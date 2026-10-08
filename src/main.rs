@@ -1,10 +1,14 @@
 //! pman: read man-style docs for any language or tool in the terminal. Docs come as packs
 //! (`pman pack install c`); `pman -k words` searches every installed pack.
 
+mod host;
 mod index;
 mod md;
 mod pack;
 mod pager;
+mod repl;
+#[cfg(unix)]
+mod pty;
 
 use index::Index;
 use std::io::{self, BufRead, IsTerminal, Write};
@@ -70,6 +74,13 @@ fn run(args: &[String]) -> Result<(), String> {
         }
         "pack" => packs(&args[1..]),
         "add" => add(&args[1..]),
+        "--repl" => repl(&args[1..]),
+        #[cfg(unix)]
+        "--pty-host" => {
+            let n = |i: usize, d: u16| args.get(i).and_then(|a| a.parse().ok()).unwrap_or(d);
+            let code = pty::host(n(1, 80), n(2, 24), &args[3..]);
+            std::process::exit(code);
+        }
         "list" => {
             let ix = load_index();
             list(&ix, args.get(1).map(String::as_str));
@@ -396,6 +407,112 @@ fn apropos(ix: &Index, query: &str) -> Result<(), String> {
 }
 
 // ---- packs -----------------------------------------------------------------------------------
+
+/// `pman --repl [command...]`: a prompt with history and tab completion, for hosts that give pman a
+/// terminal but no shell (the phone).
+fn repl(initial: &[String]) -> Result<(), String> {
+    outln!("pman: topic or page to open, -k words to search, list, pack, exit  (tab completes)");
+    let run_line = |words: &[String]| {
+        if let Err(e) = run(words) {
+            if !e.is_empty() {
+                eprintln!("pman: {e}");
+            }
+        }
+    };
+    if !initial.is_empty() {
+        run_line(initial);
+    }
+    let interactive = io::stdin().is_terminal();
+    let mut history = repl::History::load();
+    let mut words = completion_words();
+    loop {
+        let line = if interactive {
+            match repl::read_line("pman> ", &history, &|b| complete(&words, b)).map_err(|e| e.to_string())? {
+                Some(l) => l,
+                None => return Ok(()),
+            }
+        } else {
+            print!("pman> ");
+            let _ = io::stdout().flush();
+            let mut l = String::new();
+            if io::stdin().lock().read_line(&mut l).map_err(|e| e.to_string())? == 0 {
+                return Ok(());
+            }
+            l
+        };
+        history.add(line.trim());
+        let mut args: Vec<String> = line.split_whitespace().map(String::from).collect();
+        if args.first().map_or(false, |w| w == "pman" || w == "man") {
+            args.remove(0);
+        }
+        match args.first().map(String::as_str) {
+            None => continue,
+            Some("exit") | Some("quit") => return Ok(()),
+            Some("clear") => {
+                print!("\x1b[2J\x1b[H");
+                continue;
+            }
+            _ => {}
+        }
+        let changes_packs = matches!(args[0].as_str(), "pack" | "add");
+        run_line(&args);
+        if changes_packs {
+            words = completion_words();
+        }
+    }
+}
+
+struct Words {
+    first: Vec<String>,
+    subs: std::collections::HashMap<String, Vec<String>>,
+    topics: Vec<String>,
+    packs: Vec<String>,
+}
+
+fn completion_words() -> Words {
+    let ix = load_index();
+    let mut first: std::collections::BTreeSet<String> =
+        ["list", "pack", "add", "exit", "clear", "help"].iter().map(|s| s.to_string()).collect();
+    let mut subs: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+    for p in ix.pages.values() {
+        first.insert(p.topic.clone());
+        if p.id.len() > p.topic.len() {
+            subs.entry(p.topic.clone()).or_default().push(p.id[p.topic.len() + 1..].to_string());
+        }
+        for a in &p.aliases {
+            first.insert(a.clone());
+        }
+    }
+    let mut packs: std::collections::BTreeSet<String> = pack::installed().into_iter().map(|(id, _)| id).collect();
+    if let Ok(reg) = pack::fetch_registry() {
+        packs.extend(reg.packs.keys().cloned());
+    }
+    let topics = ix.topics();
+    Words { first: first.into_iter().collect(), subs, topics, packs: packs.into_iter().collect() }
+}
+
+/// What can follow `before` (the line up to the cursor): (char index where the current word starts, matches).
+fn complete(w: &Words, before: &str) -> (usize, Vec<String>) {
+    let cur: String = if before.ends_with(char::is_whitespace) { String::new() } else { before.split_whitespace().last().unwrap_or("").to_string() };
+    let start = before.chars().count() - cur.chars().count();
+    let mut prev: Vec<&str> = before[..before.len() - cur.len()].split_whitespace().collect();
+    if prev.first().map_or(false, |p| *p == "pman" || *p == "man") {
+        prev.remove(0);
+    }
+    let lc = cur.to_lowercase();
+    let pool: Vec<String> = match prev.as_slice() {
+        [] => w.first.clone(),
+        ["pack"] => ["install", "list", "remove", "update"].iter().map(|s| s.to_string()).collect(),
+        ["pack", "install"] | ["pack", "remove"] => w.packs.clone(),
+        ["list"] => w.topics.clone(),
+        [topic] => w.subs.get(&topic.to_lowercase()).cloned().unwrap_or_default(),
+        _ => Vec::new(),
+    };
+    let mut found: Vec<String> = pool.into_iter().filter(|c| c.to_lowercase().starts_with(&lc)).collect();
+    found.sort();
+    found.dedup();
+    (start, found)
+}
 
 fn add(args: &[String]) -> Result<(), String> {
     let (mut path, mut name) = (None, None);

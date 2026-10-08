@@ -24,7 +24,18 @@ MIRROR = "https://deb.debian.org/debian/"
 
 PACKAGES = """manpages manpages-dev coreutils util-linux bsdextrautils mount login passwd findutils grep sed gawk tar gzip
 bzip2 xz-utils zip unzip procps psmisc lsof strace iproute2 net-tools iptables tcpdump kmod e2fsprogs systemd
-openssh-client curl wget rsync less nano diffutils patch make file cron sudo debianutils dpkg apt man-db""".split()
+openssh-client curl wget rsync less nano diffutils patch make file cron sudo debianutils dpkg apt man-db
+lvm2 mdadm parted gdisk cryptsetup cryptsetup-bin btrfs-progs xfsprogs dosfstools ntfs-3g exfatprogs smartmontools
+hdparm nvme-cli fio quota multipath-tools nfs-common nfs-kernel-server cifs-utils samba-common  lsscsi sg3-utils
+nftables ufw iptables-persistent ethtool bridge-utils vlan iputils-ping iputils-arping iputils-tracepath traceroute
+mtr-tiny nmap netcat-openbsd socat dnsutils bind9-host bind9-utils dnsmasq-base openssh-server wireguard-tools
+openvpn ppp wpasupplicant iw wireless-tools hostapd tcpdump conntrack ipset arptables ebtables keepalived 
+  chrony systemd-timesyncd systemd-resolved udev dbus  logrotate rsyslog auditd acl attr
+libcap2-bin openssl gnupg adduser passwd   ca-certificates  anacron at
+screen tmux htop sysstat dstat iotop atop lshw pciutils usbutils dmidecode ltrace gdb  
+grub-common grub-pc-bin initramfs-tools  efibootmgr os-prober fuse3 squashfs-tools cpio rsyslog
+        
+kmod  cpufrequtils numactl linux-base procps""".split()
 # lower section number wins a shared name
 SECTION_ORDER = ["1", "8", "2", "3", "5", "7", "4", "6", "9"]
 

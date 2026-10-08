@@ -37,7 +37,7 @@ PACKS = {
     "php":    {"version": 1, "topics": ["php"],    "desc": "PHP manual: language reference, core functions and classes"},
     "cpp":    {"version": 1, "topics": ["cpp"],    "desc": "cppreference: C++ library and language reference"},
     "tools":  {"version": 1, "topics": ["posix", "jq", "cmake", "vim"], "desc": "POSIX utilities (sed, awk, make, grep...), jq, CMake commands, Vim help"},
-    "linux": {"version": 3, "topics": ["linux"], "desc": "Linux man pages: commands (coreutils, util-linux, systemd, ...), system calls, libc, file formats, overviews"},
+    "linux": {"version": 4, "topics": ["linux"], "desc": "Linux man pages: commands (coreutils, util-linux, systemd, ...), system calls, libc, file formats, overviews"},
 }
 
 

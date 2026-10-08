@@ -27,6 +27,8 @@ enum Mode {
     Normal,
     Search(String),
     Toc(usize),
+    /// host builds: pick lines to send to the host's editor: (marked start, cursor), logical lines
+    Select(Option<usize>, usize),
 }
 
 struct Pager<'a> {
@@ -239,6 +241,23 @@ impl<'a> Pager<'a> {
                 return false;
             }
             Mode::Normal => {}
+            Mode::Select(..) => {}
+        }
+        if let Mode::Select(mark, cur) = self.mode {
+            let n = self.page.lines().len();
+            match k.code {
+                KeyCode::Esc | KeyCode::Char('q') => self.mode = Mode::Normal,
+                KeyCode::Down | KeyCode::Char('j') => self.select_to(mark, (cur + 1).min(n - 1)),
+                KeyCode::Up | KeyCode::Char('k') => self.select_to(mark, cur.saturating_sub(1)),
+                KeyCode::Char('v') | KeyCode::Char(' ') => self.select_to(Some(mark.unwrap_or(cur)), cur),
+                KeyCode::Enter | KeyCode::Char('y') => {
+                    let a = mark.unwrap_or(cur);
+                    self.send_lines(a.min(cur), a.max(cur));
+                    return true;
+                }
+                _ => {}
+            }
+            return false;
         }
         let page = self.body_height();
         let max = self.rows.len().saturating_sub(page);
@@ -260,12 +279,40 @@ impl<'a> Pager<'a> {
                 let line = self.rows.get(self.top).map_or(0, |r| r.line);
                 self.mode = Mode::Toc(self.page.section_at(line));
             }
+            KeyCode::Char('v') => {
+                if crate::host::active() {
+                    let line = self.rows.get(self.top).map_or(0, |r| r.line);
+                    self.mode = Mode::Select(None, line);
+                } else {
+                    self.note = "line selection is for the phone app".into();
+                }
+            }
             KeyCode::Char('?') => {
-                self.note = "j/k line  space/b page  d/u half  g/G ends  / search  n/N next/prev  t sections  q quit".into();
+                self.note = "j/k line  space/b page  d/u half  g/G ends  / search  n/N next/prev  t sections  v select (app)  q quit".into();
             }
             _ => {}
         }
         false
+    }
+
+    fn select_to(&mut self, mark: Option<usize>, cur: usize) {
+        self.mode = Mode::Select(mark, cur);
+        let row = self.row_of_line.get(cur).copied().unwrap_or(0);
+        let body = self.body_height();
+        if row < self.top {
+            self.top = row;
+        } else if row >= self.top + body {
+            self.top = row + 1 - body;
+        }
+        self.clamp();
+    }
+
+    /// Sends lines `a..=b` to the host (the Sandbox editor), minus their common indent.
+    fn send_lines(&self, a: usize, b: usize) {
+        let lines: Vec<&String> = self.page.lines()[a..=b].iter().collect();
+        let indent = lines.iter().filter(|l| !l.trim().is_empty()).map(|l| l.len() - l.trim_start().len()).min().unwrap_or(0);
+        let text: Vec<String> = lines.iter().map(|l| if l.len() >= indent { l[indent..].to_string() } else { String::new() }).collect();
+        crate::host::emit(&format!("insert {}", crate::host::base64(text.join("\n").as_bytes())));
     }
 
     fn draw(&self) -> io::Result<()> {
@@ -279,7 +326,19 @@ impl<'a> Pager<'a> {
                 let ri = self.top + y;
                 let Some(row) = self.rows.get(ri) else { break };
                 queue!(out, cursor::MoveTo(0, y as u16))?;
-                self.draw_row(&mut out, ri, row)?;
+                let selected = match self.mode {
+                    Mode::Select(mark, cur) => {
+                        let a = mark.unwrap_or(cur);
+                        (a.min(cur)..=a.max(cur)).contains(&row.line)
+                    }
+                    _ => false,
+                };
+                if selected {
+                    let text: String = row.text.chars().take(self.width.saturating_sub(1)).collect();
+                    queue!(out, SetAttribute(Attribute::Reverse), Print(pad(&text, self.width.saturating_sub(1))), SetAttribute(Attribute::Reset))?;
+                } else {
+                    self.draw_row(&mut out, ri, row)?;
+                }
             }
         }
         // bottom line
@@ -366,6 +425,13 @@ impl<'a> Pager<'a> {
         }
         if let Mode::Toc(_) = self.mode {
             return format!("{} · sections · enter jump  q back", self.page.id);
+        }
+        if let Mode::Select(mark, _) = self.mode {
+            return if mark.is_none() {
+                "select · j/k move  v mark start  y/enter insert this line  esc cancel".into()
+            } else {
+                "select · j/k extend  y/enter insert  esc cancel".into()
+            };
         }
         let line = self.rows.get(self.top).map_or(0, |r| r.line);
         let sec = &self.page.sections()[self.page.section_at(line)].title;

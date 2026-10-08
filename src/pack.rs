@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "net"), allow(dead_code))]
 //! Doc packs: zips of man-style text downloaded on demand into the data dir.
 //!
 //! A pack lives in `<data>/packs/<id>/` and counts as installed only when its `.version` marker
@@ -122,12 +123,7 @@ pub fn registry_source() -> String {
 pub fn fetch_registry() -> Result<Registry, String> {
     let src = registry_source();
     let text = if is_url(&src) {
-        ureq::get(&src)
-            .timeout(Duration::from_secs(15))
-            .call()
-            .map_err(|e| format!("cannot reach the pack registry ({e})"))?
-            .into_string()
-            .map_err(|e| e.to_string())?
+        http_text(&src)?
     } else {
         fs::read_to_string(&src).map_err(|e| format!("cannot read registry {src}: {e}"))?
     };
@@ -167,7 +163,20 @@ pub fn clean_stale() {
     }
 }
 
+/// Installs a pack: downloaded here, or (builds without network) by the host app.
 pub fn install(id: &str, info: &PackInfo, quiet: bool) -> Result<(), String> {
+    #[cfg(feature = "net")]
+    {
+        install_net(id, info, quiet)
+    }
+    #[cfg(not(feature = "net"))]
+    {
+        let _ = (info, quiet);
+        crate::host::request(&format!("install {id}"))
+    }
+}
+
+fn install_net(id: &str, info: &PackInfo, quiet: bool) -> Result<(), String> {
     let root = packs_dir();
     fs::create_dir_all(&root).map_err(|e| format!("cannot create {}: {e}", root.display()))?;
     clean_stale();
@@ -209,21 +218,48 @@ pub fn install(id: &str, info: &PackInfo, quiet: bool) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(feature = "net")]
+fn http_text(url: &str) -> Result<String, String> {
+    ureq::get(url)
+        .timeout(Duration::from_secs(15))
+        .call()
+        .map_err(|e| format!("cannot reach the pack registry ({e})"))?
+        .into_string()
+        .map_err(|e| e.to_string())
+}
+
+/// Opens `url` (resuming at byte `have`); returns the body and whether the server resumed.
+#[cfg(feature = "net")]
+fn http_open(url: &str, have: u64) -> Result<(Box<dyn Read>, bool), String> {
+    let mut req = ureq::get(url).timeout(Duration::from_secs(600));
+    if have > 0 {
+        req = req.set("Range", &format!("bytes={have}-"));
+    }
+    let resp = req.call().map_err(|e| match e {
+        ureq::Error::Status(404, _) => "download not available yet (HTTP 404)".to_string(),
+        ureq::Error::Status(c, _) => format!("server error (HTTP {c})"),
+        _ => "no connection, nothing was installed".to_string(),
+    })?;
+    let resumed = resp.status() == 206;
+    Ok((Box::new(resp.into_reader()), resumed))
+}
+
+#[cfg(not(feature = "net"))]
+fn http_text(_url: &str) -> Result<String, String> {
+    Err("this build has no network support; the host app downloads packs".into())
+}
+
+#[cfg(not(feature = "net"))]
+fn http_open(_url: &str, _have: u64) -> Result<(Box<dyn Read>, bool), String> {
+    Err("this build has no network support; the host app downloads packs".into())
+}
+
 fn download(url: &str, part: &Path, have: u64, total: u64, quiet: bool) -> Result<(), String> {
     let mut out_file;
     let mut reader: Box<dyn Read>;
     let mut done: u64;
     if is_url(url) {
-        let mut req = ureq::get(url).timeout(Duration::from_secs(600));
-        if have > 0 {
-            req = req.set("Range", &format!("bytes={have}-"));
-        }
-        let resp = req.call().map_err(|e| match e {
-            ureq::Error::Status(404, _) => "download not available yet (HTTP 404)".to_string(),
-            ureq::Error::Status(c, _) => format!("server error (HTTP {c})"),
-            _ => "no connection, nothing was installed".to_string(),
-        })?;
-        let resumed = resp.status() == 206;
+        let (resp, resumed) = http_open(url, have)?;
         done = if resumed { have } else { 0 }; // a plain 200 ignored Range: restart from zero
         out_file = fs::OpenOptions::new()
             .create(true)
@@ -232,7 +268,7 @@ fn download(url: &str, part: &Path, have: u64, total: u64, quiet: bool) -> Resul
             .truncate(!resumed)
             .open(part)
             .map_err(|e| e.to_string())?;
-        reader = Box::new(resp.into_reader());
+        reader = resp;
     } else {
         let path = url.strip_prefix("file://").unwrap_or(url);
         reader = Box::new(File::open(path).map_err(|e| format!("cannot read {path}: {e}"))?);
