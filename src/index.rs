@@ -405,6 +405,19 @@ fn parse(id: &str, text: &str) -> Body {
             continue;
         }
         let t: &str = if r.is_char_boundary(BASE_INDENT) { &r[BASE_INDENT..] } else { r.trim_start() };
+        if let Some(h) = t.strip_prefix(crate::md::HEADING_MARK) {
+            // explicit heading (converted markdown): any wording or case
+            let h = h.trim();
+            p.sections.push(Section { title: h.to_string(), line: p.lines.len() });
+            if first_heading {
+                p.title = h.to_string();
+                have_title = true;
+                first_heading = false;
+            }
+            emit(&mut p, h, false);
+            prev = 3;
+            continue;
+        }
         let trimmed = t.trim();
         // Numbered headings may be stacked ("2 Usage" directly above "2.1 Install").
         let blank_before = i == 0 || raw[i - 1].trim().is_empty() || is_numbered(raw[i - 1]);

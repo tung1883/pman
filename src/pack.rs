@@ -67,6 +67,42 @@ pub fn installed() -> Vec<(String, u32)> {
     out
 }
 
+/// A local pack (made by `pman add`) records where it came from in `.source`.
+pub fn local_source(id: &str) -> Option<PathBuf> {
+    let s = fs::read_to_string(pack_dir(id).join(".source")).ok()?;
+    Some(PathBuf::from(s.trim()))
+}
+
+/// Imports a .md file or folder of them as the local pack `name`, replacing an earlier import.
+pub fn add_local(name: &str, src: &Path) -> Result<usize, String> {
+    let notes = crate::md::convert_source(src, name);
+    if notes.is_empty() {
+        return Err(format!("no .md files in {}", src.display()));
+    }
+    let root = packs_dir();
+    let tmp = root.join(format!("{name}.tmp"));
+    let _ = fs::remove_dir_all(&tmp);
+    let man = tmp.join("man");
+    fs::create_dir_all(&man).map_err(|e| e.to_string())?;
+    for n in &notes {
+        let path = if n.slug.is_empty() { man.join(format!("{name}.txt")) } else { man.join(name).join(format!("{}.txt", n.slug)) };
+        if let Some(d) = path.parent() {
+            fs::create_dir_all(d).map_err(|e| e.to_string())?;
+        }
+        fs::write(&path, &n.text).map_err(|e| e.to_string())?;
+    }
+    crate::index::build_bundle(&tmp).map_err(|e| e.to_string())?;
+    let abs = fs::canonicalize(src).unwrap_or_else(|_| src.to_path_buf());
+    let abs = abs.to_string_lossy().to_string();
+    let abs = abs.strip_prefix("\\\\?\\").unwrap_or(&abs).to_string();
+    fs::write(tmp.join(".source"), abs).map_err(|e| e.to_string())?;
+    fs::write(tmp.join(".version"), "0").map_err(|e| e.to_string())?;
+    let dest = pack_dir(name);
+    let _ = fs::remove_dir_all(&dest);
+    fs::rename(&tmp, &dest).map_err(|e| e.to_string())?;
+    Ok(notes.len())
+}
+
 pub fn remove(id: &str) -> io::Result<()> {
     let d = pack_dir(id);
     if d.exists() {

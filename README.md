@@ -21,6 +21,19 @@ In a page: `j/k` line, `space/b` page, `d/u` half page, `g/G` ends, `/` search, 
 
 Env: `PMAN_HOME` (data dir), `PMAN_REGISTRY` (URL or file), `PMAN_DOCS` (extra dir of `<pack>/man` folders).
 
+## Your own notes
+
+```
+pman add ~/Vault --name notes   # a .md file or a folder of them (Obsidian vaults work: read as plain markdown)
+pman notes                      # pick a note;  pman notes <note> [section]
+pman -k words                   # searches your notes together with the doc packs
+pman pack update                # re-imports local packs from their source
+pman pack remove notes
+```
+
+Notes are copied into a local pack under the data dir; the source is never modified. Hidden folders
+(`.obsidian`, `.git`) are skipped.
+
 ## Sources and licenses
 
 The code is MIT. The doc packs are converted from other projects' documentation and keep their licenses;

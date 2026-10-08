@@ -2,6 +2,7 @@
 //! (`pman pack install c`); `pman -k words` searches every installed pack.
 
 mod index;
+mod md;
 mod pack;
 mod pager;
 
@@ -27,7 +28,10 @@ usage:
   pman pack list               available and installed packs
   pman pack install <id>...    download packs (or: pack install all)
                                pack remove <id>...   delete them (or: pack remove all)
-  pman pack update             update installed packs
+  pman pack update             update installed packs (and re-import local ones)
+  pman add <file.md|dir> [--name n]
+                               read your own markdown notes as a pack (pman n); refresh with
+                               pman add again or pman pack update, delete with pack remove n
 
 examples:
   pman c printf        pman c syntax        pman ts generics
@@ -65,6 +69,7 @@ fn run(args: &[String]) -> Result<(), String> {
             Ok(())
         }
         "pack" => packs(&args[1..]),
+        "add" => add(&args[1..]),
         "list" => {
             let ix = load_index();
             list(&ix, args.get(1).map(String::as_str));
@@ -392,14 +397,68 @@ fn apropos(ix: &Index, query: &str) -> Result<(), String> {
 
 // ---- packs -----------------------------------------------------------------------------------
 
+fn add(args: &[String]) -> Result<(), String> {
+    let (mut path, mut name) = (None, None);
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        if a == "--name" || a == "-n" {
+            name = Some(it.next().ok_or("--name needs a value")?.clone());
+        } else if path.is_none() {
+            path = Some(a.clone());
+        } else {
+            return Err("usage: pman add <file.md|dir> [--name n]".into());
+        }
+    }
+    let path = path.ok_or("usage: pman add <file.md|dir> [--name n]")?;
+    let src = std::path::Path::new(&path);
+    if !src.exists() {
+        return Err(format!("{path}: no such file or folder"));
+    }
+    let name = name
+        .or_else(|| {
+            let abs = std::fs::canonicalize(src).ok()?;
+            abs.file_stem().map(|s| s.to_string_lossy().to_string())
+        })
+        .map(|n| md::slug(std::path::Path::new(&n)))
+        .filter(|n| !n.is_empty())
+        .ok_or("cannot derive a name; use --name")?;
+    import_local(&name, src)
+}
+
+fn import_local(name: &str, src: &std::path::Path) -> Result<(), String> {
+    const RESERVED: [&str; 8] = ["pack", "list", "add", "help", "update", "remove", "install", "all"];
+    if RESERVED.contains(&name) {
+        return Err(format!("'{name}' is a pman command; pick another with --name"));
+    }
+    if pack::installed_version(name).is_some() && pack::local_source(name).is_none() {
+        return Err(format!("'{name}' is an installed doc pack; pick another with --name"));
+    }
+    let known = pack::fetch_registry().map(|r| r.packs.contains_key(name)).unwrap_or(false);
+    if known && pack::local_source(name).is_none() {
+        return Err(format!("'{name}' is a downloadable doc pack; pick another with --name"));
+    }
+    let again = pack::local_source(name).is_some();
+    let n = pack::add_local(name, src)?;
+    outln!("{} {name}: {n} page{} (pman {name})", if again { "updated" } else { "added" }, if n == 1 { "" } else { "s" });
+    Ok(())
+}
+
 fn packs(args: &[String]) -> Result<(), String> {
     let sub = args.first().map(String::as_str).unwrap_or("list");
     match sub {
         "list" => {
             let installed = pack::installed();
+            for (id, _) in &installed {
+                if let Some(src) = pack::local_source(id) {
+                    outln!("  {id:<8} {:<18} {}", "local", src.display());
+                }
+            }
             match pack::fetch_registry() {
                 Ok(reg) => {
                     for (id, info) in &reg.packs {
+                        if pack::local_source(id).is_some() {
+                            continue;
+                        }
                         let state = match pack::installed_version(id) {
                             Some(v) if v == info.version => "installed".to_string(),
                             Some(_) => "update available".to_string(),
@@ -411,6 +470,9 @@ fn packs(args: &[String]) -> Result<(), String> {
                 Err(e) => {
                     eprintln!("pman: {e}");
                     for (id, v) in installed {
+                        if pack::local_source(&id).is_some() {
+                            continue;
+                        }
                         outln!("  {id:<8} installed (v{v})");
                     }
                 }
@@ -434,15 +496,31 @@ fn packs(args: &[String]) -> Result<(), String> {
                 }
                 return Ok(());
             }
+            let mut locals = 0;
+            if sub == "update" {
+                for (id, _) in pack::installed() {
+                    if let Some(src) = pack::local_source(&id) {
+                        if src.exists() {
+                            import_local(&id, &src)?;
+                        } else {
+                            eprintln!("pman: source of '{id}' is gone ({}); keeping the imported copy", src.display());
+                        }
+                        locals += 1;
+                    }
+                }
+            }
             let reg = pack::fetch_registry()?;
             let targets: Vec<String> = if sub == "update" {
-                pack::installed().into_iter().map(|(id, _)| id).collect()
+                pack::installed().into_iter().map(|(id, _)| id).filter(|id| pack::local_source(id).is_none()).collect()
             } else if ids.iter().any(|i| i == "all" || i == "--all") {
                 reg.packs.keys().cloned().collect()
             } else {
                 ids
             };
             if targets.is_empty() {
+                if sub == "update" && locals > 0 {
+                    return Ok(());
+                }
                 return Err(if sub == "update" { "nothing installed".into() } else { "usage: pman pack install <id>...".into() });
             }
             let (mut changed, mut current) = (0, 0);
@@ -454,6 +532,9 @@ fn packs(args: &[String]) -> Result<(), String> {
                     }
                     return Err(format!("no pack '{id}' (pman pack list)"));
                 };
+                if pack::local_source(&id).is_some() {
+                    return Err(format!("'{id}' is one of your local packs; remove it first (pman pack remove {id})"));
+                }
                 let old = pack::installed_version(&id);
                 if old == Some(info.version) {
                     outln!("{id} is up to date (v{})", info.version);
