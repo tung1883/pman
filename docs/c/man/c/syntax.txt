@@ -1,0 +1,200 @@
+SYNTAX(1)                        Sandbox manual                        SYNTAX(1)
+
+       C LANGUAGE QUICK REFERENCE
+
+       C language quick reference. Library functions have their own pages: man c printf, man c malloc, man c strlen. Search everything with man -k <words>. The Tiny C Compiler manual is man c tcc.
+
+       PROGRAM STRUCTURE
+
+         #include <stdio.h>
+
+         int main(int argc, char **argv)
+         {
+             printf("hello\n");
+             return 0;
+         }
+
+       TYPES
+
+         char            1 byte, holds a character or small integer
+         short, int      at least 16 bits (int is usually 32)
+         long            at least 32 bits (64 on 64-bit Android)
+         long long       at least 64 bits
+         unsigned T      same size, no negative values
+         float, double   single, double precision
+         size_t          unsigned size of objects (<stddef.h>)
+         int8_t..int64_t, uint8_t..uint64_t   exact widths (<stdint.h>)
+         bool, true, false                    (<stdbool.h>)
+         void            no value; void * is a generic pointer
+         sizeof(x)       size in bytes of a type or expression
+
+       LITERALS
+
+         42  0x2A  052  0b101010      int in decimal, hex, octal, binary
+         42u  42L  42UL  42LL        unsigned, long, unsigned long, long long
+         3.14  3.14f  1e-3           double, float, scientific
+         'a'  '\n'  '\0'  '\x41'      char constants
+         "text"                      string: char array ending in '\0'
+         Escapes: \n newline  \t tab  \\ backslash  \' quote  \" double quote  \0 NUL
+
+       OPERATORS
+
+         Precedence, highest first:
+           () [] -> .  post++ post--
+           ! ~ pre++ pre-- + - (type) * & sizeof     (unary)
+           * / %
+           + -
+           << >>
+           < <= > >=
+           == !=
+           &
+           ^
+           |
+           &&
+           ||
+           ?:
+           = += -= *= /= %= <<= >>= &= ^= |=
+           ,
+         a / b on integers truncates toward zero. a % b has the sign of a.
+         && and || stop early: the right side runs only when needed.
+
+       CONTROL FLOW
+
+         if (x > 0) { ... } else if (x == 0) { ... } else { ... }
+
+         for (int i = 0; i < n; i++) { ... }
+         while (cond) { ... }
+         do { ... } while (cond);
+
+         switch (n) {
+         case 1:  ...  break;
+         case 2:
+         case 3:  ...  break;
+         default: ...
+         }
+
+         break;      leave the loop or switch
+         continue;   next iteration
+         return x;   leave the function
+         goto done;  jump to label  done:
+
+       FUNCTIONS
+
+         int add(int a, int b) { return a + b; }
+
+         void swap(int *a, int *b) { int t = *a; *a = *b; *b = t; }
+
+         int sum(const int *v, size_t n);      declaration (prototype)
+         static int helper(void);              file-local function
+         inline int sq(int x) { return x * x; }
+
+         Arguments are passed by value. Pass a pointer to let the callee change something.
+         int f(void) takes no arguments; int f() means "unspecified" in older C.
+         Variadic: int printf(const char *fmt, ...) uses <stdarg.h> (man c stdarg).
+
+       POINTERS AND ARRAYS
+
+         int x = 5;
+         int *p = &x;          p holds the address of x
+         *p = 6;               write through the pointer
+         int a[4] = {1, 2, 3, 4};
+         a[i]  is  *(a + i)    arrays decay to a pointer to the first element
+         p + 1                 advances by sizeof(*p) bytes
+         NULL                  the null pointer (<stddef.h>)
+
+         int *q = malloc(10 * sizeof *q);   heap array, check for NULL, release with free(q)
+         const char *s = "text";            pointer to read-only characters
+         char buf[64];                      writable array
+         int (*fp)(int, int) = add;         pointer to function;  fp(1, 2)
+         int m[2][3];                       array of 2 arrays of 3 ints
+
+       STRINGS
+
+         A string is a char array ending with '\0'.
+         strlen(s)  strcpy(d, s)  strncpy  strcat  strcmp(a, b) == 0 when equal  strchr  strstr
+         snprintf(buf, sizeof buf, "%d items", n)     safe formatting
+         Never compare strings with ==, that compares addresses.
+
+       STRUCTS, UNIONS, ENUMS, TYPEDEF
+
+         struct Point { int x, y; };
+         struct Point p = {1, 2};            p.x = 3;
+         struct Point *pp = &p;              pp->x = 4;      same as (*pp).x
+         struct Point q = { .y = 9 };        designated initializer
+
+         union Value { int i; float f; };    members share storage
+
+         enum Color { RED, GREEN = 5, BLUE };    RED is 0, BLUE is 6
+
+         typedef struct { int x, y; } Vec;       Vec v;
+         typedef unsigned char byte;
+
+         struct { unsigned flag : 1; unsigned mode : 3; } bits;    bit fields
+
+       STORAGE AND QUALIFIERS
+
+         auto            default for locals
+         static          local: keeps value between calls; global: private to the file
+         extern          declared here, defined in another file
+         register        hint only
+         const           may not be modified through this name
+         volatile        value can change outside the program's control
+         restrict        pointer is the only way to reach that object
+
+       PREPROCESSOR
+
+         #include <stdio.h>        system header
+         #include "mine.h"         your header
+         #define N 100             constant
+         #define SQ(x) ((x) * (x)) macro: always parenthesise the arguments
+         #undef N
+         #if defined(DEBUG) && N > 10  ...  #elif ...  #else ...  #endif
+         #ifdef X  #ifndef X
+         #pragma once
+         Header guard:  #ifndef FOO_H  #define FOO_H  ...  #endif
+         Predefined: __FILE__  __LINE__  __func__  __DATE__  __TIME__
+         #x turns an argument into a string, a ## b pastes tokens.
+
+       PRINTF FORMATS
+
+         %d %i   int            %u   unsigned          %ld %lu   long
+         %lld %llu long long     %zu  size_t            %x %X   hex
+         %o      octal          %c   char              %s      string
+         %f      double         %e %g  scientific/short  %p     pointer
+         %%      a percent sign
+         Flags and width:  %5d  %-5d  %05d  %.2f  %8.3f  %*d  %.*s
+         Always use the matching specifier: a wrong one is undefined behavior.
+         Full details: man c printf.  Input: man c scanf.
+
+       STANDARD HEADERS
+
+         <stdio.h>    printf, scanf, fopen, fgets, puts, FILE
+         <stdlib.h>   malloc, free, exit, atoi, strtol, qsort, rand, getenv
+         <string.h>   strlen, strcpy, strcmp, memcpy, memset
+         <ctype.h>    isalpha, isdigit, toupper, tolower
+         <math.h>     sqrt, pow, sin, cos, floor, ceil, fabs  (link with -lm if needed)
+         <time.h>     time, clock, strftime, localtime
+         <stdint.h>   fixed-width integers
+         <stdbool.h>  bool
+         <stddef.h>   size_t, NULL, offsetof
+         <limits.h>   INT_MAX, CHAR_BIT, LONG_MAX
+         <float.h>    DBL_MAX, DBL_EPSILON
+         <errno.h>    errno, ENOENT
+         <assert.h>   assert
+         <stdarg.h>   va_list, va_start
+         <setjmp.h>   setjmp, longjmp
+         <signal.h>   signal, raise
+         <unistd.h>   read, write, close, sleep (POSIX)
+
+       COMMON PITFALLS
+
+         Using an uninitialised variable, or reading past the end of an array.
+         Forgetting the '\0' terminator or the +1 when allocating strings.
+         Returning a pointer to a local variable.
+         Not checking malloc, fopen and scanf return values.
+         Integer overflow on signed types is undefined behavior.
+         Using = instead of == in a condition.
+         Missing break in a switch case (falls through).
+         sizeof applied to a pointer parameter gives the pointer size, not the array size.
+
+C manual                                bundled with the sandbox

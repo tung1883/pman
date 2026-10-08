@@ -1,0 +1,997 @@
+PY.OS(1)                         Sandbox manual                         PY.OS(1)
+
+       OS
+
+       OS routines for NT or Posix depending on what system we're on.
+
+       OS._EXIT
+
+         _exit(status)
+
+       Exit to the system with specified status, without normal exit processing.
+
+       OS.ABORT
+
+         abort()
+
+       Abort the interpreter immediately.
+
+       This function 'dumps core' or otherwise fails in the hardest way possible
+       on the hosting operating system.  This function never returns.
+
+       OS.ACCESS
+
+         access(path, mode, *, dir_fd=None, effective_ids=False, follow_symlinks=True)
+
+       Use the real uid/gid to test for access to a path.
+
+         path
+           Path to be tested; can be string, bytes, or a path-like object.
+         mode
+           Operating-system mode bitfield.  Can be F_OK to test existence,
+           or the inclusive-OR of R_OK, W_OK, and X_OK.
+         dir_fd
+           If not None, it should be a file descriptor open to a directory,
+           and path should be relative; path will then be relative to that
+           directory.
+         effective_ids
+           If True, access will use the effective uid/gid instead of
+           the real uid/gid.
+         follow_symlinks
+           If False, and the last element of the path is a symbolic link,
+           access will examine the symbolic link itself instead of the file
+           the link points to.
+
+       dir_fd, effective_ids, and follow_symlinks may not be implemented
+         on your platform.  If they are unavailable, using them will raise a
+         NotImplementedError.
+
+       Note that most operations will use the effective uid/gid, therefore this
+         routine can be used in a suid/sgid environment to test if the invoking user
+         has the specified access to the path.
+
+       OS.CHDIR
+
+         chdir(path)
+
+       Change the current working directory to the specified path.
+
+       path may always be specified as a string.
+       On some platforms, path may also be specified as an open file descriptor.
+         If this functionality is unavailable, using it raises an exception.
+
+       OS.CHMOD
+
+         chmod(path, mode, *, dir_fd=None, follow_symlinks=True)
+
+       Change the access permissions of a file.
+
+         path
+           Path to be modified.  May always be specified as a str, bytes, or a path-like object.
+           On some platforms, path may also be specified as an open file descriptor.
+           If this functionality is unavailable, using it raises an exception.
+         mode
+           Operating-system mode bitfield.
+           Be careful when using number literals for *mode*. The conventional UNIX notation for
+           numeric modes uses an octal base, which needs to be indicated with a ``0o`` prefix in
+           Python.
+         dir_fd
+           If not None, it should be a file descriptor open to a directory,
+           and path should be relative; path will then be relative to that
+           directory.
+         follow_symlinks
+           If False, and the last element of the path is a symbolic link,
+           chmod will modify the symbolic link itself instead of the file
+           the link points to.
+
+       It is an error to use dir_fd or follow_symlinks when specifying path as
+         an open file descriptor.
+       dir_fd and follow_symlinks may not be implemented on your platform.
+         If they are unavailable, using them will raise a NotImplementedError.
+
+       OS.CLOSE
+
+         close(fd)
+
+       Close a file descriptor.
+
+       OS.CLOSERANGE
+
+         closerange(fd_low, fd_high, /)
+
+       Closes all file descriptors in [fd_low, fd_high), ignoring errors.
+
+       OS.CPU_COUNT
+
+         cpu_count()
+
+       Return the number of CPUs in the system; return None if indeterminable.
+
+       This number is not equivalent to the number of CPUs the current process can
+       use.  The number of usable CPUs can be obtained with
+       ``len(os.sched_getaffinity(0))``
+
+       OS.DEVICE_ENCODING
+
+         device_encoding(fd)
+
+       Return a string describing the encoding of a terminal's file descriptor.
+
+       The file descriptor must be attached to a terminal.
+       If the device is not a terminal, return None.
+
+       OS.DUP
+
+         dup(fd, /)
+
+       Return a duplicate of a file descriptor.
+
+       OS.DUP2
+
+         dup2(fd, fd2, inheritable=True)
+
+       Duplicate file descriptor.
+
+       OS.ERROR
+
+       Base class for I/O related errors.
+
+       OS.EXECL
+
+         execl(file, *args)
+
+       execl(file, *args)
+
+       Execute the executable file with argument list args, replacing the
+       current process.
+
+       OS.EXECLE
+
+         execle(file, *args)
+
+       execle(file, *args, env)
+
+       Execute the executable file with argument list args and
+       environment env, replacing the current process.
+
+       OS.EXECLP
+
+         execlp(file, *args)
+
+       execlp(file, *args)
+
+       Execute the executable file (which is searched for along $PATH)
+       with argument list args, replacing the current process.
+
+       OS.EXECLPE
+
+         execlpe(file, *args)
+
+       execlpe(file, *args, env)
+
+       Execute the executable file (which is searched for along $PATH)
+       with argument list args and environment env, replacing the current
+       process.
+
+       OS.EXECV
+
+         execv(path, argv, /)
+
+       Execute an executable path with arguments, replacing current process.
+
+       path
+         Path of executable file.
+       argv
+         Tuple or list of strings.
+
+       OS.EXECVE
+
+         execve(path, argv, env)
+
+       Execute an executable path with arguments, replacing current process.
+
+       path
+         Path of executable file.
+       argv
+         Tuple or list of strings.
+       env
+         Dictionary of strings mapping to strings.
+
+       OS.EXECVP
+
+         execvp(file, args)
+
+       execvp(file, args)
+
+       Execute the executable file (which is searched for along $PATH)
+       with argument list args, replacing the current process.
+       args may be a list or tuple of strings.
+
+       OS.EXECVPE
+
+         execvpe(file, args, env)
+
+       execvpe(file, args, env)
+
+       Execute the executable file (which is searched for along $PATH)
+       with argument list args and environment env, replacing the
+       current process.
+       args may be a list or tuple of strings.
+
+       OS.FSDECODE
+
+         fsdecode(filename)
+
+       Decode filename (an os.PathLike, bytes, or str) from the filesystem
+       encoding with 'surrogateescape' error handler, return str unchanged. On
+       Windows, use 'strict' error handler if the file system encoding is
+       'mbcs' (which is the default encoding).
+
+       OS.FSENCODE
+
+         fsencode(filename)
+
+       Encode filename (an os.PathLike, bytes, or str) to the filesystem
+       encoding with 'surrogateescape' error handler, return bytes unchanged.
+       On Windows, use 'strict' error handler if the file system encoding is
+       'mbcs' (which is the default encoding).
+
+       OS.FSPATH
+
+         fspath(path)
+
+       Return the file system path representation of the object.
+
+       If the object is str or bytes, then allow it to pass through as-is. If the
+       object defines __fspath__(), then return the result of that method. All other
+       types raise a TypeError.
+
+       OS.FSTAT
+
+         fstat(fd)
+
+       Perform a stat system call on the given file descriptor.
+
+       Like stat(), but for an open file descriptor.
+       Equivalent to os.stat(fd).
+
+       OS.FSYNC
+
+         fsync(fd)
+
+       Force write of fd to disk.
+
+       OS.FTRUNCATE
+
+         ftruncate(fd, length, /)
+
+       Truncate a file, specified by file descriptor, to a specific length.
+
+       OS.GET_BLOCKING
+
+         get_blocking(fd, /)
+
+       Get the blocking mode of the file descriptor.
+
+       Return False if the O_NONBLOCK flag is set, True if the flag is cleared.
+
+       OS.GET_EXEC_PATH
+
+         get_exec_path(env=None)
+
+       Returns the sequence of directories that will be searched for the
+       named executable (similar to a shell) when launching a process.
+
+       *env* must be an environment variable dict or None.  If *env* is None,
+       os.environ will be used.
+
+       OS.GET_HANDLE_INHERITABLE
+
+         get_handle_inheritable(handle, /)
+
+       Get the close-on-exe flag of the specified file descriptor.
+
+       OS.GET_INHERITABLE
+
+         get_inheritable(fd, /)
+
+       Get the close-on-exe flag of the specified file descriptor.
+
+       OS.GET_TERMINAL_SIZE
+
+       Return the size of the terminal window as (columns, lines).
+
+       The optional argument fd (default standard output) specifies
+       which file descriptor should be queried.
+
+       If the file descriptor is not connected to a terminal, an OSError
+       is thrown.
+
+       This function will only be defined if an implementation is
+       available for this system.
+
+       shutil.get_terminal_size is the high-level function which should
+       normally be used, os.get_terminal_size is the low-level implementation.
+
+       OS.GETCWD
+
+         getcwd()
+
+       Return a unicode string representing the current working directory.
+
+       OS.GETCWDB
+
+         getcwdb()
+
+       Return a bytes string representing the current working directory.
+
+       OS.GETENV
+
+         getenv(key, default=None)
+
+       Get an environment variable, return None if it doesn't exist.
+       The optional second argument can specify an alternate default.
+       key, default and the result are str.
+
+       OS.GETLOGIN
+
+         getlogin()
+
+       Return the actual login name.
+
+       OS.GETPID
+
+         getpid()
+
+       Return the current process id.
+
+       OS.GETPPID
+
+         getppid()
+
+       Return the parent's process id.
+
+       If the parent process has already exited, Windows machines will still
+       return its id; others systems will return the id of the 'init' process (1).
+
+       OS.ISATTY
+
+         isatty(fd, /)
+
+       Return True if the fd is connected to a terminal.
+
+       Return True if the file descriptor is an open file descriptor
+       connected to the slave end of a terminal.
+
+       OS.KILL
+
+         kill(pid, signal, /)
+
+       Kill a process with a signal.
+
+       OS.LINK
+
+         link(src, dst, *, src_dir_fd=None, dst_dir_fd=None, follow_symlinks=True)
+
+       Create a hard link to a file.
+
+       If either src_dir_fd or dst_dir_fd is not None, it should be a file
+         descriptor open to a directory, and the respective path string (src or dst)
+         should be relative; the path will then be relative to that directory.
+       If follow_symlinks is False, and the last element of src is a symbolic
+         link, link will create a link to the symbolic link itself instead of the
+         file the link points to.
+       src_dir_fd, dst_dir_fd, and follow_symlinks may not be implemented on your
+         platform.  If they are unavailable, using them will raise a
+         NotImplementedError.
+
+       OS.LISTDIR
+
+         listdir(path=None)
+
+       Return a list containing the names of the files in the directory.
+
+       path can be specified as either str, bytes, or a path-like object.  If path is bytes,
+         the filenames returned will also be bytes; in all other circumstances
+         the filenames returned will be str.
+       If path is None, uses the path='.'.
+       On some platforms, path may also be specified as an open file descriptor;\
+         the file descriptor must refer to a directory.
+         If this functionality is unavailable, using it raises NotImplementedError.
+
+       The list is in arbitrary order.  It does not include the special
+       entries '.' and '..' even if they are present in the directory.
+
+       OS.LISTDRIVES
+
+         listdrives()
+
+       Return a list containing the names of drives in the system.
+
+       A drive name typically looks like 'C:\\'.
+
+       OS.LISTMOUNTS
+
+         listmounts(volume)
+
+       Return a list containing mount points for a particular volume.
+
+       'volume' should be a GUID path as returned from os.listvolumes.
+
+       OS.LISTVOLUMES
+
+         listvolumes()
+
+       Return a list containing the volumes in the system.
+
+       Volumes are typically represented as a GUID path.
+
+       OS.LSEEK
+
+         lseek(fd, position, whence, /)
+
+       Set the position of a file descriptor.  Return the new position.
+
+         fd
+           An open file descriptor, as returned by os.open().
+         position
+           Position, interpreted relative to 'whence'.
+         whence
+           The relative position to seek from. Valid values are:
+           - SEEK_SET: seek from the start of the file.
+           - SEEK_CUR: seek from the current file position.
+           - SEEK_END: seek from the end of the file.
+
+       The return value is the number of bytes relative to the beginning of the file.
+
+       OS.LSTAT
+
+         lstat(path, *, dir_fd=None)
+
+       Perform a stat system call on the given path, without following symbolic links.
+
+       Like stat(), but do not follow symbolic links.
+       Equivalent to stat(path, follow_symlinks=False).
+
+       OS.MAKEDIRS
+
+         makedirs(name, mode=511, exist_ok=False)
+
+       makedirs(name [, mode=0o777][, exist_ok=False])
+
+       Super-mkdir; create a leaf directory and all intermediate ones.  Works like
+       mkdir, except that any intermediate path segment (not just the rightmost)
+       will be created if it does not exist. If the target directory already
+       exists, raise an OSError if exist_ok is False. Otherwise no exception is
+       raised.  This is recursive.
+
+       OS.MKDIR
+
+         mkdir(path, mode=511, *, dir_fd=None)
+
+       Create a directory.
+
+       If dir_fd is not None, it should be a file descriptor open to a directory,
+         and path should be relative; path will then be relative to that directory.
+       dir_fd may not be implemented on your platform.
+         If it is unavailable, using it will raise a NotImplementedError.
+
+       The mode argument is ignored on Windows. Where it is used, the current umask
+       value is first masked out.
+
+       OS.OPEN
+
+         open(path, flags, mode=511, *, dir_fd=None)
+
+       Open a file for low level IO.  Returns a file descriptor (integer).
+
+       If dir_fd is not None, it should be a file descriptor open to a directory,
+         and path should be relative; path will then be relative to that directory.
+       dir_fd may not be implemented on your platform.
+         If it is unavailable, using it will raise a NotImplementedError.
+
+       OS.PIPE
+
+         pipe()
+
+       Create a pipe.
+
+       Returns a tuple of two file descriptors:
+         (read_fd, write_fd)
+
+       OS.PUTENV
+
+         putenv(name, value, /)
+
+       Change or add an environment variable.
+
+       OS.READ
+
+         read(fd, length, /)
+
+       Read from a file descriptor.  Returns a bytes object.
+
+       OS.READLINK
+
+         readlink(path, *, dir_fd=None)
+
+       Return a string representing the path to which the symbolic link points.
+
+       If dir_fd is not None, it should be a file descriptor open to a directory,
+       and path should be relative; path will then be relative to that directory.
+
+       dir_fd may not be implemented on your platform.  If it is unavailable,
+       using it will raise a NotImplementedError.
+
+       OS.REMOVE
+
+         remove(path, *, dir_fd=None)
+
+       Remove a file (same as unlink()).
+
+       If dir_fd is not None, it should be a file descriptor open to a directory,
+         and path should be relative; path will then be relative to that directory.
+       dir_fd may not be implemented on your platform.
+         If it is unavailable, using it will raise a NotImplementedError.
+
+       OS.REMOVEDIRS
+
+         removedirs(name)
+
+       removedirs(name)
+
+       Super-rmdir; remove a leaf directory and all empty intermediate
+       ones.  Works like rmdir except that, if the leaf directory is
+       successfully removed, directories corresponding to rightmost path
+       segments will be pruned away until either the whole path is
+       consumed or an error occurs.  Errors during this latter phase are
+       ignored -- they generally mean that a directory was not empty.
+
+       OS.RENAME
+
+         rename(src, dst, *, src_dir_fd=None, dst_dir_fd=None)
+
+       Rename a file or directory.
+
+       If either src_dir_fd or dst_dir_fd is not None, it should be a file
+         descriptor open to a directory, and the respective path string (src or dst)
+         should be relative; the path will then be relative to that directory.
+       src_dir_fd and dst_dir_fd, may not be implemented on your platform.
+         If they are unavailable, using them will raise a NotImplementedError.
+
+       OS.RENAMES
+
+         renames(old, new)
+
+       renames(old, new)
+
+       Super-rename; create directories as necessary and delete any left
+       empty.  Works like rename, except creation of any intermediate
+       directories needed to make the new pathname good is attempted
+       first.  After the rename, directories corresponding to rightmost
+       path segments of the old name will be pruned until either the
+       whole path is consumed or a nonempty directory is found.
+
+       Note: this function can fail with the new directory structure made
+       if you lack permissions needed to unlink the leaf directory or
+       file.
+
+       OS.REPLACE
+
+         replace(src, dst, *, src_dir_fd=None, dst_dir_fd=None)
+
+       Rename a file or directory, overwriting the destination.
+
+       If either src_dir_fd or dst_dir_fd is not None, it should be a file
+         descriptor open to a directory, and the respective path string (src or dst)
+         should be relative; the path will then be relative to that directory.
+       src_dir_fd and dst_dir_fd, may not be implemented on your platform.
+         If they are unavailable, using them will raise a NotImplementedError.
+
+       OS.RMDIR
+
+         rmdir(path, *, dir_fd=None)
+
+       Remove a directory.
+
+       If dir_fd is not None, it should be a file descriptor open to a directory,
+         and path should be relative; path will then be relative to that directory.
+       dir_fd may not be implemented on your platform.
+         If it is unavailable, using it will raise a NotImplementedError.
+
+       OS.SCANDIR
+
+         scandir(path=None)
+
+       Return an iterator of DirEntry objects for given path.
+
+       path can be specified as either str, bytes, or a path-like object.  If path
+       is bytes, the names of yielded DirEntry objects will also be bytes; in
+       all other circumstances they will be str.
+
+       If path is None, uses the path='.'.
+
+       OS.SET_BLOCKING
+
+         set_blocking(fd, blocking, /)
+
+       Set the blocking mode of the specified file descriptor.
+
+       Set the O_NONBLOCK flag if blocking is False,
+       clear the O_NONBLOCK flag otherwise.
+
+       OS.SET_HANDLE_INHERITABLE
+
+         set_handle_inheritable(handle, inheritable, /)
+
+       Set the inheritable flag of the specified handle.
+
+       OS.SET_INHERITABLE
+
+         set_inheritable(fd, inheritable, /)
+
+       Set the inheritable flag of the specified file descriptor.
+
+       OS.SPAWNL
+
+         spawnl(mode, file, *args)
+
+       spawnl(mode, file, *args) -> integer
+
+       Execute file with arguments from args in a subprocess.
+       If mode == P_NOWAIT return the pid of the process.
+       If mode == P_WAIT return the process's exit code if it exits normally;
+       otherwise return -SIG, where SIG is the signal that killed it.
+
+       OS.SPAWNLE
+
+         spawnle(mode, file, *args)
+
+       spawnle(mode, file, *args, env) -> integer
+
+       Execute file with arguments from args in a subprocess with the
+       supplied environment.
+       If mode == P_NOWAIT return the pid of the process.
+       If mode == P_WAIT return the process's exit code if it exits normally;
+       otherwise return -SIG, where SIG is the signal that killed it.
+
+       OS.SPAWNV
+
+         spawnv(mode, path, argv, /)
+
+       Execute the program specified by path in a new process.
+
+       mode
+         Mode of process creation.
+       path
+         Path of executable file.
+       argv
+         Tuple or list of strings.
+
+       OS.SPAWNVE
+
+         spawnve(mode, path, argv, env, /)
+
+       Execute the program specified by path in a new process.
+
+       mode
+         Mode of process creation.
+       path
+         Path of executable file.
+       argv
+         Tuple or list of strings.
+       env
+         Dictionary of strings mapping to strings.
+
+       OS.STARTFILE
+
+       Start a file with its associated application.
+
+       When "operation" is not specified or "open", this acts like
+       double-clicking the file in Explorer, or giving the file name as an
+       argument to the DOS "start" command: the file is opened with whatever
+       application (if any) its extension is associated.
+       When another "operation" is given, it specifies what should be done with
+       the file.  A typical operation is "print".
+
+       "arguments" is passed to the application, but should be omitted if the
+       file is a document.
+
+       "cwd" is the working directory for the operation. If "filepath" is
+       relative, it will be resolved against this directory. This argument
+       should usually be an absolute path.
+
+       "show_cmd" can be used to override the recommended visibility option.
+       See the Windows ShellExecute documentation for values.
+
+       startfile returns as soon as the associated application is launched.
+       There is no option to wait for the application to close, and no way
+       to retrieve the application's exit status.
+
+       The filepath is relative to the current directory.  If you want to use
+       an absolute path, make sure the first character is not a slash ("/");
+       the underlying Win32 ShellExecute function doesn't work if it is.
+
+       OS.STAT
+
+         stat(path, *, dir_fd=None, follow_symlinks=True)
+
+       Perform a stat system call on the given path.
+
+         path
+           Path to be examined; can be string, bytes, a path-like object or
+           open-file-descriptor int.
+         dir_fd
+           If not None, it should be a file descriptor open to a directory,
+           and path should be a relative string; path will then be relative to
+           that directory.
+         follow_symlinks
+           If False, and the last element of the path is a symbolic link,
+           stat will examine the symbolic link itself instead of the file
+           the link points to.
+
+       dir_fd and follow_symlinks may not be implemented
+         on your platform.  If they are unavailable, using them will raise a
+         NotImplementedError.
+
+       It's an error to use dir_fd or follow_symlinks when specifying path as
+         an open file descriptor.
+
+       OS.STAT_RESULT
+
+         stat_result(iterable=(), /)
+
+       stat_result: Result from stat, fstat, or lstat.
+
+       This object may be accessed either as a tuple of
+         (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime)
+       or via the attributes st_mode, st_ino, st_dev, st_nlink, st_uid, and so on.
+
+       Posix/windows: If your platform supports st_blksize, st_blocks, st_rdev,
+       or st_flags, they are available as attributes only.
+
+       See os.stat for more information.
+
+       OS.STATVFS_RESULT
+
+         statvfs_result(iterable=(), /)
+
+       statvfs_result: Result from statvfs or fstatvfs.
+
+       This object may be accessed either as a tuple of
+         (bsize, frsize, blocks, bfree, bavail, files, ffree, favail, flag, namemax),
+       or via the attributes f_bsize, f_frsize, f_blocks, f_bfree, and so on.
+
+       See os.statvfs for more information.
+
+       OS.STRERROR
+
+         strerror(code, /)
+
+       Translate an error code to a message string.
+
+       OS.SYMLINK
+
+         symlink(src, dst, target_is_directory=False, *, dir_fd=None)
+
+       Create a symbolic link pointing to src named dst.
+
+       target_is_directory is required on Windows if the target is to be
+         interpreted as a directory.  (On Windows, symlink requires
+         Windows 6.0 or greater, and raises a NotImplementedError otherwise.)
+         target_is_directory is ignored on non-Windows platforms.
+
+       If dir_fd is not None, it should be a file descriptor open to a directory,
+         and path should be relative; path will then be relative to that directory.
+       dir_fd may not be implemented on your platform.
+         If it is unavailable, using it will raise a NotImplementedError.
+
+       OS.SYSTEM
+
+         system(command)
+
+       Execute the command in a subshell.
+
+       OS.TERMINAL_SIZE
+
+         terminal_size(iterable=(), /)
+
+       A tuple of (columns, lines) for holding terminal window size
+
+       OS.TIMES
+
+         times()
+
+       Return a collection containing process timing information.
+
+       The object returned behaves like a named tuple with these fields:
+         (utime, stime, cutime, cstime, elapsed_time)
+       All fields are floating point numbers.
+
+       OS.TIMES_RESULT
+
+         times_result(iterable=(), /)
+
+       times_result: Result from os.times().
+
+       This object may be accessed either as a tuple of
+         (user, system, children_user, children_system, elapsed),
+       or via the attributes user, system, children_user, children_system,
+       and elapsed.
+
+       See os.times for more information.
+
+       OS.TRUNCATE
+
+         truncate(path, length)
+
+       Truncate a file, specified by path, to a specific length.
+
+       On some platforms, path may also be specified as an open file descriptor.
+         If this functionality is unavailable, using it raises an exception.
+
+       OS.UMASK
+
+         umask(mask, /)
+
+       Set the current numeric umask and return the previous umask.
+
+       OS.UNAME_RESULT
+
+         uname_result(iterable=(), /)
+
+       uname_result: Result from os.uname().
+
+       This object may be accessed either as a tuple of
+         (sysname, nodename, release, version, machine),
+       or via the attributes sysname, nodename, release, version, and machine.
+
+       See os.uname for more information.
+
+       OS.UNLINK
+
+         unlink(path, *, dir_fd=None)
+
+       Remove a file (same as remove()).
+
+       If dir_fd is not None, it should be a file descriptor open to a directory,
+         and path should be relative; path will then be relative to that directory.
+       dir_fd may not be implemented on your platform.
+         If it is unavailable, using it will raise a NotImplementedError.
+
+       OS.UNSETENV
+
+         unsetenv(name, /)
+
+       Delete an environment variable.
+
+       OS.URANDOM
+
+         urandom(size, /)
+
+       Return a bytes object containing random bytes suitable for cryptographic use.
+
+       OS.UTIME
+
+       Set the access and modified time of path.
+
+       path may always be specified as a string.
+       On some platforms, path may also be specified as an open file descriptor.
+         If this functionality is unavailable, using it raises an exception.
+
+       If times is not None, it must be a tuple (atime, mtime);
+           atime and mtime should be expressed as float seconds since the epoch.
+       If ns is specified, it must be a tuple (atime_ns, mtime_ns);
+           atime_ns and mtime_ns should be expressed as integer nanoseconds
+           since the epoch.
+       If times is None and ns is unspecified, utime uses the current time.
+       Specifying tuples for both times and ns is an error.
+
+       If dir_fd is not None, it should be a file descriptor open to a directory,
+         and path should be relative; path will then be relative to that directory.
+       If follow_symlinks is False, and the last element of the path is a symbolic
+         link, utime will modify the symbolic link itself instead of the file the
+         link points to.
+       It is an error to use dir_fd or follow_symlinks when specifying path
+         as an open file descriptor.
+       dir_fd and follow_symlinks may not be available on your platform.
+         If they are unavailable, using them will raise a NotImplementedError.
+
+       OS.WAITPID
+
+         waitpid(pid, options, /)
+
+       Wait for completion of a given process.
+
+       Returns a tuple of information regarding the process:
+           (pid, status << 8)
+
+       The options argument is ignored on Windows.
+
+       OS.WAITSTATUS_TO_EXITCODE
+
+         waitstatus_to_exitcode(status)
+
+       Convert a wait status to an exit code.
+
+       On Unix:
+
+       * If WIFEXITED(status) is true, return WEXITSTATUS(status).
+       * If WIFSIGNALED(status) is true, return -WTERMSIG(status).
+       * Otherwise, raise a ValueError.
+
+       On Windows, return status shifted right by 8 bits.
+
+       On Unix, if the process is being traced or if waitpid() was called with
+       WUNTRACED option, the caller must first check if WIFSTOPPED(status) is true.
+       This function must not be called if WIFSTOPPED(status) is true.
+
+       OS.WALK
+
+         walk(top, topdown=True, onerror=None, followlinks=False)
+
+       Directory tree generator.
+
+       For each directory in the directory tree rooted at top (including top
+       itself, but excluding '.' and '..'), yields a 3-tuple
+
+           dirpath, dirnames, filenames
+
+       dirpath is a string, the path to the directory.  dirnames is a list of
+       the names of the subdirectories in dirpath (including symlinks to directories,
+       and excluding '.' and '..').
+       filenames is a list of the names of the non-directory files in dirpath.
+       Note that the names in the lists are just names, with no path components.
+       To get a full path (which begins with top) to a file or directory in
+       dirpath, do os.path.join(dirpath, name).
+
+       If optional arg 'topdown' is true or not specified, the triple for a
+       directory is generated before the triples for any of its subdirectories
+       (directories are generated top down).  If topdown is false, the triple
+       for a directory is generated after the triples for all of its
+       subdirectories (directories are generated bottom up).
+
+       When topdown is true, the caller can modify the dirnames list in-place
+       (e.g., via del or slice assignment), and walk will only recurse into the
+       subdirectories whose names remain in dirnames; this can be used to prune the
+       search, or to impose a specific order of visiting.  Modifying dirnames when
+       topdown is false has no effect on the behavior of os.walk(), since the
+       directories in dirnames have already been generated by the time dirnames
+       itself is generated. No matter the value of topdown, the list of
+       subdirectories is retrieved before the tuples for the directory and its
+       subdirectories are generated.
+
+       By default errors from the os.scandir() call are ignored.  If
+       optional arg 'onerror' is specified, it should be a function; it
+       will be called with one argument, an OSError instance.  It can
+       report the error to continue with the walk, or raise the exception
+       to abort the walk.  Note that the filename is available as the
+       filename attribute of the exception object.
+
+       By default, os.walk does not follow symbolic links to subdirectories on
+       systems that support them.  In order to get this functionality, set the
+       optional argument 'followlinks' to true.
+
+       Caution:  if you pass a relative pathname for top, don't change the
+       current working directory between resumptions of walk.  walk never
+       changes the current directory, and assumes that the client doesn't
+       either.
+
+       Example:
+
+       import os
+       from os.path import join, getsize
+       for root, dirs, files in os.walk('python/Lib/email'):
+           print(root, "consumes ")
+           print(sum(getsize(join(root, name)) for name in files), end=" ")
+           print("bytes in", len(files), "non-directory files")
+           if 'CVS' in dirs:
+               dirs.remove('CVS')  # don't visit CVS directories
+
+       OS.WRITE
+
+         write(fd, data, /)
+
+       Write a bytes object to a file descriptor.
+
+PY manual                               generated from Python 3.12 docstrings

@@ -1,0 +1,57 @@
+TIME(2)                          Sandbox manual                          TIME(2)
+
+       NAME
+
+       time - get time in seconds
+
+       SYNOPSIS
+
+         #include <time.h>
+
+         time_t time(time_t *_Nullable tloc);
+
+       DESCRIPTION
+
+       time() returns the time as the number of seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC).
+
+       If tloc is non-NULL, the return value is also stored in the memory pointed to by tloc.
+
+       RETURN VALUE
+
+       On success, the value of time in seconds since the Epoch is returned. On error, ((time_t) -1) is returned, and errno is set to indicate the error.
+
+       ERRORS
+
+         EOVERFLOW
+       The time cannot be represented as a time_t value. This can happen if an executable with 32-bit time_t is run on a 64-bit kernel when the time is 2038-01-19 03:14:08 UTC or later. However, when the system time is out of time_t range in other situations, the behavior is undefined.
+
+         EFAULT
+       tloc points outside your accessible address space (but see BUGS).
+
+       On systems where the C library time() wrapper function invokes an implementation provided by the vdso(7) (so that there is no trap into the kernel), an invalid address may instead trigger a SIGSEGV signal.
+
+       VERSIONS
+
+       POSIX.1 defines seconds since the Epoch using a formula that approximates the number of seconds between a specified time and the Epoch. This formula takes account of the facts that all years that are evenly divisible by 4 are leap years, but years that are evenly divisible by 100 are not leap years unless they are also evenly divisible by 400, in which case they are leap years. This value is not the same as the actual number of seconds between the time and the Epoch, because of leap seconds and because system clocks are not required to be synchronized to a standard reference. Linux systems normally follow the POSIX requirement that this value ignore leap seconds, so that conforming systems interpret it consistently; see POSIX.1-2018 Rationale A.4.16.
+
+       Applications intended to run after 2038 should use ABIs with time_t wider than 32 bits; see time_t(3type).
+
+       C LIBRARY/KERNEL DIFFERENCES
+
+       On some architectures, an implementation of time() is provided in the vdso(7).
+
+       STANDARDS
+
+       C11, POSIX.1-2008.
+
+       BUGS
+
+       Error returns from this system call are indistinguishable from successful reports that the time is a few seconds before the Epoch, so the C library wrapper function never sets errno as a result of this call.
+
+       The tloc argument is obsolescent and should always be NULL in new code. When tloc is NULL, the call cannot fail.
+
+       SEE ALSO
+
+       date(1), gettimeofday(2), ctime(3), ftime(3), time(7), vdso(7)
+
+C manual                                from the Linux man-pages project
