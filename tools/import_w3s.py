@@ -83,11 +83,33 @@ def page_text(url, html, pid):
     return re.sub(r"\n[ \t]+\n(?=[ \t]*\n)", "\n", re.sub(r"[ \t]+$", "", text, flags=re.M))
 
 
+def add_nav(text, prev, nxt, contents=None):
+    """Previous/Next lines in tutorial order, before the manual footer; the pager binds [ and ] to them."""
+    lines = [f"{label} w3s.{p}" for label, p in (("Previous:", prev), ("Next:", nxt), ("Contents:", contents)) if p]
+    if not lines:
+        return text
+    i = text.rfind("\nW3Schools manual")
+    i = i if i >= 0 else len(text)
+    return text[:i].rstrip("\n") + "\n\n" + "".join("       " + l + "\n" for l in lines) + text[i:]
+
+
 def main():
     want = set(sys.argv[1:])
     shutil.rmtree(os.path.join(ROOT, "docs", "w3s"), ignore_errors=True)
     os.makedirs(OUT)
     pages = {}  # url -> pid
+    tutorials = []  # (name, pids) per seed, in side-menu order
+
+    def new_pid(u):
+        stem = os.path.splitext(os.path.basename(urlparse(u).path))[0]
+        if stem in ("default", "index"):
+            parts = urlparse(u).path.strip("/").split("/")
+            stem = (parts[-2] if len(parts) > 1 else "site") + "_home"
+        pid = re.sub(r"[^a-z0-9_.+-]+", "-", stem.lower())
+        if pid in pages.values():
+            pid = re.sub(r"[^a-z0-9_.+-]+", "-", urlparse(u).path.strip("/").lower().rsplit(".", 1)[0].replace("/", "_"))
+        return pid
+
     for seed in SEEDS:
         top = seed.split("/")[0] if not seed.startswith("python/") else seed.split("/")[1] if seed.count("/") > 1 else "python"
         if want and seed.split("/")[0] not in want and top not in want:
@@ -98,23 +120,27 @@ def main():
         except Exception as e:
             print("seed failed", seed, str(e)[:60])
             continue
-        links = [url] + menu_links(url, html)
+        links = list(dict.fromkeys([url] + menu_links(url, html)))
         n = 0
+        order = []
         for u in links:
             if u not in pages:
-                stem = os.path.splitext(os.path.basename(urlparse(u).path))[0]
-                if stem in ("default", "index"):
-                    stem = urlparse(u).path.strip("/").split("/")[-2] + "_home"
-                pid = re.sub(r"[^a-z0-9_.+-]+", "-", stem.lower())
-                if pid in pages.values():
-                    pid = re.sub(r"[^a-z0-9_.+-]+", "-", urlparse(u).path.strip("/").lower().rsplit(".", 1)[0].replace("/", "_"))
-                pages[u] = pid
+                pages[u] = new_pid(u)
                 n += 1
+                order.append(pages[u])
+        parts = seed.split("/")
+        name = parts[-2] if parts[-1] in ("default.asp", "index.php") else os.path.splitext(parts[-1])[0].split("_")[0]
+        tutorials.append((name, order))
         print(f"{seed}: {n} new pages")
     print("pages to fetch:", len(pages))
 
-    written = 0
-    for i, (u, pid) in enumerate(pages.items(), 1):
+    texts = {}
+    site_nav = {}  # pid -> (previous url, next url) from the page's own Previous/Next buttons
+    work = list(pages.items())
+    i = 0
+    while i < len(work):
+        u, pid = work[i]
+        i += 1
         try:
             html = fetch(u, 0.4)
         except Exception as e:
@@ -123,11 +149,51 @@ def main():
         text = page_text(u, html, pid)
         if len(text) < 500:
             continue
+        texts[pid] = text
+        links = []
+        for side, word in (("left", "Previous"), ("right", "Next")):
+            m = re.search(r'<a class="w3-%s w3-btn" href="([^"]+)">[^<]*%s' % (side, word), html)
+            t = urljoin(u, m.group(1)).split("#")[0].split("?")[0] if m else None
+            if t and urlparse(t).netloc == "www.w3schools.com" and re.search(r"\.(asp|php)$", t) \
+                    and not (SKIP_URL.search(t) and not KEEP_HOWTO.search(t)):
+                links.append(t)
+                if t not in pages:  # a page the side menu does not list
+                    pages[t] = new_pid(t)
+                    work.append((t, pages[t]))
+            else:
+                links.append(None)
+        site_nav[pid] = tuple(links)
+        if i % 200 == 0:
+            print(i, "/", len(work), "fetched", len(texts), flush=True)
+    # Previous/Next: the site's own buttons when that page exists here, else the neighbour in menu order
+    menu = {}
+    toc_of = {}
+    for name, order in tutorials:
+        order = [p for p in order if p in texts]
+        for k, pid in enumerate(order):
+            menu[pid] = (order[k - 1] if k else None, order[k + 1] if k + 1 < len(order) else None)
+            toc_of.setdefault(pid, f"{name}_contents")
+        toc = f"{name}_contents"
+        if len(order) < 2 or toc in texts:
+            continue
+        rows = []
+        for pid in order:
+            title = next((l.strip() for l in texts[pid].split("\n")[1:] if l.strip()), pid)
+            rows.append(f"        * w3s.{pid}  {title.title()}")
+        head = f"{toc.upper()}(1)"
+        texts[toc] = (f"{head:<30}Sandbox manual{head:>30}\n\n       {name.upper()} CONTENTS\n\n" + "\n".join(rows)
+                      + "\n\nW3Schools manual                        bundled documentation\n")
+    for pid in [p for p in texts if not p.endswith("_contents") or p in menu]:
+        nav = []
+        for j in (0, 1):
+            t = site_nav.get(pid, (None, None))[j]
+            target = pages.get(t) if t else None
+            nav.append(target if target in texts and target != pid else menu.get(pid, (None, None))[j])
+        texts[pid] = add_nav(texts[pid], *nav, toc_of.get(pid) if toc_of.get(pid) in texts else None)
+    for pid, text in texts.items():
         with open(os.path.join(OUT, pid + ".txt"), "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
-        written += 1
-        if i % 200 == 0:
-            print(i, "/", len(pages), "written", written, flush=True)
+    written = len(texts)
     print("w3s pages", written)
 
     os.makedirs(os.path.dirname(ZIP), exist_ok=True)
