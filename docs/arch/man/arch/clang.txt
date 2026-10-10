@@ -1,0 +1,85 @@
+ARCH.CLANG(1)                    Sandbox manual                    ARCH.CLANG(1)
+
+       Clang is a C/C++/Objective C/CUDA compiler based on LLVM. The most recent iteration is distributed under the "Apache 2.0 License with LLVM exceptions".
+
+       INSTALLATION
+
+       Install the clang package.
+
+       BUILD PACKAGES WITH CLANG
+
+       GENERIC SETUP
+
+       To change the default compiler for building packages, edit:
+
+         /etc/makepkg.conf
+
+         ...
+         export CC=clang
+         export CXX=clang++
+
+       To use libc++ as the C++ Standard Library instead of GCC's libstdc++: install the libc++ package, then add -stdlib=libc++ to CXXFLAGS in your /etc/makepkg.conf.
+
+       For LTO support: install the lld package, then add -fuse-ld=lld to LDFLAGS in your /etc/makepkg.conf.
+
+       If you are building with debug, you also need to remove -fvar-tracking-assignments from DEBUG_CFLAGS and DEBUG_CXXFLAGS, as Clang does not support it.
+
+       Note For packages that specify GCC-specific build options, there may be build errors that require either editing the source package, the PKGBUILD or commenting out the Clang lines in makepkg.conf.
+
+       QT PACKAGES
+
+       Qt packages may require extra setup. Qt has predefined build configurations called mkspecs, defaulting to GCC for Linux.
+
+       In some cases, the mkspec will be automatically set to linux-clang based on CC/CXX variables. But in other cases (e.g. packages with direct call of qmake) it will not, so we can set it explicitly:
+
+         /etc/makepkg.conf
+
+         export QMAKESPEC=linux-clang
+
+       Note Some packages will require llvm to be installed because linux-clang is configured to use tools like llvm-ar.
+
+       RUST PACKAGES
+
+       Whenever clang is set as the system default compiler, Rust needs to be configured to use clang as the linker for C code often compiled as a part of the process for building Rust applications.
+
+       To do so, clang (and optionally lld) needs to be specified in /etc/makepkg.conf.d/rust.conf.
+
+       For example, to use clang and lld:
+
+         /etc/makepkg.conf.d/rust.conf
+
+         RUSTFLAGS="-Cforce-frame-pointers=yes -Clinker=clang -Clink-arg=-fuse-ld=lld"
+
+       USING THE STATIC ANALYZER
+
+       To analyze a project, simply place the word scan-build in front of your build command. For example:
+
+         $ scan-build make
+
+       If your project is already compiled, scan-build will not rebuild and will not analyse it. To force recompilation and analysis, use -B switch:
+
+         $ scan-build make -B
+
+       It is also possible to analyze specific files:
+
+         $ scan-build gcc -c t1.c t2.c
+
+       TIPS AND TRICKS
+
+       BASH COMPLETION
+
+       In order to enable Bash completion, install bash-completion.
+
+       TROUBLESHOOTING
+
+       STACK PROTECTOR
+
+       The clang package enables -fstack-protector-strong on default. This practice should not cause any problem for compiling most programs and improve the overall security and robustness with a minimal cost. However, there are situations where the stack protector canary is uninitialized in TLS (for example, when you are implementing the _start function on yourself). In such cases, compiling with -fstack-protector-strong may lead to segmentation faults or other unexpected errors. One should be aware of the divergence between the clang package and upstream.
+
+       SEE ALSO
+
+        * Wikipedia:Clang
+        * scan-build: running the analyzer from the command line
+        * Compiling CUDA with clang
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,83 @@
+HTTP.METHOD-DELETE(1)            Sandbox manual            HTTP.METHOD-DELETE(1)
+
+       NAME
+
+       DELETE request method - The DELETE HTTP method asks the server to delete a specified resource.
+
+       DELETE REQUEST METHOD
+
+       The DELETE HTTP method asks the server to delete a specified resource.
+
+       Requests using DELETE should only be used to delete data and shouldn't contain a body.
+
+       > The semantics of sending a message body in DELETE requests are undefined.
+       > Some servers may reject the request with a 4XX client error response.
+       Request has body No Successful response has body May Safe No Idempotent Yes Cacheable No Allowed in HTML forms No
+
+       SYNTAX
+
+         DELETE <request-target>["?"<query>] HTTP/1.1
+
+        * 
+          * : Identifies the target resource of the request when combined with the information provided in the Host header.
+       This is an absolute path (e.g., /path/to/file.html) in requests to an origin server, and an absolute URL in requests to proxies (e.g., http://www.example.com/path/to/file.html).
+
+        * (optional)
+          * : An optional query component preceded by a question-mark ?.
+       Often used to carry identifying information in the form of key=value pairs.
+
+       EXAMPLES
+
+       SUCCESSFULLY DELETING A RESOURCE
+
+       The following request asks the server to delete the resource file.html:
+
+         DELETE /file.html HTTP/1.1
+         Host: example.com
+
+       If the request is successful, there are several possible successful response status codes. A 204 No Content response means the request was successful and no additional information needs to be sent back to the client:
+
+         HTTP/1.1 204 No Content
+         Date: Wed, 04 Sep 2024 10:16:04 GMT
+
+       A 200 OK response means the request was successful and the response body includes a representation describing the outcome:
+
+         HTTP/1.1 200 OK
+         Content-Type: text/html; charset=UTF-8
+         Date: Fri, 21 Jun 2024 14:18:33 GMT
+         Content-Length: 1234
+
+         <html lang="en-US">
+           <body>
+             <h1>File "file.html" deleted.</h1>
+           </body>
+         </html>
+
+       A 202 Accepted response means the request has been accepted and will probably succeed, but the resource has not yet been deleted by the server.
+
+         HTTP/1.1 202 Accepted
+         Date: Wed, 26 Jun 2024 12:00:00 GMT
+         Content-Type: text/html; charset=UTF-8
+         Content-Length: 1234
+
+         <html lang="en-US">
+           <body>
+             <h1>Deletion of "file.html" accepted.</h1>
+             <p>See <a href="http://example.com/tasks/123/status">the status monitor</a> for details.</p>
+           </body>
+         </html>
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       The browser doesn't use the DELETE method for user-initiated actions, so "browser compatibility" doesn't apply. Developers can set this request method using fetch().
+
+       SEE ALSO
+
+        * HTTP statuses: 200, 202, 204
+        * HTTP request methods
+        * HTTP response status codes
+        * HTTP headers
+
+HTTP manual                             from the official documentation

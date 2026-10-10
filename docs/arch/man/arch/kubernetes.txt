@@ -1,0 +1,491 @@
+ARCH.KUBERNETES(1)               Sandbox manual               ARCH.KUBERNETES(1)
+
+       Kubernetes (aka. k8s) is an open-source system for automating the deployment, scaling, and management of containerized applications.
+
+       A k8s cluster consists of its control-plane components and node components (each representing one or more host machines running a container runtime and kubelet.service). There are two options to install kubernetes, "the real one", described here, and a local install with k3s, kind, or minikube.
+
+       INSTALLATION
+
+       There are many methods to setup a kubernetes cluster. This article will focus on bootstrapping with kubeadm.
+
+       DEPLOYMENT TOOLS
+
+       KUBEADM
+
+       When bootstrapping a Kubernetes cluster with kubeadm, install kubeadm and kubelet on each node.
+
+       Note
+
+       Upgrading a Kubernetes cluster bootstrapped with kubeadm requires special attention:
+
+        * The control plane components (kube-apiserver, kube-controller-manager, kube-scheduler, kube-proxy) are not running binaries from the Arch Linux packages, but instead they run as privileged static pods in the cluster itself. These pods are managed directly by kubelet through manifests in /etc/kubernetes/manifests/.
+        * Consequently, the need to upgrade the control plane components using kubeadm requires a non-trivial procedure upon system upgrade. Based on the Upgrading kubeadm clusters documentation, the procedure should be as follows (checkservices is from archlinux-contrib):
+
+         pacman -Syu --ignore cri-o,crun,kubeadm,kubectl,kubelet
+         checkservices
+         pacman -S kubeadm
+         kubeadm upgrade plan
+         kubeadm upgrade apply v1.3x.y
+         # check the kubelet config file (see below)
+         pacman -Syu
+         checkservices
+
+       Note that kubeadm upgrade apply overwrites the local /var/lib/kubelet/config.yaml file with contents from the kubelet-config ConfigMap object. Ensure that the ConfigMap is up to date to make the upgrade process smooth.
+
+       MANUAL INSTALLATION
+
+       When manually creating a Kubernetes cluster install etcd and the package group kubernetes-control-plane (for a control-plane node) and kubernetes-node (for a worker node).
+
+       Tip See Kubernetes The Hard Way for the manual bootstrapping procedure.
+
+       CLUSTER MANAGEMENT
+
+       To control a kubernetes cluster, install kubectl on the control-plane hosts and any external host that is supposed to be able to interact with the cluster.
+
+       CONTAINER RUNTIME
+
+       Both control-plane and regular worker nodes require a container runtime for their kubelet instances which is used for hosting containers. Install either containerd or cri-o to meet this dependency.
+
+       CONTAINERD RUNTIME
+
+       There are two methods available to install containerd:
+
+        * Install the containerd package.
+        * To install a rootless containerd, use nerdctl-full-binAUR, which is a full nerdctl package, bundled with containerd, CNI plugin, and RootlessKit. Rootless containerd can be launched with containerd-rootless-setuptool.sh install.
+       Remember that Arch Linux uses systemd as its init system, so you need to choose systemd cgroup driver before deploying the control plane(s).
+
+       (OPTIONAL) PACKAGE MANAGER
+
+       helm is a tool for managing pre-configured Kubernetes resources which may be helpful for getting started.
+
+       CONFIGURATION
+
+       All nodes in a cluster (control-plane and worker) require a running instance of kubelet.service.
+
+       Tip Read the following subsections closely before starting kubelet.service or using kubeadm.
+
+       All provided systemd services accept CLI overrides in environment files:
+
+        * kubelet.service: /etc/kubernetes/kubelet.env
+        * kube-apiserver.service: /etc/kubernetes/kube-apiserver.env
+        * kube-controller-manager.service: /etc/kubernetes/kube-controller-manager.env
+        * kube-proxy.service: /etc/kubernetes/kube-proxy.env
+        * kube-scheduler.service: /etc/kubernetes/kube-scheduler.env
+
+       DISABLE SWAP
+
+       Kubernetes currently does not support having swap enabled on the system. See KEP-2400: Node system swap support for details.
+
+       See Swap#Disabling swap for instructions on how to disable swap.
+
+       CHOOSE CGROUP DRIVER FOR CONTAINERD
+
+       To use the systemd cgroup driver in /etc/containerd/config.toml with runc, set
+
+         [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+           ...
+           [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+             SystemdCgroup = true
+
+       If /etc/containerd/config.toml does not exist, the default configuration can be generated with [1]
+
+         # mkdir -p /etc/containerd/
+         # containerd config default > /etc/containerd/config.toml
+
+       Remember to restart containerd.service to make the change take effect.
+
+       See the official documentation for a deeper discussion on whether to keep cgroupfs driver or use systemd cgroup driver.
+
+       CHOOSE CONTAINER RUNTIME INTERFACE (CRI)
+
+       A container runtime has to be configured and started, before kubelet.service can make use of it.
+
+       You will pass flag --cri-socket with the container runtime interface endpoint to kubeadm init or kubeadm join in order to create or join a cluster.
+
+       For example, if you choose containerd as CRI runtime, the flag --cri-socket will be:
+
+         kubeadm init --cri-socket /run/containerd/containerd.sock
+
+       CONTAINERD
+
+       Before Kubernetes version 1.27.4, when using containerd as container runtime, it is required to provide kubeadm init or kubeadm join with its CRI endpoint. To do so, specify their flag --cri-socket to /run/containerd/containerd.sock[2].
+
+         kubeadm join --cri-socket=/run/containerd/containerd.sock
+
+       After Kubernetes version 1.27.4, kubeadm will auto detect this CRI for you, flag --cri-socket is only needed when you installed multiple CRI.
+
+       CRI-O
+
+       When using CRI-O as container runtime, it is required to provide kubeadm init or kubeadm join with its CRI endpoint: --cri-socket='unix:///run/crio/crio.sock'
+
+       CHOOSE CLUSTER NETWORK PARAMETER
+
+       CHOOSE A POD CIDR RANGE
+
+       The networking setup for the cluster has to be configured for the respective container runtime. This can be done using cni-plugins.
+
+       The pod CIDR addresses refer to the IP address range that is assigned to pods within a Kubernetes cluster. When pods are scheduled to run on nodes in the cluster, they are assigned IP addresses from this CIDR range.
+
+       The pod CIDR range is specified when deploying a Kubernetes cluster and is confined within the cluster network. It should not overlap with other IP ranges used within the cluster, such as the service CIDR range.
+
+       You will pass flag --pod-network-cidr with value of the virtual network's CIDR to kubeadm init or kubeadm join in order to create or join a cluster.
+
+       For example:
+
+         kubeadm init --pod-network-cidr='10.85.0.0/16'
+
+       will set your kubernetes' pod CIDR range to 10.85.0.0/16.
+
+       (OPTIONAL) CHOOSE API SERVER ADVERTISING ADDRESS
+
+       If your node for control plane is in multiple subnets (for example you may have installed a tailscale tailnet), when initializing the Kubernetes master with kubeadm init, you can specify the IP address that the API server will advertise with the --apiserver-advertise-address flag. This IP address should be accessible to all nodes in your cluster.
+
+       (OPTIONAL) CHOOSE ALTERNATIVE NODE NETWORK PROXY PROVIDER
+
+       Node proxy provider like kube-proxy is a network proxy that runs on each node in your cluster, maintaining network rules on nodes to allow network communication to your Pods from network sessions inside or outside of your cluster.
+
+       By default kubeadm choose kube-proxy as the node proxy that runs on each node in your cluster.
+
+       Container Network Interface (CNI) plugins like cilium offer a complete replacement for kube-proxy.
+
+       If you want to use cilium's implementation of node network proxy to fully leverage cilium's network policy feature, you should pass flag --skip-phases=addon/kube-proxy to kubeadm init to skip the install of kube-proxy.
+
+       Cilium will install a full replacement during its installation. See this[3] for details.
+
+       CREATE CLUSTER
+
+       Before creating a new kubernetes cluster with kubeadm start and enable kubelet.service.
+
+       Note kubelet.service will fail (but restart) until configuration for it is present.
+
+       KUBEADM WITHOUT CONFIG
+
+       When creating a new kubernetes cluster with kubeadm a control-plane has to be created before further worker nodes can join it.
+
+       Tip
+
+        * If the cluster is supposed to be turned into a high availability cluster (a stacked etcd topology) later on kubeadm init needs to be provided with --control-plane-endpoint=<IP or domain> (it is not possible to do this retroactively!).
+        * It is possible to use a config file for kubeadm init instead of a set of parameters.
+
+       INITIALIZE CONTROL-PLANE
+
+       To initialize control-plane, you need pass the following necessary flags to kubeadm init
+
+       If run successfully, kubeadm init will have generated configurations for the kubelet and various control-plane components below /etc/kubernetes/ and /var/lib/kubelet/.
+
+       Finally, it will output commands ready to be copied and pasted to setup kubectl and make a worker node join the cluster (based on a token, valid for 24 hours).
+
+       To use kubectl with the freshly created control-plane node, setup the configuration (either as root or as a normal user):
+
+         $ mkdir -p $HOME/.kube
+         # cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+         # chown $(id -u):$(id -g) $HOME/.kube/config
+
+       INSTALLING CNI PLUGINS (POD NETWORK ADDON)
+
+       Note You must deploy a Container Network Interface (CNI) based Pod network add-on so that your Pods can communicate with each other. Cluster DNS (CoreDNS) will not start up before a network is installed.
+
+       Pod network add-ons (CNI plugins) implement the Kubernetes network model differently from simple solutions like flannel to more complicated solutions like calico. See this list for more options.
+
+       An increasingly adopted advanced CNI plugin is cilium, which achieves impressive performance with eBPF. To install cilium as CNI plugin, use cilium-cli:
+
+         # cilium-cli install
+
+       This will create the /opt/cni/bin/cilium-cni plugin, config file /etc/cni/net.d/05-cilium.conflist and deploy two pods on the Kubernetes cluster.
+
+       Note If you use CRI-O, make sure you have enabled the /opt/cni/bin/ plugin directory. See CRI-O#Plugin directories.
+
+       KUBEADM WITH CONFIG
+
+       You will most likely find that creating the control plane requires several attempts to find the optimal configuration for your particular setup. To make this easier (and the process with kubeadm more repeatable generally), you may run the initialization step using config files.
+
+       Tip Plan on using two config files, one for inits and one for resets to more rapidly test configurations.
+
+       CREATE THE INIT CONFIG
+
+       You can create this file anywhere, but we will go with /etc/kubeadm for this example.
+
+         # mkdir -pv /etc/kubeadm
+         # cd /etc/kubeadm
+         # kubeadm config print init-defaults > init.yaml
+
+       This will produce the following file.
+
+         /etc/kubeadm/init.yaml
+
+         apiVersion: kubeadm.k8s.io/v1beta3
+         bootstrapTokens:
+         - groups:
+           - system:bootstrappers:kubeadm:default-node-token
+           token: abcdef.0123456789abcdef
+           ttl: 24h0m0s
+           usages:
+           - signing
+           - authentication
+         kind: InitConfiguration
+         localAPIEndpoint:
+           advertiseAddress: 1.2.3.4
+           bindPort: 6443
+         nodeRegistration:
+           criSocket: unix:///var/run/containerd/containerd.sock
+           imagePullPolicy: IfNotPresent
+           name: node
+           taints: null
+         ---
+         apiServer:
+           timeoutForControlPlane: 4m0s
+         apiVersion: kubeadm.k8s.io/v1beta3
+         certificatesDir: /etc/kubernetes/pki
+         clusterName: kubernetes
+         controllerManager: {}
+         dns: {}
+         etcd:
+           local:
+             dataDir: /var/lib/etcd
+         imageRepository: registry.k8s.io
+         kind: ClusterConfiguration
+         kubernetesVersion: 1.29.0
+         networking:
+           dnsDomain: cluster.local
+           serviceSubnet: 10.96.0.0/12
+         scheduler: {}
+
+       Most of the default settings should work, though you will need to update a few of them.
+
+       BOOTSTRAP TOKEN
+
+       Create a token with kubeadm token generate and use it instead of token: abcdef.0123456789abcdef in the config.
+
+       ADVERTISE ADDRESS
+
+       The advertiseAddress: 1.2.3.4 should be an IPv4 address of a network interface on the control plane being initialized, probably something in the 192.168.0.0/16 subnet.
+
+       NODE NAME
+
+       The default node name can either be left at node and added to your local DNS server or hosts file, or you can change it to an address that is routable on your local network. It should be a DNS-compatible hostname, such as kcp01.example.com. This will allow your control plane to be found on your local network when you join other nodes.
+
+       INIT THE CLUSTER
+
+       With all of these changes set, we can initialize our cluster.
+
+         # kubeadm init --config /etc/kubeadm/init.yaml
+
+       This will produce a good amount of output that will provide instructions on how to join nodes to the cluster, update your kubeconfig to interact with the new cluster, and other tasks.
+
+       USE CALICO FOR CNI CONFIG
+
+       The last thing you need before you can start adding nodes and running workloads is a properly configured CNI. This example will use calico for that.
+
+         # cd /etc/cni/net.d
+         # curl https://raw.githubusercontent.com/projectcalico/calico/v3.27.2/manifests/calico.yaml -O
+         # kubectl create -f calico.yaml
+
+       If this completes successfully, you are ready to start adding nodes and running workloads on your cluster.
+
+       CREATE THE RESET CONFIG
+
+       Just in case kubeadm does not land the init the first time, you can also create a config file for use with the reset command:
+
+         # kubeadm config print reset-defaults > /etc/kubeadm/reset.yaml
+
+       This will create the following file:
+
+         /etc/kubeadm/reset.yaml
+
+         apiVersion: kubeadm.k8s.io/v1beta4
+         certificatesDir: /etc/kubernetes/pki
+         criSocket: unix:///var/run/containerd/containerd.sock
+         kind: ResetConfiguration
+
+       RESET A CLUSTER
+
+       To reset the cluster back to zero, run the following command:
+
+         # kubeadm reset --config /etc/kubeadm/reset.yaml
+
+       This can be done as many times as required to sort out your cluster's ideal configuration.
+
+       CREATE THE JOIN CONFIG
+
+       Most likely once you init the cluster you'll be able to join any nodes with the command listed in the output of the init command, but if you happen to run in to trouble it will be helpful to have a join config available on the nodes you're joining. You can either create this file on your control plane, or run the command on nodes that you intend to join to the cluster, we'll assume you did the latter.
+
+         # kubeadm config print join-defaults > /etc/kubeadm/join.yaml
+
+       This will create the following file.
+
+         /etc/kubeadm/join.yaml
+
+         apiVersion: kubeadm.k8s.io/v1beta3
+         caCertPath: /etc/kubernetes/pki/ca.crt
+         discovery:
+           bootstrapToken:
+             apiServerEndpoint: kcp01.example.com:6443
+             token: abcdef.0123456789abcdef
+             unsafeSkipCAVerification: true
+           timeout: 5m0s
+           tlsBootstrapToken: abcdef.0123456789abcdef
+         kind: JoinConfiguration
+         nodeRegistration:
+           criSocket: unix:///var/run/containerd/containerd.sock
+           imagePullPolicy: IfNotPresent
+           name: node01.example.com
+           taints: null
+
+       Note You'll need to create two different tokens for this configuration file, the first for discovery.bootstrapToken.token and the second for the discovery.tlsBootstrapToken attribute.
+
+       JOIN CLUSTER
+
+       With the token information generated in #Create cluster it is possible to make another machine join the cluster as worker node with command kubeadm join.
+
+       Remember you need to choose a container runtime interface for working nodes as well by passing flag <SOCKET> to command kubeadm join.
+
+       For example:
+
+         # kubeadm join <api-server-ip>:<port> --token <token> --discovery-token-ca-cert-hash sha256:<hash> --node-name=<name_of_the_node> --cri-socket=<SOCKET>
+
+       To generate new bootstrap token,
+
+         kubeadm token create --print-join-command
+
+       If you are using Cilium and find the working node remains to be NotReady, check the status of working node using:
+
+         kubectl describe node <node-id> --namespace=kube-system
+
+       If you found the following condition status:
+
+         Type                  Status       Reason
+         ----                  ------       ------
+         NetworkUnavailable    False        CiliumIsUp
+         Ready                 False        KubeletNotReady container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized
+
+       Restart containerd.service and kubelet.service on the working node
+
+       TIPS AND TRICKS
+
+       TEAR DOWN A CLUSTER
+
+       When it is necessary to start from scratch, use kubectl to tear down a cluster.
+
+         kubectl drain <node name> --delete-local-data --force --ignore-daemonsets
+
+       Here <node name> is the name of the node that should be drained and reset. Use kubectl get node -A to list all nodes.
+
+       Then reset the node:
+
+         # kubeadm reset
+
+       OPERATING FROM BEHIND A PROXY
+
+       kubeadm reads the https_proxy, http_proxy, and no_proxy environment variables. Kubernetes internal networking should be included in the latest one, for example
+
+         export no_proxy="192.168.122.0/24,10.96.0.0/12,192.168.123.0/24"
+
+       where the second one is the default service network CIDR.
+
+       TROUBLESHOOTING
+
+       FAILED TO GET CONTAINER STATS
+
+       If kubelet.service emits
+
+         Failed to get system container stats for "/system.slice/kubelet.service": failed to get cgroup stats for "/system.slice/kubelet.service": failed to get container info for "/system.slice/kubelet.service": unknown container "/system.slice/kubelet.service"
+
+       it is necessary to add configuration for the kubelet (see relevant upstream ticket).
+
+         /var/lib/kubelet/config.yaml
+
+         systemCgroups: '/systemd/system.slice'
+         kubeletCgroups: '/systemd/system.slice'
+
+       PODS CANNOT COMMUNICATE WHEN USING FLANNEL CNI AND SYSTEMD-NETWORKD
+
+       See upstream bug report.
+
+       systemd-networkd assigns a persistent MAC address to every link. This policy is defined in its shipped configuration file /usr/lib/systemd/network/99-default.link. However, Flannel relies on being able to pick its own MAC address. To override systemd-networkd's behaviour for flannel* interfaces, create the following configuration file:
+
+         /etc/systemd/network/50-flannel.link
+
+         [Match]
+         OriginalName=flannel*
+
+         [Link]
+         MACAddressPolicy=none
+
+       Then restart systemd-networkd.service.
+
+       If the cluster is already running, you might need to manually delete the flannel.1 interface and the kube-flannel-ds-* pod on each node, including the master. The pods will be recreated immediately and they themselves will recreate the flannel.1 interfaces.
+
+       Delete the interface flannel.1:
+
+         # ip link delete flannel.1
+
+       Delete the kube-flannel-ds-* pod. Use the following command to delete all kube-flannel-ds-* pods on all nodes:
+
+         $ kubectl -n kube-system delete pod -l="app=flannel"
+
+       COREDNS POD PENDING FOREVER, THE CONTROL PLANE NODE REMAINS NOTREADY
+
+       When bootstrap the Kubernetes with kubeadm init on a single machine, and there is no other machine kubeadm join the cluster, the control-plane node is default to be tainted. As a result, no workload will be scheduled on the working machine.
+
+       One can confirm the control-plane node is tainted by the following commands:
+
+         kubectl get nodes -o json | jq '.items[].spec.taints
+
+       To temporarily allow scheduling on the control-plane node, execute:
+
+         kubectl taint nodes <your-node-name> node-role.kubernetes.io/control-plane:NoSchedule-
+
+       Then restart containerd.service and kubelet.service to apply the updates.
+
+       KUBELET-FINALIZE MALFORMED HEADER: MISSING HTTP CONTENT-TYPE
+
+       You may have forgotten to choose systemd cgroup driver. See kubeadm issue 2767 reporting this.
+
+       COREDNS POD DOES NOT START DUE TO LOOPS
+
+       When the host node runs a local DNS cache such as systemd-resolved, the CoreDNS may fail to start due to detecting a forwarding loop. This can be checked as follows:
+
+         # kubectl get pods -n kube-system
+
+         NAME                               READY   STATUS             RESTARTS      AGE
+         cilium-jc98m                       1/1     Running            0             21m
+         cilium-operator-64664858c8-zjzcq   1/1     Running            0             21m
+         coredns-7db6d8ff4d-29zfg           0/1     CrashLoopBackOff   6 (41s ago)   21m
+         coredns-7db6d8ff4d-zlvsm           0/1     CrashLoopBackOff   6 (50s ago)   21m
+         etcd-k8s                           1/1     Running            19            21m
+         kube-apiserver-k8s                 1/1     Running            17            21m
+         kube-controller-manager-k8s        1/1     Running            16            21m
+         kube-proxy-cvntt                   1/1     Running            0             21m
+         kube-scheduler-k8s                 1/1     Running            23            21m
+
+         # kubectl logs -n kube-system coredns-7db6d8ff4d-29zfg
+
+         ...
+         [FATAL] plugin/loop: Loop ([::1]:46171 -> :53) detected for zone ".", see https://coredns.io/plugins/loop#troubleshooting. Query: "HINFO 64811921068182325.3042126689798234092."
+
+       This is caused by kubelet passing the host /etc/resolv.conf file, to all Pods using the default dnsPolicy. CoreDNS uses this /etc/resolv.conf as a list of upstreams to forward requests to. Since it contains a loopback address such as 127.0.0.53, CoreDNS ends up forwarding requests to itself.
+
+       See https://coredns.io/plugins/loop/#troubleshooting to resolve the issue.
+
+       SOME CONTAINERS ARE SLOW TO START/DON'T START IN KIND
+
+       By default on Arch, sysctl fs.nr_open is set to a really high value.
+
+       You can fix this with sysctl -w fs.nr_open=1048576.
+
+       References:
+
+        * https://github.com/kubernetes-sigs/kind/pull/760
+        * https://github.com/kubernetes-sigs/kind/issues/4001
+        * https://github.com/kubernetes-sigs/kind/pull/1799/files
+
+       SEE ALSO
+
+        * Kubernetes Documentation - The upstream documentation
+        * Kubernetes Cluster with Kubeadm - Upstream documentation on how to setup a Kubernetes cluster using kubeadm
+        * Kubernetes Glossary - The official glossary explaining all Kubernetes specific terminology
+        * Kubernetes Addons - A list of third-party addons
+        * Kubelet Config File - Documentation on the Kubelet configuration file
+        * Taints and Tolerations - Documentation on node affinities and taints
+
+ArchWiki manual                         bundled documentation

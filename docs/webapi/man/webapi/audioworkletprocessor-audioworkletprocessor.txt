@@ -1,0 +1,91 @@
+WEBAPI.AUDIOWORKLETPROCESSOR-AUDIOWORKLETPROCESSOR(1) Sandbox manual WEBAPI.AUDIOWORKLETPROCESSOR-AUDIOWORKLETPROCESSOR(1)
+
+       NAME
+
+       AudioWorkletProcessor: AudioWorkletProcessor() constructor - The AudioWorkletProcessor()
+
+       AUDIOWORKLETPROCESSOR: AUDIOWORKLETPROCESSOR() CONSTRUCTOR
+
+       The AudioWorkletProcessor() constructor creates a new AudioWorkletProcessor object, which represents an underlying audio processing mechanism of an AudioWorkletNode.
+
+       > The AudioWorkletProcessor and classes that derive from it
+       > cannot be instantiated directly from user-supplied code. Instead, they are created
+       > only internally by the creation of an associated AudioWorkletNode.
+
+       SYNTAX
+
+         new AudioWorkletProcessor(options)
+
+       PARAMETERS
+
+        * options
+          * : An object that is passed as _options_ parameter to the
+       AudioWorkletNode() constructor and passed through the structured clone algorithm. Available properties are as follows:
+
+       
+
+            * numberOfInputs (optional)
+              * : The value to initialize the numberOfInputs property to. Defaults to 1.
+            * numberOfOutputs (optional)
+              * : The value to initialize the numberOfOutputs property to. Defaults to 1.
+            * outputChannelCount (optional)
+              * : An array defining the number of channels for each output. For example, _outputChannelCount: \[n, m]_ specifies the number of channels in the first output to be _n_ and the second output to be _m_. The array length must match numberOfOutputs.
+            * parameterData (optional)
+              * : An object containing the initial values of custom AudioParam objects on this node (in its parameters property), with key being the name of a custom parameter and value being its initial value.
+            * processorOptions (optional)
+              * : Any additional data that can be used for custom initialization of the underlying AudioWorkletProcessor.
+       Note that there are default values for the first two properties, so even if there is no _options_ object passed to the AudioWorkletNode() constructor, the _options_ object passed by the node to the AudioWorkletProcessor constructor will exist and at minimum have numberOfInputs and numberOfOutputs.
+
+       RETURN VALUE
+
+       The newly constructed AudioWorkletProcessor instance.
+
+       EXAMPLES
+
+       In this example we pass custom options to the AudioWorkletNode() constructor and observe how a structured clone of them gets passed to our AudioWorkletProcessor constructor.
+
+       First, we need to define a custom AudioWorkletProcessor and register it. Note that this should be done in a separate file.
+
+         // test-processor.js
+         class TestProcessor extends AudioWorkletProcessor {
+           constructor(options) {
+             super();
+             console.log(options.numberOfInputs);
+             console.log(options.processorOptions.someUsefulVariable);
+           }
+           process(inputs, outputs, parameters) {
+             return true;
+           }
+         }
+
+         registerProcessor("test-processor", TestProcessor);
+
+       Next, in our main script file we'll load the processor, create an instance of AudioWorkletNode passing it the name of the processor and _options_ object.
+
+       In the _options_ object we pass processorOptions with a Map instance under someUsefulVariable key. We don't pass numberOfInputs and see how it gets its default value.
+
+         const audioContext = new AudioContext();
+         await audioContext.audioWorklet.addModule("test-processor.js");
+         const testNode = new AudioWorkletNode(audioContext, "test-processor", {
+           processorOptions: {
+             someUsefulVariable: new Map([
+               [1, "one"],
+               [2, "two"],
+             ]),
+           },
+         });
+
+       The console output will be as follows:
+
+         > 1 // AudioWorkletNode options.numberOfInputs set to default
+         > Map(2) { 1 => "one", 2 => "two" } // A cloned map under someUsefulVariable
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * AudioWorkletNode interface
+
+Web APIs manual                         from the official documentation

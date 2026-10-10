@@ -1,0 +1,186 @@
+WEBAPI.LANGUAGEMODEL-PROMPT(1)   Sandbox manual   WEBAPI.LANGUAGEMODEL-PROMPT(1)
+
+       NAME
+
+       LanguageModel: prompt() method - The prompt() method of the LanguageModel interface sends input to the language model and returns a Promise that resolves with the model's co
+
+       LANGUAGEMODEL: PROMPT() METHOD
+
+       The prompt() method of the LanguageModel interface sends input to the language model and returns a Promise that resolves with the model's complete response as a string.
+
+       SYNTAX
+
+         prompt(input)
+         prompt(input, options)
+
+       PARAMETERS
+
+        * input
+          * : The content to prompt the model with. This is either:
+            * A string — Shorthand for a single textual message.
+            * An array of objects, each representing a single message in a conversation with a language model.
+       Objects may have the following properties:
+
+              * role
+                * : A string indicating the point of view the message is phrased from. Must be one of:
+                  * system
+                    * : A system-level instruction that guides the model's overall behavior. This must be the first instruction passed to the model.
+                  * user
+                    * : A message from the user, which the API should respond to.
+                  * assistant
+                    * : An input that provides context for the AI assistant, such as its persona or the format of its responses. Such messages mainly serve to provide context/history, and further shape how the model responds.
+              * content
+                * : A string representing a textual prompt, or an array of objects. Each object includes the following properties:
+                  * type
+                    * : An enumerated value representing the type of content. This can be one of:
+                      * audio
+                        * : Audio content.
+                      * image
+                        * : Image content.
+                      * text
+                        * : Textual content.
+                      * tool-call
+                        * : A tool invocation issued by the model.
+                      * tool-response
+                        * : The result of a tool invocation.
+                  * value
+                    * : The content of the message. If the type is text, this is always a string. If the type is audio or image, the value can be one of several different object types; see What data types are accepted?.
+              * prefix (optional)
+                * : A boolean, defaulting to false. When true, the message is treated as a prefix for the model's next generated response rather than a complete turn.
+        * options (optional)
+          * : Options for creating a prompt. Properties include:
+            * responseConstraint
+              * : An object following the structure defined by JSON Schema defining the precise format the model's output should be delivered in. When provided and omitResponseConstraintInput is false, any implementation-defined constraint-description message is included in the measurement.
+            * omitResponseConstraintInput
+              * : A boolean; when true, the automatic constraint-description message is excluded from the measurement.
+            * signal
+              * : An AbortSignal to cancel the operation.
+
+       RETURN VALUE
+
+       A Promise that resolves with a String containing the model's complete response.
+
+       EXCEPTIONS
+
+        * AbortError DOMException
+          * : Thrown if the operation was canceled via the signal option.
+        * NotAllowedError DOMException
+          * : Thrown if usage of the method is blocked by a language-model Permissions-Policy.
+        * NotSupportedError DOMException
+          * : Thrown if:
+            * A message's role is assistant and its type is anything other than text.
+            * A message's type is text and its value is not a string.
+            * The input or output text is in a language the user agent doesn't support for prompting.
+            * A message's type is image or audio but the type was not listed in expectedInputs, or the value is not an accepted data type.
+        * OperationError DOMException
+          * : Thrown if the prompt fails for any other reason not listed in the other exception types.
+        * QuotaExceededError DOMException
+          * : Thrown if the prompt would cause the session's context usage to exceed the model's LanguageModel.contextWindow.
+        * SyntaxError DOMException
+          * : Thrown if:
+            * No messages are included in the messages array.
+            * A message's prefix property is set to true and:
+              * The message's role is not assistant.
+              * The message is not the last item in the messages array.
+        * TypeError
+          * : Thrown if:
+            * omitResponseConstraintInput is true but responseConstraint is not provided.
+            * A message's role is system but it was not the first message passed to the context.
+
+       DESCRIPTION
+
+       The prompt() method is the primary mechanism for interacting with a language model session. It adds the provided input to the context window and generates a response. The entire response is buffered and returned as a single string when generation completes.
+
+       For long responses or streaming use cases, use LanguageModel.promptStreaming() instead to receive the response incrementally. To add content to the context window without generating a response, use LanguageModel.append().
+
+       Each call to prompt() adds to the session's context. To branch from a given state without affecting the original session, call LanguageModel.clone().
+
+       EXAMPLES
+
+       BASIC TEXT PROMPT
+
+       This example shows basic prompt() usage with a single user text input.
+
+         const session = await LanguageModel.create();
+         const response = await session.prompt(
+           "Summarize the water cycle in one paragraph.",
+         );
+         console.log(response);
+
+       See also Using the Prompt API > Prompting the model.
+
+       MULTI-TURN CONVERSATION
+
+         const session = await LanguageModel.create();
+
+         const reply1 = await session.prompt("My name is Alex.");
+         console.log(reply1); // "Nice to meet you, Alex!"
+
+         const reply2 = await session.prompt("What's my name?");
+         console.log(reply2); // "Your name is Alex."
+
+       CONSTRAINED JSON OUTPUT
+
+       The following example shows how to pass JSON to the responseConstraint option to specify that you want an array returned by the call to prompt().
+
+         const session = await LanguageModel.create();
+         const raw = await session.prompt("Name three planets in our solar system.", {
+           responseConstraint: {
+             type: "object",
+             properties: {
+               planets: {
+                 type: "array",
+                 items: { type: "string" },
+               },
+             },
+             required: ["planets"],
+           },
+         });
+
+         const { planets } = JSON.parse(raw);
+         console.log(planets); // ["Mercury", "Venus", "Earth"]
+
+       See also Adding context with initial and ongoing prompt inputs > Adding response constraints.
+
+       CANCELING A PROMPT
+
+       The following example shows how to enable a user to cancel a prompt with a button. It does this by creating an AbortController. Its abort() is callable from a button's click handler. For this to work, a reference to the controller's signal property must be passed to prompt().
+
+         const controller = new AbortController();
+
+         // Select your cancel button from the DOM
+         const cancelButton = document.querySelector("#btn-cancel");
+
+         // Trigger the abort when the user clicks the button
+         cancelButton.addEventListener("click", () => {
+           controller.abort();
+         });
+
+         try {
+           const response = await session.prompt("write a very long story.", {
+             signal: controller.signal,
+           });
+           console.log(response);
+         } catch (err) {
+           if (err.name === "AbortError") {
+             console.log("prompt was canceled.");
+           } else {
+             console.error("An unexpected error occurred:", err);
+           }
+         }
+
+       See also Using the Prompt API > Canceling operations and destroying instances.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * LanguageModel.promptStreaming()
+        * LanguageModel.append()
+        * Prompt API
+        * Using the Prompt API
+        * Adding context with initial and ongoing prompt inputs
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,65 @@
+WEBAPI.SELECTION-ADDRANGE(1)     Sandbox manual     WEBAPI.SELECTION-ADDRANGE(1)
+
+       NAME
+
+       Selection: addRange() method - The Selection.addRange() method adds a
+
+       SELECTION: ADDRANGE() METHOD
+
+       The Selection.addRange() method adds a Range to a Selection.
+
+       SYNTAX
+
+         addRange(range)
+
+       PARAMETERS
+
+        * range
+          * : A Range object that will be added to the Selection.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       Note that only Firefox supports multiple selection ranges. In this example, other browsers will not add new ranges to the selection if it already contains one.
+
+       HTML
+
+         <p>
+           I <strong>insist</strong> that you <strong>try</strong> selecting the
+           <strong>strong words</strong>.
+         </p>
+         <button>Select strong words</button>
+
+       JAVASCRIPT
+
+         let button = document.querySelector("button");
+
+         button.addEventListener("click", () => {
+           const selection = window.getSelection();
+           const strongElems = document.getElementsByTagName("strong");
+
+           if (selection.rangeCount > 0) {
+             selection.removeAllRanges();
+           }
+
+           for (const node of strongElems) {
+             const range = document.createRange();
+             range.selectNode(node);
+             selection.addRange(range);
+           }
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Selection, the interface this method belongs to
+
+Web APIs manual                         from the official documentation

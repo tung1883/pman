@@ -1,0 +1,54 @@
+WEBAPI.LAYOUTSHIFTATTRIBUTION(1) Sandbox manual WEBAPI.LAYOUTSHIFTATTRIBUTION(1)
+
+       NAME
+
+       LayoutShiftAttribution - The LayoutShiftAttribution interface provides debugging information about elements which have shifted.
+
+       LAYOUTSHIFTATTRIBUTION
+
+       The LayoutShiftAttribution interface provides debugging information about elements which have shifted.
+
+       Instances of LayoutShiftAttribution are returned in an array by calling LayoutShift.sources.
+
+       INSTANCE PROPERTIES
+
+        * LayoutShiftAttribution.node (read-only) (experimental)
+          * : Returns the element that has shifted (null if it has been removed).
+        * LayoutShiftAttribution.previousRect (read-only) (experimental)
+          * : Returns a DOMRectReadOnly object representing the position of the element before the shift.
+        * LayoutShiftAttribution.currentRect (read-only) (experimental)
+          * : Returns a DOMRectReadOnly object representing the position of the element after the shift.
+
+       INSTANCE METHODS
+
+        * LayoutShiftAttribution.toJSON() (experimental)
+          * : Returns a JSON-serializable plain object representing the LayoutShiftAttribution object. Automatically called by JSON.stringify().
+
+       EXAMPLES
+
+       The following example observes layout shifts and identifies the most impactful element. The sources array is sorted by impact area, in descending order — so the first element (sources[0]) represents the element that contributed most to the layout shift. For more detail on that, see Debug Web Vitals in the field.
+
+         const observer = new PerformanceObserver((list) => {
+           for (const entry of list.getEntries()) {
+             if (!entry.sources || entry.sources.length === 0) continue;
+
+             const mostImpactfulSource = entry.sources[0];
+             console.log("Layout shift score:", entry.value);
+             console.log("Most impactful element:", largestShiftSource.node);
+             console.log("Previous position:", largestShiftSource.previousRect);
+             console.log("Current position:", largestShiftSource.currentRect);
+           }
+         });
+
+         observer.observe({ type: "layout-shift", buffered: true });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Debug layout shifts
+        * Debug Web Vitals in the field
+
+Web APIs manual                         from the official documentation

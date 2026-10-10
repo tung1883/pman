@@ -1,0 +1,68 @@
+WEBAPI.SHAREDWORKERGLOBALSCOPE-CONNECT-EVENT(1) Sandbox manual WEBAPI.SHAREDWORKERGLOBALSCOPE-CONNECT-EVENT(1)
+
+       NAME
+
+       SharedWorkerGlobalScope: connect event - The connect event is fired in shared workers at their SharedWorkerGlobalScope when a new client connects.
+
+       SHAREDWORKERGLOBALSCOPE: CONNECT EVENT
+
+       The connect event is fired in shared workers at their SharedWorkerGlobalScope when a new client connects.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("connect", (event) => { })
+
+         onconnect = (event) => { }
+
+       EVENT TYPE
+
+       A MessageEvent. Inherits from Event.
+
+       MessageEvent
+
+       EXAMPLES
+
+       This example shows a shared worker file — when a connection to the worker occurs from a main thread via a MessagePort, the onconnect event handler fires. The event object is a MessageEvent.
+
+       The connecting port can be referenced through the event object's ports parameter; this reference can have an onmessage handler attached to it to handle messages coming in through the port, and its postMessage() method can be used to send messages back to the main thread using the worker.
+
+         self.onconnect = (e) => {
+           const port = e.ports[0];
+
+           port.onmessage = (e) => {
+             const workerResult = `Result: ${e.data[0] * e.data[1]}`;
+             port.postMessage(workerResult);
+           };
+
+           port.start();
+         };
+
+       For a complete running example, see our Basic shared worker example (run shared worker.)
+
+       ADDEVENTLISTENER EQUIVALENT
+
+       You could also set up an event handler using the addEventListener() method:
+
+         self.addEventListener("connect", (e) => {
+           const port = e.ports[0];
+
+           port.onmessage = (e) => {
+             const workerResult = `Result: ${e.data[0] * e.data[1]}`;
+             port.postMessage(workerResult);
+           };
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using web workers
+        * SharedWorkerGlobalScope
+
+Web APIs manual                         from the official documentation

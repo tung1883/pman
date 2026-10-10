@@ -1,0 +1,90 @@
+WEBAPI.BASEAUDIOCONTEXT-CREATEGAIN(1) Sandbox manual WEBAPI.BASEAUDIOCONTEXT-CREATEGAIN(1)
+
+       NAME
+
+       BaseAudioContext: createGain() method - The createGain() method of the BaseAudioContext
+
+       BASEAUDIOCONTEXT: CREATEGAIN() METHOD
+
+       The createGain() method of the BaseAudioContext interface creates a GainNode, which can be used to control the overall gain (or volume) of the audio graph.
+
+       > The GainNode()
+       > constructor is the recommended way to create a GainNode; see
+       > Creating an AudioNode.
+
+       SYNTAX
+
+         createGain()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A GainNode which takes as input one or more audio sources and outputs audio whose volume has been adjusted in gain (volume) to a level specified by the node's GainNode.gain a-rate parameter.
+
+       EXAMPLES
+
+       The following example shows basic usage of an AudioContext to create a GainNode, which is then used to mute and unmute the audio when a Mute button is clicked by changing the gain property value.
+
+       The below snippet wouldn't work as is — for a complete working example, check out our Voice-change-O-matic demo (view source.)
+
+         <div>
+           <button class="mute">Mute button</button>
+         </div>
+
+         const audioCtx = new AudioContext();
+         const gainNode = audioCtx.createGain();
+         const mute = document.querySelector(".mute");
+         let source;
+
+         if (navigator.mediaDevices.getUserMedia) {
+           navigator.mediaDevices.getUserMedia(
+             // constraints - only audio needed for this app
+             {
+               audio: true,
+             },
+
+             // Success callback
+             (stream) => {
+               source = audioCtx.createMediaStreamSource(stream);
+             },
+
+             // Error callback
+             (err) => {
+               console.error(`The following gUM error occurred: ${err}`);
+             },
+           );
+         } else {
+           console.error("getUserMedia not supported on your browser!");
+         }
+
+         source.connect(gainNode);
+         gainNode.connect(audioCtx.destination);
+
+         // …
+
+         mute.onclick = () => {
+           if (mute.id === "") {
+             // 0 means mute. If you still hear something, make sure you haven't
+             // connected your source into the output in addition to using the GainNode.
+             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+             mute.id = "activated";
+             mute.textContent = "Unmute";
+           } else {
+             gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+             mute.id = "";
+             mute.textContent = "Mute";
+           }
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,144 @@
+CSHARP.VALUE-TUPLES(1)           Sandbox manual           CSHARP.VALUE-TUPLES(1)
+
+       NAME
+
+       Tuple types (C# reference) - C# tuples: lightweight data structures that you can use to group loosely related data elements. Tuples introduce a type that contains multip
+
+       TUPLE TYPES (C# REFERENCE)
+
+       The tuples feature provides a concise syntax to group multiple data elements in a lightweight data structure.
+
+       The following example shows how you can declare a tuple variable, initialize it, and access its data members:
+
+       As the preceding example shows, to define a tuple type, you specify the types of all its data members and, optionally, the field names. You can't define methods in a tuple type, but you can use the methods provided by .NET, as the following example shows:
+
+       Tuple types support equality operators == and !=. For more information, see the Tuple equality section.
+
+       Tuple types are value types; tuple elements are public fields. That design makes tuples mutable value types.
+
+       You can define tuples with an arbitrarily large number of elements:
+
+       USE CASES FOR TUPLES
+
+       One of the most common use cases for tuples is as a method return type. Instead of defining out method parameters, group method results in a tuple return type, as the following example shows:
+
+       As the preceding example shows, you can work with the returned tuple instance directly or deconstruct it in separate variables.
+
+       You can also use tuple types instead of anonymous types; for example, in LINQ queries. For more information, see Choosing between anonymous and tuple types.
+
+       Typically, use tuples to group loosely related data elements. In public APIs, consider defining a class or a structure type.
+
+       TUPLE FIELD NAMES
+
+       You explicitly specify tuple field names in a tuple initialization expression or in the definition of a tuple type, as the following example shows:
+
+       !code-csharp[explicit field names]
+
+       If you don't specify a field name, the compiler might infer it from the name of the corresponding variable in a tuple initialization expression, as the following example shows:
+
+       This feature is called tuple projection initializers. The name of a variable isn't projected onto a tuple field name in the following cases:
+
+        * The candidate name is a member name of a tuple type, for example, Item3, ToString, or Rest.
+        * The candidate name is a duplicate of another tuple field name, either explicit or implicit.
+       In the preceding cases, you either explicitly specify the name of a field or access a field by its default name.
+
+       The default names of tuple fields are Item1, Item2, Item3, and so on. You can always use the default name of a field, even when a field name is specified explicitly or inferred, as the following example shows:
+
+       Tuple assignment and tuple equality comparisons don't take field names into account.
+
+       At compile time, the compiler replaces non-default field names with the corresponding default names. As a result, explicitly specified or inferred field names aren't available at run time.
+
+       > Enable .NET code style rule IDE0037 to set a preference on inferred or explicit tuple field names.
+       Beginning with C# 12, you can specify an alias for a tuple type with a using directive. The following example adds a global using alias for a tuple type with two integer values for an allowed Min and Max value:
+
+         global using BandPass = (int Min, int Max);
+
+       After declaring the alias, you can use the BandPass name as an alias for that tuple type:
+
+         BandPass bracket = (40, 100);
+         Console.WriteLine($"The bandpass filter is {bracket.Min} to {bracket.Max}");
+
+       An alias doesn't introduce a new type, but only creates a synonym for an existing type. You can deconstruct a tuple declared with the BandPass alias the same as you can with its underlying tuple type:
+
+         (int a , int b) = bracket;
+         Console.WriteLine($"The bracket is {a} to {b}");
+
+       As with tuple assignment or deconstruction, the tuple member names don't need to match; the types do.
+
+       Similarly, a second alias with the same arity and member types can be used interchangeably with the original alias. You could declare a second alias:
+
+         using Range = (int Minimum, int Maximum);
+
+       You can assign a Range tuple to a BandPass tuple. As with all tuple assignment, the field names need not match, only the types and the arity.
+
+         Range r = bracket;
+         Console.WriteLine($"The range is {r.Minimum} to {r.Maximum}");
+
+       An alias for a tuple type provides more semantic information when you use tuples. It doesn't introduce a new type. To provide type safety, you should declare a positional record instead.
+
+       TUPLE ASSIGNMENT AND DECONSTRUCTION
+
+       C# supports assignment between tuple types that satisfy both of the following conditions:
+
+        * Both tuple types have the same number of elements.
+        * For each tuple position, the type of the right-hand tuple element is the same as or implicitly convertible to the type of the corresponding left-hand tuple element.
+       Assign tuple element values by following the order of tuple elements. The assignment process ignores the names of tuple fields, as the following example shows:
+
+       Use the assignment operator = to deconstruct a tuple instance into separate variables. You can do that in many ways:
+
+        * Use the var keyword outside the parentheses to declare implicitly typed variables and let the compiler infer their types:
+        * Explicitly declare the type of each variable inside parentheses:
+        * Declare some types explicitly and other types implicitly (with var) inside the parentheses:
+        * Use existing variables:
+       The destination of a deconstruct expression can include both existing variables and variables declared in the deconstruction declaration.
+
+       You can also combine deconstruction with pattern matching to inspect the characteristics of fields in a tuple. The following example loops through several integers and prints those that are divisible by 3. It deconstructs the tuple result of DivRem* and matches against a Remainder of 0:
+
+         for (int i = 4; i < 20;  i++)
+         {
+             if (Math.DivRem(i, 3) is ( Quotient: var q, Remainder: 0 ))
+             {
+                 Console.WriteLine($"{i} is divisible by 3, with quotient {q}");
+             }
+         }
+
+       For more information about deconstruction of tuples and other types, see Deconstructing tuples and other types.
+
+       TUPLE EQUALITY
+
+       Tuple types support the == and != operators. These operators compare members of the left-hand operand with the corresponding members of the right-hand operand following the order of tuple elements.
+
+       As the preceding example shows, the == and != operations don't take tuple field names into account.
+
+       Two tuples are comparable when both of the following conditions are satisfied:
+
+        * Both tuples have the same number of elements. For example, t1 != t2 doesn't compile if t1 and t2 have different numbers of elements.
+        * For each tuple position, the corresponding elements from the left-hand and right-hand tuple operands are comparable by using the == and != operators. For example, (1, (2, 3)) == ((1, 2), 3) doesn't compile because 1 isn't comparable with (1, 2).
+       The == and != operators compare tuples in a short-circuiting way. That is, an operation stops as soon as it meets a pair of non equal elements or reaches the ends of tuples. However, before any comparison, all tuple elements are evaluated, as the following example shows:
+
+       TUPLES AS OUT PARAMETERS
+
+       Typically, you refactor a method that has out parameters into a method that returns a tuple. However, some cases exist where an out parameter can be a tuple type. The following example shows how to work with tuples as out parameters:
+
+       TUPLES VS SYSTEM.TUPLE
+
+       C# tuples use ValueTuple types and differ from tuples that use Tuple types. The main differences are:
+
+        * System.ValueTuple types are value types. System.Tuple types are reference types.
+        * System.ValueTuple types are mutable. System.Tuple types are immutable.
+        * Data members of System.ValueTuple types are fields. Data members of System.Tuple types are properties.
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information, see:
+
+        * Tuple types
+        * Tuple equality operators
+
+       SEE ALSO
+
+        * Value types
+        * Choosing between anonymous and tuple types
+        * ValueTuple
+
+C# manual                               from the official documentation

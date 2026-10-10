@@ -1,0 +1,43 @@
+DOCKER.BUILD-CI-GITHUB-ACTIONS-LOCAL-REGISTRY(1) Sandbox manual DOCKER.BUILD-CI-GITHUB-ACTIONS-LOCAL-REGISTRY(1)
+
+       NAME
+
+       Local registry with GitHub Actions - For testing purposes you may need to create a local registry
+
+       LOCAL REGISTRY WITH GITHUB ACTIONS
+
+       For testing purposes you may need to create a local registry to push images into:
+
+         name: ci
+
+         on:
+           push:
+
+         jobs:
+           docker:
+             runs-on: ubuntu-latest
+             services:
+               registry:
+                 image: registry:3
+                 ports:
+                   - 5000:5000
+             steps:
+               - name: Set up QEMU
+                 uses: docker/setup-qemu-action@
+
+               - name: Set up Docker Buildx
+                 uses: docker/setup-buildx-action@
+                 with:
+                   driver-opts: network=host
+
+               - name: Build and push to local registry
+                 uses: docker/build-push-action@
+                 with:
+                   push: true
+                   tags: localhost:5000/name/app:latest
+
+               - name: Inspect
+                 run: |
+                   docker buildx imagetools inspect localhost:5000/name/app:latest
+
+Docker manual                           from the official documentation

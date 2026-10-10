@@ -1,0 +1,36 @@
+SHELLCHECK.CENTOS6(1)            Sandbox manual            SHELLCHECK.CENTOS6(1)
+
+       NAME
+
+       Deps - Note: Haskell Platform v7.10.3 and v8.0.1 requires glibc v2.14 but CentOS 6 has v2.12 so be sure to download v7.10.2-a release from their pr
+
+       DEPS
+
+       _Note: Haskell Platform v7.10.3 and v8.0.1 requires glibc v2.14 but CentOS 6 has v2.12 so be sure to download v7.10.2-a release from their prior releases page._
+
+         yum groupinstall "Development Tools" -y
+         yum install gmp-devel # may need epel
+         sudo ln -s /usr/lib64/libgmp.so.3  /usr/lib64/libgmp.so.10
+
+       GET HASKELL AND BUILD IT
+
+       BASED ON HTTPS://WWW.HASKELL.ORG/PLATFORM/LINUX.HTML#LINUX-GENERIC
+
+         dir="$(mktemp -d)"
+         pushd "$dir"
+         wget https://haskell.org/platform/download/7.10.2/haskell-platform-7.10.2-a-unknown-linux-deb7.tar.gz
+         tar xvzf haskell-platform-7.10.2-a-unknown-linux-deb7.tar.gz
+         ./install-haskell-platform.sh
+         popd
+         rm -r "$dir"
+
+       INSTALL SHELLCHECK
+
+         cabal update
+         cabal install shellcheck
+
+       PLACE IT IN A GLOBAL DIRECTORY
+
+         cp ~/.cabal/bin/shellcheck /usr/local/bin # portable to other el6 systems without Haskell
+
+ShellCheck manual                       from the official documentation

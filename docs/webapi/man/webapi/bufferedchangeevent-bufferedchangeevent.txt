@@ -1,0 +1,57 @@
+WEBAPI.BUFFEREDCHANGEEVENT-BUFFEREDCHANGEEVENT(1) Sandbox manual WEBAPI.BUFFEREDCHANGEEVENT-BUFFEREDCHANGEEVENT(1)
+
+       NAME
+
+       BufferedChangeEvent: BufferedChangeEvent() constructor - windowanddedicated
+
+       BUFFEREDCHANGEEVENT: BUFFEREDCHANGEEVENT() CONSTRUCTOR
+
+       window_and_dedicated
+
+       The BufferedChangeEvent() constructor of the BufferedChangeEvent interface creates a new BufferedChangeEvent object instance.
+
+       SYNTAX
+
+         new BufferedChangeEvent(type, options)
+
+       PARAMETERS
+
+        * type
+          * : A string representing the type of event. In the case of BufferedChangeEvent this is always bufferedchange.
+        * options (optional)
+          * : An object that, _in addition to the properties defined in Event()_, has the following properties:
+       > Although the spec marks options as optional, Safari (currently the only implementation) throws a TypeError if the argument is omitted entirely. Passing an empty object ({}) works correctly.
+            * addedRanges (optional)
+              * : A TimeRanges object representing the time ranges added to the buffer.
+            * removedRanges (optional)
+              * : A TimeRanges object representing the time ranges removed from the buffer.
+
+       RETURN VALUE
+
+       A new BufferedChangeEvent object instance.
+
+       EXAMPLES
+
+       INSPECTING A BUFFEREDCHANGE EVENT
+
+       The BufferedChangeEvent() constructor isn't generally called manually. When a ManagedSourceBuffer's bufferedchange event fires (meaning its buffered ranges change), the browser will construct a BufferedChangeEvent object to use as the event object.
+
+       The event's properties describe what changed:
+
+         sourceBuffer.addEventListener("bufferedchange", (event) => {
+           console.log(event instanceof BufferedChangeEvent); // true
+           console.log(event.type); // "bufferedchange"
+           console.log(event.addedRanges); // TimeRanges — ranges added to the buffer
+           console.log(event.removedRanges); // TimeRanges — ranges removed from the buffer
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ManagedSourceBuffer
+        * bufferedchange event
+
+Web APIs manual                         from the official documentation

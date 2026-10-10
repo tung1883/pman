@@ -1,0 +1,35 @@
+SHELLCHECK.SC2068(1)             Sandbox manual             SHELLCHECK.SC2068(1)
+
+       NAME
+
+       Double quote array expansions to avoid re-splitting elements. - cp $@ ~/dir
+
+       DOUBLE QUOTE ARRAY EXPANSIONS TO AVOID RE-SPLITTING ELEMENTS
+
+       DOUBLE QUOTE ARRAY EXPANSIONS TO AVOID RE-SPLITTING ELEMENTS
+
+       PROBLEMATIC CODE
+
+         cp $@ ~/dir
+
+       CORRECT CODE
+
+         cp "$@" ~/dir
+
+       RATIONALE
+
+       Double quotes around $@ (and similarly, ${array[@]}) prevents globbing and word splitting of individual elements, while still expanding to multiple separate arguments.
+
+       Let's say you have four arguments: baz, foo bar, and ////*
+
+       "$@" will expand into exactly that: baz, foo bar, and ////*
+
+       $@ will expand into multiple other arguments: baz, foo, bar, file.txt, otherfile.jpg, and (eventually) a list of most files on the system
+
+       Since the latter is rarely expected or desired, ShellCheck warns about it.
+
+       EXCEPTIONS
+
+       When you want globbing of individual elements.
+
+ShellCheck manual                       from the official documentation

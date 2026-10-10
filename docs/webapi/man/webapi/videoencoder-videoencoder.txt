@@ -1,0 +1,74 @@
+WEBAPI.VIDEOENCODER-VIDEOENCODER(1) Sandbox manual WEBAPI.VIDEOENCODER-VIDEOENCODER(1)
+
+       NAME
+
+       VideoEncoder: VideoEncoder() constructor - windowanddedicated
+
+       VIDEOENCODER: VIDEOENCODER() CONSTRUCTOR
+
+       window_and_dedicated
+
+       The VideoEncoder() constructor creates a new VideoEncoder object with the provided options.output callback assigned as the output callback, the provided options.error callback as the error callback, and sets the VideoEncoder.state to "unconfigured".
+
+       SYNTAX
+
+         new VideoEncoder(options)
+
+       PARAMETERS
+
+        * options
+          * : An object containing two required callbacks.
+            * output
+              * : A callback which takes an EncodedVideoChunk object as the first argument, and an optional metadata object as the second. The metadata object has three members:
+                * decoderConfig (optional)
+                  * : An object containing:
+                    * codec
+                      * : A string containing a valid codec string.
+                    * description (optional)
+                      * : An ArrayBuffer, a TypedArray, or a DataView containing a sequence of codec-specific bytes, commonly known as "extradata".
+                    * codedWidth (optional)
+                      * : An integer representing the width of the VideoFrame in pixels, potentially including non-visible padding, and prior to considering potential ratio adjustments.
+                    * codedHeight (optional)
+                      * : An integer representing the height of the VideoFrame in pixels, potentially including non-visible padding, and prior to considering potential ratio adjustments.
+                    * displayAspectWidth (optional)
+                      * : An integer representing the horizontal dimension of the VideoFrame's aspect ratio when displayed.
+                    * displayAspectHeight (optional)
+                      * : An integer representing the vertical dimension of the VideoFrame's aspect ratio when displayed.
+                    * colorSpace (optional)
+                      * : An object you pass to the VideoColorSpace constructor as the init argument, configuring the VideoFrame.colorSpace for VideoFrames associated with this decoderConfig object. If colorSpace exists, the provided values will override any in-band values from the bitstream.
+                    * hardwareAcceleration (optional)
+                      * : A string that configures hardware acceleration for this codec. Defaults to "no-preference". Options are:
+                        * "no-preference"
+                        * "prefer-hardware"
+                        * "prefer-software"
+                    * optimizeForLatency (optional)
+                      * : A boolean representing whether the selected decoder should be configured to minimize the number of EncodedVideoChunks that have to be decoded before a VideoFrame is output.
+                * svc (optional)
+                  * : An optional object with only one member: temporalLayerId, which is a number that identifies the temporal layer for the associated EncodedVideoChunk.
+                * alphaSideData (optional)
+                  * : An ArrayBuffer, a TypedArray, or a DataView
+       that contains the EncodedVideoChunk's extra alpha channel data.
+
+            * error
+              * : A callback which takes an Error object as its only argument.
+
+       EXAMPLES
+
+       In the following example a VideoEncoder is created with the two required callback functions, one to deal with the encoded frame and the other to handle errors.
+
+         const videoEncoder = new VideoEncoder({
+           output(chunk, metadata) {
+             console.log(chunk.timestamp);
+             console.log(chunk.byteLength);
+             console.log(JSON.stringify(metadata));
+           },
+           error(error) {
+             console.log(error);
+           },
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

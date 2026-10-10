@@ -1,0 +1,99 @@
+WEBAPI.ELEMENT-TRANSITIONRUN-EVENT(1) Sandbox manual WEBAPI.ELEMENT-TRANSITIONRUN-EVENT(1)
+
+       NAME
+
+       Element: transitionrun event - The transitionrun event is fired when a CSS transition is first created, i.e., before any transition-delay has begun.
+
+       ELEMENT: TRANSITIONRUN EVENT
+
+       The transitionrun event is fired when a CSS transition is first created, i.e., before any transition-delay has begun.
+
+       This event is not cancelable.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("transitionrun", (event) => { })
+
+         ontransitionrun = (event) => { }
+
+       EVENT TYPE
+
+       A TransitionEvent. Inherits from Event.
+
+       TransitionEvent
+
+       EXAMPLES
+
+       This code adds a listener to the transitionrun event:
+
+         el.addEventListener("transitionrun", () => {
+           console.log(
+             "Transition is running but hasn't necessarily started transitioning yet",
+           );
+         });
+
+       The same, but using the ontransitionrun property instead of addEventListener():
+
+         el.ontransitionrun = () => {
+           console.log(
+             "Transition started running, and will start transitioning when the transition delay has expired",
+           );
+         };
+
+       LIVE EXAMPLE
+
+       In the following example, we have a simple element, styled with a transition that includes a delay:
+
+         <div class="transition">Hover over me</div>
+         <div class="message"></div>
+
+         .transition {
+           width: 100px;
+           height: 100px;
+           background: red;
+           transition-property: transform, background;
+           transition-duration: 2s;
+           transition-delay: 1s;
+         }
+
+         .transition:hover {
+           transform: rotate(90deg);
+           background: transparent;
+         }
+
+       To this, we'll add some JavaScript to indicate where the transitionstart and transitionrun events fire.
+
+         const el = document.querySelector(".transition");
+         const message = document.querySelector(".message");
+
+         el.addEventListener("transitionrun", () => {
+           message.textContent = "transitionrun fired";
+         });
+
+         el.addEventListener("transitionstart", () => {
+           message.textContent = "transitionstart fired";
+         });
+
+         el.addEventListener("transitionend", () => {
+           message.textContent = "transitionend fired";
+         });
+
+       The difference is that:
+
+        * transitionrun fires when the transition is created (i.e., at the start of any delay).
+        * transitionstart fires when the actual animation has begun (i.e., at the end of any delay).
+       The transitionrun will occur even if the transition is canceled before the delay expires. If there is no transition delay or if transition-delay is negative, both transitionrun and transitionstart are fired.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The TransitionEvent interface
+        * CSS properties: transition, transition-delay, transition-duration, transition-property, transition-timing-function
+        * Related events: transitionend, transitionstart, transitioncancel
+
+Web APIs manual                         from the official documentation

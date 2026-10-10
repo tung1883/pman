@@ -1,0 +1,54 @@
+WEBAPI.WORKERGLOBALSCOPE-SCHEDULER(1) Sandbox manual WEBAPI.WORKERGLOBALSCOPE-SCHEDULER(1)
+
+       NAME
+
+       WorkerGlobalScope: scheduler property - worker
+
+       WORKERGLOBALSCOPE: SCHEDULER PROPERTY
+
+       worker
+
+       The scheduler read-only property of the WorkerGlobalScope interface is the entry point for using the Prioritized Task Scheduling API.
+
+       It returns a Scheduler object instance containing postTask() and yield() methods that can be used to schedule prioritized tasks.
+
+       VALUE
+
+       A Scheduler.
+
+       EXAMPLES
+
+       The code below shows a very basic use of the property and its associated interface. It demonstrates how to check that the property exists and then posts a task that returns a promise.
+
+         // Check if the prioritized task API is supported
+         if ("scheduler" in self) {
+           // Callback function - "the task"
+           const myTask = () => "Task 1: user-visible";
+
+           // Post task with default priority: 'user-visible' (no other options)
+           // When the task resolves, Promise.then() logs the result.
+           self.scheduler
+             .postTask(myTask)
+             // Handle resolved value
+             .then((taskResult) => console.log(`${taskResult}`))
+             // Handle error or abort
+             .catch((error) => console.log(`Error: ${error}`));
+         } else {
+           console.log("Feature: NOT Supported");
+         }
+
+       For comprehensive example code showing to use the API see Prioritized Task Scheduling API > Examples.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Prioritized Task Scheduling API
+        * Scheduler.postTask()
+        * Scheduler.yield()
+        * TaskController
+        * Window.scheduler
+
+Web APIs manual                         from the official documentation

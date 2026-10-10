@@ -1,0 +1,35 @@
+SHELLCHECK.SC2185(1)             Sandbox manual             SHELLCHECK.SC2185(1)
+
+       NAME
+
+       Some finds don't have a default path. Specify . explicitly. - find -type f
+
+       SOME FINDS DON'T HAVE A DEFAULT PATH. SPECIFY . EXPLICITLY
+
+       SOME FINDS DON'T HAVE A DEFAULT PATH. SPECIFY . EXPLICITLY
+
+       PROBLEMATIC CODE
+
+         find -type f
+
+       CORRECT CODE
+
+         find . -type f
+
+       RATIONALE
+
+       When not provided a search path, GNU and Busybox find will use a default path of ., the current directory.
+
+       On POSIX, macOS/OSX, FreeBSD, OpenBSD and NetBSD, it will instead result in an error.
+
+       Explicitly specifying a path works across all implementations, and is therefore preferred.
+
+       EXCEPTIONS
+
+       You will get a false positive if you concatenate a series of pre-path flags:
+
+       find -XLE .
+
+       In such cases, please either use find -X -L -E . or [[ignore]] the message.
+
+ShellCheck manual                       from the official documentation

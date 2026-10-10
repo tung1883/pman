@@ -1,0 +1,57 @@
+HTTP.HEADER-EXPECT(1)            Sandbox manual            HTTP.HEADER-EXPECT(1)
+
+       NAME
+
+       Expect header - The HTTP Expect request header indicates that there are expectations that need to be met by the server in order to handle the complete reque
+
+       EXPECT HEADER
+
+       The HTTP Expect request header indicates that there are expectations that need to be met by the server in order to handle the complete request successfully.
+
+       When a request has an Expect: 100-continue header, a server sends a 100 Continue response to indicate that the server is ready or capable of receiving the rest of the request content. Waiting for a 100 response can be helpful if a client anticipates that an error is likely, for example, when sending state-changing operations without previously verified authentication credentials.
+
+       A 417 Expectation Failed response is returned if the server cannot meet the expectation, or any other status otherwise (e.g., a 4XX status for a client error, or a 2XX status if the request can be resolved successfully without further processing).
+
+       None of the more common browsers send the Expect header, but some clients (command-line tools) do so by default.
+
+       Header type Request header Forbidden request header Yes
+
+       SYNTAX
+
+         Expect: 100-continue
+
+       DIRECTIVES
+
+       There is only one defined expectation:
+
+        * 100-continue
+          * : Informs recipients that the client is about to send a (presumably large) message body in this request and wishes to receive a 100 Continue interim response.
+
+       EXAMPLES
+
+       LARGE MESSAGE BODY
+
+       A client sends a request with Expect header and waits for the server to respond before sending the message body.
+
+         PUT /somewhere/fun HTTP/1.1
+         Host: origin.example.com
+         Content-Type: video/h264
+         Content-Length: 1234567890987
+         Expect: 100-continue
+
+       The server checks the headers and generates the response, where a 100 Continue instructs the client to send the message body:
+
+         HTTP/1.1 100 Continue
+
+       The client completes the request by sending the actual data:
+
+         [Video data as content for PUT request]
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * 417 Expectation Failed
+        * 100 Continue
+
+HTTP manual                             from the official documentation

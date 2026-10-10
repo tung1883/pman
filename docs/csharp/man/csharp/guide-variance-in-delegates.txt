@@ -1,0 +1,178 @@
+CSHARP.GUIDE-VARIANCE-IN-DELEGATES(1) Sandbox manual CSHARP.GUIDE-VARIANCE-IN-DELEGATES(1)
+
+       NAME
+
+       Variance in Delegates (C#) - Learn how the variance support in .NET allows you to match method signatures with delegate types in all delegates.
+
+       VARIANCE IN DELEGATES (C#)
+
+       .NET Framework 3.5 introduced variance support for matching method signatures with delegate types in all delegates in C#. This means that you can assign to delegates not only methods that have matching signatures, but also methods that return more derived types (covariance) or that accept parameters that have less derived types (contravariance) than that specified by the delegate type. This includes both generic and non-generic delegates.
+
+       For example, consider the following code, which has two classes and two delegates: generic and non-generic.
+
+         public class First { }
+         public class Second : First { }
+         public delegate First SampleDelegate(Second a);
+         public delegate R SampleGenericDelegate<A, R>(A a);
+
+       When you create delegates of the SampleDelegate or SampleGenericDelegate types, you can assign any one of the following methods to those delegates.
+
+         // Matching signature.
+         public static First ASecondRFirst(Second second)
+         { return new First(); }
+
+         // The return type is more derived.
+         public static Second ASecondRSecond(Second second)
+         { return new Second(); }
+
+         // The argument type is less derived.
+         public static First AFirstRFirst(First first)
+         { return new First(); }
+
+         // The return type is more derived
+         // and the argument type is less derived.
+         public static Second AFirstRSecond(First first)
+         { return new Second(); }
+
+       The following code example illustrates the implicit conversion between the method signature and the delegate type.
+
+         // Assigning a method with a matching signature
+         // to a non-generic delegate. No conversion is necessary.
+         SampleDelegate dNonGeneric = ASecondRFirst;
+         // Assigning a method with a more derived return type
+         // and less derived argument type to a non-generic delegate.
+         // The implicit conversion is used.
+         SampleDelegate dNonGenericConversion = AFirstRSecond;
+
+         // Assigning a method with a matching signature to a generic delegate.
+         // No conversion is necessary.
+         SampleGenericDelegate<Second, First> dGeneric = ASecondRFirst;
+         // Assigning a method with a more derived return type
+         // and less derived argument type to a generic delegate.
+         // The implicit conversion is used.
+         SampleGenericDelegate<Second, First> dGenericConversion = AFirstRSecond;
+
+       For more examples, see Using Variance in Delegates (C#) and Using Variance for Func and Action Generic Delegates (C#).
+
+       VARIANCE IN GENERIC TYPE PARAMETERS
+
+       In .NET Framework 4 or later you can enable implicit conversion between delegates, so that generic delegates that have different types specified by generic type parameters can be assigned to each other, if the types are inherited from each other as required by variance.
+
+       To enable implicit conversion, you must explicitly declare generic parameters in a delegate as covariant or contravariant by using the in or out keyword.
+
+       The following code example shows how you can create a delegate that has a covariant generic type parameter.
+
+         // Type T is declared covariant by using the out keyword.
+         public delegate T SampleGenericDelegate <out T>();
+
+         public static void Test()
+         {
+             SampleGenericDelegate <String> dString = () => " ";
+
+             // You can assign delegates to each other,
+             // because the type T is declared covariant.
+             SampleGenericDelegate <Object> dObject = dString;
+         }
+
+       If you use only variance support to match method signatures with delegate types and do not use the in and out keywords, you may find that sometimes you can instantiate delegates with identical lambda expressions or methods, but you cannot assign one delegate to another.
+
+       In the following code example, SampleGenericDelegate cannot be explicitly converted to SampleGenericDelegate, although String inherits Object. You can fix this problem by marking the generic parameter T with the out keyword.
+
+         public delegate T SampleGenericDelegate<T>();
+
+         public static void Test()
+         {
+             SampleGenericDelegate<String> dString = () => " ";
+
+             // You can assign the dObject delegate
+             // to the same lambda expression as dString delegate
+             // because of the variance support for
+             // matching method signatures with delegate types.
+             SampleGenericDelegate<Object> dObject = () => " ";
+
+             // The following statement generates a compiler error
+             // because the generic type T is not marked as covariant.
+             // SampleGenericDelegate <Object> dObject = dString;
+
+         }
+
+       GENERIC DELEGATES THAT HAVE VARIANT TYPE PARAMETERS IN .NET
+
+       .NET Framework 4 introduced variance support for generic type parameters in several existing generic delegates:
+
+        * Action delegates from the System namespace, for example, Action1 and Action2
+        * Func delegates from the System namespace, for example, Func1 and Func2
+        * The Predicate1 delegate
+        * The Comparison1 delegate
+        * The Converter2 delegate
+       For more information and examples, see Using Variance for Func and Action Generic Delegates (C#).
+
+       DECLARING VARIANT TYPE PARAMETERS IN GENERIC DELEGATES
+
+       If a generic delegate has covariant or contravariant generic type parameters, it can be referred to as a variant generic delegate.
+
+       You can declare a generic type parameter covariant in a generic delegate by using the out keyword. The covariant type can be used only as a method return type and not as a type of method arguments. The following code example shows how to declare a covariant generic delegate.
+
+         public delegate R DCovariant<out R>();
+
+       You can declare a generic type parameter contravariant in a generic delegate by using the in keyword. The contravariant type can be used only as a type of method arguments and not as a method return type. The following code example shows how to declare a contravariant generic delegate.
+
+         public delegate void DContravariant<in A>(A a);
+
+       > ref, in, and out parameters in C# can't be marked as variant.
+       It is also possible to support both variance and covariance in the same delegate, but for different type parameters. This is shown in the following example.
+
+         public delegate R DVariant<in A, out R>(A a);
+
+       INSTANTIATING AND INVOKING VARIANT GENERIC DELEGATES
+
+       You can instantiate and invoke variant delegates just as you instantiate and invoke invariant delegates. In the following example, the delegate is instantiated by a lambda expression.
+
+         DVariant<String, String> dvariant = (String str) => str + " ";
+         dvariant("test");
+
+       COMBINING VARIANT GENERIC DELEGATES
+
+       Don't combine variant delegates. The Combine* method does not support variant delegate conversion and expects delegates to be of exactly the same type. This can lead to a run-time exception when you combine delegates either by using the Combine* method or by using the + operator, as shown in the following code example.
+
+         Action<object> actObj = x => Console.WriteLine("object: {0}", x);
+         Action<string> actStr = x => Console.WriteLine("string: {0}", x);
+         // All of the following statements throw exceptions at run time.
+         // Action<string> actCombine = actStr + actObj;
+         // actStr += actObj;
+         // Delegate.Combine(actStr, actObj);
+
+       VARIANCE IN GENERIC TYPE PARAMETERS FOR VALUE AND REFERENCE TYPES
+
+       Variance for generic type parameters is supported for reference types only. For example, DVariant can't be implicitly converted to DVariant or DVariant, because integer is a value type.
+
+       The following example demonstrates that variance in generic type parameters is not supported for value types.
+
+         // The type T is covariant.
+         public delegate T DVariant<out T>();
+
+         // The type T is invariant.
+         public delegate T DInvariant<T>();
+
+         public static void Test()
+         {
+             int i = 0;
+             DInvariant<int> dInt = () => i;
+             DVariant<int> dVariantInt = () => i;
+
+             // All of the following statements generate a compiler error
+             // because type variance in generic parameters is not supported
+             // for value types, even if generic type parameters are declared variant.
+             // DInvariant<Object> dObject = dInt;
+             // DInvariant<long> dLong = dInt;
+             // DVariant<Object> dVariantObject = dVariantInt;
+             // DVariant<long> dVariantLong = dVariantInt;
+         }
+
+       SEE ALSO
+
+        * Generics
+        * Using Variance for Func and Action Generic Delegates (C#)
+        * How to combine delegates (Multicast Delegates)
+
+C# manual                               from the official documentation

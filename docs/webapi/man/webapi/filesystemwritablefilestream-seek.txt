@@ -1,0 +1,73 @@
+WEBAPI.FILESYSTEMWRITABLEFILESTREAM-SEEK(1) Sandbox manual WEBAPI.FILESYSTEMWRITABLEFILESTREAM-SEEK(1)
+
+       NAME
+
+       FileSystemWritableFileStream: seek() method - The seek() method of the FileSystemWritableFileStream interface updates the current file cursor offset to the position (in bytes) specified 
+
+       FILESYSTEMWRITABLEFILESTREAM: SEEK() METHOD
+
+       The seek() method of the FileSystemWritableFileStream interface updates the current file cursor offset to the position (in bytes) specified when calling the method.
+
+       SYNTAX
+
+         seek(position)
+
+       PARAMETERS
+
+        * position
+          * : A number specifying the byte position from the beginning of the file.
+
+       RETURN VALUE
+
+       A Promise that returns undefined.
+
+       EXCEPTIONS
+
+        * NotAllowedError DOMException
+          * : Thrown if PermissionStatus.state is not granted.
+        * TypeError
+          * : Thrown if position is not a number or not defined.
+
+       EXAMPLES
+
+       The following asynchronous function opens the 'Save File' picker, which returns a FileSystemFileHandle once a file is selected. From this, a writable stream is created using the FileSystemFileHandle.createWritable() method.
+
+       Next, we write to the stream:
+
+        1. A text string is written to the stream.
+        2. The seek() method is used to put the cursor at the start of the stream.
+        3. A second text string is written to the start of the stream, overwriting the first write.
+       The stream is then closed.
+
+         async function saveFile() {
+           try {
+             // create a new handle
+             const newHandle = await window.showSaveFilePicker();
+
+             // create a FileSystemWritableFileStream to write to
+             const writableStream = await newHandle.createWritable();
+
+             // write our file
+             await writableStream.write("My first file content");
+             await writableStream.seek(0);
+             await writableStream.write("My second file content");
+
+             // close the file and write the contents to disk.
+             await writableStream.close();
+           } catch (err) {
+             console.error(err.name, err.message);
+           }
+         }
+
+       If you run the above function and then open the resulting file created on disk, you should see the text "My second file content".
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File System API
+        * The File System Access API: simplifying access to local files
+
+Web APIs manual                         from the official documentation

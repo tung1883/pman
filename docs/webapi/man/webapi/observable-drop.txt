@@ -1,0 +1,61 @@
+WEBAPI.OBSERVABLE-DROP(1)        Sandbox manual        WEBAPI.OBSERVABLE-DROP(1)
+
+       NAME
+
+       Observable: drop() method - The drop() method of the Observable interface returns a new observable that skips the given number of values at the start of the source obse
+
+       OBSERVABLE: DROP() METHOD
+
+       The drop() method of the Observable interface returns a new observable that skips the given number of values at the start of the source observable.
+
+       SYNTAX
+
+         drop(amount)
+
+       PARAMETERS
+
+        * amount
+          * : The number of values to drop from the start of the source observable. It should be an unsigned integer.
+
+       RETURN VALUE
+
+       A new Observable. When subscribed to, it skips the first amount values emitted by the source observable, then emits the remaining values. If the source completes before emitting amount values, the returned observable completes without emitting any values.
+
+       DESCRIPTION
+
+       Like other observable-returning operators, this method is lazy: calling it creates a new observable without subscribing to the source. Processing starts when the returned observable is subscribed to.
+
+       If amount is 0, all source values are forwarded. Errors from the source are forwarded even while values are being skipped.
+
+       EXAMPLES
+
+       USING DROP()
+
+       This example ignores the first three button clicks, then displays a count of subsequent clicks.
+
+         <button>Click me</button>
+         <p>Click count: 0</p>
+
+         const btn = document.querySelector("button");
+         const para = document.querySelector("p");
+
+         let countValue = 0;
+
+         function increment() {
+           countValue++;
+           para.textContent = `Click count: ${countValue}`;
+         }
+
+         btn.when("click").drop(3).subscribe(increment);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Observable.take()
+        * Using observables
+        * Observable explainer
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,269 @@
+CSHARP.GUIDE-HOW-TO-INITIALIZE-OBJECTS-BY-USING-AN-OBJECT-INITIALIZER(1) Sandbox manual CSHARP.GUIDE-HOW-TO-INITIALIZE-OBJECTS-BY-USING-AN-OBJECT-INITIALIZER(1)
+
+       NAME
+
+       How to initialize objects by using an object initializer (C# Programming Guide) - Learn how to use object initializers to initialize type objects in C# without invoking a constructor. Use an object initializer to define an
+
+       HOW TO INITIALIZE OBJECTS BY USING AN OBJECT INITIALIZER (C# PROGRAMMI
+
+       You can use object initializers to initialize type objects in a declarative manner without explicitly invoking a constructor for the type.
+
+       The following examples show how to use object initializers with named objects. The compiler processes object initializers by first accessing the parameterless instance constructor and then processing the member initializations. Therefore, if the parameterless constructor is declared as private in the class, object initializers that require public access will fail.
+
+       You must use an object initializer if you're defining an anonymous type. For more information, see How to return subsets of element properties in a query.
+
+       EXAMPLE
+
+       The following example shows how to initialize a new StudentName type by using object initializers. This example sets properties in the StudentName type:
+
+         public class HowToObjectInitializers
+         {
+             public static void Main()
+             {
+                 // Declare a StudentName by using the constructor that has two parameters.
+                 StudentName student1 = new StudentName("Craig", "Playstead");
+
+                 // Make the same declaration by using an object initializer and sending
+                 // arguments for the first and last names. The parameterless constructor is
+                 // invoked in processing this declaration, not the constructor that has
+                 // two parameters.
+                 StudentName student2 = new StudentName
+                 {
+                     FirstName = "Craig",
+                     LastName = "Playstead"
+                 };
+
+                 // Declare a StudentName by using an object initializer and sending
+                 // an argument for only the ID property. No corresponding constructor is
+                 // necessary. Only the parameterless constructor is used to process object
+                 // initializers.
+                 StudentName student3 = new StudentName
+                 {
+                     ID = 183
+                 };
+
+                 // Declare a StudentName by using an object initializer and sending
+                 // arguments for all three properties. No corresponding constructor is
+                 // defined in the class.
+                 StudentName student4 = new StudentName
+                 {
+                     FirstName = "Craig",
+                     LastName = "Playstead",
+                     ID = 116
+                 };
+
+                 Console.WriteLine(student1.ToString());
+                 Console.WriteLine(student2.ToString());
+                 Console.WriteLine(student3.ToString());
+                 Console.WriteLine(student4.ToString());
+             }
+             // Output:
+             // Craig  0
+             // Craig  0
+             //   183
+             // Craig  116
+
+             public class StudentName
+             {
+                 // This constructor has no parameters. The parameterless constructor
+                 // is invoked in the processing of object initializers.
+                 // You can test this by changing the access modifier from public to
+                 // private. The declarations in Main that use object initializers will
+                 // fail.
+                 public StudentName() { }
+
+                 // The following constructor has parameters for two of the three
+                 // properties.
+                 public StudentName(string first, string last)
+                 {
+                     FirstName = first;
+                     LastName = last;
+                 }
+
+                 // Properties.
+                 public string? FirstName { get; set; }
+                 public string? LastName { get; set; }
+                 public int ID { get; set; }
+
+                 public override string ToString() => FirstName + "  " + ID;
+             }
+         }
+
+       Object initializers can be used to set indexers in an object. The following example defines a BaseballTeam class that uses an indexer to get and set players at different positions. The initializer can assign players, based on the abbreviation for the position, or the number used for each position baseball scorecards:
+
+         public class HowToIndexInitializer
+         {
+             public class BaseballTeam
+             {
+                 private string[] players = new string[9];
+                 private readonly List<string> positionAbbreviations = new List<string>
+                 {
+                     "P", "C", "1B", "2B", "3B", "SS", "LF", "CF", "RF"
+                 };
+
+                 public string this[int position]
+                 {
+                     // Baseball positions are 1 - 9.
+                     get { return players[position-1]; }
+                     set { players[position-1] = value; }
+                 }
+                 public string this[string position]
+                 {
+                     get { return players[positionAbbreviations.IndexOf(position)]; }
+                     set { players[positionAbbreviations.IndexOf(position)] = value; }
+                 }
+             }
+
+             public static void Main()
+             {
+                 var team = new BaseballTeam
+                 {
+                     ["RF"] = "Mookie Betts",
+                     [4] = "Jose Altuve",
+                     ["CF"] = "Mike Trout"
+                 };
+
+                 Console.WriteLine(team["2B"]);
+             }
+         }
+
+       The next example shows the order of execution of constructor and member initializations using constructor with and without parameter:
+
+         public class ObjectInitializersExecutionOrder
+         {
+             public static void Main()
+             {
+                 new Person { FirstName = "Paisley", LastName = "Smith", City = "Dallas" };
+                 new Dog(2) { Name = "Mike" };
+             }
+
+             public class Dog
+             {
+                 private int age;
+                 private string name;
+
+                 public Dog(int age)
+                 {
+                     Console.WriteLine("Hello from Dog's non-parameterless constructor");
+                     this.age = age;
+                 }
+
+                 public required string Name
+                 {
+                     get { return name; }
+
+                     set
+                     {
+                         Console.WriteLine("Hello from setter of Dog's required property 'Name'");
+                         name = value;
+                     }
+                 }
+             }
+
+             public class Person
+             {
+                 private string firstName;
+                 private string lastName;
+                 private string city;
+
+                 public Person()
+                 {
+                     Console.WriteLine("Hello from Person's parameterless constructor");
+                 }
+
+                 public required string FirstName
+                 {
+                     get { return firstName; }
+
+                     set
+                     {
+                         Console.WriteLine("Hello from setter of Person's required property 'FirstName'");
+                         firstName = value;
+                     }
+                 }
+
+                 public string LastName
+                 {
+                     get { return lastName; }
+
+                     init
+                     {
+                         Console.WriteLine("Hello from setter of Person's init property 'LastName'");
+                         lastName = value;
+                     }
+                 }
+
+                 public string City
+                 {
+                     get { return city; }
+
+                     set
+                     {
+                         Console.WriteLine("Hello from setter of Person's property 'City'");
+                         city = value;
+                     }
+                 }
+             }
+
+             // Output:
+             // Hello from Person's parameterless constructor
+             // Hello from setter of Person's required property 'FirstName'
+             // Hello from setter of Person's init property 'LastName'
+             // Hello from setter of Person's property 'City'
+             // Hello from Dog's non-parameterless constructor
+             // Hello from setter of Dog's required property 'Name'
+         }
+
+       OBJECT INITIALIZERS WITHOUT THE NEW KEYWORD
+
+       You can also use object initializer syntax without the new keyword to initialize properties of nested objects. This syntax is particularly useful with read-only properties:
+
+         public class ObjectInitializerWithoutNew
+         {
+             public class Address
+             {
+                 public string Street { get; set; } = "";
+                 public string City { get; set; } = "";
+                 public string State { get; set; } = "";
+             }
+
+             public class Person
+             {
+                 public string Name { get; set; } = "";
+                 public Address HomeAddress { get; set; } = new(); // Property with setter
+             }
+
+             public static void Examples()
+             {
+                 // Example 1: Using object initializer WITHOUT 'new' keyword
+                 // This modifies the existing Address instance created in the constructor
+                 var person1 = new Person
+                 {
+                     Name = "Alice",
+                     HomeAddress = { Street = "123 Main St", City = "Anytown", State = "CA" }
+                 };
+
+                 // Example 2: Using object initializer WITH 'new' keyword
+                 // This creates a completely new Address instance
+                 var person2 = new Person
+                 {
+                     Name = "Bob",
+                     HomeAddress = new Address { Street = "456 Oak Ave", City = "Somewhere", State = "NY" }
+                 };
+
+                 // Both approaches work, but they behave differently:
+                 // - person1.HomeAddress is the same instance that was created in Person's constructor
+                 // - person2.HomeAddress is a new instance, replacing the one from the constructor
+
+                 Console.WriteLine($"Person 1: {person1.Name} at {person1.HomeAddress.Street}, {person1.HomeAddress.City}, {person1.HomeAddress.State}");
+                 Console.WriteLine($"Person 2: {person2.Name} at {person2.HomeAddress.Street}, {person2.HomeAddress.City}, {person2.HomeAddress.State}");
+             }
+         }
+
+       This approach modifies the existing instance of the nested object rather than creating a new one. For more details and examples, see Object Initializers with class-typed properties.
+
+       SEE ALSO
+
+        * Object and Collection Initializers
+
+C# manual                               from the official documentation

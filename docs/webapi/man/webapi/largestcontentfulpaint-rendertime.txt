@@ -1,0 +1,51 @@
+WEBAPI.LARGESTCONTENTFULPAINT-RENDERTIME(1) Sandbox manual WEBAPI.LARGESTCONTENTFULPAINT-RENDERTIME(1)
+
+       NAME
+
+       LargestContentfulPaint: renderTime property - The renderTime read-only property of the LargestContentfulPaint interface represents the time that the element was rendered to the screen.
+
+       LARGESTCONTENTFULPAINT: RENDERTIME PROPERTY
+
+       The renderTime read-only property of the LargestContentfulPaint interface represents the time that the element was rendered to the screen.
+
+       VALUE
+
+       The renderTime property can have the following values:
+
+        * A timestamp representing the time in milliseconds that the element was rendered to the screen.
+        * 0 or a coarsened timestamp if the resource is a cross-origin request and no Timing-Allow-Origin HTTP response header is used.
+
+       CROSS-ORIGIN IMAGE RENDER TIME
+
+       For security reasons, the value of the renderTime property was originally 0 if the resource is a cross-origin request.
+
+       Browsers may now expose a slightly coarsened render time in these situations. Check for browser support.
+
+       To expose more accurate cross-origin render-time information, the Timing-Allow-Origin HTTP response header needs to be set.
+
+       For example, to allow https://developer.mozilla.org to see an accurate renderTime, the cross-origin resource should send:
+
+         Timing-Allow-Origin: https://developer.mozilla.org
+
+       USE STARTTIME OVER RENDERTIME
+
+       Regardless of the accuracy of the renderTime, developers should use startTime over renderTime as the LCP time. This returns the value of the entry's renderTime if it is not 0, and otherwise the value of this entry's loadTime so removes the need to check for 0 values for non-supporting browsers.
+
+       EXAMPLES
+
+       LOGGING THE RENDERTIME OF THE LARGEST CONTENTFUL PAINT
+
+       This example uses a PerformanceObserver notifying of new largest-contentful-paint performance entries as they are recorded in the browser's performance timeline. The buffered option is used to access entries from before the observer creation.
+
+         const observer = new PerformanceObserver((list) => {
+           const entries = list.getEntries();
+           const lastEntry = entries[entries.length - 1]; // Use the latest LCP candidate
+           console.log(lastEntry.renderTime);
+         });
+         observer.observe({ type: "largest-contentful-paint", buffered: true });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

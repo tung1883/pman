@@ -1,0 +1,379 @@
+DEBREF.CH05-NETWORK-SETUP(1)     Sandbox manual     DEBREF.CH05-NETWORK-SETUP(1)
+
+       CHAPTER 5. NETWORK SETUP
+
+         Tip
+       For modern Debian specific guide to the networking, read The Debian Administrator's Handbook — Configuring the Network.
+
+         Tip
+       Under systemd, networkd may be used to manage networks. See systemd-networkd(8).
+
+       5.1. THE BASIC NETWORK INFRASTRUCTURE
+
+       Let's review the basic network infrastructure on the modern Debian system.
+
+       Table 5.1. List of network configuration tools
+
+         packages | popcon | size | type | description
+         network-manager | V:422, I:469 | 7021 | config::NM | NetworkManager (daemon): manage the network automatically
+         network-manager-gnome | V:39, I:156 | 18 | config::NM | NetworkManager (GNOME frontend)
+         netplan.io | V:1.4, I:8.6 | 340 | config::NM+networkd | Netplan (generator): Unified, declarative interface to NetworkManager and systemd-networkd backends
+         ifupdown | V:640, I:972 | 201 | config::ifupdown | standardized tool to bring up and down the network (Debian specific)
+         pppoeconf | V:0.2, I:4.0 | 176 | config::helper | configuration helper for PPPoE connection
+         wpasupplicant | V:411, I:513 | 3896 | config::helper | client support for WPA and WPA2 (IEEE 802.11i)
+         wpagui | V:0.2, I:1.4 | 779 | config::helper | Qt GUI client for wpa_supplicant
+         wireless-tools | V:190, I:260 | 232 | config::helper | tools for manipulating Linux Wireless Extensions
+         iw | V:38, I:472 | 332 | config::helper | tool for configuring Linux wireless devices
+         iproute2 | V:775, I:987 | 4123 | config::iproute2 | iproute2, IPv6 and other advanced network configuration: ip(8), tc(8), etc
+         iptables | V:382, I:642 | 2408 | config::Netfilter | administration tools for packet filtering and NAT (Netfilter)
+         nftables | V:254, I:872 | 189 | config::Netfilter | administration tools for packet filtering and NAT (Netfilter) (successor to {ip,ip6,arp,eb}tables)
+         iputils-ping | V:198, I:998 | 188 | test | test network reachability of a remote host by hostname or IP address (iproute2)
+         iputils-arping | V:2, I:18 | 53 | test | test network reachability of a remote host specified by the ARP address
+         iputils-tracepath | V:2, I:21 | 50 | test | trace the network path to a remote host
+         ethtool | V:97, I:254 | 1093 | test | display or change Ethernet device settings
+         mtr-tiny | V:4, I:39 | 182 | test::low-level | trace the network path to a remote host (curses)
+         mtr | V:4, I:41 | 231 | test::low-level | trace the network path to a remote host (curses and GTK)
+         gnome-nettool | V:0.5, I:9.1 | 2480 | test::low-level | tools for common network information operations (GNOME)
+         nmap | V:25, I:186 | 4759 | test::low-level | network mapper / port scanner (Nmap, console)
+         tcpdump | V:19, I:177 | 1346 | test::low-level | network traffic analyzer (Tcpdump, console)
+         wireshark | V:4, I:39 | 17068 | test::low-level | network traffic analyzer (Wireshark, GTK)
+         tshark | V:2, I:24 | 433 | test::low-level | network traffic analyzer (console)
+         tcptrace | V:0.2, I:1.7 | 407 | test::low-level | produce a summarization of the connections from tcpdump output
+         dnsutils | V:5, I:156 | 23 | test::low-level | network clients provided with BIND: nslookup(8), nsupdate(8), dig(8)
+         dlint | V:0.1, I:2.1 | 52 | test::low-level | check DNS zone information using nameserver lookups
+         dnstracer | V:0.1, I:1.1 | 63 | test::low-level | trace a chain of DNS servers to the source
+
+       5.1.1. THE HOSTNAME RESOLUTION
+
+       The hostname resolution is currently supported by the NSS (Name Service Switch) mechanism too. The flow of this resolution is the following.
+
+        * The "/etc/nsswitch.conf" file with stanza like "hosts: files dns" dictates the hostname resolution order. (This replaces the old functionality of the "order" stanza in "/etc/host.conf".)
+        * The files method is invoked first. If the hostname is found in the "/etc/hosts" file, it returns all valid addresses for it and exits. (The "/etc/host.conf" file contains "multi on".)
+        * The dns method is invoked. If the hostname is found by the query to the Internet Domain Name System (DNS) identified by the "/etc/resolv.conf" file, it returns all valid addresses for it and exits.
+       A typical workstation may be installed with its host name set to, e.g., "host_name" and its optional domain name set to an empty string. Then, "/etc/hosts" looks like the following.
+
+         127.0.0.1 localhost
+         127.0.1.1 host_name
+
+         # The following lines are desirable for IPv6 capable hosts
+         ::1     localhost ip6-localhost ip6-loopback
+         ff02::1 ip6-allnodes
+         ff02::2 ip6-allrouters
+
+       Each line starts with a IP address and it is followed by the associated hostname.
+
+       The IP address 127.0.1.1 in the second line of this example may not be found on some other Unix-like systems. The Debian Installer creates this entry for a system without a permanent IP address as a workaround for some software (e.g., GNOME) as documented in the bug #719621.
+
+       The host_name matches the hostname defined in the "/etc/hostname" (see Section 3.8.1, “The hostname”).
+
+       For a system with a permanent IP address, that permanent IP address should be used here instead of 127.0.1.1.
+
+       For a system with a permanent IP address and a fully qualified domain name (FQDN) provided by the Domain Name System (DNS), that canonical host_name.domain_name should be used instead of just host_name.
+
+       The "/etc/resolv.conf" is a static file if the resolvconf package is not installed. If installed, it is a symbolic link. Either way, it contains information that initialize the resolver routines. If the DNS is found at IP="192.168.11.1", it contains the following.
+
+         nameserver 192.168.11.1
+
+       The resolvconf package makes this "/etc/resolv.conf" into a symbolic link and manages its contents by the hook scripts automatically.
+
+       For the PC workstation on the typical adhoc LAN environment, the hostname can be resolved via Multicast DNS (mDNS) in addition to the basic files and dns methods.
+
+        * Avahi provides a framework for Multicast DNS Service Discovery on Debian.
+        * It is equivalent of Apple Bonjour / Apple Rendezvous.
+        * The libnss-mdns plugin package provides host name resolution via mDNS for the GNU Name Service Switch (NSS) functionality of the GNU C Library (glibc).
+        * The "/etc/nsswitch.conf" file should have stanza like "hosts: files mdns4_minimal [NOTFOUND=return] dns" (see /usr/share/doc/libnss-mdns/README.Debian for other configurations).
+        * A host name suffixed with the ".local" pseudo-top-level domain is resolved by sending a mDNS query message in a multicast UDP packet using IPv4 address "224.0.0.251" or IPv6 address "FF02::FB".
+         Note
+       The expansion of generic Top-Level Domains (gTLD) in the Domain Name System is underway. Watch out for the name collision when choosing a domain name used only within LAN.
+
+         Note
+       Use of packages such as libnss-resolve together with systemd-resolved, or libnss-myhostname, or libnss-mymachine, with coressponding listings on the "hosts" line in the "/etc/nsswitch.conf" file may override the traditional network configuration discussed in the above. See nss-resolve(8), systemd-resolved(8), nss-myhostname(8), and nss-mymachines(8) for more.
+
+       5.1.2. THE NETWORK INTERFACE NAME
+
+       The systemd uses "Predictable Network Interface Names" such as "enp0s25".
+
+       5.1.3. THE NETWORK ADDRESS RANGE FOR THE LAN
+
+       Let us be reminded of the IPv4 32 bit address ranges in each class reserved for use on the local area networks (LANs) by rfc1918. These addresses are guaranteed not to conflict with any addresses on the Internet proper.
+
+         Note
+       IP address written with colon are IPv6 address, e.g., "::1" for localhost.
+
+       Table 5.2. List of network address ranges
+
+         Class | network addresses | net mask | net mask /bits | number of subnets
+         A | 10.x.x.x | 255.0.0.0 | /8 | 1
+         B | 172.16.x.x — 172.31.x.x | 255.255.0.0 | /16 | 16
+         C | 192.168.0.x — 192.168.255.x | 255.255.255.0 | /24 | 256
+         Note
+       If one of these addresses is assigned to a host, then that host must not access the Internet directly but must access it through a gateway that acts as a proxy for individual services or else does Network Address Translation (NAT). The broadband router usually performs NAT for the consumer LAN environment.
+
+       5.1.4. THE NETWORK DEVICE SUPPORT
+
+       Although most hardware devices are supported by the Debian system, there are some network devices which require DFSG non-free firmware to support them. Please see Section 9.10.5, “Hardware drivers and firmware”.
+
+       5.2. THE MODERN NETWORK CONFIGURATION FOR DESKTOP
+
+       Network interfaces are typically initialized in "networking.service" for the lo interface and "NetworkManager.service" for other interfaces on modern Debian desktop system under systemd.
+
+       Debian can manage the network connection via management daemon software such as NetworkManager (NM) (network-manager and associated packages).
+
+        * They come with their own GUI and command-line programs as their user interfaces.
+        * They come with their own daemon as their backend system.
+        * They allow easy connection of your system to the Internet.
+        * They allow easy management of wired and wireless network configuration.
+        * They allow us to configure network independent of the legacy ifupdown package.
+         Note
+       Do not use these automatic network configuration tools for servers. These are aimed primarily for mobile desktop users on laptops.
+
+       These modern network configuration tools need to be configured properly to avoid conflicting with the legacy ifupdown package and its configuration file "/etc/network/interfaces".
+
+       5.2.1. GUI NETWORK CONFIGURATION TOOLS
+
+       Official documentations for NM on Debian are provided in "/usr/share/doc/network-manager/README.Debian".
+
+       Essentially, the network configuration for desktop is done as follows.
+
+        * Make desktop user, e.g. foo, belong to group "netdev" by the following (Alternatively, do it automatically via D-bus under modern desktop environments such as GNOME and KDE).
+
+         $ sudo usermod -a -G netdev foo
+
+        * Keep configuration of "/etc/network/interfaces" as simple as in the following.
+
+         auto lo
+         iface lo inet loopback
+
+        * Restart NM by the following.
+
+         $ sudo systemctl restart NetworkManager
+
+        * Configure your network via GUI.
+         Note
+       Only interfaces which are not listed in "/etc/network/interfaces" are managed by NM to avoid conflict with ifupdown.
+
+         Tip
+       If you wish to extend network configuration capabilities of NM, please seek appropriate plug-in modules and supplemental packages such as network-manager-openconnect, network-manager-openvpn-gnome, network-manager-pptp-gnome, mobile-broadband-provider-info, gnome-bluetooth, etc.
+
+       5.3. THE MODERN NETWORK CONFIGURATION WITHOUT GUI
+
+       Under systemd, the network may be configured in /etc/systemd/network/ instead. See systemd-resolved(8), resolved.conf(5), and systemd-networkd(8).
+
+       This allows the modern network configuration without GUI.
+
+       A DHCP client configuration can be set up by creating "/etc/systemd/network/dhcp.network". E.g.:
+
+         [Match]
+         Name=en*
+
+         [Network]
+         DHCP=yes
+
+       A static network configuration can be set up by creating "/etc/systemd/network/static.network". E.g.:
+
+         [Match]
+         Name=en*
+
+         [Network]
+         Address=192.168.0.15/24
+         Gateway=192.168.0.1
+
+       5.4. THE MODERN NETWORK CONFIGURATION FOR CLOUD
+
+       The modern network configuration for cloud may use cloud-init and netplan.io packages (see Section 3.8.4, “Cloud system initialization”).
+
+       The netplan.io package supports systemd-networkd and NetworkManager as its network configuration backends, and enables the declarative network configuration using YAML data. When you change YAML:
+
+        * Run "netplan generate" command to generate all the necessary backend configuration from YAML.
+        * Run "netplan apply" command to apply the generated configuration to the backends.
+       See "Netplan documentation", netplan(5), netplan-generate(8), and netplan-apply(8).
+
+       See also "Cloud-init documentation" (especially around "Configuration sources" and "Netplan Passthrough") for how cloud-init can integrate netplan.io configuration with alternative data sources.
+
+       5.4.1. THE MODERN NETWORK CONFIGURATION FOR CLOUD WITH DHCP
+
+       A DHCP client configuration can be set up by creating a data source file "/etc/netplan/50-dhcp.yaml":
+
+         network:
+           version: 2
+           ethernets:
+             all-en:
+               match:
+                 name: "en*"
+               dhcp4: true
+               dhcp6: true
+
+       5.4.2. THE MODERN NETWORK CONFIGURATION FOR CLOUD WITH STATIC IP
+
+       A static network configuration can be set up by creating a data source file "/etc/netplan/50-static.yaml":
+
+         network:
+           version: 2
+           ethernets:
+             eth0:
+               addresses:
+                 - 192.168.0.15/24
+               routes:
+                 - to: default
+                   via: 192.168.0.1
+
+       5.4.3. THE MODERN NETWORK CONFIGURATION FOR CLOUD WITH NETWORK MANAGER
+
+       The network client configuration using Network Manager infrastructure can be set up by creating a data source file "/etc/netplan/00-network-manager.yaml":
+
+         network:
+           version: 2
+           renderer: NetworkManager
+
+       5.5. THE LOW LEVEL NETWORK CONFIGURATION
+
+       For the low level network configuration on Linux, use the iproute2 programs (ip(8), …) .
+
+       5.5.1. IPROUTE2 COMMANDS
+
+       Iproute2 commands offer complete low-level network configuration capabilities. Here is a translation table from obsolete net-tools commands to new iproute2 etc. commands.
+
+       Table 5.3. Translation table from obsolete net-tools commands to new iproute2 commands
+
+         obsolete net-tools | new iproute2 etc. | manipulation
+         ifconfig(8) | ip addr | protocol (IP or IPv6) address on a device
+         route(8) | ip route | routing table entry
+         arp(8) | ip neigh | ARP or NDISC cache entry
+         ipmaddr | ip maddr | multicast address
+         iptunnel | ip tunnel | tunnel over IP
+         nameif(8) | ifrename(8) | name network interfaces based on MAC addresses
+         mii-tool(8) | ethtool(8) | Ethernet device settings
+       See ip(8) and Linux Advanced Routing & Traffic Control.
+
+       5.5.2. SAFE LOW LEVEL NETWORK OPERATIONS
+
+       You may use low level network commands as follows safely since they do not change network configuration.
+
+       Table 5.4. List of low level network commands
+
+         command | description
+         ip addr show | display the link and address status of active interfaces
+         route -n | display all the routing table in numerical addresses
+         ip route show | display all the routing table in numerical addresses
+         arp | display the current content of the ARP cache tables
+         ip neigh | display the current content of the ARP cache tables
+         plog | display ppp daemon log
+         ping yahoo.com | check the Internet connection to "yahoo.com"
+         whois yahoo.com | check who registered "yahoo.com" in the domains database
+         traceroute yahoo.com | trace the Internet connection to "yahoo.com"
+         tracepath yahoo.com | trace the Internet connection to "yahoo.com"
+         mtr yahoo.com | trace the Internet connection to "yahoo.com" (repeatedly)
+         dig [@dns-server.com] example.com [{a|mx|any}] | check DNS records of "example.com" by "dns-server.com" for a "a", "mx", or "any" record
+         iptables -L -n | check packet filter
+         ss -a | find all open ports
+         ss -l | find listening ports
+         ss -l -t -n | find listening TCP ports (numeric)
+         dlint example.com | check DNS zone information of "example.com"
+         Tip
+       Some of these low level network configuration tools reside in "/usr/sbin/". You may need to issue full command path such as "/usr/sbin/ifconfig" or add "/usr/sbin" to the "$PATH" list in your "~/.bashrc".
+
+       5.6. NETWORK OPTIMIZATION
+
+       Generic network optimization is beyond the scope of this documentation. I touch only subjects pertinent to the consumer grade connection.
+
+       Table 5.5. List of network optimization tools
+
+         packages | popcon | size | description
+         iftop | V:6, I:88 | 93 | display bandwidth usage information on an network interface
+         iperf | V:2, I:34 | 431 | Internet Protocol bandwidth measuring tool
+         ifstat | V:0.6, I:5.5 | 52 | InterFace STATistics Monitoring
+         bmon | V:2, I:20 | 141 | portable bandwidth monitor and rate estimator
+         ethstatus | V:0.2, I:2.6 | 41 | script that quickly measures network device throughput
+         bing | V:0.07, I:0.50 | 80 | empirical stochastic bandwidth tester
+         bwm-ng | V:1.0, I:9.6 | 95 | small and simple console-based bandwidth monitor
+         ethstats | V:0.05, I:0.39 | 21 | console-based Ethernet statistics monitor
+         ipfm | V:0.04, I:0.11 | 78 | bandwidth analysis tool
+
+       5.6.1. FINDING OPTIMAL MTU
+
+       NM normally sets optimal Maximum Transmission Unit (MTU) automatically.
+
+       In some occasion, you may wish to set MTU manually after experiments with ping(8) with "-M do" option to send a ICMP packet with various data packet size. MTU is the maximum succeeding data packet size without IP fragmentation plus 28 bytes for the IPv4 and plus 48 bytes for the IPv6. For example the following finds MTU for IPv4 connection to be 1460 and MTU for IPv6 connection to be 1500.
+
+         $ ping -4 -c 1 -s $((1500-28)) -M do www.debian.org
+         PING  (149.20.4.15) 1472(1500) bytes of data.
+         ping: local error: message too long, mtu=1460
+
+         ---  ping statistics ---
+         1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+
+         $ ping -4 -c 1 -s $((1460-28)) -M do www.debian.org
+         PING  (130.89.148.77) 1432(1460) bytes of data.
+         1440 bytes from klecker-misc.debian.org (130.89.148.77): icmp_seq=1 ttl=50 time=325 ms
+
+         ---  ping statistics ---
+         1 packets transmitted, 1 received, 0% packet loss, time 0ms
+         rtt min/avg/max/mdev = 325.318/325.318/325.318/0.000 ms
+         $ ping -6 -c 1 -s $((1500-48)) -M do www.debian.org
+         PING www.debian.org(mirror-csail.debian.org (2603:400a:ffff:bb8::801f:3e)) 1452 data bytes
+         1460 bytes from mirror-csail.debian.org (2603:400a:ffff:bb8::801f:3e): icmp_seq=1 ttl=47 time=191 ms
+
+         --- www.debian.org ping statistics ---
+         1 packets transmitted, 1 received, 0% packet loss, time 0ms
+         rtt min/avg/max/mdev = 191.332/191.332/191.332/0.000 ms
+
+       This process is Path MTU (PMTU) discovery (RFC1191) and the tracepath(8) command can automate this.
+
+       Table 5.6. Basic guide lines of the optimal MTU value
+
+         network environment | MTU | rationale
+         Dial-up link (IP: PPP) | 576 | standard
+         Ethernet link (IP: DHCP or fixed) | 1500 | standard and default
+       In addition to these basic guide lines, you should know the following.
+
+        * Any use of tunneling methods (VPN etc.) may reduce optimal MTU further by their overheads.
+        * The MTU value should not exceed the experimentally determined PMTU value.
+        * The bigger MTU value is generally better when other limitations are met.
+       The maximum segment size (MSS) is used as an alternative measure of packet size. The relationship between MSS and MTU are the following.
+
+        * MSS = MTU - 40 for IPv4
+        * MSS = MTU - 60 for IPv6
+         Note
+       The iptables(8) (see Section 5.7, “Netfilter infrastructure”) based optimization can clamp packet size by the MSS and is useful for the router. See "TCPMSS" in iptables(8).
+
+       5.6.2. WAN TCP OPTIMIZATION
+
+       The TCP throughput can be maximized by adjusting TCP buffer size parameters as in "TCP tuning" for the modern high-bandwidth and high-latency WAN. So far, the current Debian default settings serve well even for my LAN connected by the fast 1G bps FTTP service.
+
+       5.7. NETFILTER INFRASTRUCTURE
+
+       Netfilter provides infrastructure for stateful firewall and network address translation (NAT) with Linux kernel modules (see Section 3.10, “The kernel module initialization”).
+
+       Table 5.7. List of firewall tools
+
+         packages | popcon | size | description
+         nftables | V:254, I:872 | 189 | administration tools for packet filtering and NAT (Netfilter) (successor to {ip,ip6,arp,eb}tables)
+         iptables | V:382, I:642 | 2408 | administration tools for netfilter (iptables(8) for IPv4, ip6tables(8) for IPv6)
+         arptables | V:0.1, I:1.8 | 102 | administration tools for netfilter (arptables(8) for ARP)
+         ebtables | V:14, I:24 | 276 | administration tools for netfilter (ebtables(8) for Ethernet bridging)
+         iptstate | V:0.2, I:1.7 | 121 | continuously monitor netfilter state (similar to top(1))
+         ufw | V:82, I:109 | 862 | Uncomplicated Firewall (UFW) is a program for managing a netfilter firewall
+         gufw | V:6, I:11 | 3682 | graphical user interface for Uncomplicated Firewall (UFW)
+         firewalld | V:14, I:22 | 2581 | firewalld is a dynamically managed firewall program with support for network zones
+         firewall-config | V:0.7, I:3.3 | 1096 | graphical user interface for firewalld
+         shorewall-init | V:0.18, I:0.40 | 88 | Shoreline Firewall initialization
+         shorewall | V:2.2, I:5.0 | 3090 | Shoreline Firewall, netfilter configuration file generator
+         shorewall-lite | V:0.02, I:0.06 | 71 | Shoreline Firewall, netfilter configuration file generator (light version)
+         shorewall6 | V:0.7, I:1.3 | 1334 | Shoreline Firewall, netfilter configuration file generator (IPv6 version)
+         shorewall6-lite | V:0.01, I:0.02 | 71 | Shoreline Firewall, netfilter configuration file generator (IPv6, light version)
+       See The netfilter.org "nftables" project for the newer user space nft(8) command in the nftables package. (Linux kernel >= 3.13)
+
+       See The netfilter.org "iptables" project for the older user space iptables(8) and similar commands in the iptables and similar packages. (Linux kernel >= 2.4.x)
+
+       You can manually configure netfilter interactively from shell, save its state with "nft list ruleset > file" or iptables-save(8), and restore it via init script with "nft -f file" or iptables-restore(8) upon system reboot.
+
+       Configuration helper scripts such as shorewall ease this process.
+
+       See documentations at Netfilter Documentation (or in "/usr/share/doc/iptables/html/").
+
+        * Linux Networking-concepts HOWTO
+        * Linux 2.4 Packet Filtering HOWTO
+        * Linux 2.4 NAT HOWTO
+        * nftables HOWTO
+
+Debian Reference manual                 bundled documentation

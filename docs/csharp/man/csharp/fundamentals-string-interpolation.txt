@@ -1,0 +1,119 @@
+CSHARP.FUNDAMENTALS-STRING-INTERPOLATION(1) Sandbox manual CSHARP.FUNDAMENTALS-STRING-INTERPOLATION(1)
+
+       NAME
+
+       Tutorial: Use string interpolation to build a report in C\# - Build a small report in C# with string interpolation to format and align expression results in a result string.
+
+       TUTORIAL: USE STRING INTERPOLATION TO BUILD A REPORT IN C #
+
+       In this tutorial, you build a small file-based app that prints a formatted order summary. Along the way, you apply string interpolation to insert values into text, format numbers and currency, line up columns, and produce culture-specific output.
+
+       This tutorial assumes that you're familiar with basic C# concepts. For a feature-by-feature reference of interpolation syntax, see String interpolation.
+
+       PREREQUISITES
+
+        * The .NET 10 SDK or a later version. File-based apps require .NET 10 or later.
+        * A code editor, such as Visual Studio Code.
+
+       CREATE THE APP
+
+       A file-based app is a single .cs file that you run without a project file. Create a folder for the app and move into it:
+
+         mkdir StringInterpolation
+         cd StringInterpolation
+
+       Create an empty file named report.cs in that folder and open it in your editor. You add code to it in the sections that follow, and you run the app with dotnet run report.cs.
+
+       INSERT VALUES INTO TEXT
+
+       Prefix a string literal with $ to make it an interpolated string. Inside the string, put any C# expression in braces ({ and }); C# evaluates the expression, converts the result to a string, and inserts it.
+
+       Add the following code to report.cs, then run the app with dotnet run report.cs:
+
+         string name = "Maria";
+         int itemCount = 3;
+
+         // Prefix a string literal with $ to interpolate expressions inside braces.
+         Console.WriteLine($"Hello, {name}! You have {itemCount} items in your cart.");
+         // => Hello, Maria! You have 3 items in your cart.
+
+       The result combines the literal text with the values of name and itemCount.
+
+       FORMAT NUMBERS AND CURRENCY
+
+       An order summary shows money and rates, so raw numbers like 23.5 or 0.08 look unfinished and hard to read. Present each value the way a customer expects: a price with a currency symbol and a tax rate as a percentage. Format it as part of the interpolation.
+
+       To format a value, follow the expression with a colon (:) and a format string. The standard format strings C and P0 produce currency and whole-number percentages. Add the following code to the end of the file:
+
+         decimal subtotal = 23.5m;
+         decimal taxRate = 0.08m;
+
+         // Follow an expression with :format to apply a standard or custom format string.
+         Console.WriteLine($"Subtotal: {subtotal:C}");
+         Console.WriteLine($"Tax rate: {taxRate:P0}");
+         Console.WriteLine($"Total:    {subtotal * (1 + taxRate):C}");
+         // => Subtotal: $23.50
+         // => Tax rate: 8%
+         // => Total:    $25.38
+
+       The format string applies the conventions of the current culture, so the currency symbol and separators match the machine's settings.
+
+       ALIGN VALUES INTO COLUMNS
+
+       When you print several rows of data, values of different lengths leave the columns ragged and hard to scan. To line up each name and number under a consistent heading, give every field a fixed width so the columns stay straight no matter how long each value is.
+
+       To set a minimum field width, follow the expression with a comma (,) and the width. A positive width right-aligns the value; a negative width left-aligns it. Combine width and a format string as {expression,width:format}. Add the following code to print a tabular summary:
+
+         (string Name, int Quantity, decimal Price)[] orders =
+         [
+             ("Espresso", 2, 3.50m),
+             ("Cappuccino", 1, 4.25m),
+             ("Tea", 4, 2.00m),
+         ];
+
+         // Follow an expression with ,width to set a minimum field width.
+         // A positive width right-aligns; a negative width left-aligns.
+         foreach (var order in orders)
+         {
+             Console.WriteLine($"{order.Name,-12}{order.Quantity,3}{order.Price * order.Quantity,10:C}");
+         }
+         // => Espresso      2     $7.00
+         // => Cappuccino    1     $4.25
+         // => Tea           4     $8.00
+
+       The left-aligned name column and right-aligned numeric columns line up into a readable table.
+
+       PRODUCE CULTURE-SPECIFIC OUTPUT
+
+       An interpolated string uses the current culture by default. When you need a specific culture, such as a fixed format for logs or a locale for a receipt, pass a culture to DefaultInterpolatedStringHandler@). Add the following code:
+
+         decimal total = 1234.56m;
+
+         // An interpolated string uses the current culture by default.
+         // Use string.Create with a culture to control the formatting explicitly.
+         string germanReceipt = string.Create(
+             new CultureInfo("de-DE"), $"Gesamt: {total:C}");
+         string invariantLog = string.Create(
+             CultureInfo.InvariantCulture, $"total={total:F2}");
+
+         Console.WriteLine(germanReceipt);
+         Console.WriteLine(invariantLog);
+         // => Gesamt: 1.234,56 €
+         // => total=1234.56
+
+       The German receipt uses a comma as the decimal separator and the euro symbol. The invariant log uses a period and no symbol, regardless of the machine's culture.
+
+       NEXT STEPS
+
+       You used string interpolation to insert, format, align, and localize values. For the full set of interpolation features, including raw string literals, escaped braces, and constant interpolated strings, see the concept article:
+
+       > String interpolation in C#
+
+       SEE ALSO
+
+        * String interpolation in C#
+        * Composite formatting
+        * Formatting types in .NET
+        * Format*
+
+C# manual                               from the official documentation

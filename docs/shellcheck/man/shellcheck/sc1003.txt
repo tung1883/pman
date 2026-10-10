@@ -1,0 +1,33 @@
+SHELLCHECK.SC1003(1)             Sandbox manual             SHELLCHECK.SC1003(1)
+
+       NAME
+
+       Want to escape a single quote? echo 'This is how it'\''s done'. - (Note: in v0.4.6, the error message was accidentally missing the backslash)
+
+       WANT TO ESCAPE A SINGLE QUOTE ECHO 'THIS IS HOW IT' ''S DONE'
+
+       WANT TO ESCAPE A SINGLE QUOTE ECHO 'THIS IS HOW IT' ''S DONE'
+
+       (Note: in v0.4.6, the error message was accidentally missing the backslash)
+
+       PROBLEMATIC CODE
+
+         echo 'This is not how it\'s done'.
+
+       CORRECT CODE
+
+         echo 'This is how it'\''s done'.
+
+       RATIONALE
+
+       In POSIX shell, the shell cares about nothing but another single-quote to terminate the quoted segment. Not even backslashes are interpreted.
+
+       POSIX.1 Shell Command Language § 2.2.2 Single Quotes:
+
+       > Enclosing characters in single-quotes ( '' ) shall preserve the literal value of each character within the single-quotes. A single-quote cannot occur within single-quotes.
+
+       EXCEPTIONS
+
+       If you want your single-quoted string to end in a backslash, you can rewrite as 'string'\\ or [[ignore]] this warning.
+
+ShellCheck manual                       from the official documentation

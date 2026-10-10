@@ -1,0 +1,61 @@
+WEBAPI.CRYPTOKEY-EXTRACTABLE(1)  Sandbox manual  WEBAPI.CRYPTOKEY-EXTRACTABLE(1)
+
+       NAME
+
+       CryptoKey: extractable property - The read-only extractable property of the CryptoKey interface indicates whether or not the key may be extracted using SubtleCrypto.exportKey
+
+       CRYPTOKEY: EXTRACTABLE PROPERTY
+
+       The read-only extractable property of the CryptoKey interface indicates whether or not the key may be extracted using SubtleCrypto.exportKey() or SubtleCrypto.wrapKey().
+
+       If the key cannot be exported, exportKey() or wrapKey() will throw an exception if used to extract it.
+
+       VALUE
+
+       A boolean value that is true if the key can be exported and false if not.
+
+       EXAMPLES
+
+       In this example, the _Export_ button is disabled, and no listener added, if the key cannot be exported.
+
+         // Export the given key and write it into the "exported-key" space.
+         async function exportCryptoKey(key) {
+           const exported = await window.crypto.subtle.exportKey("raw", key);
+           const exportedKeyBuffer = new Uint8Array(exported);
+
+           const exportKeyOutput = document.querySelector(".exported-key");
+           exportKeyOutput.textContent = `[${exportedKeyBuffer}]`;
+         }
+
+         // Enable or disable the exportButton if the key is extractable or not
+         function setExportButton(key) {
+           const exportButton = document.querySelector(".raw");
+
+           // Disable the button if the key is not extractable
+           exportButton.disabled = !key.extractable;
+           if (key.extractable) {
+             // Add an event listener to extract the key
+             exportButton.addEventListener("click", () => {
+               exportCryptoKey(key);
+             });
+           }
+         }
+
+         // Generate an encrypt/decrypt secret key,
+         // then enable and set up an event listener on the "Export" button.
+         window.crypto.subtle
+           .generateKey(
+             {
+               name: "AES-GCM",
+               length: 256,
+             },
+             true,
+             ["encrypt", "decrypt"],
+           )
+           .then(setExportButton(key));
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

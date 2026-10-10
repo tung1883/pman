@@ -1,0 +1,78 @@
+WEBAPI.AUDIOWORKLETNODE(1)       Sandbox manual       WEBAPI.AUDIOWORKLETNODE(1)
+
+       NAME
+
+       AudioWorkletNode - > [!NOTE]
+
+       AUDIOWORKLETNODE
+
+       > Although the interface is available outside secure contexts, the BaseAudioContext.audioWorklet property is not, thus custom AudioWorkletProcessors cannot be defined outside them.
+       The AudioWorkletNode interface of the Web Audio API represents a base class for a user-defined AudioNode, which can be connected to an audio routing graph along with other nodes. It has an associated AudioWorkletProcessor, which does the actual audio processing in a Web Audio rendering thread.
+
+       CONSTRUCTOR
+
+        * AudioWorkletNode()
+          * : Creates a new instance of an AudioWorkletNode object.
+
+       INSTANCE PROPERTIES
+
+       _Also Inherits properties from its parent, AudioNode_.
+
+        * AudioWorkletNode.port (read-only)
+          * : Returns a MessagePort used for bidirectional communication between the node and its associated AudioWorkletProcessor. The other end is available under the port property of the processor.
+        * AudioWorkletNode.parameters (read-only)
+          * : Returns an AudioParamMap — a collection of AudioParam objects. They are instantiated during the creation of the underlying AudioWorkletProcessor. If the AudioWorkletProcessor has a static parameterDescriptors getter, the AudioParamDescriptor array returned from it is used to create AudioParam objects on the AudioWorkletNode. With this mechanism it is possible to make your own AudioParam objects accessible from your AudioWorkletNode. You can then use their values in the associated AudioWorkletProcessor.
+
+       EVENTS
+
+        * processorerror
+          * : Fired when an error is thrown in associated AudioWorkletProcessor. Once fired, the processor and consequently the node will output silence throughout its lifetime.
+
+       INSTANCE METHODS
+
+       _Also inherits methods from its parent, AudioNode_.
+
+       _The AudioWorkletNode interface does not define any methods of its own._
+
+       EXAMPLES
+
+       In this example we create a custom AudioWorkletNode that outputs random noise.
+
+       First, we need to define a custom AudioWorkletProcessor, which will output random noise, and register it. Note that this should be done in a separate file.
+
+         // random-noise-processor.js
+         class RandomNoiseProcessor extends AudioWorkletProcessor {
+           process(inputs, outputs, parameters) {
+             const output = outputs[0];
+             output.forEach((channel) => {
+               for (let i = 0; i < channel.length; i++) {
+                 channel[i] = Math.random() * 2 - 1;
+               }
+             });
+             return true;
+           }
+         }
+
+         registerProcessor("random-noise-processor", RandomNoiseProcessor);
+
+       Next, in our main script file we'll load the processor, create an instance of AudioWorkletNode passing it the name of the processor, and connect the node to an audio graph.
+
+         const audioContext = new AudioContext();
+         await audioContext.audioWorklet.addModule("random-noise-processor.js");
+         const randomNoiseNode = new AudioWorkletNode(
+           audioContext,
+           "random-noise-processor",
+         );
+         randomNoiseNode.connect(audioContext.destination);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Audio API
+        * Using the Web Audio API
+        * Using AudioWorklet
+
+Web APIs manual                         from the official documentation

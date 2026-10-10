@@ -1,0 +1,64 @@
+WEBAPI.SVGTRANSFORMLIST-CREATESVGTRANSFORMFROMMATRIX(1) Sandbox manual WEBAPI.SVGTRANSFORMLIST-CREATESVGTRANSFORMFROMMATRIX(1)
+
+       NAME
+
+       SVGTransformList: createSVGTransformFromMatrix() method - The createSVGTransformFromMatrix() method of the SVGTransformList interface creates an SVGTransform object which is initialized to a transfo
+
+       SVGTRANSFORMLIST: CREATESVGTRANSFORMFROMMATRIX() METHOD
+
+       The createSVGTransformFromMatrix() method of the SVGTransformList interface creates an SVGTransform object which is initialized to a transform of type SVG_TRANSFORM_MATRIX and whose values are the given matrix.
+
+       The values from the parameter matrix are copied; the matrix parameter is not adopted as SVGTransform::matrix.
+
+       SYNTAX
+
+         createSVGTransformFromMatrix(matrix)
+
+       PARAMETERS
+
+        * matrix
+          * : A DOMMatrix object; the transformation matrix.
+
+       RETURN VALUE
+
+       An SVGTransform object.
+
+       EXAMPLES
+
+       CREATING A TRANSFORMATION FROM A MATRIX
+
+         <svg width="200" height="200">
+           <rect width="100" height="100" fill="blue" />
+         </svg>
+
+         const svgElement = document.querySelector("svg");
+         const rectElement = svgElement.querySelector("rect");
+
+         // Access the transform list of the <rect> element
+         const transformList = rectElement.transform.baseVal;
+
+         // Create a DOMMatrix object for a rotation transformation
+         const rotationMatrix = new DOMMatrix();
+         rotationMatrix.a = Math.cos(Math.PI / 4); // 45-degree rotation
+         rotationMatrix.b = Math.sin(Math.PI / 4);
+         rotationMatrix.c = -Math.sin(Math.PI / 4);
+         rotationMatrix.d = Math.cos(Math.PI / 4);
+
+         // Create an SVGTransform object from the matrix
+         const svgTransform = transformList.createSVGTransformFromMatrix(rotationMatrix);
+
+         // Append the new transformation to the transform list
+         transformList.appendItem(svgTransform);
+
+         console.dir(svgTransform); // Output: SVGTransform { type: 1, matrix: SVGMatrix, angle: 0 }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * SVGTransform
+        * DOMMatrix
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,593 @@
+DEBREF.CH11-DATA-CONVERSION(1)   Sandbox manual   DEBREF.CH11-DATA-CONVERSION(1)
+
+       CHAPTER 11. DATA CONVERSION
+
+       Tools and tips for converting data formats on the Debian system are described.
+
+       Standard based tools are in very good shape but support for proprietary data formats are limited.
+
+       11.1. TEXT DATA CONVERSION TOOLS
+
+       Following packages for the text data conversion caught my eyes.
+
+       Table 11.1. List of text data conversion tools
+
+         package | popcon | size | keyword | description
+         libc6 | V:942, I:1000 | 5481 | charset | text encoding converter between locales by iconv(1) (fundamental)
+         recode | V:2, I:13 | 528 | charset+eol | text encoding converter between locales (versatile, more aliases and features)
+         konwert | V:2, I:42 | 137 | charset | text encoding converter between locales (fancy)
+         nkf | V:0.4, I:8.5 | 360 | charset | character set translator for Japanese
+         tcs | V:0.01, I:0.14 | 518 | charset | character set translator
+         unaccent | V:0.03, I:0.28 | 35 | charset | replace accented letters by their unaccented equivalent
+         tofrodos | V:1, I:12 | 50 | eol | text format converter between DOS and Unix: fromdos(1) and todos(1)
+         macutils | V:0.04, I:0.43 | 319 | eol | text format converter between Macintosh and Unix: frommac(1) and tomac(1)
+
+       11.1.1. CONVERTING A TEXT FILE WITH ICONV
+
+         Tip
+       iconv(1) is provided as a part of the libc6 package and it is always available on practically all Unix-like systems to convert the encoding of characters.
+
+       You can convert encodings of a text file with iconv(1) by the following.
+
+         $ iconv -f encoding1 -t encoding2 input.txt >output.txt
+
+       Encoding values are case insensitive and ignore "-" and "_" for matching. Supported encodings can be checked by the "iconv -l" command.
+
+       Table 11.2. List of encoding values and their usage
+
+         encoding value | usage
+         ASCII | American Standard Code for Information Interchange, 7 bit code w/o accented characters
+         UTF-8 | current multilingual standard for all modern OSs
+         ISO-8859-1 | old standard for western European languages, ASCII + accented characters
+         ISO-8859-2 | old standard for eastern European languages, ASCII + accented characters
+         ISO-8859-15 | old standard for western European languages, ISO-8859-1 with euro sign
+         CP850 | code page 850, Microsoft DOS characters with graphics for western European languages, ISO-8859-1 variant
+         CP932 | code page 932, Microsoft Windows style Shift-JIS variant for Japanese
+         CP936 | code page 936, Microsoft Windows style GB2312, GBK or GB18030 variant for Simplified Chinese
+         CP949 | code page 949, Microsoft Windows style EUC-KR or Unified Hangul Code variant for Korean
+         CP950 | code page 950, Microsoft Windows style Big5 variant for Traditional Chinese
+         CP1251 | code page 1251, Microsoft Windows style encoding for the Cyrillic alphabet
+         CP1252 | code page 1252, Microsoft Windows style ISO-8859-15 variant for western European languages
+         KOI8-R | old Russian UNIX standard for the Cyrillic alphabet
+         ISO-2022-JP | standard encoding for Japanese email which uses only 7 bit codes
+         eucJP | old Japanese UNIX standard 8 bit code and completely different from Shift-JIS
+         Shift-JIS | JIS X 0208 Appendix 1 standard for Japanese (see CP932)
+         Note
+       Some encodings are only supported for the data conversion and are not used as locale values (Section 8.1, “The locale”).
+
+       For character sets which fit in single byte such as ASCII and ISO-8859 character sets, the character encoding means almost the same thing as the character set.
+
+       For character sets with many characters such as JIS X 0213 for Japanese or Universal Character Set (UCS, Unicode, ISO-10646-1) for practically all languages, there are many encoding schemes to fit them into the sequence of the byte data.
+
+        * EUC and ISO/IEC 2022 (also known as JIS X 0202) for Japanese
+        * UTF-8, UTF-16/UCS-2 and UTF-32/UCS-4 for Unicode
+       For these, there are clear differentiations between the character set and the character encoding.
+
+       The code page is used as the synonym to the character encoding tables for some vendor specific ones.
+
+         Note
+       Please note most encoding systems share the same code with ASCII for the 7 bit characters. But there are some exceptions. If you are converting old Japanese C programs and URLs data from the casually-called shift-JIS encoding format to UTF-8 format, use "CP932" as the encoding name instead of "shift-JIS" to get the expected results: 0x5C → "\" and 0x7E → "~". Otherwise, these are converted to wrong characters.
+
+         Tip
+       recode(1) may be used too and offers more than the combined functionality of iconv(1), fromdos(1), todos(1), frommac(1), and tomac(1). For more, see "info recode".
+
+       11.1.2. CHECKING FILE TO BE UTF-8 WITH ICONV
+
+       You can check if a text file is encoded in UTF-8 with iconv(1) by the following.
+
+         $ iconv -f utf8 -t utf8 input.txt >/dev/null || echo "non-UTF-8 found"
+
+         Tip
+       Use "--verbose" option in the above example to find the first non-UTF-8 character.
+
+       11.1.3. CONVERTING FILE NAMES WITH ICONV
+
+       Here is an example script to convert encoding of file names from ones created under older OS to modern UTF-8 ones in a single directory.
+
+         #!/bin/sh
+         ENCDN=iso-8859-1
+         for x in *;
+          do
+          mv "$x" "$(echo "$x" | iconv -f $ENCDN -t utf-8)"
+         done
+
+       The "$ENCDN" variable specifies the original encoding used for file names under older OS as in Table 11.2, “List of encoding values and their usage”.
+
+       For more complicated case, please mount a filesystem (e.g. a partition on a disk drive) containing such file names with proper encoding as the mount(8) option (see Section 8.1.3, “Filename encoding”) and copy its entire contents to another filesystem mounted as UTF-8 with "cp -a" command.
+
+       11.1.4. EOL CONVERSION
+
+       The text file format, specifically the end-of-line (EOL) code, is dependent on the platform.
+
+       Table 11.3. List of EOL styles for different platforms
+
+         platform | EOL code | control | decimal | hexadecimal
+         Debian (unix) | LF | ^J | 10 | 0A
+         MSDOS and Windows | CR-LF | ^M^J | 13 10 | 0D 0A
+         Apple's Macintosh | CR | ^M | 13 | 0D
+       The EOL format conversion programs, fromdos(1), todos(1), frommac(1), and tomac(1), are quite handy. recode(1) is also useful.
+
+         Note
+       Some data on the Debian system, such as the wiki page data for the python-moinmoin package, use MSDOS style CR-LF as the EOL code. So the above rule is just a general rule.
+
+         Note
+       Most editors (eg. vim, emacs, gedit, …) can handle files in MSDOS style EOL transparently.
+
+         Tip
+       The use of "sed -e '/\r$/!s/$/\r/'" instead of todos(1) is better when you want to unify the EOL style to the MSDOS style from the mixed MSDOS and Unix style. (e.g., after merging 2 MSDOS style files with diff3(1).) This is because todos adds CR to all lines.
+
+       11.1.5. TAB CONVERSION
+
+       There are few popular specialized programs to convert the tab codes.
+
+       Table 11.4. List of TAB conversion commands from bsdmainutils and coreutils packages
+
+         function | bsdmainutils | coreutils
+         expand tab to spaces | "col -x" | expand
+         unexpand tab from spaces | "col -h" | unexpand
+       indent(1) from the indent package completely reformats whitespaces in the C program.
+
+       Editor programs such as vim and emacs can be used for TAB conversion, too. For example with vim, you can expand TAB with ":set expandtab" and ":%retab" command sequence. You can revert this with ":set noexpandtab" and ":%retab!" command sequence.
+
+       11.1.6. EDITORS WITH AUTO-CONVERSION
+
+       Intelligent modern editors such as the vim program are quite smart and copes well with any encoding systems and any file formats. You should use these editors under the UTF-8 locale in the UTF-8 capable console for the best compatibility.
+
+       An old western European Unix text file, "u-file.txt", stored in the latin1 (iso-8859-1) encoding can be edited simply with vim by the following.
+
+         $ vim u-file.txt
+
+       This is possible since the auto detection mechanism of the file encoding in vim assumes the UTF-8 encoding first and, if it fails, assumes it to be latin1.
+
+       An old Polish Unix text file, "pu-file.txt", stored in the latin2 (iso-8859-2) encoding can be edited with vim by the following.
+
+         $ vim '+e ++enc=latin2 pu-file.txt'
+
+       An old Japanese unix text file, "ju-file.txt", stored in the eucJP encoding can be edited with vim by the following.
+
+         $ vim '+e ++enc=eucJP ju-file.txt'
+
+       An old Japanese MS-Windows text file, "jw-file.txt", stored in the so called shift-JIS encoding (more precisely: CP932) can be edited with vim by the following.
+
+         $ vim '+e ++enc=CP932 ++ff=dos jw-file.txt'
+
+       When a file is opened with "++enc" and "++ff" options, ":w" in the Vim command line stores it in the original format and overwrite the original file. You can also specify the saving format and the file name in the Vim command line, e.g., ":w ++enc=utf8 new.txt".
+
+       Please refer to the mbyte.txt "multi-byte text support" in vim on-line help and Table 11.2, “List of encoding values and their usage” for locale values used with "++enc".
+
+       The emacs family of programs can perform the equivalent functions.
+
+       11.1.7. PLAIN TEXT EXTRACTION
+
+       The following reads a web page into a text file. This is very useful when copying configurations off the Web or applying basic Unix text tools such as grep(1) on the web page.
+
+         $ w3m -dump https://www.remote-site.com/help-info.html >textfile
+
+       Similarly, you can extract plain text data from other formats using the following.
+
+       Table 11.5. List of tools to extract plain text data
+
+         package | popcon | size | keyword | function
+         w3m | V:10, I:134 | 2853 | html→text | HTML to text converter with the "w3m -dump" command
+         html2text | V:3, I:68 | 298 | html→text | advanced HTML to text converter (ISO 8859-1)
+         lynx | V:29, I:448 | 2031 | html→text | HTML to text converter with the "lynx -dump" command
+         elinks | V:3, I:16 | 1791 | html→text | HTML to text converter with the "elinks -dump" command
+         links | V:2, I:21 | 2321 | html→text | HTML to text converter with the "links -dump" command
+         links2 | V:0.8, I:8.6 | 5466 | html→text | HTML to text converter with the "links2 -dump" command
+         catdoc | V:15, I:170 | 682 | MSWord→text,TeX | convert MSWord files to plain text or TeX
+         antiword | V:0.9, I:6.7 | 587 | MSWord→text,ps | convert MSWord files to plain text or ps
+         unhtml | V:0.05, I:0.49 | 40 | html→text | remove the markup tags from an HTML file
+         odt2txt | V:1, I:20 | 60 | odt→text | converter from OpenDocument Text to text
+
+       11.1.8. HIGHLIGHTING AND FORMATTING PLAIN TEXT DATA
+
+       You can highlight and format plain text data by the following.
+
+       Table 11.6. List of tools to highlight plain text data
+
+         package | popcon | size | keyword | description
+         vim-runtime | V:18, I:360 | 38849 | highlight | Vim MACRO to convert source code to HTML with ":source $VIMRUNTIME/syntax/html.vim"
+         cxref | V:0.01, I:0.23 | 1191 | c→html | converter for the C program to latex and HTML (C language)
+         src2tex | V:0.02, I:0.16 | 1799 | highlight | convert many source codes to TeX (C language)
+         source-highlight | V:0.4, I:3.1 | 2131 | highlight | convert many source codes to HTML, XHTML, LaTeX, Texinfo, ANSI color escape sequences and DocBook files with highlight (C++)
+         highlight | V:0.4, I:3.1 | 1412 | highlight | convert many source codes to HTML, XHTML, RTF, LaTeX, TeX or XSL-FO files with highlight (C++)
+         grc | V:0.9, I:5.9 | 208 | text→color | generic colouriser for everything (Python)
+         pandoc | V:10, I:46 | 209102 | text→any | general markup converter (Haskell)
+         python3-docutils | V:11, I:50 | 2013 | text→any | ReStructured Text document formatter to XML (Python)
+         markdown | V:0.4, I:6.1 | 56 | text→html | Markdown text document formatter to (X)HTML (Perl)
+         asciidoctor | V:0.4, I:5.0 | 101 | text→any | AsciiDoc text document formatter to XML/HTML (Ruby)
+         python3-sphinx | V:6, I:25 | 3234 | text→any | ReStructured Text based document publication system (Python)
+         hugo | V:0.8, I:5.3 | 66736 | text→html | Markdown based static site publication system (Go)
+
+       11.2. XML DATA
+
+       The Extensible Markup Language (XML) is a markup language for documents containing structured information.
+
+       See introductory information at XML.COM.
+
+        * "What is XML?"
+        * "What Is XSLT?"
+        * "What Is XSL-FO?"
+        * "What Is XLink?"
+
+       11.2.1. BASIC HINTS FOR XML
+
+       XML text looks somewhat like HTML. It enables us to manage multiple formats of output for a document. One easy XML system is the docbook-xsl package, which is used here.
+
+       Each XML file starts with standard XML declaration as the following.
+
+         <?xml version="1.0" encoding="UTF-8"?>
+
+       The basic syntax for one XML element is marked up as the following.
+
+         <name attribute="value">content</name>
+
+       XML element with empty content is marked up in the following short form.
+
+         <name attribute="value" />
+
+       The "attribute="value"" in the above examples are optional.
+
+       The comment section in XML is marked up as the following.
+
+         <!-- comment -->
+
+       Other than adding markups, XML requires minor conversion to the content using predefined entities for following characters.
+
+       Table 11.7. List of predefined entities for XML
+
+         predefined entity | character to be converted into
+         &quot; | " : quote
+         &apos; | ' : apostrophe
+         &lt; | < : less-than
+         &gt; | > : greater-than
+         &amp; | & : ampersand
+         Caution
+       "<" or "&" can not be used in attributes or elements.
+
+         Note
+       When SGML style user defined entities, e.g. "&some-tag;", are used, the first definition wins over others. The entity definition is expressed in "<!ENTITY some-tag "entity value">".
+
+         Note
+       As long as the XML markup are done consistently with certain set of the tag name (either some data as content or attribute value), conversion to another XML is trivial task using Extensible Stylesheet Language Transformations (XSLT).
+
+       11.2.2. XML PROCESSING
+
+       There are many tools available to process XML files such as the Extensible Stylesheet Language (XSL).
+
+       Basically, once you create well formed XML file, you can convert it to any format using Extensible Stylesheet Language Transformations (XSLT).
+
+       The Extensible Stylesheet Language for Formatting Objects (XSL-FO) is supposed to be solution for formatting. The fop package is new to the Debian main archive due to its dependence to the Java programming language. So the LaTeX code is usually generated from XML using XSLT and the LaTeX system is used to create printable file such as DVI, PostScript, and PDF.
+
+       Table 11.8. List of XML tools
+
+         package | popcon | size | keyword | description
+         docbook-xml | V:15, I:404 | 2126 | xml | XML document type definition (DTD) for DocBook
+         docbook-xsl | V:14, I:145 | 14823 | xml/xslt | XSL stylesheets for processing DocBook XML to various output formats with XSLT
+         xsltproc | V:15, I:72 | 83 | xslt | XSLT command line processor (XML→ XML, HTML, plain text, etc.)
+         xmlto | V:0.5, I:8.8 | 124 | xml/xslt | XML-to-any converter with XSLT
+         fop | V:0.6, I:7.6 | 281 | xml/xsl-fo | convert Docbook XML files to PDF
+         dblatex | V:0.9, I:5.9 | 4636 | xml/xslt | convert Docbook files to DVI, PostScript, PDF documents with XSLT
+         dbtoepub | V:0.05, I:0.58 | 37 | xml/xslt | DocBook XML to .epub converter
+       Since XML is subset of Standard Generalized Markup Language (SGML), it can be processed by the extensive tools available for SGML, such as Document Style Semantics and Specification Language (DSSSL).
+
+       Table 11.9. List of DSSSL tools
+
+         package | popcon | size | keyword | description
+         openjade | V:1, I:22 | 1066 | dsssl | ISO/IEC 10179:1996 standard DSSSL processor (latest)
+         docbook-dsssl | V:0.5, I:8.0 | 2594 | xml/dsssl | DSSSL stylesheets for processing DocBook XML to various output formats with DSSSL
+         docbook-utils | V:0.3, I:5.7 | 287 | xml/dsssl | utilities for DocBook files including conversion to other formats (HTML, RTF, PS, man, PDF) with docbook2* commands with DSSSL
+         Tip
+       GNOME's yelp is sometimes handy to read DocBook XML files directly since it renders decently on X.
+
+       11.2.3. THE XML DATA EXTRACTION
+
+       You can extract HTML or XML data from other formats using followings.
+
+       Table 11.10. List of XML data extraction tools
+
+         package | popcon | size | keyword | description
+         man2html | V:0.1, I:1.3 | 142 | manpage→html | converter from manpage to HTML (CGI support)
+         doclifter | I:0.04 | 487 | troff→xml | converter from troff to DocBook XML
+         texi2html | V:0.2, I:2.9 | 1847 | texi→html | converter from Texinfo to HTML
+         info2www | V:0.9, I:1.5 | 76 | info→html | converter from GNU info to HTML (CGI support)
+         wv | V:0.2, I:2.5 | 733 | MSWord→any | document converter from Microsoft Word to HTML, LaTeX, etc.
+         unrtf | V:0.3, I:3.0 | 159 | rtf→html | document converter from RTF to HTML, etc
+         wp2x | I:0.09 | 200 | WordPerfect→any | WordPerfect 5.0 and 5.1 files to TeX, LaTeX, troff, GML and HTML
+
+       11.2.4. THE XML DATA LINT
+
+       For non-XML HTML files, you can convert them to XHTML which is an instance of well formed XML. XHTML can be processed by XML tools.
+
+       Syntax of XML files and goodness of URLs found in them may be checked.
+
+       Table 11.11. List of XML pretty print tools
+
+         package | popcon | size | function | description
+         libxml2-utils | V:60, I:210 | 211 | xml↔html↔xhtml | command line XML tool with xmllint(1) (syntax check, reformat, lint, …)
+         tidy | V:0.8, I:7.5 | 79 | xml↔html↔xhtml | HTML syntax checker and reformatter
+         weblint-perl | V:0.05, I:0.96 | 32 | lint | syntax and minimal style checker for HTML
+         linklint | V:0.06, I:0.49 | 343 | link check | fast link checker and web site maintenance tool
+       Once proper XML is generated, you can use XSLT technology to extract data based on the mark-up context etc.
+
+       11.3. TYPE SETTING
+
+       The Unix troff program originally developed by AT&T can be used for simple typesetting. It is usually used to create manpages.
+
+       TeX created by Donald Knuth is a very powerful type setting tool and is the de facto standard. LaTeX originally written by Leslie Lamport enables a high-level access to the power of TeX.
+
+       Table 11.12. List of type setting tools
+
+         package | popcon | size | keyword | description
+         texlive | V:1, I:27 | 55 | (La)TeX | TeX system for typesetting, previewing and printing
+         lilypond | V:0.6, I:5.7 | 16924 | (La)TeX | music typesetter
+         groff | V:2, I:24 | 16514 | troff | GNU troff text-formatting system
+
+       11.3.1. ROFF TYPESETTING
+
+       Traditionally, roff is the main Unix text processing system. See roff(7), groff(7), groff(1), grotty(1), troff(1), groff_mdoc(7), groff_man(7), groff_ms(7), groff_me(7), groff_mm(7), and "info groff".
+
+       You can read or print a good tutorial and reference on "-me" macro in "/usr/share/doc/groff/" by installing the groff package.
+
+         Tip
+       "groff -Tascii -me -" produces plain text output with ANSI escape code. If you wish to get manpage like output with many "^H" and "_", use "GROFF_NO_SGR=1 groff -Tascii -me -" instead.
+
+         Tip
+       To remove "^H" and "_" from a text file generated by groff, filter it by "col -b -x".
+
+       11.3.2. TEX/LATEX
+
+       The TeX Live software distribution offers a complete TeX system. The texlive metapackage provides a decent selection of the TeX Live packages which should suffice for the most common tasks.
+
+       There are many references available for TeX and LaTeX.
+
+        * The teTeX HOWTO: The Linux-teTeX Local Guide
+        * tex(1)
+        * latex(1)
+        * texdoc(1)
+        * texdoctk(1)
+        * "The TeXbook", by Donald E. Knuth, (Addison-Wesley)
+        * "LaTeX - A Document Preparation System", by Leslie Lamport, (Addison-Wesley)
+        * "The LaTeX Companion", by Goossens, Mittelbach, Samarin, (Addison-Wesley)
+       This is the most powerful typesetting environment. Many SGML processors use this as their back end text processor. Lyx provided by the lyx package and GNU TeXmacs provided by the texmacs package offer nice WYSIWYG editing environment for LaTeX while many use Emacs and Vim as the choice for the source editor.
+
+       There are many online resources available.
+
+        * The TEX Live Guide - TEX Live 2007 ("/usr/share/doc/texlive-doc-base/english/texlive-en/live.html") (texlive-doc-base package)
+        * A Simple Guide to Latex/Lyx
+        * Word Processing Using LaTeX
+       When documents become bigger, sometimes TeX may cause errors. You must increase pool size in "/etc/texmf/texmf.cnf" (or more appropriately edit "/etc/texmf/texmf.d/95NonPath" and run update-texmf(8)) to fix this.
+
+         Note
+       The TeX source of "The TeXbook" is available at www.ctan.org tex-archive site for texbook.tex. This file contains most of the required macros. I heard that you can process this document with tex(1) after commenting lines 7 to 10 and adding "\input manmac \proofmodefalse". It's strongly recommended to buy this book (and all other books from Donald E. Knuth) instead of using the online version but the source is a great example of TeX input!
+
+       11.3.3. PRETTY PRINT A MANUAL PAGE
+
+       You can print a manual page in PostScript nicely by one of the following commands.
+
+         $ man -Tps some_manpage | lpr
+
+       11.3.4. CREATING A MANUAL PAGE
+
+       Although writing a manual page (manpage) in the plain troff format is possible, there are few helper packages to create it.
+
+       Table 11.13. List of packages to help creating the manpage
+
+         package | popcon | size | keyword | description
+         docbook-to-man | V:0.5, I:5.7 | 189 | SGML→manpage | converter from DocBook SGML into roff man macros
+         help2man | V:0.5, I:6.4 | 542 | text→manpage | automatic manpage generator from --help
+         info2man | V:0.02, I:0.21 | 134 | info→manpage | converter from GNU info to POD or man pages
+         txt2man | V:0.05, I:0.66 | 112 | text→manpage | convert flat ASCII text to man page format
+
+       11.4. PRINTABLE DATA
+
+       Printable data is expressed in the PostScript format on the Debian system. Common Unix Printing System (CUPS) uses Ghostscript as its rasterizer backend program for non-PostScript printers.
+
+       Printable data may also be expressed in the PDF format on the recent Debian system.
+
+       PDF files can displayed and its form entries may be filled using GUI viewer tools such as Evince and Okular (see Section 7.4, “GUI applications”); and modern browsers such as Chromium.
+
+       PDF files can be edited using some graphics tools such as LibreOffice, Scribus, and Inkscape (see Section 11.6, “Graphic data tools”).
+
+         Tip
+       You can read a PDF file with GIMP and convert it into PNG format using higher than 300 dpi resolution. This may be used as a background image for LibreOffice to produce a desirable altered printout with minimum efforts.
+
+       11.4.1. GHOSTSCRIPT
+
+       The core of printable data manipulation is the Ghostscript PostScript (PS) interpreter which generates raster image.
+
+       Table 11.14. List of Ghostscript PostScript interpreters
+
+         package | popcon | size | description
+         ghostscript | V:181, I:559 | 177 | The GPL Ghostscript PostScript/PDF interpreter
+         ghostscript-x | V:0, I:14 | 88 | GPL Ghostscript PostScript/PDF interpreter - X display support
+         libpoppler162 | V:1.2, I:3.1 | 5313 | PDF rendering library forked from the xpdf PDF viewer
+         libpoppler-glib8t64 | V:73, I:307 | 612 | PDF rendering library (GLib-based shared library)
+         poppler-data | V:169, I:580 | 13086 | CMaps for PDF rendering library (for CJK support: Adobe-*)
+         Tip
+       "gs -h" can display the configuration of Ghostscript.
+
+       11.4.2. MERGE TWO PS OR PDF FILES
+
+       You can merge two PostScript (PS) or Portable Document Format (PDF) files using gs(1) of Ghostscript.
+
+         $ gs -q -dNOPAUSE -dBATCH -sDEVICE=pswrite -sOutputFile=bla.ps -f foo1.ps foo2.ps
+         $ gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=bla.pdf -f foo1.pdf foo2.pdf
+
+         Note
+       The PDF, which is a widely used cross-platform printable data format, is essentially the compressed PS format with few additional features and extensions.
+
+         Tip
+       For command line, psmerge(1) and other commands from the psutils package are useful for manipulating PostScript documents. pdftk(1) from the pdftk package is useful for manipulating PDF documents, too.
+
+       11.4.3. PRINTABLE DATA UTILITIES
+
+       The following packages for the printable data utilities caught my eyes.
+
+       Table 11.15. List of printable data utilities
+
+         package | popcon | size | keyword | description
+         poppler-utils | V:156, I:471 | 804 | pdf→ps,text,… | PDF utilities: pdftops, pdfinfo, pdfimages, pdftotext, pdffonts
+         psutils | V:4, I:50 | 34 | ps→ps | PostScript document conversion tools
+         poster | V:0.1, I:1.8 | 57 | ps→ps | create large posters out of PostScript pages
+         enscript | V:1, I:11 | 2138 | text→ps, html, rtf | convert ASCII text to PostScript, HTML, RTF or Pretty-Print
+         a2ps | V:1.0, I:7.0 | 4109 | text→ps | 'Anything to PostScript' converter and pretty-printer
+         pdftk | V:1, I:21 | 28 | pdf→pdf | PDF document conversion tool: pdftk
+         html2ps | V:0.1, I:1.8 | 256 | html→ps | converter from HTML to PostScript
+         gnuhtml2latex | V:0.02, I:0.63 | 26 | html→latex | converter from html to latex
+         latex2rtf | V:0.1, I:1.6 | 495 | latex→rtf | convert documents from LaTeX to RTF which can be read by MS Word
+         ps2eps | V:2, I:32 | 95 | ps→eps | converter from PostScript to EPS (Encapsulated PostScript)
+         e2ps | V:0.01, I:0.12 | 104 | text→ps | Text to PostScript converter with Japanese encoding support
+         impose+ | V:0.1, I:1.5 | 118 | ps→ps | PostScript utilities
+         trueprint | V:0.01, I:0.07 | 148 | text→ps | pretty print many source codes (C, C++, Java, Pascal, Perl, Pike, Sh, and Verilog) to PostScript. (C language)
+         pdf2svg | V:0.2, I:3.0 | 33 | pdf→svg | converter from PDF to Scalable vector graphics format
+         pdftoipe | V:0.01, I:0.46 | 69 | pdf→ipe | converter from PDF to IPE's XML format
+
+       11.4.4. PRINTING WITH CUPS
+
+       Both lp(1) and lpr(1) commands offered by Common Unix Printing System (CUPS) provides options for customized printing the printable data.
+
+       You can print 3 copies of a file collated using one of the following commands.
+
+         $ lp -n 3 -o Collate=True filename
+
+         $ lpr -#3 -o Collate=True filename
+
+       You can further customize printer operation by using printer option such as "-o number-up=2", "-o page-set=even", "-o page-set=odd", "-o scaling=200", "-o natural-scaling=200", etc., documented at Command-Line Printing and Options.
+
+       11.5. THE MAIL DATA CONVERSION
+
+       The following packages for the mail data conversion caught my eyes.
+
+       Table 11.16. List of packages to help mail data conversion
+
+         package | popcon | size | keyword | description
+         sharutils | V:2, I:28 | 1436 | mail | shar(1), unshar(1), uuencode(1), uudecode(1)
+         mpack | V:0.8, I:8.0 | 109 | MIME | encoding and decoding of MIME messages: mpack(1) and munpack(1)
+         tnef | V:0.3, I:4.0 | 103 | ms-tnef | unpacking MIME attachments of type "application/ms-tnef" which is a Microsoft only format
+         uudeview | V:0.2, I:1.8 | 105 | mail | encoder and decoder for the following formats: uuencode, xxencode, BASE64, quoted printable, and BinHex
+         Tip
+       The Internet Message Access Protocol version 4 (IMAP4) server may be used to move mails out from proprietary mail systems if the mail client software can be configured to use IMAP4 server too.
+
+       11.5.1. MAIL DATA BASICS
+
+       Mail (SMTP) data should be limited to series of 7 bit data. So binary data and 8 bit text data are encoded into 7 bit format with the Multipurpose Internet Mail Extensions (MIME) and the selection of the charset (see Table 11.2, “List of encoding values and their usage”).
+
+       The standard mail storage format is mbox formatted according to RFC2822 (updated RFC822). See mbox(5) (provided by the mutt package).
+
+       For European languages, "Content-Transfer-Encoding: quoted-printable" with the ISO-8859-1 charset is usually used for mail since there are not much 8 bit characters. If European text is encoded in UTF-8, "Content-Transfer-Encoding: quoted-printable" is likely to be used since it is mostly 7 bit data.
+
+       For Japanese, traditionally "Content-Type: text/plain; charset=ISO-2022-JP" is usually used for mail to keep text in 7 bits. But older Microsoft systems may send mail data in Shift-JIS without proper declaration. If Japanese text is encoded in UTF-8, Base64 is likely to be used since it contains many 8 bit data. The situation of other Asian languages is similar.
+
+         Note
+       If your non-Unix mail data is accessible by a non-Debian client software which can talk to the IMAP4 server, you may be able to move them out by running your own IMAP4 server.
+
+         Note
+       If you use other mail storage formats, moving them to mbox format is the good first step. The versatile client program such as mutt(1) may be handy for this.
+
+       You can split mailbox contents to each message using procmail(1) and formail(1).
+
+       Each mail message can be unpacked using munpack(1) from the mpack package (or other specialized tools) to obtain the MIME encoded contents.
+
+       11.6. GRAPHIC DATA TOOLS
+
+       Although GUI programs such as gimp(1) are very powerful, command line tools such as imagemagick(1) are quite useful for automating image manipulation via scripts.
+
+       The de facto image file format of the digital camera is the Exchangeable Image File Format (EXIF) which is the JPEG image file format with additional metadata tags. It can hold information such as date, time, and camera settings.
+
+       The Lempel-Ziv-Welch (LZW) lossless data compression patent has been expired. Graphics Interchange Format (GIF) utilities which use the LZW compression method are now freely available on the Debian system.
+
+         Tip
+       Any digital camera or scanner with removable recording media works with Linux through USB storage readers since it follows the Design rule for Camera Filesystem and uses FAT filesystem. See Section 10.1.7, “Removable storage device”.
+
+       11.6.1. GRAPHIC DATA TOOLS (METAPACKAGE)
+
+       The following metapackages are good starting points for searching graphics data tools using aptitude(8). "Packages overview for Debian PhotoTools Maintainers" can be another starting point.
+
+       Table 11.17. List of graphics data tools (metapackage)
+
+         package | popcon | size | keyword | description
+         education-graphics | I:0.34 | 25 | svg, jpeg, … | metapackage for teaching graphics and pictural art.
+         open-font-design-toolkit | I:0.06 | 9 | ttf, ps, … | metapackage for open font design
+         Tip
+       Search more image tools using regex "~Gworks-with::image" in aptitude(8) (see Section 2.2.6, “Search method options with aptitude”).
+
+       11.6.2. GRAPHIC DATA TOOLS (GUI)
+
+       The following packages for the GUI graphics data conversion, editing, and organization tools caught my eyes.
+
+       Table 11.18. List of graphics data tools (GUI)
+
+         package | popcon | size | keyword | description
+         gimp | V:41, I:214 | 32779 | image(bitmap) | GNU Image Manipulation Program
+         xsane | V:8, I:129 | 1512 | image(bitmap) | GTK-based X11 frontend for SANE (Scanner Access Now Easy)
+         scribus | V:1, I:12 | 32415 | ps/pdf/SVG/… | Scribus DTP editor
+         libreoffice-draw | V:91, I:414 | 11209 | image(vector) | LibreOffice office suite - drawing
+         inkscape | V:11, I:76 | 113353 | image(vector) | SVG (Scalable Vector Graphics) editor
+         dia | V:1, I:15 | 3846 | image(vector) | diagram editor (Gtk)
+         xfig | V:0.8, I:8.4 | 7951 | image(vector) | Facility for Interactive Generation of figures under X11
+         gocr | V:0.4, I:3.8 | 549 | image→text | free OCR software
+         eog | V:24, I:137 | 10535 | image(Exif) | Eye of GNOME graphics viewer program
+         gthumb | V:3, I:12 | 5162 | image(Exif) | image viewer and browser (GNOME)
+         geeqie | V:3, I:11 | 3135 | image(Exif) | image viewer using GTK
+         shotwell | V:14, I:243 | 6334 | image(Exif) | digital photo organizer (GNOME)
+         gwenview | V:39, I:115 | 6000 | image(Exif) | image viewer (KDE)
+         kamera | I:114 | 992 | image(Exif) | digital camera support for KDE applications
+         digikam | V:1.5, I:8.6 | 325 | image(Exif) | digital photo management application for KDE
+         darktable | V:4, I:11 | 35876 | image(Exif) | virtual lighttable and darkroom for photographers
+         hugin | V:0.4, I:5.7 | 6481 | image(Exif) | panorama photo stitcher
+         librecad | V:1, I:12 | 9164 | DXF, ... | 2D CAD data editor
+         freecad | V:1, I:19 | 112 | DXF, ... | 3D CAD data editor
+         blender | V:2, I:19 | 169320 | blend, TIFF, VRML, … | 3D content editor for animation etc
+         mm3d | V:0.02, I:0.26 | 4123 | ms3d, obj, dxf, … | OpenGL based 3D model editor
+         fontforge | V:0.5, I:5.8 | 4736 | ttf, ps, … | font editor for PS, TrueType and OpenType fonts
+         xgridfit | V:0.01, I:0.10 | 878 | ttf | program for gridfitting and hinting TrueType fonts
+
+       11.6.3. GRAPHIC DATA TOOLS (CLI)
+
+       The following packages for the CLI graphics data conversion, editing, and organization tools caught my eyes.
+
+       Table 11.19. List of graphics data tools (CLI)
+
+         package | popcon | size | keyword | description
+         imagemagick | V:7, I:275 | 81 | image(bitmap) | image manipulation programs
+         graphicsmagick | V:1.0, I:8.8 | 5945 | image(bitmap) | image manipulation programs (fork of imagemagick)
+         netpbm | V:26, I:285 | 8435 | image(bitmap) | graphics conversion tools
+         libheif-examples | V:0.3, I:3.6 | 503 | heif→jpeg(bitmap) | convert High Efficiency Image File Format (HEIF) to JPEG, PNG, or Y4M formats with heif-convert(1) command
+         icoutils | V:3, I:33 | 221 | png↔ico(bitmap) | convert MS Windows icons and cursors to and from PNG formats (favicon.ico)
+         pstoedit | V:1, I:37 | 1075 | ps/pdf→image(vector) | PostScript and PDF files to editable vector graphics converter (SVG)
+         libwmf-bin | V:4, I:81 | 149 | Windows/image(vector) | Windows metafile (vector graphics data) conversion tools
+         fig2sxd | V:0.01, I:0.18 | 158 | fig→sxd(vector) | convert XFig files to OpenOffice.org Draw format
+         unpaper | V:2, I:17 | 417 | image→image | post-processing tool for scanned pages for OCR
+         tesseract-ocr | V:8, I:35 | 2209 | image→text | free OCR software based on the HP's commercial OCR engine
+         tesseract-ocr-eng | V:8, I:35 | 4032 | image→text | OCR engine data: tesseract-ocr language files for English text
+         ocrad | V:0.3, I:2.5 | 608 | image→text | free OCR software
+         exif | V:3, I:51 | 335 | image(Exif) | command-line utility to show EXIF information in JPEG files
+         exiv2 | V:2, I:20 | 429 | image(Exif) | EXIF/IPTC metadata manipulation tool
+         exiftran | V:1, I:11 | 81 | image(Exif) | transform digital camera jpeg images
+         exiftags | V:0.2, I:2.8 | 309 | image(Exif) | utility to read Exif tags from a digital camera JPEG file
+         exifprobe | V:0.2, I:2.3 | 506 | image(Exif) | read metadata from digital pictures
+         dcraw | V:0.8, I:7.7 | 428 | image(Raw)→ppm | decode raw digital camera images
+         findimagedupes | V:0.1, I:1.1 | 76 | image→fingerprint | find visually similar or duplicate images
+         ale | V:0.01, I:0.16 | 850 | image→image | merge images to increase fidelity or create mosaics
+         imageindex | V:0.1, I:1.3 | 143 | image(Exif)→html | generate static HTML galleries from images
+         outguess | V:0.1, I:1.1 | 230 | jpeg,png | universal Steganographic tool
+         jpegoptim | V:0.6, I:6.2 | 59 | jpeg | optimize JPEG files
+         optipng | V:2, I:40 | 187 | png | optimize PNG files, lossless compression
+         pngquant | V:1, I:12 | 62 | png | optimize PNG files, lossy compression
+
+       11.7. MISCELLANEOUS DATA CONVERSION
+
+       There are many other programs for converting data. Following packages caught my eyes using regex "~Guse::converting" in aptitude(8) (see Section 2.2.6, “Search method options with aptitude”).
+
+       Table 11.20. List of miscellaneous data conversion tools
+
+         package | popcon | size | keyword | description
+         alien | V:1, I:13 | 150 | rpm/tgz→deb | converter for the foreign package into the Debian package
+         freepwing | I:0.02 | 447 | EB→EPWING | converter from "Electric Book" (popular in Japan) to a single JIS X 4081 format (a subset of the EPWING V1)
+         calibre | V:7, I:26 | 69924 | any→EPUB | e-book converter and library management
+       You can also extract data from RPM format with the following.
+
+         $ rpm2cpio file.src.rpm | cpio --extract
+
+Debian Reference manual                 bundled documentation

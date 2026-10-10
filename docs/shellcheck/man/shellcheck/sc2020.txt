@@ -1,0 +1,31 @@
+SHELLCHECK.SC2020(1)             Sandbox manual             SHELLCHECK.SC2020(1)
+
+       NAME
+
+       tr replaces sets of chars, not words (mentioned due to duplicates). - echo 'hello world' | tr 'hello' 'goodbye'
+
+       TR REPLACES SETS OF CHARS, NOT WORDS (MENTIONED DUE TO DUPLICATES)
+
+       TR REPLACES SETS OF CHARS, NOT WORDS (MENTIONED DUE TO DUPLICATES)
+
+       PROBLEMATIC CODE
+
+         echo 'hello world' | tr 'hello' 'goodbye'
+
+       CORRECT CODE
+
+         echo 'hello world' | sed -e 's/hello/goodbye/g'
+
+       RATIONALE
+
+       tr is for transliteration, turning some characters into other characters. It doesn't match strings or words, only individual characters.
+
+       In this case, it transliterates h->g, e->o, l->d, o->y, resulting in the string "goddb wbrdd" instead of "goodbye world".
+
+       The solution is to use a tool that does string search and replace, such as sed.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

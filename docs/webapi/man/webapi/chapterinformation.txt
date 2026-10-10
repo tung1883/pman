@@ -1,0 +1,92 @@
+WEBAPI.CHAPTERINFORMATION(1)     Sandbox manual     WEBAPI.CHAPTERINFORMATION(1)
+
+       NAME
+
+       ChapterInformation - The ChapterInformation interface of the Media Session API represents the metadata for an individual chapter of a media resource (i.e., a vid
+
+       CHAPTERINFORMATION
+
+       The ChapterInformation interface of the Media Session API represents the metadata for an individual chapter of a media resource (i.e., a video or audio file).
+
+       The chapter information for a given media resource is set when it is first created, via the chapterInfo property of the MediaMetadata() constructor's initialization object. The property takes an array of ChapterInformation objects as its value.
+
+       You can access the chapter information for an existing MediaMetadata object via its chapterInfo property. This returns an array of ChapterInformation objects.
+
+       INSTANCE PROPERTIES
+
+        * ChapterInformation.artwork (read-only) (experimental)
+          * : Returns an Array of objects representing images associated with the chapter.
+        * ChapterInformation.startTime (read-only) (experimental)
+          * : Returns a number, in seconds, representing the start time of the chapter.
+        * ChapterInformation.title (read-only) (experimental)
+          * : Returns a string representing the title of the chapter.
+
+       EXAMPLES
+
+       The sample code below from Video / Media Session Sample shows a typical structure for the ChapterInformation object:
+
+         const BASE_URL = "https://storage.googleapis.com/media-session/";
+
+         const metadata = {
+           // …
+           chapterInfo: [
+             {
+               title: "Chapter 1",
+               startTime: 0,
+               artwork: [
+                 {
+                   src: `${BASE_URL}sintel/chapter1-128.png`,
+                   sizes: "128x128",
+                   type: "image/png",
+                 },
+                 {
+                   src: `${BASE_URL}sintel/chapter1-512.png`,
+                   sizes: "512x512",
+                   type: "image/png",
+                 },
+               ],
+             },
+             {
+               title: "Chapter 2",
+               startTime: 37,
+               artwork: [
+                 {
+                   src: `${BASE_URL}sintel/chapter2-128.png`,
+                   sizes: "128x128",
+                   type: "image/png",
+                 },
+                 {
+                   src: `${BASE_URL}sintel/chapter2-512.png`,
+                   sizes: "512x512",
+                   type: "image/png",
+                 },
+               ],
+             },
+           ],
+         };
+
+       The following snippet shows how it can be used inside Media Session code (the above object property is part of the playlist object referenced below):
+
+         function updateMetadata() {
+           const track = playlist[index];
+
+           log(`Playing ${track.title} track...`);
+           navigator.mediaSession.metadata = new MediaMetadata({
+             title: track.title,
+             artist: track.artist,
+             artwork: track.artwork,
+             chapterInfo: track.chapterInfo,
+           });
+
+           // …
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * MediaMetadata
+
+Web APIs manual                         from the official documentation

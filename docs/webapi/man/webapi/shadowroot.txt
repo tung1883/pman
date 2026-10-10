@@ -1,0 +1,123 @@
+WEBAPI.SHADOWROOT(1)             Sandbox manual             WEBAPI.SHADOWROOT(1)
+
+       NAME
+
+       ShadowRoot - The ShadowRoot interface of the Shadow DOM API is the root node of a DOM subtree that is rendered separately from a document's main DOM tree
+
+       SHADOWROOT
+
+       The ShadowRoot interface of the Shadow DOM API is the root node of a DOM subtree that is rendered separately from a document's main DOM tree.
+
+       You can retrieve a reference to an element's shadow root using its Element.shadowRoot property, provided it was created using Element.attachShadow() with the mode option set to open.
+
+       INSTANCE PROPERTIES
+
+        * ShadowRoot.activeElement (read-only)
+          * : Returns the Element within the shadow tree that has focus.
+        * ShadowRoot.adoptedStyleSheets
+          * : Add an array of constructed stylesheets to be used by the shadow DOM subtree.
+       These may be shared with other DOM subtrees that share the same parent Document node, and the document itself.
+
+        * ShadowRoot.clonable (read-only)
+          * : A boolean that indicates whether the shadow root is clonable.
+        * ShadowRoot.customElementRegistry (read-only)
+          * : Returns the CustomElementRegistry object associated with this shadow root, or null if one has not been set.
+        * ShadowRoot.delegatesFocus (read-only)
+          * : A boolean that indicates whether the shadow root delegates focus if a non-focusable node is selected.
+        * ShadowRoot.fullscreenElement (read-only)
+          * : The element that's currently in fullscreen mode for this shadow tree.
+        * ShadowRoot.host (read-only)
+          * : Returns a reference to the DOM element the ShadowRoot is attached to.
+        * ShadowRoot.innerHTML
+          * : Sets or returns a reference to the DOM tree inside the ShadowRoot.
+        * ShadowRoot.mode (read-only)
+          * : The mode of the ShadowRoot, either open or closed.
+       This defines whether or not the shadow root's internal features are accessible from JavaScript.
+
+        * ShadowRoot.pictureInPictureElement (read-only)
+          * : Returns the Element within the shadow tree that is currently being presented in picture-in-picture mode.
+        * ShadowRoot.pointerLockElement (read-only)
+          * : Returns the Element set as the target for mouse events while the pointer is locked.
+       null if lock is pending, pointer is unlocked, or if the target is in another tree.
+
+        * ShadowRoot.referenceTarget (experimental) {{non-standard_inline}}
+          * : A nullable string value that indicates the effective target of any element reference made against the shadow host from outside the host element. The value should be the ID of an element inside the shadow DOM. If set, target references to the host element from outside the shadow DOM will cause the referenced target element to become the effective target of the reference to the host element.
+        * ShadowRoot.serializable (read-only)
+          * : A boolean that indicates whether the shadow root is serializable.
+       A serializable shadow root inside an element will be serialized by Element.getHTML() or ShadowRoot.getHTML() when its options.serializableShadowRoots parameter is set true. This is set when the shadow root is created.
+
+        * ShadowRoot.slotAssignment (read-only)
+          * : Returns a string containing the type of slot assignment, either manual or named.
+        * ShadowRoot.styleSheets (read-only)
+          * : Returns a StyleSheetList of CSSStyleSheet objects for stylesheets explicitly linked into, or embedded in a shadow tree.
+
+       INSTANCE METHODS
+
+        * ShadowRoot.getAnimations()
+          * : Returns an array of all Animation objects currently in effect, whose target elements are descendants of the shadow tree.
+        * ShadowRoot.getSelection() {{Non-standard_Inline}}
+          * : Returns a Selection object representing the range of text selected by the user, or the current position of the caret.
+        * ShadowRoot.elementFromPoint() {{Non-standard_Inline}}
+          * : Returns the topmost element at the specified coordinates.
+        * ShadowRoot.elementsFromPoint() {{Non-standard_Inline}}
+          * : Returns an array of all elements at the specified coordinates.
+        * ShadowRoot.setHTML()
+          * : Provides an XSS-safe method to parse and sanitize a string of HTML into a DocumentFragment, which then replaces the existing tree in the shadow DOM.
+        * ShadowRoot.setHTMLUnsafe()
+          * : Parses a string of HTML into a document fragment, without sanitization, which then replaces the shadowroot's original subtree. The HTML string may include declarative shadow roots, which would be parsed as template elements the HTML was set using ShadowRoot.innerHTML.
+
+       EVENTS
+
+       The following events are available to ShadowRoot via event bubbling from HTMLSlotElement:
+
+        * HTMLSlotElement slotchange event
+          * : An event fired when the node(s) contained in that slot change.
+
+       EXAMPLES
+
+       The following snippets are taken from our life-cycle-callbacks example (see it live also), which creates an element that displays a square of a size and color specified in the element's attributes.
+
+       Inside the element's class definition we include some life cycle callbacks that make a call to an external function, updateStyle(), which actually applies the size and color to the element. You'll see that we are passing it this (the custom element itself) as a parameter.
+
+         class Square extends HTMLElement {
+           // …
+           connectedCallback() {
+             console.log("Custom square element added to page.");
+             updateStyle(this);
+           }
+
+           attributeChangedCallback(name, oldValue, newValue) {
+             console.log("Custom square element attributes changed.");
+             updateStyle(this);
+           }
+           // …
+         }
+
+       In the updateStyle() function itself, we get a reference to the shadow DOM using Element.shadowRoot. From here we use standard DOM traversal techniques to find the element inside the shadow DOM and then update the CSS found inside it:
+
+         function updateStyle(elem) {
+           const shadow = elem.shadowRoot;
+           const childNodes = shadow.childNodes;
+           for (const node of childNodes) {
+             if (node.nodeName === "STYLE") {
+               node.textContent = `
+         div {
+           width: ${elem.getAttribute("l")}px;
+           height: ${elem.getAttribute("l")}px;
+           background-color: ${elem.getAttribute("c")};
+         }
+               `;
+             }
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the shadow DOM
+        * Web components
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,99 @@
+APACHE.MOD_AUTHN_SOCACHE(1)      Sandbox manual      APACHE.MOD_AUTHN_SOCACHE(1)
+
+       AUTHENTICATION CACHING
+
+       Some users of more heavyweight authentication such as SQL database lookups (mod_authn_dbd) have reported it putting an unacceptable load on their authentication provider. A typical case in point is where an HTML page contains hundreds of objects (images, scripts, stylesheets, media, etc), and a request to the page generates hundreds of effectively-immediate requests for authenticated additional contents.
+
+       mod_authn_socache provides a solution to this problem by maintaining a cache of authentication credentials.
+
+       USAGE
+
+       The authentication cache should be used where authentication lookups impose a significant load on the server, or a backend or network. Authentication by file (mod_authn_file) or dbm (mod_authn_dbm) are unlikely to benefit, as these are fast and lightweight in their own right (though in some cases, such as a network-mounted file, caching may be worthwhile). Other providers such as SQL or LDAP based authentication are more likely to benefit, particularly where there is an observed performance issue. Amongst the standard modules, mod_authnz_ldap manages its own cache, so only mod_authn_dbd will usually benefit from this cache.
+
+       The basic rules to cache for a provider are:
+
+        * Include the provider you're caching for in an AuthnCacheProvideFor directive.
+        * List socache ahead of the provider you're caching for in your AuthBasicProvider or AuthDigestProvider directive.
+       A simple usage example to accelerate mod_authn_dbd using dbm as a cache engine:
+
+         #AuthnCacheSOCache is optional.  If specified, it is server-wide
+         AuthnCacheSOCache dbm
+         <Directory "/usr/www/myhost/private">
+             AuthType Basic
+             AuthName "Cached Authentication Example"
+             AuthBasicProvider socache dbd
+             AuthDBDUserPWQuery "SELECT password FROM authn WHERE user = %s"
+             AuthnCacheProvideFor dbd
+             Require valid-user
+             #Optional
+             AuthnCacheContext dbd-authn-example
+         </Directory>
+
+       CACHING WITH CUSTOM MODULES
+
+       Module developers should note that their modules must be enabled for caching with mod_authn_socache. A single optional API function ap_authn_cache_store is provided to cache credentials a provider has just looked up or generated. Usage examples are available in r957072, in which three authn providers are enabled for caching.
+
+       AUTHNCACHECONTEXT DIRECTIVE
+
+         Description: | Specify a context string for use in the cache key
+         Syntax: | AuthnCacheContext directory|server|custom-string
+         Default: | AuthnCacheContext directory
+         Context: | directory
+         Status: | Base
+         Module: | mod_authn_socache
+       This directive specifies a string to be used along with the supplied username (and realm in the case of Digest Authentication) in constructing a cache key. This serves to disambiguate identical usernames serving different authentication areas on the server.
+
+       Two special values for this are directory, which uses the directory context of the request as a string, and server which uses the virtual host name.
+
+       The default is directory, which is also the most conservative setting. This is likely to be less than optimal, as it (for example) causes $app-base, $app-base/images, $app-base/scripts and $app-base/media each to have its own separate cache key. A better policy is to name the AuthnCacheContext for the password provider: for example a htpasswd file or database table.
+
+       Contexts can be shared across different areas of a server, where credentials are shared. However, this has potential to become a vector for cross-site or cross-application security breaches, so this directive is not permitted in .htaccess contexts.
+
+       AUTHNCACHEENABLE DIRECTIVE
+
+         Description: | Enable Authn caching configured anywhere
+         Syntax: | AuthnCacheEnable
+         Context: | server config
+         Status: | Base
+         Module: | mod_authn_socache
+       This directive is not normally necessary: it is implied if authentication caching is enabled anywhere in httpd.conf. However, if it is not enabled anywhere in httpd.conf it will by default not be initialized, and is therefore not available in a .htaccess context. This directive ensures it is initialized so it can be used in .htaccess.
+
+       AUTHNCACHEPROVIDEFOR DIRECTIVE
+
+         Description: | Specify which authn provider(s) to cache for
+         Syntax: | AuthnCacheProvideFor authn-provider [...]
+         Default: | None
+         Context: | directory, .htaccess
+         Override: | AuthConfig
+         Status: | Base
+         Module: | mod_authn_socache
+       This directive specifies an authentication provider or providers to cache for. Credentials found by a provider not listed in an AuthnCacheProvideFor directive will not be cached.
+
+       For example, to cache credentials found by mod_authn_dbd or by a custom provider myprovider, but leave those looked up by lightweight providers like file or dbm lookup alone:
+
+         AuthnCacheProvideFor dbd myprovider
+
+       AUTHNCACHESOCACHE DIRECTIVE
+
+         Description: | Select socache backend provider to use
+         Syntax: | AuthnCacheSOCache provider-name[:provider-args]
+         Context: | server config
+         Status: | Base
+         Module: | mod_authn_socache
+         Compatibility: | Optional provider arguments are available in Apache HTTP Server 2.4.7 and later
+       This is a server-wide setting to select a provider for the shared object cache, followed by optional arguments for that provider. Some possible values for provider-name are "dbm", "dc", "memcache", or "shmcb", each subject to the appropriate module being loaded. If not set, your platform's default will be used.
+
+       AUTHNCACHETIMEOUT DIRECTIVE
+
+         Description: | Set a timeout for cache entries
+         Syntax: | AuthnCacheTimeout timeout (seconds)
+         Default: | AuthnCacheTimeout 300 (5 minutes)
+         Context: | directory, .htaccess
+         Override: | AuthConfig
+         Status: | Base
+         Module: | mod_authn_socache
+       Caching authentication data can be a security issue, though short-term caching is unlikely to be a problem. Typically a good solution is to cache credentials for as long as it takes to relieve the load on a backend, but no longer, though if changes to your users and passwords are infrequent then a longer timeout may suit you. The default 300 seconds (5 minutes) is both cautious and ample to keep the load on a backend such as dbd (SQL database queries) down.
+
+       This should not be confused with session timeout, which is an entirely separate issue. However, you may wish to check your session-management software for whether cached credentials can "accidentally" extend a session, and bear it in mind when setting your timeout.
+
+Apache HTTP Server manual               bundled documentation

@@ -1,0 +1,68 @@
+WEBAPI.PERFORMANCERESOURCETIMING-RESPONSESTATUS(1) Sandbox manual WEBAPI.PERFORMANCERESOURCETIMING-RESPONSESTATUS(1)
+
+       NAME
+
+       PerformanceResourceTiming: responseStatus property - The responseStatus read-only property represents the HTTP response status code returned when fetching the resource.
+
+       PERFORMANCERESOURCETIMING: RESPONSESTATUS PROPERTY
+
+       The responseStatus read-only property represents the HTTP response status code returned when fetching the resource.
+
+       This property maps to Response.status from the Fetch API.
+
+       VALUE
+
+       The responseStatus property can have the following values:
+
+        * A number indicating the HTTP response status code returned when fetching the resource.
+        * 0 if the CORS check fails.
+        * 0 for cross-origin objects.
+
+       EXAMPLES
+
+       CHECKING IF A CACHE WAS HIT
+
+       The responseStatus property can be used to check for cached resources with a 304 Not Modified response status code.
+
+       Example using a PerformanceObserver, which notifies of new resource performance entries as they are recorded in the browser's performance timeline. Use the buffered option to access entries from before the observer creation.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             if (entry.responseStatus === 304) {
+               console.log(`${entry.name} was loaded from cache`);
+             }
+           });
+         });
+
+         observer.observe({ type: "resource", buffered: true });
+
+       Example using Performance.getEntriesByType(), which only shows resource performance entries present in the browser's performance timeline at the time you call this method:
+
+         const resources = performance.getEntriesByType("resource");
+         resources.forEach((entry) => {
+           if (entry.responseStatus === 304) {
+             console.log(`${entry.name} was loaded from cache`);
+           }
+         });
+
+       Alternatively, if responseStatus is not available, you can check if the transferSize property returned 0.
+
+       CROSS-ORIGIN RESPONSE STATUS CODES
+
+       If the value of the responseStatus property is 0, the resource might be a cross-origin request. To allow seeing cross-origin response status codes, the CORS Access-Control-Allow-Origin HTTP response header needs to be set.
+
+       For example, to allow https://developer.mozilla.org to see response status codes, the cross-origin resource should send:
+
+         Access-Control-Allow-Origin: https://developer.mozilla.org
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTTP response status code
+        * Response.status
+        * CORS
+
+Web APIs manual                         from the official documentation

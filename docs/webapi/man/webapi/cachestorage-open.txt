@@ -1,0 +1,64 @@
+WEBAPI.CACHESTORAGE-OPEN(1)      Sandbox manual      WEBAPI.CACHESTORAGE-OPEN(1)
+
+       NAME
+
+       CacheStorage: open() method - The open() method of the
+
+       CACHESTORAGE: OPEN() METHOD
+
+       The open() method of the CacheStorage interface returns a Promise that resolves to the Cache object matching the cacheName.
+
+       You can access CacheStorage through the Window.caches property in windows or through the WorkerGlobalScope.caches property in workers.
+
+       > If the specified Cache does not exist, a new
+       > cache is created with that cacheName and a Promise that
+       > resolves to this new Cache object is returned.
+
+       SYNTAX
+
+         open(cacheName)
+
+       PARAMETERS
+
+        * cacheName
+          * : The name of the cache you want to open.
+
+       RETURN VALUE
+
+       A Promise that resolves to the requested Cache object.
+
+       EXAMPLES
+
+       This example is from the MDN simple service worker example (see simple service worker running live). Here we wait for an InstallEvent to fire, then runs waitUntil() to handle the install process for the app. This consists of calling CacheStorage.open() to create a new cache, then using Cache.addAll() to add a series of assets to it.
+
+         self.addEventListener("install", (event) => {
+           event.waitUntil(
+             caches
+               .open("v1")
+               .then((cache) =>
+                 cache.addAll([
+                   "/",
+                   "/index.html",
+                   "/style.css",
+                   "/app.js",
+                   "/image-list.js",
+                   "/star-wars-logo.jpg",
+                   "/gallery/bountyHunters.jpg",
+                   "/gallery/myLittleVader.jpg",
+                   "/gallery/snowTroopers.jpg",
+                 ]),
+               ),
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Cache
+        * Window.caches and WorkerGlobalScope.caches
+
+Web APIs manual                         from the official documentation

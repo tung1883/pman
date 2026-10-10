@@ -1,0 +1,43 @@
+SHELLCHECK.SC2120(1)             Sandbox manual             SHELLCHECK.SC2120(1)
+
+       NAME
+
+       foo references arguments, but none are ever passed. - sayhello() {
+
+       FOO REFERENCES ARGUMENTS, BUT NONE ARE EVER PASSED
+
+       PROBLEMATIC CODE
+
+         sayhello() {
+           echo "Hello $1"
+         }
+         sayhello
+
+       ./myscript World just prints "Hello " instead of "Hello World".
+
+       CORRECT CODE
+
+         sayhello() {
+           echo "Hello $1"
+         }
+         sayhello "$@"
+
+       ./myscript World now prints "Hello World".
+
+       RATIONALE
+
+       In a function, $1 and up refers to the function's parameters, not the script's parameters.
+
+       If you want to process your script's parameters in a function, you have to explicitly pass them. You can do this with myfunction "$@".
+
+       Note that "$@" refers to the current context's positional parameters, so if you call a function from a function, you have to pass in "$@" to both of them:
+
+         first() { second "$@"; }
+         second() { echo "The first script parameter is: $1"; }
+         first "$@"
+
+       EXCEPTIONS
+
+       If the parameters are optional and you currently just don't want to use them, you can ignore this message. In versions strictly greater than v0.6.0, ignoring SC2120 on a function will also disable SC2119 on each of the call sites.
+
+ShellCheck manual                       from the official documentation

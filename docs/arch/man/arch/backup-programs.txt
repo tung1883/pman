@@ -1,0 +1,203 @@
+ARCH.BACKUP-PROGRAMS(1)          Sandbox manual          ARCH.BACKUP-PROGRAMS(1)
+
+       This page lists and compares applications that synchronize data between two or more locations, and those that build on top of such functionality to make incremental copies of important data for backup purposes. Because of their relationship, the two groups share several traits that justify describing them in the same article.
+
+       IMPORTANT CONSIDERATIONS
+
+       In order to choose the best program for one's own needs, the following aspects should be considered:
+
+        * The type of backup medium that is going to store the data, e.g. CD, DVD, remote server, external hard drive, etc.
+        * The planned frequency of backups, e.g. daily, weekly, monthly, etc.
+        * The features expected from the backup solution, e.g. compression, encryption, handles renames, etc.
+        * The planned method to restore backups if needed.
+
+       DATA SYNCHRONIZATION
+
+       These applications simply keep directories synchronized between multiple locations/machines, in a "mirror" fashion. Nonetheless, most of them still allow storing and reverting to old revisions of modified or deleted files.
+
+       See also:
+
+        * List of applications/Utilities#File synchronization and backup
+        * List of applications/Internet#Cloud synchronization clients
+        * Wikipedia:Comparison of file synchronization software
+
+       LEGEND
+
+         Name
+       The application name, linking to the ArchWiki article or the official website.
+
+         Package
+       A link to the package.
+
+         Implementation
+       The programming language, library, or utility that the application is based on.
+
+         Delta transfer
+       Only the modified parts of files are transferred.
+
+         Encrypted transfer
+       Data is encrypted by default when transferred over the network.
+
+         FS metadata
+       File system permissions and attributes are synchronized.
+
+         Resumable
+       The synchronization can be resumed if interrupted.
+
+         Handles renames
+       Moved/renamed files are detected and not stored or transferred twice. It typically means that a checksum of files or its chunks is computed. Applications missing this functionality can be supplemented by combining with hsyncAUR, which only synchronizes renames.
+
+         Version control
+       The old version of files are backed up (reverse incremental backup).
+
+         Change propagation
+       Specifies in how many directions changes can be propagated.
+
+        * unidirectional means one-way synchronization of two locations,
+        * bidirectional means two-way synchronization of two locations and
+        * multidirectional means full synchronization of more than two locations.
+         Conflict resolution
+       The application handles file conflicts, either automatically or interactively, i.e. it does not silently discard conflicting files. This attribute does not apply to applications that only propagate changes in one direction.
+
+         FS monitoring
+       The application listens to file system events to trigger the synchronization.
+
+         CLI
+       The application provides a command-line interface.
+
+         Other interfaces
+       The application has the specified user interfaces, e.g. GUI, TUI, or web-based.
+
+         License
+       The license of the server and client applications.
+
+         Other platforms
+       Supported operating systems other than Linux.
+
+         Maintained
+       The project is maintained.
+
+         Specificity
+       Brief notes about special features that notably set the application apart from the others.
+
+       TABLE
+
+         Name | Package | Implementation | Delta transfer | Encrypted transfer | FS metadata | Resumable | Handles renames | Version control | Change propagation | Conflict resolution | FS monitoring | CLI | Other interfaces | License | Other platforms | Maintained | Specificity
+         FreeFileSync | freefilesync-binAUR | C++ | No [1] | SFTP [2] | Yes [3] | ? | Yes [4] | Yes [5] | unidirectional / multidirectional | interactive | Yes [6] | No | Yes | GPLv3 | Windows, macOS | Yes
+         git-annex | git-annex | Haskell, git | rsync [7] | rsync, others [8] | No, but has custom non-FS metadata [9] | Yes [10] | Yes, content-addressable storage | Yes | multidirectional; with git remotes [11] | renames conflicting files [12] | optional, git-annex assistant | Yes | git-annex assistant | GPLv3 | FreeBSD, macOS, Android (via Termux), Windows (beta) | Yes | Manage files with git
+         osync.sh | osyncAUR | Bash, based on rsync | rsync | rsync | Yes | Yes | No | Yes | bidirectional | keeps multiple versions of a file [13][dead link 2025-11-17—SSL error] | optional [14] | Yes | No | BSD | FreeBSD, Windows (via WSL, MSYS, Cygwin), macOS, Android (via Termux), QTS, pfSense | Yes
+         rclone | rclone | Go | No [15] | Yes [16] | Yes [17] | No [18] | Yes [19] | Yes [20] | unidirectional / bidirectional [21] | interactive, renames, or deletes conflicting files [22] | No [23] | Yes | Web (experimental) | MIT | FreeBSD, Windows, macOS, Plan9, Solaris | Yes | Optimized for synchronization with cloud storage, behavior varies with the features supported by the remote location.
+         rdiff-backup | rdiff-backupAUR | Python, librsync | rsync | rsync | Yes | No | No | Yes | unidirectional | No | Yes | No | GPLv2 | FreeBSD, Windows, macOS | Yes
+         Resilio Sync | rslsyncAUR | C++ | Yes | Yes | partial [24] | Yes | Yes [25] | Yes | multidirectional | renames conflicting files [26] | Yes [27] | No | Web | Proprietary freemium | As for v3: Windows, macOS, Android, iOS | Yes | P2P sync
+        * --link-dest with hard links [28]
+        * --backup
+       rsync | rsync | C | Yes | SSH or native protocol | Yes | Yes | No | unidirectional | No | Yes | Rsync#Front-ends | GPLv3 | FreeBSD, Windows (via WSL, MSYS, Cygwin), macOS, Android (via Termux) | Yes | Standard tool available on all Linux distributions.
+
+         SparkleShare | sparkleshareAUR | C#, git | Yes | AES-256 [29] | ? | ? | Yes | Yes | ? | ? | ? | No | Yes | GPLv3 | Windows, macOS | No [30] | It can sync with any Git server over SSH.
+         Syncany | syncanyAUR | Java | ? | ? | ? | ? | ? | ? | ? | ? | ? | Yes | Yes | GPLv3 | Windows, macOS, Docker | No [31]
+         Syncthing | syncthing | Go | Yes [32] | Yes [33] | partial [34] | Yes | Yes, but it has issues with multiple and/or big files renames [35] | Yes [36], previous versions moved to archive folder | multidirectional | renames conflicting files [37] | Yes | Yes | Web, GTK | MPL v2 | BSD, Windows, macOS, Android (fork), Dragonfly, Illumos, Solaris | Yes | P2P sync
+         Synkron | synkronAUR | C++ | ? | ? | ? | ? | ? | ? | multidirectional | ? | ? | No | Qt | GPLv2 | BSD, Windows, macOS, ChromeOS | No [38]
+         taskd | taskd-gitAUR | C++, Python | Yes | Yes | ? | Yes | ? | ? | multidirectional | ? | No | Yes | No | MIT | Android | No
+         Unison | unison | OCaml | Yes | Yes | partial [39] (Subsection "perms") | optional [40] (Subsection "speeding") | No - "Unison sees the rename as a delete and a separate create" [41] (Subsection "caveats") | Yes [42] (Subsection "backups") | bidirectional | interactive | Yes, built-in for Linux and Windows since before version 2.48: [43] For macOS see "unison-fsmonitor": [44] | Yes | GTK2 | GPLv3 | FreeBSD, Windows, macOS | Yes [45]
+         yarsync | yarsyncAUR | Python, based on rsync | rsync | rsync | Yes | Yes | Yes | Yes, for repository snapshots (each file has a single version) | unidirectional / multidirectional | renames one file | No | Yes | No | GPLv3 | Windows (via WSL, MSYS, Cygwin), macOS, Android (via Termux) | Yes | UNIX-like systems or backup drives, CLI like git.
+         Zaloha2.sh | bash | No | SSH+SCP | optional | No | No | No | bidirectional | interactive | No | Yes | No | MIT | BSD, Windows (via WSL, MSYS, Cygwin), macOS, Android (via Termux) | Yes [46] | Small and simple
+
+       INCREMENTAL BACKUPS
+
+       Applications that can do incremental backups remember and take into account what data has been backed up during the last run (so-called "diffs") and eliminate the need to have duplicates of unchanged data. Restoring the data to a certain point in time would require locating the last full backup and all the incremental backups from then to the moment when it is supposed to be restored. This sort of backup is useful for those who do it very often.
+
+       See also:
+
+        * Wikipedia:List of backup software
+        * Wikipedia:Comparison of backup software
+        * Wikipedia:Comparison of online backup services
+       Legend:
+
+        * Name: the application name, linking to the ArchWiki article or the official website.
+        * Package: a link to the package.
+        * Implementation: the programming language, library, or utility that the application is based on.
+        * Compressed storage: compression is used for storage.
+        * Encrypted storage: encryption is used for storage.
+        * Delta transfer: only the modified parts of files are transferred.
+        * Encrypted transfer: data is encrypted by default when transferred over a network.
+        * FS metadata: file system permissions and attributes are backed up.
+        * Easy access: the backup is stored plainly in the file system, or is mountable as such.
+        * Resumable: the backup can be resumed without restarting it if interrupted.
+        * Multithreading: the backup can be done in multiple threads of execution concurrently.
+        * Handles renames: moved/renamed files are detected and not stored or transferred twice; it typically means that a checksum is computed for files or chunks thereof.
+        * CLI: the application is command-line driven, i.e. it is scriptable.
+        * Other interfaces: the application has the specified user interfaces, e.g. GUI, TUI, or web-based.
+        * Licence: the licence of the server and client applications.
+        * Other platforms: supported operating systems other than Linux.
+        * Maintained: whether the project is maintained.
+        * Deduplication: whether the program supports deduplicating saved files
+        * Specificity: brief notes about special features that notably set the application apart from the others.
+
+       SINGLE MACHINE
+
+       These applications are aimed at backing up data from the machine they are installed on, although the backup destination can be located on an external machine or storage media.
+
+       CHUNK-BASED INCREMENTS
+
+       If a file is modified, these applications store only its changed parts at the next snapshot. Compared to #File-based increments applications, these are more space-efficient, especially when large files receive small modifications; on the other hand, the archived snapshots have to be opened with the backup application that created them, since the files have to be reconstructed from the stored binary diffs.
+
+         Name | Package | Implementation | Compressed storage | Encrypted storage | Delta transfer | Encrypted transfer | FS metadata | Easy access | Resumable | Multithreading | Handles renames | CLI | Other interfaces | Licence | Other platforms | Maintained | Deduplication | Specificity
+         Areca Backup | arecaAUR | Java | Zip, Zip64 | AES128, AES256 | Yes | Yes | Yes | No | Pausing only | No [47] | No | Yes | Yes | GPLv2 | Windows | No
+         Borg backup | borg | Python, C (Cython) | lz4, zlib, lzma, zstd | AES256 | Yes | SSH | Yes [48] | Yes [49] | Yes [50] | No [51] | Yes | Yes | third party | BSD | *BSD, macOS, Windows (Cygwin / WSL)[52] | Yes | Yes, based on variable length chunks. | Support both local and SSH-based remote backup destination.
+         bup | bup | C, Python, git | Yes | No | Yes | Yes | Immature | Yes [53] | pick up where you left off [54] | No | Yes | Yes | thesafeAUR | GPLv2 | NetBSD, Windows, macOS | Yes | Yes | Same storage format as git.
+         Duplicacy | duplicacyAUR | Go | Yes | Yes | Yes | Yes | Yes | Yes [55] | Yes [56] | Yes [57] | Yes [58] | Yes | duplicacy-webAUR | Custom (non-free) | FreeBSD, macOS, Windows | Yes | Yes
+         Duplicati | duplicati-canary-binAUR | C# | Yes | Yes | Yes | Yes | Yes | No | Pausing only | Yes [59] | No | Yes | Yes | MIT | Windows, macOS | Yes | Yes
+         Duplicity | duplicity | librsync | gzip | gpg | Yes | Yes | ? | No | Yes | No | No | Yes | Yes | GPLv2 | Yes
+         Kopia | kopiaAUR | Go, Javascript front-end | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Apache 2.0 | Windows, macOS, OpenBSD | Yes | Yes
+         Kup Backup System | kup | rsync, bup front-end | Yes | Yes | Yes | Yes | Immature | Yes | No | ? | Yes | bup | Qt | GPLv2 | Yes
+         Restic | restic | Go | Yes | Mandatory (AES-256) | Yes | Yes | Yes [60] | Yes [61] | Yes [62] | Yes [63] | Yes | Yes | No [64] | BSD | OpenBSD, Windows, macOS | Yes | Yes [65] | Supports storage on various cloud services natively and through rclone.
+         ZBackup | zbackupAUR | C++ | LZMA, LZO | AES | Yes | Yes | ? | No | No | ? | Kinda through tar | Yes | No | GPLv2 | No | Yes | Repository consists of immutable files.
+
+       FILE-BASED INCREMENTS
+
+       If a file is modified, these applications store its new version entirely at the next snapshot. Compared to #Chunk-based increments applications, these are less space-efficient, especially when large files receive small modifications; on the other hand, often the archived snapshots can be opened without the need to have the backup application installed.
+
+       Specific legend:
+
+        * Hard links: whether unmodified files are stored as hard links to previous versions.
+         Name | Package | Implementation | Compressed storage | Encrypted storage | Delta transfer | Encrypted transfer | FS metadata | Easy access | Resumable | Handles renames | Hard links | CLI | Other interfaces | Licence | Other platforms | Maintained | Specificity
+         Back In Time | backintimeAUR | Python, rsync, diff | No | Yes | rsync | rsync | rsync | Yes | No | No | Yes [66] | Yes | Qt | GPLv2 | Yes
+         DAR (Disk ARchive) | darAUR | C++ | special archive format | Yes | Yes | Yes | ? | ? | ? | ? | No [67] | Yes | darguiAUR | GPLv2 | FreeBSD, NetBSD, Windows, macOS | Yes
+         rdup | rdupAUR | C | tar.gz | gpg, blowfish and others | ? | ? | ? | Yes | ? | No | Yes | Yes | No | GPLv3 | No | Set of command-line tools.
+         rsnapshot | rsnapshot | rsync | No | No | Yes | Yes | ? | ? | ? | ? | Yes [68] | Yes | No | GPLv2 | Win32 | Yes [69]
+         Timeshift | timeshift | rsync | No | No | rsync | rsync | ? | ? | ? | ? | Yes | Yes | GTK | GPLv3 | Designed for full-system backups to dedicated devices. | Yes
+
+       NETWORK ORIENTED
+
+       These applications have been designed to centralize the backup of several machines connected to a network, through a server-client model. In general they are more complicated to deploy, compared to #Single machine solutions.
+
+       Specific legend:
+
+        * Control direction: Pull: server logs into client. Push: client initiates backup session.
+        * Increment type: the strategy used to reduce used space by deduplicating data (i.e., besides compression).
+          * file-based: if a file is modified, the entire new version is stored at each snapshot.
+            * hard-links: whether unmodified files are stored as hard links to previous versions.
+          * chunk-based: only the modified parts of files are stored at each snapshot.
+         Name | Package | Implementation | Control direction | Compressed storage | Encrypted storage | Delta transfer | Encrypted transfer | FS metadata | Easy access | Resumable | Handles renames | Increment type | CLI | Other interfaces | Licence | Other platforms | Maintained | Specificity
+         BackupPC | backuppc | Perl | Pull | Yes | No | Yes | Yes | Yes | No | No | ? | file-based, hard links [70] | Yes | Web | GPLv2 | Any (no client needed) | Yes | Identical files across backups of the same or different clients are stored only once.
+         Bacula | bacula* | C++ | Pull | Yes | Yes | ? | Yes | ? | ? | Yes | ? | file-based [71] | Yes | GUI, Web | AGPLv3 | Windows, macOS | Yes
+         Bareos | bareos* | C++ (Bacula fork) | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | AGPLv3 | Yes
+         burp | burp-backupAUR | librsync | Push | Yes | Yes | Yes | Yes | Yes | ? | Yes | ? | chunk-based [72] | Yes | burp-ui | AGPLv3 | Windows, macOS | Yes
+         SafeKeep | safekeepAUR | rdiff-backup | Pull | No | No | ? | Yes | ? | ? | ? | ? | chunk-based [73] | Yes | Yes | GPLv2 | No | Integrates with LVM and databases to create consistent backups. Bandwidth throttling.
+         Synbak | synbak | Multitool wrapper | ? | Yes | No | Yes | Yes | Yes | ? | ? | ? | ? | No | Web | GPLv3 | Yes | Unifies several backup methods.
+         UrBackup | urbackup* | C++ | Pull | No | No | Yes | Internet transfers only | Yes | Yes | Yes | Yes | file-based,hard-links and symlinks[74]/chunk-based CoW-Snapshots[75] | Yes (client) | GUI, Web | AGPLv3+ | Windows, macOS | Yes | Identical files across backups of the same or different clients are stored only once. Integrates with LVM, dattobd and btrfs for file system snapshots.
+
+       VERSION CONTROL SYSTEMS
+
+       While version control systems are mostly used for source code, they can track any files in a directory.
+
+       See List of applications/Utilities#Version control systems and dotfiles.
+
+       SEE ALSO
+
+        * Backing up Linux and other Unix(-like) systems
+        * Exhaustive list of backup solutions for Linux
+        * Mirroring an Entire Site using Rsync over SSH
+        * rsync-snapshots.sh — Local and remote snapshot backup using rsync with hard links
+
+ArchWiki manual                         bundled documentation

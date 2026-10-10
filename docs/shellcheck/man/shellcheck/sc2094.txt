@@ -1,0 +1,41 @@
+SHELLCHECK.SC2094(1)             Sandbox manual             SHELLCHECK.SC2094(1)
+
+       NAME
+
+       Make sure not to read and write the same file in the same pipeline. - grep foo file.txt | sed -e 's/foo/bar/g' > file.txt
+
+       MAKE SURE NOT TO READ AND WRITE THE SAME FILE IN THE SAME PIPELINE
+
+       MAKE SURE NOT TO READ AND WRITE THE SAME FILE IN THE SAME PIPELINE
+
+       PROBLEMATIC CODE
+
+         grep foo file.txt | sed -e 's/foo/bar/g' > file.txt
+
+       CORRECT CODE
+
+         grep foo file.txt  | sed -e 's/foo/bar/g' > tmpfile && mv tmpfile file.txt
+
+       RATIONALE
+
+       Each step in a pipeline runs in parallel.
+
+       In this case, grep foo file.txt will immediately try to read file.txt while sed .. > file.txt will immediately try to truncate it.
+
+       This is a race condition, and results in the file being partially or (far more likely) entirely truncated.
+
+       Note that this can also be a problem when you write to a file and read from it later in the pipe. The second command (which reads the file) may not see all the output of the first. An exception in this case is a non-greedy file reader like less, for example python foo.py 2> errfile.txt | less - errfile.txt will successfully allow you to see stdout and stderr separately in less.
+
+       EXCEPTIONS
+
+       You can ignore this error if:
+
+        * The file is a device or named pipe. These files don't truncate in the same way.
+        * The command mentions the filename but doesn't read/write it, such as echo log.txt > log.txt.
+
+       ADDITIONAL RESOURCES
+
+        * StackOverflow: bash redirect input from file back into same file
+        * BashPitfalls: cat file | sed s/foo/bar/ > file
+
+ShellCheck manual                       from the official documentation

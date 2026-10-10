@@ -1,0 +1,59 @@
+WEBAPI.RTCRTPSENDER-SETSTREAMS(1) Sandbox manual WEBAPI.RTCRTPSENDER-SETSTREAMS(1)
+
+       NAME
+
+       RTCRtpSender: setStreams() method - The RTCRtpSender method setStreams() associates the sender's track with the specified MediaStream objects.
+
+       RTCRTPSENDER: SETSTREAMS() METHOD
+
+       The RTCRtpSender method setStreams() associates the sender's track with the specified MediaStream objects.
+
+       SYNTAX
+
+         setStreams()
+         setStreams(mediaStream1)
+         setStreams(mediaStream1, mediaStream2)
+         setStreams(mediaStream1, mediaStream2, /* …, */ mediaStreamN)
+
+       PARAMETERS
+
+        * mediaStreamN (optional)
+          * : An arbitrary number of MediaStream objects specified as arguments, that identify the streams to which the RTCRtpSender's track belongs.
+       If this parameter isn't specified, no new streams will be associated with the track.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the sender's connection is closed.
+
+       DESCRIPTION
+
+       setStreams() is purely additive. It doesn't remove the track from any streams; it adds it to new ones. If you specify streams to which the track already belongs, that stream is unaffected.
+
+       Once the track has been added to all of the streams, renegotiation of the connection will be triggered by the negotiationneeded event being dispatched to the RTCPeerConnection to which the sender belongs.
+
+       EXAMPLES
+
+       This example adds all of an RTCPeerConnection's tracks to the specified stream.
+
+         function addTracksToStream(stream) {
+           let senders = pc.getSenders();
+
+           senders.forEach((sender) => {
+             if (sender.track && sender.transport.state === connected) {
+               sender.setStreams(stream);
+             }
+           });
+         }
+
+       After calling the RTCPeerConnection method getSenders() to get the list of the connection's senders, the addTracksToStream() function iterates over the list. For each sender, if the sender's track is non-null and its transport's state is connected, we call setStreams() to add the track to the stream specified.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

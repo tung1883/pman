@@ -1,0 +1,73 @@
+WEBAPI.CSSFONTFACERULE(1)        Sandbox manual        WEBAPI.CSSFONTFACERULE(1)
+
+       NAME
+
+       CSSFontFaceRule - The CSSFontFaceRule interface represents an @font-face at-rule.
+
+       CSSFONTFACERULE
+
+       The CSSFontFaceRule interface represents an @font-face at-rule.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its ancestor CSSRule._
+
+        * CSSFontFaceRule.style (read-only)
+          * : Returns a CSSFontFaceDescriptors object that allows reading and setting the descriptors of the associated @font-face at-rule.
+
+       INSTANCE METHODS
+
+       _Inherits methods from its ancestor CSSRule._
+
+       EXAMPLES
+
+       ACCESSING FONT-FACE PROPERTIES
+
+       This example defines a @font-face rule and then iterates over the rules on the page until the associated CSSFontFaceRule is found. It then logs some of the properties.
+
+       CSS
+
+         @font-face {
+           font-family: "MyHelvetica";
+           src:
+             local("Helvetica Neue Bold"), local("HelveticaNeue-Bold"),
+             url("MgOpenModernaBold.woff2");
+           font-weight: bold;
+         }
+
+         #log {
+           height: 200px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         <pre id="log"></pre>
+
+       JAVASCRIPT
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+         const myRules = document.getElementById("css-output").sheet.cssRules;
+         for (const rule of myRules) {
+           if (rule instanceof CSSFontFaceRule) {
+             log(`this: ${rule}`);
+             log(` cssText: ${rule.cssText}`);
+             log(` parentRule: ${rule.parentRule}`);
+             log(` parentStyleSheet: ${rule.parentStyleSheet}`);
+             log(` type: ${rule.type}`);
+             log(` style: ${rule.style}`);
+           }
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

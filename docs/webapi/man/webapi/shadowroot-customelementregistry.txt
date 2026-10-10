@@ -1,0 +1,63 @@
+WEBAPI.SHADOWROOT-CUSTOMELEMENTREGISTRY(1) Sandbox manual WEBAPI.SHADOWROOT-CUSTOMELEMENTREGISTRY(1)
+
+       NAME
+
+       ShadowRoot: customElementRegistry property - The customElementRegistry read-only property of the ShadowRoot interface returns the CustomElementRegistry object associated with this shado
+
+       SHADOWROOT: CUSTOMELEMENTREGISTRY PROPERTY
+
+       The customElementRegistry read-only property of the ShadowRoot interface returns the CustomElementRegistry object associated with this shadow root, or null if one has not been set.
+
+       A shadow root's customElementRegistry determines which custom element definitions are used for upgrading elements within that shadow tree. It can be set when the shadow root is created via the customElementRegistry option of Element.attachShadow(), or later using CustomElementRegistry.initialize(). Once set to a CustomElementRegistry object, it cannot be changed.
+
+       This property is also available on Document objects via the same customElementRegistry property name.
+
+       VALUE
+
+       A CustomElementRegistry object, or null.
+
+       EXAMPLES
+
+       SETTING A SCOPED REGISTRY ON A SHADOW ROOT
+
+       This example creates a scoped registry with a custom element definition and passes it to Element.attachShadow(). The customElementRegistry property on the resulting shadow root reflects the scoped registry.
+
+         const myRegistry = new CustomElementRegistry();
+         myRegistry.define(
+           "my-element",
+           class extends HTMLElement {
+             connectedCallback() {
+               this.textContent = "Hello from scoped registry!";
+             }
+           },
+         );
+
+         const host = document.createElement("div");
+         document.body.appendChild(host);
+
+         const shadow = host.attachShadow({
+           mode: "open",
+           customElementRegistry: myRegistry,
+         });
+
+         shadow.innerHTML = "<my-element></my-element>";
+
+         console.log(shadow.customElementRegistry === myRegistry); // true
+         console.log(shadow.querySelector("my-element").textContent);
+         // "Hello from scoped registry!"
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Document.customElementRegistry
+        * Element.customElementRegistry
+        * CustomElementRegistry
+        * CustomElementRegistry() constructor
+        * Element.attachShadow()
+        * Scoped custom element registries in Using custom elements
+        * Using shadow DOM
+
+Web APIs manual                         from the official documentation

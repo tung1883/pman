@@ -1,0 +1,43 @@
+SHELLCHECK.SC1040(1)             Sandbox manual             SHELLCHECK.SC1040(1)
+
+       NAME
+
+       When using <<-, you can only indent with tabs. - Any code using <<- that is indented with spaces. cat -T script shows
+
+       WHEN USING -, YOU CAN ONLY INDENT WITH TABS
+
+       WHEN USING -, YOU CAN ONLY INDENT WITH TABS
+
+       PROBLEMATIC CODE
+
+       Any code using <<- that is indented with spaces. cat -T script shows
+
+             cat <<- foo
+                 Hello world
+             foo
+
+       CORRECT CODE
+
+       Code using <<- must be indented with tabs. cat -T script shows
+
+         ^Icat <<- foo
+         ^I^IHello world
+         ^Ifoo
+
+       Or simply don't indent the end token:
+
+             cat <<- foo
+               Hello World
+         foo
+
+       RATIONALE
+
+       <<-, by design, only strips tabs. Not spaces.
+
+       Your editor may be automatically replacing tabs with spaces, either when you type them or when you save the file or both. If you're unable to make it stop, just don't indent the end token.
+
+       EXCEPTIONS
+
+       None. But note that copy-pasting code to shellcheck.net may also turn correct tabs into spaces on some OS.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,120 @@
+CSHARP.CALLER-INFORMATION(1)     Sandbox manual     CSHARP.CALLER-INFORMATION(1)
+
+       NAME
+
+       Determine caller information by using attributes that the C# compiler interprets - These attributes instruct the compiler to generate information about the code that calls a member. You use the CallerFilePath, CallerLineNum
+
+       DETERMINE CALLER INFORMATION BY USING ATTRIBUTES THAT THE C# COMPILER
+
+       By using info attributes, you can get information about the caller to a method. You can get the file path of the source code, the line number in the source code, and the member name of the caller. To get member caller information, use attributes that you apply to optional parameters. Each optional parameter specifies a default value.
+
+       The following table lists the Caller Info attributes that are defined in the CompilerServices namespace:
+
+         Attribute  |  Description  |  Type
+         CallerFilePathAttribute  |  Full path of the source file that contains the caller. The full path is the path at compile time.  |  String
+         CallerLineNumberAttribute  |  Line number in the source file from which the method is called.  |  Integer
+         CallerMemberNameAttribute  |  Method name or property name of the caller.  |  String
+         CallerArgumentExpressionAttribute  |  String representation of the argument expression.  |  String
+       This information helps you with tracing and debugging, and helps you to create diagnostic tools. The following example shows how to use caller info attributes. On each call to the TraceMessage method, the caller information is inserted for the arguments to the optional parameters.
+
+         public void DoProcessing()
+         {
+             TraceMessage("Something happened.");
+         }
+
+         public void TraceMessage(string message,
+                 [CallerMemberName] string memberName = "",
+                 [CallerFilePath] string sourceFilePath = "",
+                 [CallerLineNumber] int sourceLineNumber = 0)
+         {
+             Trace.WriteLine("message: " + message);
+             Trace.WriteLine("member name: " + memberName);
+             Trace.WriteLine("source file path: " + sourceFilePath);
+             Trace.WriteLine("source line number: " + sourceLineNumber);
+         }
+
+         // Sample Output:
+         //  message: Something happened.
+         //  member name: DoProcessing
+         //  source file path: c:\Visual Studio Projects\CallerInfoCS\CallerInfoCS\Form1.cs
+         //  source line number: 31
+
+       You specify an explicit default value for each optional parameter. You can't apply caller info attributes to parameters that aren't optional. The caller info attributes don't make a parameter optional. Instead, they affect the default value passed in when the argument is omitted. The compiler emits caller info values as literals into the Intermediate Language (IL) at compile time. Unlike the results of the StackTrace property for exceptions, obfuscation doesn't affect the results. You can explicitly supply the optional arguments to control the caller information or to hide caller information.
+
+       MEMBER NAMES
+
+       Use the CallerMemberName attribute to avoid specifying the member name as a String argument to the called method. By using this technique, you avoid the problem that Rename Refactoring doesn't change the String values. This benefit is especially useful for the following tasks:
+
+        * Using tracing and diagnostic routines.
+        * Implementing the INotifyPropertyChanged interface when binding data. This interface allows the property of an object to notify a bound control that the property changed. The control can display the updated information. Without the CallerMemberName attribute, you must specify the property name as a literal.
+       The following chart shows the member names that are returned when you use the CallerMemberName attribute.
+
+         Calls occur within  |  Member name result
+         Method, property, or event  |  The name of the method, property, or event from which the call originated.
+         Constructor  |  The string ".ctor"
+         Static constructor  |  The string ".cctor"
+         Finalizer  |  The string "Finalize"
+         User-defined operators or conversions  |  The generated name for the member, for example, "op_Addition".
+         Attribute constructor  |  The name of the method or property to which the attribute is applied. If the attribute is any element within a member (such as a parameter, a return value, or a generic type parameter), this result is the name of the member associated with that element.
+         No containing member (for example, assembly-level or attributes that are applied to types)  |  The default value of the optional parameter.
+
+       ARGUMENT EXPRESSIONS
+
+       Use the CallerArgumentExpressionAttribute when you want the expression passed as an argument. Diagnostic libraries can provide more details about the expressions passed to arguments. By providing the expression that triggered the diagnostic, in addition to the parameter name, developers have more details about the condition that triggered the diagnostic. That extra information makes it easier to fix.
+
+       The following example shows how you can provide detailed information about the argument when it's invalid:
+
+         public static void ValidateArgument(string parameterName, bool condition, [CallerArgumentExpression("condition")] string? message=null)
+         {
+             if (!condition)
+             {
+                 throw new ArgumentException($"Argument failed validation: <{message}>", parameterName);
+             }
+         }
+
+       You invoke it as shown in the following example:
+
+         public void Operation(Action func)
+         {
+             Utilities.ValidateArgument(nameof(func), func is not null);
+             func();
+         }
+
+       The compiler injects the expression used for condition into the message argument. When a developer calls Operation with a null argument, the following message is stored in the ArgumentException:
+
+         Argument failed validation: <func is not null>
+
+       By using this attribute, you can write diagnostic utilities that provide more details. Developers can more quickly understand what changes are needed. You can also use the CallerArgumentExpressionAttribute to determine what expression was used as the receiver for extension members. The following method samples a sequence at regular intervals. If the sequence has fewer elements than the frequency, it reports an error:
+
+         extension<T>(IEnumerable<T> sequence)
+         {
+             public IEnumerable<T> Sample(int frequency,
+                 [CallerArgumentExpression(nameof(sequence))] string? message = null)
+             {
+                 if (sequence.Count() < frequency)
+                     throw new InvalidOperationException($"Expression doesn't have enough elements: {message}");
+                 int i = 0;
+                 foreach (T item in sequence)
+                 {
+                     if (i++ % frequency == 0)
+                         yield return item;
+                 }
+             }
+         }
+
+       The previous example uses the nameof operator for the parameter sequence. You could call this method as follows:
+
+         sample = Enumerable.Range(0, 10).Sample(100);
+
+       The preceding example throws an ArgumentException whose message is the following text:
+
+         Expression doesn't have enough elements: Enumerable.Range(0, 10) (Parameter 'sequence')
+
+       SEE ALSO
+
+        * Named and Optional Arguments
+        * Reflection
+        * Attribute
+        * Attributes
+
+C# manual                               from the official documentation

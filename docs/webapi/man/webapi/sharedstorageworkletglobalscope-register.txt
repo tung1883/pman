@@ -1,0 +1,64 @@
+WEBAPI.SHAREDSTORAGEWORKLETGLOBALSCOPE-REGISTER(1) Sandbox manual WEBAPI.SHAREDSTORAGEWORKLETGLOBALSCOPE-REGISTER(1)
+
+       NAME
+
+       SharedStorageWorkletGlobalScope: register() method - The register() method of the
+
+       SHAREDSTORAGEWORKLETGLOBALSCOPE: REGISTER() METHOD
+
+       {{non-standard_header}}
+
+       The register() method of the SharedStorageWorkletGlobalScope interface registers an operation defined inside the current worklet module.
+
+       SYNTAX
+
+         register(name, operationCtor)
+
+       PARAMETERS
+
+        * name
+          * : A string representing the name with which you want to register the operation. When the operation is invoked (say via WindowSharedStorage.run() or WindowSharedStorage.selectURL()), this name is used to identify the operation you want to run.
+        * operationCtor
+          * : A string representing the class name of the operation to be registered. This is the class constructor that is invoked when the operation is run.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if:
+            * An operation has already been registered with the specified name.
+            * The operationCtor is not a valid constructor.
+            * The class does not contain a valid run() method.
+            * The worklet module has not been added with SharedStorageWorklet.addModule().
+
+       EXAMPLES
+
+         // ab-testing-worklet.js
+         class SelectURLOperation {
+           async run(urls, data) {
+             // Read the user's experiment group from shared storage
+             const experimentGroup = await this.sharedStorage.get("ab-testing-group");
+
+             // Return the group number
+             return experimentGroup;
+           }
+         }
+
+         register("ab-testing", SelectURLOperation);
+
+       See the Shared Storage API landing page for a walkthrough of this example and for links to other examples.
+
+       > It is possible to define and register multiple operations in the same shared storage worklet module script with different names; see SharedStorageOperation for an example.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Shared Storage API
+
+Web APIs manual                         from the official documentation

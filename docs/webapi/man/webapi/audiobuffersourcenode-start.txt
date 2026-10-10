@@ -1,0 +1,65 @@
+WEBAPI.AUDIOBUFFERSOURCENODE-START(1) Sandbox manual WEBAPI.AUDIOBUFFERSOURCENODE-START(1)
+
+       NAME
+
+       AudioBufferSourceNode: start() method - The start() method of the AudioBufferSourceNode
+
+       AUDIOBUFFERSOURCENODE: START() METHOD
+
+       The start() method of the AudioBufferSourceNode Interface is used to schedule playback of the audio data contained in the buffer, or to begin playback immediately.
+
+       SYNTAX
+
+         start(when)
+         start(when, offset)
+         start(when, offset, duration)
+
+       PARAMETERS
+
+        * when (optional)
+          * : The time, in seconds, at which the sound should begin to play, in the same time
+       coordinate system used by the AudioContext. If when is less than (AudioContext.currentTime, or if it's 0, the sound begins to play at once. The default value is 0.
+
+        * offset (optional)
+          * : An offset, specified as the number of seconds in the same time coordinate system as
+       the AudioContext, to the time within the audio buffer that playback should begin. For example, to start playback halfway through a 10-second audio clip, offset should be 5. The default value, 0, will begin playback at the beginning of the audio buffer, and offsets past the end of the audio which will be played (based on the audio buffer's duration and/or the loopEnd property) are silently clamped to the maximum value allowed. The computation of the offset into the sound is performed using the sound buffer's natural sample rate, rather than the current playback rate, so even if the sound is playing at twice its normal speed, the midway point through a 10-second audio buffer is still 5.
+
+        * duration (optional)
+          * : The duration of the audio data to be played, specified as seconds of total buffer content.
+       If this parameter isn't specified, the sound plays until it reaches its natural conclusion or is stopped using the stop() method. The value is independent of the AudioBufferSourceNode.playbackRate, so e.g., a duration of 2 seconds with a playbackRate of 2 will play 2 seconds of the source, producing a 1 second audio output.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if a negative value was specified for one or more of the three time parameters. Please
+       don't attempt to tamper with the laws of temporal physics.
+
+        * InvalidStateError DOMException
+          * : Thrown if start() has already been called. You can only call this function once
+       during the lifetime of an AudioBufferSourceNode.
+
+       EXAMPLES
+
+       The most simple example just starts the audio buffer playing from the beginning — you don't need to specify any parameters in this case:
+
+         source.start();
+
+       The following more complex example will, 1 second from now, start playing 10 seconds worth of sound starting 3 seconds into the audio buffer.
+
+         source.start(audioCtx.currentTime + 1, 3, 10);
+
+       > For a more complete example showing start() in use, check out our AudioContext.decodeAudioData() example. You can also try the example live, and have a look at the example source.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

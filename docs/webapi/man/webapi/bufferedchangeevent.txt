@@ -1,0 +1,74 @@
+WEBAPI.BUFFEREDCHANGEEVENT(1)    Sandbox manual    WEBAPI.BUFFEREDCHANGEEVENT(1)
+
+       NAME
+
+       BufferedChangeEvent - windowanddedicated
+
+       BUFFEREDCHANGEEVENT
+
+       window_and_dedicated
+
+       The BufferedChangeEvent interface of the Media Source Extensions API represents the event object for the bufferedchange event fired on a ManagedSourceBuffer. This event is fired whenever the buffered ranges of the ManagedSourceBuffer change, for example as a result of appendBuffer(), remove(), or endOfStream() calls, or when the user agent runs the memory cleanup algorithm.
+
+       CONSTRUCTOR
+
+        * BufferedChangeEvent() (experimental)
+          * : Creates and returns a new BufferedChangeEvent object.
+
+       INSTANCE PROPERTIES
+
+       _Also inherits properties from its parent interface, Event._
+
+        * BufferedChangeEvent.addedRanges (read-only) (experimental)
+          * : A TimeRanges object representing the time ranges that were added to the ManagedSourceBuffer's buffer.
+        * BufferedChangeEvent.removedRanges (read-only) (experimental)
+          * : A TimeRanges object representing the time ranges that were removed from the ManagedSourceBuffer's buffer.
+
+       EXAMPLES
+
+       HANDLING BUFFERED RANGE CHANGES
+
+       This example creates a ManagedMediaSource, attaches it to a element, fetches a fragmented MP4 file, and listens for the bufferedchange event. When the event fires, it logs the added time ranges.
+
+         const videoUrl =
+           "https://mdn.github.io/shared-assets/videos/flower-fragmented.mp4";
+         const mediaType = 'video/mp4; codecs="avc1.64001F, mp4a.40.2"';
+
+         if (ManagedMediaSource.isTypeSupported(mediaType)) {
+           const video = document.createElement("video");
+           const source = new ManagedMediaSource();
+
+           video.controls = true;
+           video.disableRemotePlayback = true;
+           video.src = URL.createObjectURL(source);
+           document.body.appendChild(video);
+
+           source.addEventListener("sourceopen", async () => {
+             const sourceBuffer = source.addSourceBuffer(mediaType);
+
+             sourceBuffer.addEventListener("bufferedchange", (event) => {
+               for (let i = 0; i < event.addedRanges.length; i++) {
+                 console.log(
+                   `Added range: ${event.addedRanges.start(i)} - ${event.addedRanges.end(i)}`,
+                 );
+               }
+             });
+
+             const response = await fetch(videoUrl);
+             const data = await response.arrayBuffer();
+             sourceBuffer.appendBuffer(data);
+           });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ManagedMediaSource
+        * ManagedSourceBuffer
+        * MediaSource
+        * SourceBuffer
+
+Web APIs manual                         from the official documentation

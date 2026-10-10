@@ -1,0 +1,41 @@
+SHELLCHECK.SC3038(1)             Sandbox manual             SHELLCHECK.SC3038(1)
+
+       NAME
+
+       In POSIX sh, exec flags are undefined. - (or "In dash, ... are not supported." when using dash)
+
+       IN POSIX SH, EXEC FLAGS ARE UNDEFINED
+
+       IN POSIX SH, EXEC FLAGS ARE UNDEFINED
+
+       (or "In dash, ... are not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         exec -ca ls busybox
+
+       CORRECT CODE
+
+       Switch to a shell that does support the exec flags you are using, like bash:
+
+         #!/bin/bash
+         exec -ca ls busybox
+
+       In POSIX, you can use env to start a command with a clean environment, but there is no way to generally specifying the zeroth argument.
+
+       RATIONALE
+
+       Flags to exec are bash and ksh extensions. dash and POSIX sh does not support them.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

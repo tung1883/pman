@@ -1,0 +1,54 @@
+HTTP.STATUS-413(1)               Sandbox manual               HTTP.STATUS-413(1)
+
+       NAME
+
+       413 Content Too Large - The HTTP 413 Content Too Large client error response status code indicates that the request entity was larger than limits defined by server.
+
+       413 CONTENT TOO LARGE
+
+       The HTTP 413 Content Too Large client error response status code indicates that the request entity was larger than limits defined by server. The server might close the connection or return a Retry-After header field.
+
+       Prior to 9110 the response phrase for the status was Payload Too Large. This message is still widely used.
+
+       STATUS
+
+         413 Content Too Large
+
+       EXAMPLES
+
+       FILE UPLOAD LIMIT EXCEEDED
+
+       The following example shows what the client may send when an element includes an image on form submission with method="post":
+
+         POST /upload HTTP/1.1
+         Host: example.com
+         Content-Type: multipart/form-data; boundary=----Boundary1234
+         Content-Length: 4012345
+
+         ------Boundary1234
+         Content-Disposition: form-data; name="file"; filename="myImage.jpg"
+         Content-Type: image/jpeg
+
+         \xFF\xD8\xFF\xE0\x00...(binary data)
+         ------Boundary1234--
+
+       The server may reject the upload if there is a restriction on the maximum size of files it will process, and the response body includes a message with some context:
+
+         HTTP/1.1 413 Content Too Large
+         Content-Type: application/json
+         Content-Length: 97
+
+         {
+           "error": "Upload failed",
+           "message": "Maximum allowed upload size is 4MB",
+         }
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * HTTP response status codes
+        * Connection
+        * Retry-After
+
+HTTP manual                             from the official documentation

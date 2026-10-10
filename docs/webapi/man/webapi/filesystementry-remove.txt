@@ -1,0 +1,71 @@
+WEBAPI.FILESYSTEMENTRY-REMOVE(1) Sandbox manual WEBAPI.FILESYSTEMENTRY-REMOVE(1)
+
+       NAME
+
+       FileSystemEntry: remove() method - The FileSystemEntry interface's method
+
+       FILESYSTEMENTRY: REMOVE() METHOD
+
+       {{Non-standard_Header}}
+
+       The FileSystemEntry interface's method remove() deletes the file or directory from the file system. Directories must be empty before they can be removed.
+
+       To recursively remove a directory as well as all of its contents and its subdirectories, call FileSystemDirectoryEntry.removeRecursively() instead.
+
+       SYNTAX
+
+         remove(successCallback)
+         remove(successCallback, errorCallback)
+
+       PARAMETERS
+
+        * successCallback
+          * : A function which is called once the file has been successfully removed.
+        * errorCallback (optional)
+          * : An optional callback which is called if the attempt to remove the file fails.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * DOMException.INVALID_MODIFICATION_ERR
+          * : The specified entry was the file system's root directory, or the specified entry is
+       a directory which isn't empty.
+
+        * DOMException.INVALID_STATE_ERR
+          * : The file system's cached state is inconsistent with its state on disk, so the file
+       could not be deleted for safety reasons.
+
+        * DOMException.NO_MODIFICATION_ALLOWED_ERR
+          * : The file system's state doesn't permit removing the file or directory.
+        * DOMException.NOT_FOUND_ERR
+          * : The file or directory doesn't exist.
+        * DOMException.SECURITY_ERR
+          * : The entry couldn't be removed due to permissions or other access constraints, or
+       because there are too many calls being made on file resources.
+
+       EXAMPLES
+
+       This example deletes a temporary work file.
+
+         workingDirectory.getFile(
+           "tmp/work-file.json",
+           {},
+           (fileEntry) => {
+             fileEntry.remove(() => {
+               /* the file was removed successfully */
+             });
+           },
+           handleError,
+         );
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File and Directory Entries API
+        * FileSystemDirectoryEntry.removeRecursively()
+
+Web APIs manual                         from the official documentation

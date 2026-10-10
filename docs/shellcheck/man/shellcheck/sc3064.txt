@@ -1,0 +1,39 @@
+SHELLCHECK.SC3064(1)             Sandbox manual             SHELLCHECK.SC3064(1)
+
+       NAME
+
+       In POSIX sh, test -N is undefined. - if [ -N file ]
+
+       IN POSIX SH, TEST -N IS UNDEFINED
+
+       IN POSIX SH, TEST -N IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         if [ -N file ]
+         then
+           echo "File has been modified since last read"
+         fi
+
+       CORRECT CODE
+
+         if bash -c '[ -N file ]'
+         then
+           echo "File has been modified since last read"
+         fi
+
+       RATIONALE
+
+       test -N is not supported by POSIX, and there is no straight forward way of simulating it. If you need this functionality, look into which non-POSIX features your system has to allow this. stat -c, find -printf, bash, ksh, and Python are all possible options.
+
+       Note that atime did not turn out to be as useful as first imagined in 1970, and it's generally better not to rely on it.
+
+       EXCEPTIONS
+
+       None. If you expect your shell to support test -N, either explicitly specify it in the shebang, use a # shellcheck shell=bash directive, or ignore this warning.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

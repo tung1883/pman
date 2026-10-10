@@ -1,0 +1,71 @@
+WEBAPI.SVGAELEMENT-ORIGIN(1)     Sandbox manual     WEBAPI.SVGAELEMENT-ORIGIN(1)
+
+       NAME
+
+       SVGAElement: origin property - The origin read-only property of the SVGAElement interface represents the origin of the SVG a element's href: usually its scheme, domain, an
+
+       SVGAELEMENT: ORIGIN PROPERTY
+
+       The origin read-only property of the SVGAElement interface represents the origin of the SVG a element's href: usually its scheme, domain, and port.
+
+       The exact structure varies depending on the type of URL:
+
+        * For URLs using the ftp:, http:, https:, ws:, and wss: schemes, the protocol followed by //, followed by the host. Same as host, the port is only included if it's not the default for the protocol.
+        * For URLs using the file: scheme, the value is browser dependent.
+        * For URLs using the blob: scheme, the origin of the URL following blob:, but only if that URL uses the http:, https:, or file: scheme. For example, blob:https://mozilla.org will have https://mozilla.org.
+       For all other cases, the string "null" is returned.
+
+       See URL.origin for more information.
+
+       VALUE
+
+       A string.
+
+       EXAMPLES
+
+       GETTING THE ORIGIN OF AN SVG LINK
+
+       Given the following SVG:
+
+         <svg viewBox="0 0 200 30" xmlns="http://www.w3.org/2000/svg">
+           <a id="link" href="https://example.com/">
+             <text x="0" y="20">Example</text>
+           </a>
+         </svg>
+
+         <pre id="log"></pre>
+
+         svg {
+           width: 200px;
+           height: 30px;
+         }
+         svg a text {
+           fill: blue;
+           text-decoration: underline;
+         }
+         #log {
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+         }
+
+       We can read the origin of the link:
+
+         const link = document.getElementById("link");
+
+         log(`origin: "${link.origin}"`); // origin: "https://example.com"
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * SVG a element
+        * HTMLAnchorElement.origin
+
+Web APIs manual                         from the official documentation

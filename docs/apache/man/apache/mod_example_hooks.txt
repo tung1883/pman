@@ -1,0 +1,47 @@
+APACHE.MOD_EXAMPLE_HOOKS(1)      Sandbox manual      APACHE.MOD_EXAMPLE_HOOKS(1)
+
+       COMPILING THE EXAMPLE_HOOKS MODULE
+
+       To include the example_hooks module in your server, follow the steps below:
+
+        * Run configure with --enable-example-hooks option.
+        * Make the server (run "make").
+       To add another module of your own:
+
+        * cp modules/examples/mod_example_hooks.c modules/new_module/mod_myexample.c
+        * Modify the file.
+        * Create modules/new_module/config.m4.
+          * Add APACHE_MODPATH_INIT(new_module).
+          * Copy APACHE_MODULE line with "example_hooks" from modules/examples/config.m4.
+          * Replace the first argument "example_hooks" with myexample.
+          * Replace the second argument with brief description of your module. It will be used in configure --help.
+          * If your module needs additional C compiler flags, linker flags or libraries, add them to CFLAGS, LDFLAGS and LIBS accordingly. See other config.m4 files in modules directory for examples.
+          * Add APACHE_MODPATH_FINISH.
+        * Create module/new_module/Makefile.in. If your module doesn't need special build instructions, all you need to have in that file is include $(top_srcdir)/build/special.mk.
+        * Run ./buildconf from the top-level directory.
+        * Build the server with --enable-myexample
+
+       USING THE MOD_EXAMPLE_HOOKS MODULE
+
+       To activate the example_hooks module, include a block similar to the following in your httpd.conf file:
+
+         <Location "/example-hooks-info">
+            SetHandler example-hooks-handler
+         </Location>
+
+       As an alternative, you can put the following into a .htaccess file and then request the file "test.example" from that location:
+
+         AddHandler example-hooks-handler ".example"
+
+       After reloading/restarting your server, you should be able to browse to this location and see the brief display mentioned earlier.
+
+       EXAMPLE DIRECTIVE
+
+         Description: | Demonstration directive to illustrate the Apache module API
+         Syntax: | Example
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Experimental
+         Module: | mod_example_hooks
+       The Example directive just sets a demonstration flag which the example module's content handler displays. It takes no arguments. If you browse to an URL to which the example-hooks content-handler applies, you will get a display of the routines within the module and how and in what order they were called to service the document request. The effect of this directive one can observe under the point "Example directive declared here: YES/NO".
+
+Apache HTTP Server manual               bundled documentation

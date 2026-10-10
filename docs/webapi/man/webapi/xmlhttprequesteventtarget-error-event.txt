@@ -1,0 +1,131 @@
+WEBAPI.XMLHTTPREQUESTEVENTTARGET-ERROR-EVENT(1) Sandbox manual WEBAPI.XMLHTTPREQUESTEVENTTARGET-ERROR-EVENT(1)
+
+       NAME
+
+       XMLHttpRequestEventTarget: error event - windowandworkerexceptservice
+
+       XMLHTTPREQUESTEVENTTARGET: ERROR EVENT
+
+       window_and_worker_except_service
+
+       The error event is fired when the request encountered an error.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("error", (event) => { })
+
+         onerror = (event) => { }
+
+       EVENT TYPE
+
+       A ProgressEvent. Inherits from Event.
+
+       ProgressEvent
+
+       EXAMPLES
+
+       USAGE WITH XMLHTTPREQUEST
+
+       HTML
+
+         <div class="controls">
+           <input
+             class="xhr success"
+             type="button"
+             name="xhr"
+             value="Click to start XHR (success)" />
+           <input
+             class="xhr error"
+             type="button"
+             name="xhr"
+             value="Click to start XHR (error)" />
+           <input
+             class="xhr abort"
+             type="button"
+             name="xhr"
+             value="Click to start XHR (abort)" />
+         </div>
+
+         <textarea readonly class="event-log"></textarea>
+
+         .event-log {
+           width: 25rem;
+           height: 4rem;
+           border: 1px solid black;
+           margin: 0.5rem;
+           padding: 0.2rem;
+         }
+
+         input {
+           width: 11rem;
+           margin: 0.5rem;
+         }
+
+       JAVASCRIPT
+
+         const xhrButtonSuccess = document.querySelector(".xhr.success");
+         const xhrButtonError = document.querySelector(".xhr.error");
+         const xhrButtonAbort = document.querySelector(".xhr.abort");
+         const log = document.querySelector(".event-log");
+
+         function handleEvent(e) {
+           log.textContent = `${log.textContent}${e.type}: ${e.loaded} bytes transferred\n`;
+         }
+
+         function addListeners(xhr) {
+           xhr.addEventListener("loadstart", handleEvent);
+           xhr.addEventListener("load", handleEvent);
+           xhr.addEventListener("loadend", handleEvent);
+           xhr.addEventListener("progress", handleEvent);
+           xhr.addEventListener("error", handleEvent);
+           xhr.addEventListener("abort", handleEvent);
+         }
+
+         function runXHR(url) {
+           log.textContent = "";
+
+           const xhr = new XMLHttpRequest();
+           addListeners(xhr);
+           xhr.open("GET", url);
+           xhr.send();
+           return xhr;
+         }
+
+         xhrButtonSuccess.addEventListener("click", () => {
+           runXHR("example-image.jpg");
+         });
+
+         xhrButtonError.addEventListener("click", () => {
+           runXHR("https://example.com/notfound.jpg");
+         });
+
+         xhrButtonAbort.addEventListener("click", () => {
+           runXHR("example-image.jpg").abort();
+         });
+
+       RESULT
+
+       USAGE WITH XMLHTTPREQUESTUPLOAD
+
+       You can use the error event to detect a problem with the upload. For a complete code example that uploads a file and displays a progress bar, see the main XMLHttpRequestUpload page.
+
+         // In case of an error we hide the progress bar
+         // Note that this event can be listened to on the xhr object too
+         function errorAction(event) {
+           progressBar.classList.remove("visible");
+           log.textContent = `Upload failed: ${event.type}`;
+         }
+         xhr.upload.addEventListener("error", errorAction);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Related events: loadstart, load, progress, loadend, abort
+        * Monitoring progress
+
+Web APIs manual                         from the official documentation

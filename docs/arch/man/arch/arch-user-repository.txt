@@ -1,0 +1,291 @@
+ARCH.ARCH-USER-REPOSITORY(1)     Sandbox manual     ARCH.ARCH-USER-REPOSITORY(1)
+
+       The Arch User Repository (AUR) is a community-driven repository for Arch Linux users. It contains package descriptions (PKGBUILDs) that allow you to compile a package from source with makepkg and then install it via pacman. The AUR was created to organize and share new packages from the community and to help expedite popular packages' inclusion into the extra repository. This document explains how users can access and utilize the AUR.
+
+       A good number of new packages that enter the official repositories start in the AUR. In the AUR, users are able to contribute their own package builds (PKGBUILD and related files). The AUR community has the ability to vote for packages in the AUR. If a package becomes popular enough—provided it has a compatible license and good packaging technique—it may be entered into the extra repository (directly accessible by pacman or from the Arch build system).
+
+       Warning AUR packages are user-produced content. These PKGBUILDs are completely unofficial and have not been thoroughly vetted. Any use of the provided files is at your own risk.
+
+       Note If you plan to use AUR, it is highly recommended to follow aur-general Arch mailing list which has been used for security warnings in the past. [1] [2] [3] [4] [5] [6] [7]
+
+       GETTING STARTED
+
+       Users can search and download PKGBUILDs from the AUR Web Interface. These PKGBUILDs can be built into installable packages using makepkg, then installed using pacman.
+
+        * Ensure base-devel is installed.
+        * Glance over the #Frequently asked questions for answers to the most common questions.
+        * You may wish to adjust /etc/makepkg.conf to optimize the build process to your system prior to building packages from the AUR. A significant improvement in package build times can be realized on systems with multi-core processors by adjusting the MAKEFLAGS variable, by using multiple cores for compression, or by using different compression algorithm. Users can also enable hardware-specific compiler optimizations via the CFLAGS variable. See makepkg#Optimization for more information.
+       if you have set up AUR SSH authentication then it is also possible to interact with the AUR through SSH: type ssh aur@aur.archlinux.org help for a list of available commands.
+
+       INSTALLING AND UPGRADING PACKAGES
+
+       Installing packages from the AUR is a relatively simple process. Essentially:
+
+        * Acquire the build files, including the PKGBUILD and possibly other required files, like systemd units and patches (often not the actual code).
+        * Verify the PKGBUILD; the most important step to verify that the PKGBUILD and accompanying files are not malicious or untrustworthy.
+        * Build the package, by running makepkg in the directory where the files are saved. This will download the code, compile it, and package it.
+        * Install the package, by executing pacman -U package_file to install the package onto your system.
+       First, ensure that the necessary tools are installed by installing base-devel; this meta package has make and other tools needed for compiling from source, listed as dependencies.
+
+       Note Packages in the AUR assume that base-devel is installed in the build environment.
+
+       Next, choose an appropriate build directory. A build directory is simply a directory where the package will be made or "built" from source, and can be any directory. The examples in the following sections will use ~/builds as the build directory.
+
+       ACQUIRE BUILD FILES
+
+       Locate the package in the AUR. This is done using the search field at the top of the AUR home page. Clicking the application's name in the search list brings up an information page on the package. Read through the description to confirm that this is the desired package, note when the package was last updated, and read any comments.
+
+       There are several methods for acquiring the build files for a package:
+
+        * Clone its git repository, labeled "Git Clone URL" in the "Package Details" on its AUR page. This is the preferred method, an advantage of which is that you can easily get updates to the package via git pull.
+
+         $ git clone https://aur.archlinux.org/package_name.git
+
+        * Download a snapshot, either by clicking the "Download snapshot" link under "Package Actions" on the right hand side of its AUR page, or in a terminal:
+
+         $ curl -L -O https://aur.archlinux.org/cgit/aur.git/snapshot/package_name.tar.gz
+
+       Note The snapshot file is compressed, and must be extracted (preferably in a directory set aside for AUR builds): tar -xvf package_name.tar.gz
+
+        * Use the read-only mirror archlinux/aur on GitHub, where every package is located in a branch. It is recommended to clone only a single branch (the whole repository is too big and performance would be low). You can do this with one of the following two methods:
+          * Use git clone --single-branch:
+
+         $ git clone --branch package_name --single-branch https://github.com/archlinux/aur.git
+
+          * Do a partial clone of this repository (git clone --depth=1) and add branches selectively:
+
+         $ git clone --depth=1 https://github.com/archlinux/aur.git; cd aur
+         $ git remote set-branches --add origin package_name
+         $ git fetch
+         $ git switch package_name
+
+       VERIFY THE PKGBUILD
+
+       Change directories to the directory containing the package PKGBUILD.
+
+         $ cd package_name
+
+       Warning Carefully check the PKGBUILD, any .install files, and any other files in the package's git repository for malicious or dangerous commands. If in doubt, do not build the package, and seek advice on the forums or mailing list. Malicious code has been found in packages before. [8] [9] [10] [11] A few tools, such as traurAUR and ks-aur-scannerAUR, are available to assist users in scanning PKGBUILD content; however, they are not substitutes for careful manual verification.
+
+       View the contents of all provided files. For example, to use the pager less to view PKGBUILD, do:
+
+         $ less PKGBUILD
+
+       Check if a signature file in the form of .sig or .asc is part of the PKGBUILD source array. If that is the case, then acquire one of the public keys listed in the PKGBUILD validpgpkeys array. Refer to makepkg#Signature checking for more information.
+
+       In any case, be aware also malicious code may be signed, therefore you must vet the PKGBUILD, particularly for sections that may pull software code from outside the repositories.
+
+       Tip If you are updating a package, you may want to look at the changes since the last commit.
+
+        * To view changes since the last git commit, you can use git show.
+        * To view changes since the last commit using vimdiff, do git difftool @~..@ --tool=vimdiff. The advantage of vimdiff is that you view the entire contents of each file along with indicators on what has changed.
+
+       BUILD THE PACKAGE
+
+       Make the package. After manually confirming the contents of the files, run makepkg as a normal user. Some helpful flags:
+
+        * -s/--syncdeps automatically resolves and installs any dependencies with pacman before building. If the package depends on other AUR packages, you will need to manually install them first.
+        * -i/--install installs the package if it is built successfully. This lets you skip the next step that is usually done manually.
+        * -r/--rmdeps removes build-time dependencies after the build, as they are no longer needed. However, these dependencies may need to be reinstalled the next time the package is updated.
+        * -c/--clean cleans up temporary build files after the build, as they are no longer needed. These files are usually needed only when debugging the build process.
+        * --packagelist lists package filenames that would be produced without building.
+       Tip Use  git clean -dfx to delete all files that are not tracked by git, thus deleting all previously built package files.
+
+       INSTALL THE PACKAGE
+
+       The package can now be installed with pacman:
+
+         # pacman -U package_name-version-architecture.pkg.tar.zst
+
+       Note
+
+        * If you have changed your PKGEXT in makepkg.conf, the name of the package file may be slightly different.
+        * The above example is only a brief summary of the build process. It is highly recommended to read the makepkg and Arch build system articles for more details.
+
+       UPGRADING PACKAGES
+
+       In the directory containing the package's PKGBUILD, you must first update the files and changes by using the command
+
+         $ git pull
+
+       then follow the previous build and install instructions.
+
+       UPDATING PACKAGES
+
+       The AUR is unsupported, so any packages you install are your responsibility to update, not pacman's. If packages in the official repositories are updated, you will need to rebuild any AUR packages that depend on those libraries. The checkrebuild tool and rebuild-detector hook from rebuild-detector can help find packages needing rebuilt.
+
+       ACCOUNT STATUS
+
+       SUSPENSION
+
+       When editing a user as a Package Maintainer, the Suspended field can be set, which suspends the target user. When a user is suspended, they cannot:
+
+        * Login to https://aur.archlinux.org
+        * Receive notifications
+        * Interact with the git interface
+
+       INACTIVITY
+
+       When editing your own account or another as a Package Maintainer, the Inactive field can be set. Inactive accounts are used for two reasons:
+
+        * Display the date someone was marked inactive on their account page
+        * Generate a current count of active Package Maintainer based on their inactivity for new proposals
+
+       FEEDBACK
+
+       COMMENTING ON PACKAGES
+
+       The AUR Web Interface has a comments facility that allows users to provide suggestions and feedback on improvements to the PKGBUILD contributor.
+
+       Tip Avoid pasting patches or PKGBUILDs into the comments section: they quickly become obsolete and just end up needlessly taking up lots of space. Instead, email those files to the maintainer, or even use a pastebin.
+
+       Python-Markdown provides basic Markdown syntax to format comments.
+
+       Note
+
+        * This implementation has some occasional differences with the official syntax rules.
+        * Commit hashes to the Git repository of the package and references to Flyspray tickets are converted to links automatically.
+        * Long comments are collapsed and can be expanded on demand.
+
+       VOTING FOR PACKAGES
+
+       One of the easiest activities for all Arch users is to browse the AUR and vote for their favourite packages using the online interface. All packages are eligible for adoption by a Package Maintainer for inclusion in the extra repository, and the vote count is one of the considerations in that process; it is in everyone's interest to vote!
+
+       Sign up on the AUR website to get a "Vote for this package" option while browsing packages. After signing up, it is also possible to vote from the commandline with aur-auto-vote-gitAUR.
+
+       Alternatively, if you have set up AUR SSH authentication, you can directly vote from the command line using your ssh key. This means that you will not need to save or type in your AUR password.
+
+         $ ssh aur@aur.archlinux.org vote package_name
+
+       FLAGGING PACKAGES OUT-OF-DATE
+
+       First, you should flag the package out-of-date indicating details on why the package is outdated, preferably including links to the release announcement or the new release tarball.
+
+       You should also try to reach out to the maintainer directly by email. If there is no response from the maintainer after two weeks, you can file an orphan request. See AUR submission guidelines#Requests for details.
+
+       Note VCS packages are not considered out of date when the pkgver changes; do not flag them as the maintainer will merely unflag the package and ignore you. AUR maintainers should not commit mere pkgver bumps.
+
+       DEBUGGING THE PACKAGE BUILD PROCESS
+
+        * Ensure your build environment is up-to-date by upgrading before building anything.
+        * Ensure you have base-devel installed.
+        * Use the -s option with makepkg to check and install all dependencies needed before starting the build process.
+        * Try the default makepkg configuration.
+        * See Makepkg#Troubleshooting for common issues.
+       If you are having trouble building a package, first read its PKGBUILD and the comments on its AUR page.
+
+       It is possible that a PKGBUILD is broken for everyone. If you cannot figure it out on your own, report it to the maintainer (e.g. by posting the errors you are getting in the comments on the AUR page). You may also seek help in the AUR Issues, Discussion & PKGBUILD Requests forum.
+
+       The reason might not be trivial after all. Custom CFLAGS, LDFLAGS and MAKEFLAGS can cause failures. To avoid problems caused by your particular system configuration, build packages in a clean chroot. If the build process still fails in a clean chroot, the issue is probably with the PKGBUILD.
+
+       See Creating packages#Checking package sanity about using namcap. If you would like to have a PKGBUILD reviewed, post it on the aur-general mailing list to get feedback from the Package Maintainers and fellow AUR members, or the Creating & Modifying Packages forum. You could also seek help in the IRC channel #archlinux-aur on the Libera Chat network.
+
+       SUBMITTING PACKAGES
+
+       Users can share PKGBUILDs using the Arch User Repository. See AUR submission guidelines for details.
+
+       WEB INTERFACE TRANSLATION
+
+       See i18n.md in the AUR source tree for information about creating and maintaining translation of the AUR Web Interface.
+
+       HISTORY
+
+       In the beginning, there was ftp://ftp.archlinux.org/incoming, and people contributed by simply uploading the PKGBUILD, the needed supplementary files, and the built package itself to the server. The package and associated files remained there until a "Trusted user" (renamed as Package Maintainer) saw the program and adopted it.
+
+       Then the Trusted User Repositories were born. Certain individuals in the community were allowed to host their own repositories for anyone to use. The AUR expanded on this basis, with the aim of making it both more flexible and more usable. In fact, the AUR maintainers were referred to as TUs (Trusted Users) until the change in naming to Package Maintainers.
+
+       Between 2015-06-08 and 2015-08-08, the AUR transitioned from version 3.5.1 to 4.0.0, introducing the use of Git repositories for publishing the PKGBUILDs. Existing packages were dropped unless manually migrated to the new infrastructure by their maintainers.
+
+       GIT REPOSITORIES FOR AUR3 PACKAGES
+
+       The AUR Archive on GitHub has a repository for every package that was in AUR 3 at the time of the migration. Alternatively, there is the aur3-mirror repository which provides the same.
+
+       FREQUENTLY ASKED QUESTIONS
+
+       WHAT KIND OF PACKAGES ARE PERMITTED ON THE AUR
+
+       The packages on the AUR are merely "build scripts", i.e. recipes to build binaries for pacman. For most cases, everything is permitted, subject to usefulness and scope guidelines, as long as you are in compliance with the licensing terms of the content. For other cases, where it is mentioned that "you may not link" to downloads, i.e. contents that are not redistributable, you may only use the file name itself as the source. This means and requires that users already have the restricted source in the build directory prior to building the package. When in doubt, ask.
+
+       HOW CAN I VOTE FOR PACKAGES IN THE AUR
+
+       See #Voting for packages.
+
+       WHAT IS A PACKAGE MAINTAINER
+
+       See Arch terminology#Package maintainer.
+
+       WHAT IS THE DIFFERENCE BETWEEN THE ARCH USER REPOSITORY AND THE EXTRA
+
+       The Arch User Repository is where all PKGBUILDs that users submit are stored, and must be built manually with makepkg. When PKGBUILDs receive enough community interest and the support of a Package Maintainer, they are moved into the extra repository (maintained by the Package Maintainers), where the binary packages can be installed with pacman.
+
+       FOO IN THE AUR IS OUTDATED WHAT SHOULD I DO
+
+       See #Flagging packages out-of-date.
+
+       In the meantime, you can try updating the package yourself by editing the PKGBUILD locally. Sometimes, updates do not require changes to the build or package process, in which case simply updating the pkgver or source array is sufficient.
+
+       FOO IN THE AUR DOES NOT COMPILE WHEN I RUN MAKEPKG WHAT SHOULD I DO
+
+       You are probably missing something trivial; see #Debugging the package build process.
+
+       ERROR: ONE OR MORE PGP SIGNATURES COULD NOT BE VERIFIED WHAT SHOULD I
+
+       Most likely, you do not have the required public key(s) in your personal keyring to verify downloaded files. See Makepkg#Signature checking for details.
+
+       HOW DO I CREATE A PKGBUILD
+
+       Consult the AUR submission guidelines#Rules of submission, then see creating packages.
+
+       I HAVE A PKGBUILD I WOULD LIKE TO SUBMIT CAN SOMEONE CHECK IT TO SEE I
+
+       There are several channels available to submit your package for review; see #Debugging the package build process.
+
+       HOW TO GET A PKGBUILD INTO THE EXTRA REPOSITORY
+
+       Usually, at least 10 votes are required for something to move into extra. However, if a Package Maintainer wants to support a package, it will often be found in the repository.
+
+       Reaching the required minimum of votes is not the only requirement; there has to be a package maintainer willing to maintain the package. Package Maintainers are not required to move a package into the extra repository even if it has thousands of votes.
+
+       Usually, when a very popular package stays in the AUR, it is because:
+
+        * Arch Linux already has another version of a package in the repositories
+        * Its license prohibits redistribution
+        * It helps retrieve user-submitted PKGBUILDs. AUR helpers are unsupported by definition.
+       See also Rules for Packages Entering the extra repository
+
+       HOW CAN I SPEED UP REPEATED BUILD PROCESSES
+
+       See Makepkg#Improving build times.
+
+       WHAT IS THE DIFFERENCE BETWEEN FOO AND FOO-GIT PACKAGES
+
+       Many AUR packages come in "stable" release and "unstable" development versions. Development packages usually have a suffix denoting their Version Control System and are not intended for regular use, but may offer new features or bugfixes. Because these packages only download the latest available source when you execute makepkg, their pkgver() in the AUR does not reflect upstream changes. Likewise, these packages cannot perform an authenticity checksum on any VCS source.
+
+       See also System maintenance#Use proven software packages.
+
+       WHY HAS FOO DISAPPEARED FROM THE AUR
+
+       It is possible the package has been adopted by a Package Maintainer and is now in the extra repository.
+
+       Packages may be deleted if they did not fulfill the rules of submission. See the aur-requests archives for the reason for deletion.
+
+       Note The git repository for a deleted package typically remains available. See AUR submission guidelines#Requests for details.
+
+       HOW DO I FIND OUT IF ANY OF MY INSTALLED PACKAGES DISAPPEARED FROM AUR
+
+       Compare the output of pacman -Qm (installed packages not found in a sync database) against the list of all AUR packages:
+
+         $ comm -23 <(pacman -Qqm | sort) <(curl https://aur.archlinux.org/packages.gz | gzip -cd | sort)
+
+       HOW CAN I OBTAIN A LIST OF ALL AUR PACKAGES
+
+        * https://aur.archlinux.org/packages.gz
+        * Use aurpkglist from python3-aurAUR
+        * New AUR Metadata Archives
+
+       SEE ALSO
+
+        * AUR Web Interface
+        * AUR Mailing List
+
+ArchWiki manual                         bundled documentation

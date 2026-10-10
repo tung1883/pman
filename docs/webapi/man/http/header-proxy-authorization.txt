@@ -1,0 +1,55 @@
+HTTP.HEADER-PROXY-AUTHORIZATION(1) Sandbox manual HTTP.HEADER-PROXY-AUTHORIZATION(1)
+
+       NAME
+
+       Proxy-Authorization header - The HTTP Proxy-Authorization request header contains the credentials to authenticate a client with a proxy server, typically after the serve
+
+       PROXY-AUTHORIZATION HEADER
+
+       The HTTP Proxy-Authorization request header contains the credentials to authenticate a client with a proxy server, typically after the server has responded with a 407 Proxy Authentication Required status with the Proxy-Authenticate header.
+
+       Header type Request header Forbidden request header Yes
+
+       SYNTAX
+
+         Proxy-Authorization: <auth-scheme> <credentials>
+
+       DIRECTIVES
+
+        * 
+          * : A case-insensitive token indicating the Authentication scheme used.
+       Some of the more common types are Basic, Digest, Negotiate and AWS4-HMAC-SHA256. IANA maintains a list of authentication schemes, but there are other schemes offered by host services.
+
+        * 
+          * : Credentials use for the authentication scheme.
+       Generally, you will need to check the relevant specifications for the format.
+
+       > See Authorization for more details.
+
+       EXAMPLES
+
+       BASIC AUTHENTICATION
+
+       In Basic auth, credentials are sent in the format : (for example, aladdin:opensesame). The resulting string is then base64 encoded (YWxhZGRpbjpvcGVuc2VzYW1l).
+
+         Proxy-Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l
+
+       > Base64 encoding is reversible, and therefore offers no cryptographic security.
+       > This method can be considered equivalent to sending the credentials in clear text.
+       > HTTPS is always recommended when using authentication, but is even more so when using Basic authentication.
+
+       BEARER AUTHENTICATION (AUTH TOKEN)
+
+         Proxy-Authorization: Bearer kNTktNTA1My00YzLT1234
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * HTTP authentication
+        * Proxy-Authenticate
+        * WWW-Authenticate
+        * Authorization
+        * 401, 403, 407
+
+HTTP manual                             from the official documentation

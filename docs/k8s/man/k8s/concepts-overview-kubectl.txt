@@ -1,0 +1,57 @@
+K8S.CONCEPTS-OVERVIEW-KUBECTL(1) Sandbox manual K8S.CONCEPTS-OVERVIEW-KUBECTL(1)
+
+       NAME
+
+       The kubectl command-line tool - The kubectl tool communicates with your cluster through the Kubernetes API.
+
+       THE KUBECTL COMMAND-LINE TOOL
+
+       The kubectl tool communicates with your cluster through the Kubernetes API. For configuration, kubectl looks for a file named config in the $HOME/.kube directory. You can specify other kubeconfig files by setting the KUBECONFIG environment variable or by setting the --kubeconfig flag.
+
+       ROLE OF KUBECTL
+
+       The kubectl tool is the primary interface for creating, inspecting, updating, and deleting Kubernetes objects. It complements the Kubernetes Components that run inside your cluster and the Kubernetes API that those components implement. Whether you run kubectl from your laptop or from a Pod inside the cluster, it sends requests to the API server. Other clients, such as client libraries and web dashboards like Headlamp, also communicate through the same API.
+
+       HOW KUBECTL WORKS
+
+       The kubectl tool connects to the API server and authenticates using the cluster, user, and context defined in your kubeconfig file. When you run kubectl from outside a cluster, it uses the kubeconfig file to find the API server address and credentials. When kubectl runs inside a Pod (for example, in a CI/CD pipeline), it can use in-cluster authentication based on the ServiceAccount token mounted in the Pod.
+
+       When you run a command, kubectl translates your intent into one or more HTTP requests to the Kubernetes API. The API server validates each request, applies it to the cluster state stored in etcd, and returns the result. This means every kubectl action, whether creating a Deployment or reading logs, follows the same API-driven path.
+
+       Because your kubeconfig can define multiple clusters, users, and contexts, you can use kubectl to switch between clusters without reconfiguring your environment. Run kubectl config use-context to change the active context.
+
+       WHAT YOU CAN DO WITH KUBECTL
+
+       The kubectl tool supports many operations, which fall into these broad categories:
+
+        * Manage resources – Create, update, and delete objects such as Pods, Deployments, and Services.
+       Use kubectl apply for declarative management from configuration files.
+
+        * Inspect cluster state – List and describe objects, view events, and check resource usage.
+        * Debug – View logs from containers, execute commands inside a running container, or port-forward to a Pod.
+        * Cluster operations – Drain nodes for maintenance, cordon nodes to prevent new workloads, and manage cluster configuration.
+        * Script and automate – Format output as JSON, YAML, or custom columns using JSONPath for use in scripts and pipelines.
+       For syntax, command reference, and examples, see the kubectl reference documentation.
+
+       DECLARATIVE VS IMPERATIVE
+
+       For production workloads, prefer declarative object management using kubectl apply with version-controlled configuration files. Declarative management helps you track changes, collaborate, and integrate with GitOps workflows. Imperative commands (such as kubectl create or kubectl run) are useful for development and experimentation, but are harder to reproduce and audit.
+
+       EXTENDING KUBECTL WITH PLUGINS
+
+       You can extend kubectl with plugins that add new sub-commands. Plugins are standalone binaries that follow the kubectl- naming convention. The Kubernetes community maintains many plugins, and you can manage them with the Krew plugin manager.
+
+       VERSION COMPATIBILITY
+
+       The kubectl tool supports a version skew of plus-or-minus one minor version relative to the cluster's control plane. For example, kubectl v1.32 works with control planes at v1.31, v1.32, and v1.33. Using a compatible version avoids unexpected behavior. See the version skew policy for details.
+
+       ## WHATSNEXT
+
+        * Read the kubectl reference for syntax and command details.
+        * Install kubectl on your machine.
+        * Learn about The Kubernetes API that kubectl uses.
+        * Review Kubernetes Components that make up a cluster.
+        * Explore Object Management and declarative configuration.
+        * Check the version skew policy for supported version combinations.
+
+Kubernetes manual                       from the official documentation

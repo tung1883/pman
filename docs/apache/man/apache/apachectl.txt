@@ -1,0 +1,56 @@
+APACHE.APACHECTL(1)              Sandbox manual              APACHE.APACHECTL(1)
+
+       SYNOPSIS
+
+       When acting in pass-through mode, apachectl can take all the arguments available for the httpd binary.
+
+       apachectl [ httpd-argument ]
+
+       When acting in SysV init mode, apachectl takes simple, one-word commands, defined below.
+
+       apachectl command
+
+       OPTIONS
+
+       Only the SysV init-style options are defined here. Other arguments are defined on the httpd manual page.
+
+         start
+       Start the Apache httpd daemon. Gives an error if it is already running. This is equivalent to apachectl -k start.
+
+         stop
+       Stops the Apache httpd daemon. This is equivalent to apachectl -k stop.
+
+         restart
+       Restarts the Apache httpd daemon. If the daemon is not running, it is started. This command automatically checks the configuration files as in configtest before initiating the restart to make sure the daemon doesn't die. This is equivalent to apachectl -k restart.
+
+         fullstatus
+       Displays a full status report from mod_status. For this to work, you need to have mod_status enabled on your server and a text-based browser such as lynx available on your system. The URL used to access the status report can be set by editing the STATUSURL variable in the script.
+
+         status
+       Displays a brief status report. Similar to the fullstatus option, except that the list of requests currently being served is omitted.
+
+         graceful
+       Gracefully restarts the Apache httpd daemon. If the daemon is not running, it is started. This differs from a normal restart in that currently open connections are not aborted. A side effect is that old log files will not be closed immediately. This means that if used in a log rotation script, a substantial delay may be necessary to ensure that the old log files are closed before processing them. This command automatically checks the configuration files as in configtest before initiating the restart to make sure Apache doesn't die. This is equivalent to apachectl -k graceful.
+
+         graceful-stop
+       Gracefully stops the Apache httpd daemon. This differs from a normal stop in that currently open connections are not aborted. A side effect is that old log files will not be closed immediately. This is equivalent to apachectl -k graceful-stop.
+
+         configtest
+       Run a configuration file syntax test. It parses the configuration files and either reports Syntax Ok or detailed information about the particular syntax error. This is equivalent to apachectl -t.
+
+       The following option was available in earlier versions but has been removed.
+
+         startssl
+       To start httpd with SSL support, you should edit your configuration file to include the relevant directives and then use the normal apachectl start.
+
+       FILES
+
+       The default paths listed below may be changed at compile time. Consult your local installation for the actual locations.
+
+         /usr/local/apache2/bin/envvars
+       Environment variable settings sourced at startup.
+
+         /usr/local/apache2/bin/httpd
+       The httpd binary invoked by apachectl.
+
+Apache HTTP Server manual               bundled documentation

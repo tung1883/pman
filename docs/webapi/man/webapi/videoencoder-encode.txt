@@ -1,0 +1,92 @@
+WEBAPI.VIDEOENCODER-ENCODE(1)    Sandbox manual    WEBAPI.VIDEOENCODER-ENCODE(1)
+
+       NAME
+
+       VideoEncoder: encode() method - windowanddedicated
+
+       VIDEOENCODER: ENCODE() METHOD
+
+       window_and_dedicated
+
+       The encode() method of the VideoEncoder interface asynchronously encodes a VideoFrame. Encoded data (EncodedVideoChunk) or an error will eventually be returned via the callbacks provided to the VideoEncoder constructor.
+
+       SYNTAX
+
+         encode(frame)
+         encode(frame, options)
+
+       PARAMETERS
+
+        * frame
+          * : A VideoFrame object.
+        * options (optional)
+          * : An object containing the following members:
+            * keyFrame (optional)
+              * : A Boolean, defaulting to false giving the user agent flexibility to decide if this frame should be encoded as a key frame. If true this indicates that the given frame must be encoded as a key frame.
+            * vp9 (optional)
+              * : Encode options for the VP9 codec.
+                * quantizer
+                  * : Frame quantizer value 0 to 63. Only effective if VideoEncoder was configured with quantizer bitrate mode.
+            * av1 (optional)
+              * : Encode options for the AV1 codec.
+                * quantizer
+                  * : Frame quantizer value 0 to 63. Only effective if VideoEncoder was configured with quantizer bitrate mode.
+            * avc (optional)
+              * : Encode options for the AVC (H.264) codec.
+                * quantizer
+                  * : Frame quantizer value 0 to 51. Only effective if VideoEncoder was configured with quantizer bitrate mode.
+            * hevc (optional)
+              * : Encode options for the HEVC (H.265) codec.
+                * quantizer
+                  * : Frame quantizer value 0 to 51. Only effective if VideoEncoder was configured with quantizer bitrate mode.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the state is not "configured".
+        * DataError DOMException
+          * : Thrown if the given frame object's rotation and flip do not match the rotation and flip of the first VideoFrame passed to encode() (the "active orientation").
+
+       EXAMPLES
+
+       In the following example encode is passed a VideoFrame, and the options parameter indicating that this frame should be considered a keyframe.
+
+         encoder.encode(frame, { keyFrame: true });
+
+       Setting per-frame QP value for encoding individual frames.
+
+         const encoder = new VideoEncoder(init);
+         const encoderConfig = {
+           codec: "vp09.00.10.08",
+           width: 800,
+           height: 600,
+           bitrateMode: "quantizer",
+           framerate: 30,
+           latencyMode: "realtime",
+         };
+         encoder.configure(encoderConfig);
+
+         const encodeOptions = { keyFrame: false };
+         const qp = calculateQp(codec, frame);
+
+         if (codec.includes("vp09")) {
+           encodeOptions.vp9 = { quantizer: qp };
+         } else if (codec.includes("av01")) {
+           encodeOptions.av1 = { quantizer: qp };
+         } else if (codec.includes("avc")) {
+           encodeOptions.avc = { quantizer: qp };
+         } else if (codec.includes("hvc1") || codec.includes("hev1")) {
+           encodeOptions.hevc = { quantizer: qp };
+         }
+
+         encoder.encode(frame, encodeOptions);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

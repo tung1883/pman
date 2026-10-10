@@ -1,0 +1,60 @@
+WEBAPI.DOCUMENT-CREATEPROCESSINGINSTRUCTION(1) Sandbox manual WEBAPI.DOCUMENT-CREATEPROCESSINGINSTRUCTION(1)
+
+       NAME
+
+       Document: createProcessingInstruction() method - The createProcessingInstruction() method of the Document interface creates a new ProcessingInstruction object and returns it.
+
+       DOCUMENT: CREATEPROCESSINGINSTRUCTION() METHOD
+
+       The createProcessingInstruction() method of the Document interface creates a new ProcessingInstruction object and returns it.
+
+       SYNTAX
+
+         createProcessingInstruction(target, data)
+
+       PARAMETERS
+
+        * target
+          * : A string containing the first part of the processing instruction (i.e., <?target … ?>)
+        * data
+          * : A string containing any information the processing instruction should carry, after the target. The data can contain any character pattern, except that it can't contain ?>, since that closes the processing instruction.
+
+       RETURN VALUE
+
+        * A ProcessingInstruction node.
+
+       EXCEPTIONS
+
+        * InvalidCharacterError DOMException
+          * : Thrown if either of the following are true:
+            * The target value is not a valid XML name; for example, it starts with a number, hyphen, or period, or contains characters other than alphanumeric characters, underscores, hyphens, or periods.
+            * The _closing processing instruction sequence_ (?>) is included as part of the data value.
+
+       DESCRIPTION
+
+       The createProcessingInstruction() method creates a new processing instruction. The new node will usually be inserted into a document to accomplish a task with it, using a method such as node.insertBefore.
+
+       Initially, ProcessingInstruction nodes were only supported in XML documents, not in HTML documents. In non-supporting browsers, a processing instruction will be interpreted as a comment and represented as a Comment object in the DOM tree.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       This example creates an processing instruction and adds it to the top of an example XML document.
+
+         const doc = new DOMParser().parseFromString("<foo />", "application/xml");
+         const pi = doc.createProcessingInstruction(
+           "xml-stylesheet",
+           'href="mycss.css"',
+         );
+
+         doc.insertBefore(pi, doc.firstChild);
+
+         console.log(new XMLSerializer().serializeToString(doc));
+         // Displays: <?xml-stylesheet href="mycss.css" type="text/css"?><foo/>
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

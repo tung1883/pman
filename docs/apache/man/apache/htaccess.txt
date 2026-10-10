@@ -1,0 +1,206 @@
+APACHE.HTACCESS(1)               Sandbox manual               APACHE.HTACCESS(1)
+
+       HTACCESS FILES
+
+         Related Modules | Related Directives
+        * core
+        * mod_authn_file
+        * mod_authz_groupfile
+        * mod_include
+        * mod_mime
+        * mod_rewrite
+        * AccessFileName
+        * AllowOverride
+        * AllowOverrideList
+        * Options
+        * AddHandler
+        * SetHandler
+        * AuthType
+        * AuthName
+        * AuthUserFile
+        * AuthGroupFile
+        * Require
+
+       WHAT THEY ARE/HOW TO USE THEM
+
+       .htaccess files (or "distributed configuration files") provide a way to make configuration changes on a per-directory basis. A file, containing one or more configuration directives, is placed in a particular document directory, and the directives apply to that directory, and all subdirectories thereof.
+
+       NOTE
+
+       If you want to call your .htaccess file something else, you can change the name of the file using the AccessFileName directive. For example, if you would rather call the file .config then you can put the following in your server configuration file:
+
+         AccessFileName ".config"
+
+       Directives in .htaccess files use the same syntax as in the main configuration files. What you are permitted to put in these files is determined by the AllowOverride and AllowOverrideList directives. AllowOverride specifies, in categories, what directives will be honored if they are found in a .htaccess file, while AllowOverrideList names individual directives to permit (see below). If a directive is permitted, the documentation for that directive will contain an Override section, specifying what value must be in AllowOverride for that directive to be permitted.
+
+       The default value of AllowOverride is None. This means .htaccess files are completely ignored unless you explicitly enable them for a directory.
+
+       For example, if you look at the documentation for the AddDefaultCharset directive, you will find that it is permitted in .htaccess files. (See the Context line in the directive summary.) The Override line reads FileInfo. Thus, you must have at least AllowOverride FileInfo for this directive to be honored in .htaccess files.
+
+       WHEN (NOT) TO USE .HTACCESS FILES
+
+       If you have access to the main server configuration file, you should put all of your configuration there instead of in .htaccess files. This includes user authentication, mod_rewrite rules, and anything else you might be tempted to put in .htaccess. Directives in the main configuration are loaded once at server start, rather than on every request, and mod_rewrite in particular works better in server configuration context.
+
+       .htaccess files should be used in a case where the content providers need to make configuration changes to the server on a per-directory basis, but do not have root access on the server system. This is common with managed hosting environments, control-panel-based hosting (such as cPanel or Plesk), and content management systems where the application ships a .htaccess file as part of its distribution. In the event that the server administrator is not willing to make frequent configuration changes, it might be desirable to permit individual users to make these changes in .htaccess files for themselves.
+
+       There are two reasons to prefer the main configuration file over .htaccess: performance and security.
+
+       Performance: When AllowOverride is set to allow the use of .htaccess files, httpd will look in every directory for .htaccess files. Thus, permitting .htaccess files causes a performance hit, whether or not you actually even use them! Also, the .htaccess file is loaded every time a document is requested.
+
+       Additionally, httpd must look for .htaccess files in all higher-level directories to assemble the full set of applicable directives. (See section on how directives are applied.) Thus, if a file is requested out of a directory /www/htdocs/example, httpd must look for the following files:
+
+         /.htaccess
+         /www/.htaccess
+         /www/htdocs/.htaccess
+         /www/htdocs/example/.htaccess
+
+       And so, for each file access out of that directory, there are 4 additional file-system accesses, even if none of those files are present. (This would only be the case if .htaccess files were enabled for /, which is not usually the case.)
+
+       Security: You are permitting users to modify server configuration, which may result in changes over which you have no control. Carefully consider whether you want to give your users this privilege. Giving users less privileges than they need will lead to additional technical support requests. Make sure you clearly tell your users what level of privileges you have given them. Specifying exactly what you have set AllowOverride to, and pointing them to the relevant documentation, prevents confusion later.
+
+       If you need to grant .htaccess access but want to limit it to specific directives rather than entire categories, use the AllowOverrideList directive. This lets you name individual directives that are permitted, providing finer-grained control than AllowOverride alone:
+
+         # Allow only specific directives, not entire categories
+         AllowOverride None
+         AllowOverrideList Redirect RedirectMatch RewriteEngine RewriteRule RewriteCond
+
+       With this configuration, any directive not explicitly listed will cause a server error if encountered in a .htaccess file. This is a useful middle ground between full override access and no override access.
+
+       Placing a directive in a .htaccess file in a directory /www/htdocs/example is completely equivalent to placing that same directive in a <Directory "/www/htdocs/example"> section in your main server configuration:
+
+       .htaccess file in /www/htdocs/example:
+
+       CONTENTS OF .HTACCESS FILE IN /WWW/HTDOCS/EXAMPLE
+
+         AddType text/example ".exm"
+
+       SECTION FROM YOUR HTTPD.CONF FILE
+
+         <Directory "/www/htdocs/example">
+         AddType text/example ".exm"
+         </Directory>
+
+       The use of .htaccess files can be disabled completely by setting the AllowOverride directive to none:
+
+         AllowOverride None
+
+       HOW DIRECTIVES ARE APPLIED
+
+       The configuration directives found in a .htaccess file are applied to the directory in which the .htaccess file is found, and to all subdirectories thereof. Remember that there may have been .htaccess files in directories higher up. Directives are applied in the order that they are found. Therefore, a .htaccess file in a particular directory may override directives found in .htaccess files found higher up in the directory tree. And those, in turn, may have overridden directives found yet higher up, or in the main server configuration file itself.
+
+       Example:
+
+       In the directory /www/htdocs/example1 we have a .htaccess file containing the following:
+
+         Options +ExecCGI
+
+       You must have "AllowOverride Options" in effect to permit the use of the "Options" directive in .htaccess files.
+
+       In the directory /www/htdocs/example1/example2 we have a .htaccess file containing:
+
+         Options Includes
+
+       Because of this second .htaccess file, in the directory /www/htdocs/example1/example2, CGI execution is not permitted, as only Options Includes is in effect, which completely overrides any earlier setting that may have been in place.
+
+       MERGING OF .HTACCESS WITH THE MAIN CONFIGURATION FILES
+
+       As discussed in the documentation on Configuration Sections, .htaccess files can override the <Directory> sections for the corresponding directory, but will be overridden by other types of configuration sections from the main configuration files. This fact can be used to enforce certain configurations, even in the presence of a liberal AllowOverride setting. For example, to prevent script execution while allowing anything else to be set in .htaccess you can use:
+
+         <Directory "/www/htdocs">
+         AllowOverride All
+         </Directory>
+
+         <Location "/">
+         Options +IncludesNoExec -ExecCGI
+         </Location>
+
+       This example assumes that your DocumentRoot is /www/htdocs.
+
+       AUTHENTICATION EXAMPLE
+
+       As with any .htaccess use, placing these directives in a <Directory> block is preferred when you have access to the main configuration (see above). The following example shows the .htaccess approach:
+
+       .htaccess file contents:
+
+         AuthType Basic
+         AuthName "Password Required"
+         AuthUserFile "/www/passwords/password.file"
+         AuthGroupFile "/www/passwords/group.file"
+         Require group admins
+
+       AllowOverride AuthConfig must be in effect for these directives to have any effect.
+
+       Please see the authentication tutorial for a more complete discussion of authentication and authorization.
+
+       SERVER SIDE INCLUDES EXAMPLE
+
+       Another use of .htaccess files is to enable Server Side Includes for a particular directory. This may be done with the following configuration directives, placed in a .htaccess file in the desired directory:
+
+         Options +Includes
+         AddType text/html "shtml"
+         AddHandler server-parsed shtml
+
+       AllowOverride Options and AllowOverride FileInfo must both be in effect for these directives to have any effect.
+
+       Please see the SSI tutorial for a more complete discussion of server-side includes.
+
+       REWRITE RULES IN .HTACCESS FILES
+
+       When using RewriteRule in .htaccess files, be aware that the per-directory context changes things a bit. In particular, rules are taken to be relative to the current directory, rather than being the original requested URI. Consider the following examples:
+
+         # In httpd.conf
+         RewriteRule "^/images/(.+)\.jpg" "/images/$1.png"
+
+         # In .htaccess in root dir
+         RewriteRule "^images/(.+)\.jpg" "images/$1.png"
+
+         # In .htaccess in images/
+         RewriteRule "^(.+)\.jpg" "$1.png"
+
+       In a .htaccess in your document directory, the leading slash is removed from the value supplied to RewriteRule, and in the images subdirectory, /images/ is removed from it. Thus, your regular expression needs to omit that portion as well.
+
+       In .htaccess context, regular expressions are recompiled on every request, whereas in the main server configuration they are compiled once and cached.
+
+       Consult the mod_rewrite documentation for further details on using mod_rewrite.
+
+       CGI EXAMPLE
+
+       CGI scripts are a legacy mechanism for dynamic content. For new deployments, consider using mod_proxy_fcgi with a FastCGI application server, or a framework-specific handler. The information below remains useful for environments that still rely on traditional CGI.
+
+       You may wish to use a .htaccess file to permit the execution of CGI programs in a particular directory. This may be implemented with the following configuration:
+
+         Options +ExecCGI
+         AddHandler cgi-script "cgi" "py"
+
+       Alternately, if you wish to have all files in the given directory be considered to be CGI programs, this may be done with the following configuration:
+
+         Options +ExecCGI
+         SetHandler cgi-script
+
+       AllowOverride Options and AllowOverride FileInfo must both be in effect for these directives to have any effect.
+
+       Please see the CGI tutorial for a more complete discussion of CGI programming and configuration.
+
+       TROUBLESHOOTING
+
+       When you put configuration directives in a .htaccess file, and you don't get the desired effect, there are a number of things that may be going wrong.
+
+       Most commonly, the problem is that AllowOverride is not set such that your configuration directives are being honored. Make sure that you don't have a AllowOverride None in effect for the file scope in question. A good test for this is to put a nonsense word in your .htaccess file and reload the page:
+
+         TestMe
+
+       If a server error (HTTP 500) is not generated, then you almost certainly have AllowOverride None in effect.
+
+       If, on the other hand, you are getting server errors when trying to access documents, check your httpd error log. It will likely tell you that the directive used in your .htaccess file is not permitted.
+
+         [Thu Jun 18 09:12:31.528374 2026] [core:alert] [pid 12345] [client 192.168.1.50:54321] /var/www/html/.htaccess: DirectoryIndex not allowed here
+
+       This will indicate either that you've used a directive that is never permitted in .htaccess files, or that you don't have AllowOverride set to a level sufficient for the directive you've used. Consult the documentation for that particular directive to determine which is the case.
+
+       Alternately, it may tell you that you had a syntax error in your usage of the directive itself.
+
+         [Thu Jun 18 09:14:02.946218 2026] [core:alert] [pid 12345] [client 192.168.1.50:54321] /var/www/html/.htaccess: RewriteCond: bad flag delimiters
+
+       In this case, the error message should be specific to the particular syntax error that you have committed.
+
+Apache HTTP Server manual               bundled documentation

@@ -1,0 +1,143 @@
+APACHE.SSL_COMPAT(1)             Sandbox manual             APACHE.SSL_COMPAT(1)
+
+       CONFIGURATION DIRECTIVES
+
+       The mapping between configuration directives used by Apache-SSL 1.x and mod_ssl 2.0.x is given in Table 1. The mapping from Sioux 1.x and Stronghold 2.x is only partial because of special functionality in these interfaces which mod_ssl doesn't provide.
+
+       TABLE 1: CONFIGURATION DIRECTIVE MAPPING
+
+         Old Directive | mod_ssl Directive | Comment
+         Apache-SSL 1.x & mod_ssl 2.0.x compatibility:
+         SSLEnable | SSLEngine on | compactified
+         SSLDisable | SSLEngine off | compactified
+         SSLLogFile file | Use per-module LogLevel setting instead.
+         SSLRequiredCiphers spec | SSLCipherSuite spec | renamed
+         SSLRequireCipher c1 ... | SSLRequire %{SSL_CIPHER} in {"c1", ...} | generalized
+         SSLBanCipher c1 ... | SSLRequire not (%{SSL_CIPHER} in {"c1", ...}) | generalized
+         SSLFakeBasicAuth | SSLOptions +FakeBasicAuth | merged
+         SSLCacheServerPath dir | - | functionality removed
+         SSLCacheServerPort integer | - | functionality removed
+         Apache-SSL 1.x compatibility:
+         SSLExportClientCertificates | SSLOptions +ExportCertData | merged
+         SSLCacheServerRunDir dir | - | functionality not supported
+         Sioux 1.x compatibility:
+         SSL_CertFile file | SSLCertificateFile file | renamed
+         SSL_KeyFile file | SSLCertificateKeyFile file | renamed
+         SSL_CipherSuite arg | SSLCipherSuite arg | renamed
+         SSL_X509VerifyDir arg | SSLCACertificatePath arg | renamed
+         SSL_Log file | - | Use per-module LogLevel setting instead.
+         SSL_Connect flag | SSLEngine flag | renamed
+         SSL_ClientAuth arg | SSLVerifyClient arg | renamed
+         SSL_X509VerifyDepth arg | SSLVerifyDepth arg | renamed
+         SSL_FetchKeyPhraseFrom arg | - | not directly mappable; use SSLPassPhraseDialog
+         SSL_SessionDir dir | - | not directly mappable; use SSLSessionCache
+         SSL_Require expr | - | not directly mappable; use SSLRequire
+         SSL_CertFileType arg | - | functionality not supported
+         SSL_KeyFileType arg | - | functionality not supported
+         SSL_X509VerifyPolicy arg | - | functionality not supported
+         SSL_LogX509Attributes arg | - | functionality not supported
+         Stronghold 2.x compatibility:
+         StrongholdAccelerator engine | SSLCryptoDevice engine | renamed
+         StrongholdKey dir | - | functionality not needed
+         StrongholdLicenseFile dir | - | functionality not needed
+         SSLFlag flag | SSLEngine flag | renamed
+         SSLSessionLockFile file | SSLMutex file | renamed
+         SSLCipherList spec | SSLCipherSuite spec | renamed
+         RequireSSL | SSLRequireSSL | renamed
+         SSLErrorFile file | - | functionality not supported
+         SSLRoot dir | - | functionality not supported
+         SSL_CertificateLogDir dir | - | functionality not supported
+         AuthCertDir dir | - | functionality not supported
+         SSL_Group name | - | functionality not supported
+         SSLProxyMachineCertPath dir | SSLProxyMachineCertificatePath dir | renamed
+         SSLProxyMachineCertFile file | SSLProxyMachineCertificateFile file | renamed
+         SSLProxyCipherList spec | SSLProxyCipherSpec spec | renamed
+
+       ENVIRONMENT VARIABLES
+
+       The mapping between environment variable names used by the older SSL solutions and the names used by mod_ssl is given in Table 2.
+
+       TABLE 2: ENVIRONMENT VARIABLE DERIVATION
+
+         Old Variable | mod_ssl Variable | Comment
+         SSL_PROTOCOL_VERSION | SSL_PROTOCOL | renamed
+         SSLEAY_VERSION | SSL_VERSION_LIBRARY | renamed
+         HTTPS_SECRETKEYSIZE | SSL_CIPHER_USEKEYSIZE | renamed
+         HTTPS_KEYSIZE | SSL_CIPHER_ALGKEYSIZE | renamed
+         HTTPS_CIPHER | SSL_CIPHER | renamed
+         HTTPS_EXPORT | SSL_CIPHER_EXPORT | renamed
+         SSL_SERVER_KEY_SIZE | SSL_CIPHER_ALGKEYSIZE | renamed
+         SSL_SERVER_CERTIFICATE | SSL_SERVER_CERT | renamed
+         SSL_SERVER_CERT_START | SSL_SERVER_V_START | renamed
+         SSL_SERVER_CERT_END | SSL_SERVER_V_END | renamed
+         SSL_SERVER_CERT_SERIAL | SSL_SERVER_M_SERIAL | renamed
+         SSL_SERVER_SIGNATURE_ALGORITHM | SSL_SERVER_A_SIG | renamed
+         SSL_SERVER_DN | SSL_SERVER_S_DN | renamed
+         SSL_SERVER_CN | SSL_SERVER_S_DN_CN | renamed
+         SSL_SERVER_EMAIL | SSL_SERVER_S_DN_Email | renamed
+         SSL_SERVER_O | SSL_SERVER_S_DN_O | renamed
+         SSL_SERVER_OU | SSL_SERVER_S_DN_OU | renamed
+         SSL_SERVER_C | SSL_SERVER_S_DN_C | renamed
+         SSL_SERVER_SP | SSL_SERVER_S_DN_SP | renamed
+         SSL_SERVER_L | SSL_SERVER_S_DN_L | renamed
+         SSL_SERVER_IDN | SSL_SERVER_I_DN | renamed
+         SSL_SERVER_ICN | SSL_SERVER_I_DN_CN | renamed
+         SSL_SERVER_IEMAIL | SSL_SERVER_I_DN_Email | renamed
+         SSL_SERVER_IO | SSL_SERVER_I_DN_O | renamed
+         SSL_SERVER_IOU | SSL_SERVER_I_DN_OU | renamed
+         SSL_SERVER_IC | SSL_SERVER_I_DN_C | renamed
+         SSL_SERVER_ISP | SSL_SERVER_I_DN_SP | renamed
+         SSL_SERVER_IL | SSL_SERVER_I_DN_L | renamed
+         SSL_CLIENT_CERTIFICATE | SSL_CLIENT_CERT | renamed
+         SSL_CLIENT_CERT_START | SSL_CLIENT_V_START | renamed
+         SSL_CLIENT_CERT_END | SSL_CLIENT_V_END | renamed
+         SSL_CLIENT_CERT_SERIAL | SSL_CLIENT_M_SERIAL | renamed
+         SSL_CLIENT_SIGNATURE_ALGORITHM | SSL_CLIENT_A_SIG | renamed
+         SSL_CLIENT_DN | SSL_CLIENT_S_DN | renamed
+         SSL_CLIENT_CN | SSL_CLIENT_S_DN_CN | renamed
+         SSL_CLIENT_EMAIL | SSL_CLIENT_S_DN_Email | renamed
+         SSL_CLIENT_O | SSL_CLIENT_S_DN_O | renamed
+         SSL_CLIENT_OU | SSL_CLIENT_S_DN_OU | renamed
+         SSL_CLIENT_C | SSL_CLIENT_S_DN_C | renamed
+         SSL_CLIENT_SP | SSL_CLIENT_S_DN_SP | renamed
+         SSL_CLIENT_L | SSL_CLIENT_S_DN_L | renamed
+         SSL_CLIENT_IDN | SSL_CLIENT_I_DN | renamed
+         SSL_CLIENT_ICN | SSL_CLIENT_I_DN_CN | renamed
+         SSL_CLIENT_IEMAIL | SSL_CLIENT_I_DN_Email | renamed
+         SSL_CLIENT_IO | SSL_CLIENT_I_DN_O | renamed
+         SSL_CLIENT_IOU | SSL_CLIENT_I_DN_OU | renamed
+         SSL_CLIENT_IC | SSL_CLIENT_I_DN_C | renamed
+         SSL_CLIENT_ISP | SSL_CLIENT_I_DN_SP | renamed
+         SSL_CLIENT_IL | SSL_CLIENT_I_DN_L | renamed
+         SSL_EXPORT | SSL_CIPHER_EXPORT | renamed
+         SSL_KEYSIZE | SSL_CIPHER_ALGKEYSIZE | renamed
+         SSL_SECKEYSIZE | SSL_CIPHER_USEKEYSIZE | renamed
+         SSL_SSLEAY_VERSION | SSL_VERSION_LIBRARY | renamed
+         SSL_STRONG_CRYPTO | - | Not supported by mod_ssl
+         SSL_SERVER_KEY_EXP | - | Not supported by mod_ssl
+         SSL_SERVER_KEY_ALGORITHM | - | Not supported by mod_ssl
+         SSL_SERVER_KEY_SIZE | - | Not supported by mod_ssl
+         SSL_SERVER_SESSIONDIR | - | Not supported by mod_ssl
+         SSL_SERVER_CERTIFICATELOGDIR | - | Not supported by mod_ssl
+         SSL_SERVER_CERTFILE | - | Not supported by mod_ssl
+         SSL_SERVER_KEYFILE | - | Not supported by mod_ssl
+         SSL_SERVER_KEYFILETYPE | - | Not supported by mod_ssl
+         SSL_CLIENT_KEY_EXP | - | Not supported by mod_ssl
+         SSL_CLIENT_KEY_ALGORITHM | - | Not supported by mod_ssl
+         SSL_CLIENT_KEY_SIZE | - | Not supported by mod_ssl
+
+       CUSTOM LOG FUNCTIONS
+
+       When mod_ssl is enabled, additional functions exist for the Custom Log Format of mod_log_config as documented in the Reference Chapter. Beside the ``%{varname}x'' eXtension format function which can be used to expand any variables provided by any module, an additional Cryptography ``%{name}c'' cryptography format function exists for backward compatibility. The currently implemented function calls are listed in Table 3.
+
+       TABLE 3: CUSTOM LOG CRYPTOGRAPHY FUNCTION
+
+         Function Call | Description
+         %...{version}c | SSL protocol version
+         %...{cipher}c | SSL cipher
+         %...{subjectdn}c | Client Certificate Subject Distinguished Name
+         %...{issuerdn}c | Client Certificate Issuer Distinguished Name
+         %...{errcode}c | Certificate Verification Error (numerical)
+         %...{errstr}c | Certificate Verification Error (string)
+
+Apache HTTP Server manual               bundled documentation

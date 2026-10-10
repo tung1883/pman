@@ -1,0 +1,44 @@
+SHELLCHECK.SC2097(1)             Sandbox manual             SHELLCHECK.SC2097(1)
+
+       NAME
+
+       This assignment is only seen by the forked process. - name=World cmd -m "Hello $name"
+
+       THIS ASSIGNMENT IS ONLY SEEN BY THE FORKED PROCESS
+
+       THIS ASSIGNMENT IS ONLY SEEN BY THE FORKED PROCESS
+
+       PROBLEMATIC CODE
+
+         name=World cmd -m "Hello $name"
+
+       CORRECT CODE
+
+         name=World
+         cmd -m "Hello $name"
+
+       If the original goal was to limit the scope of the variable, this can also be done in a subshell:
+
+         (
+            name=World
+            cmd -m "Hello $name"
+         ) # 'name' does not leave this subshell
+
+       RATIONALE
+
+       In name=World cmd "$name", name=World is passed in as part of the environment to cmd (i.e., in the envp parameter to execve(2)). This means that cmd and its children will see the parameter, but no other processes will.
+
+       However, "$name" is not expanded by cmd. "$name" is expanded by the shell before cmd is ever executed, and thus it will not use the new value.
+
+       The solution is to set the variable first, then use it as a parameter. If limited scope is desired, a ( subshell ) can be used.
+
+       EXCEPTIONS
+
+       In the strange and fabricated scenarios where the script and a program uses a variable name for two different purposes, you can ignore this message. This is hard to conceive, since scripts should use lowercase variable names specifically to avoid collisions with the environment.
+
+       RELATED RESOURCES
+
+        * BashFaq: Why doesn't foo=bar echo "$foo" print bar?
+        * StackOverflow: Prefixing variable assignment doesn't work with echo
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,104 @@
+WEBAPI.IDBOBJECTSTORE-PUT(1)     Sandbox manual     WEBAPI.IDBOBJECTSTORE-PUT(1)
+
+       NAME
+
+       IDBObjectStore: put() method - The put() method of the IDBObjectStore interface updates a given record in a database, or inserts a new record if the given item does not al
+
+       IDBOBJECTSTORE: PUT() METHOD
+
+       The put() method of the IDBObjectStore interface updates a given record in a database, or inserts a new record if the given item does not already exist.
+
+       It returns an IDBRequest object, and, in a separate thread, creates a structured clone of the value and stores the cloned value in the object store. This is for adding new records, or updating existing records in an object store when the transaction's mode is readwrite. If the record is successfully stored, then a success event is fired on the returned request object with the result set to the key for the stored record, and the transaction set to the transaction in which this object store is opened.
+
+       The put method is an _update or insert_ method. See the IDBObjectStore.add method for an _insert only_ method.
+
+       Bear in mind that if you have an IDBCursor to the record you want to update, updating it with IDBCursor.update() is preferable to using IDBObjectStore.put(). Doing so makes it clear that an existing record will be updated, instead of a new record being inserted.
+
+       SYNTAX
+
+         put(item)
+         put(item, key)
+
+       PARAMETERS
+
+        * item
+          * : The item you wish to update (or insert).
+        * key (optional)
+          * : The primary key of the record you want to update (e.g., from
+       IDBCursor.primaryKey).
+
+       RETURN VALUE
+
+       An IDBRequest object on which subsequent events related to this operation are fired.
+
+       If the operation is successful, the value of the request's result property is the key for the new or updated record.
+
+       EXCEPTIONS
+
+       This method may raise a DOMException of one of the following types:
+
+        * ReadOnlyError DOMException
+          * : Thrown if the transaction associated with this operation is in read-only mode.
+        * TransactionInactiveError DOMException
+          * : Thrown if this IDBObjectStore's transaction is inactive.
+        * DataError DOMException
+          * : Thrown if any of the following conditions apply:
+            * The object store uses in-line keys or has a key generator, and a key parameter was provided.
+            * The object store uses out-of-line keys and has no key generator, and no key parameter was provided.
+            * The object store uses in-line keys but no key generator, and the object store's key path does not yield a valid key.
+            * The key parameter was provided but does not contain a valid key.
+        * InvalidStateError DOMException
+          * : Thrown if the IDBObjectStore has been deleted or removed.
+        * DataCloneError DOMException
+          * : Thrown if the data being stored could not be cloned by the internal structured cloning algorithm.
+
+       EXAMPLES
+
+       The following example requests a given record title; when that request is successful the onsuccess function gets the associated record from the IDBObjectStore (made available as objectStoreTitleRequest.result), updates one property of the record, and then puts the updated record back into the object store in another request with put(). For a full working example, see our To-do Notifications app (view example live).
+
+         const title = "Walk dog";
+
+         // Open up a transaction as usual
+         const objectStore = db
+           .transaction(["toDoList"], "readwrite")
+           .objectStore("toDoList");
+
+         // Get the to-do list object that has this title as its title
+         const objectStoreTitleRequest = objectStore.get(title);
+
+         objectStoreTitleRequest.onsuccess = () => {
+           // Grab the data object returned as the result
+           const data = objectStoreTitleRequest.result;
+
+           // Update the notified value in the object to "yes"
+           data.notified = "yes";
+
+           // Create another request that inserts the item back into the database
+           const updateTitleRequest = objectStore.put(data);
+
+           // Log the transaction that originated this request
+           console.log(
+             `The transaction that originated this request is ${updateTitleRequest.transaction}`,
+           );
+
+           // When this new request succeeds, run the displayData() function again to update the display
+           updateTitleRequest.onsuccess = () => {
+             displayData();
+           };
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

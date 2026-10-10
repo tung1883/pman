@@ -1,0 +1,789 @@
+ARCH.DOCKER(1)                   Sandbox manual                   ARCH.DOCKER(1)
+
+       Docker is a utility to pack, ship and run any application as a lightweight container.
+
+       INSTALLATION
+
+       To pull Docker images and run Docker containers, you need the Docker Engine. The Docker Engine includes a daemon to manage the containers, as well as the docker CLI frontend.
+
+       Install the docker package.
+
+       Next enable/start docker.service or docker.socket. Note that docker.service starts the service on boot, whereas docker.socket starts Docker on first usage which can decrease boot times. Then verify Docker's status:
+
+         # docker info
+
+       Note that starting the docker service may fail if you have an active VPN connection due to IP conflicts between the VPN and Docker's bridge and overlay networks. If this is the case, try disconnecting the VPN before starting the docker service. You may reconnect the VPN immediately afterwards. You can also try to deconflict the networks (see solutions [1] or [2]).
+
+       Next, verify that you can run containers. The following command downloads the latest Arch Linux image and uses it to run a Hello World program within a container:
+
+         # docker run -it --rm archlinux bash -c "echo hello world"
+
+       To remove the downloaded archlinux Docker image, see #Remove Docker and images.
+
+       If you want to be able to run the docker CLI command as a non-root user, add your user to the docker user group, re-login and restart docker.service.
+
+       Warning Anyone added to the docker group is root equivalent because they can use the docker run --privileged command to start containers with root privileges. For more information see [3] and [4].
+
+       If you plan to build container images using Docker, install docker-buildx to use the current builder instead of the deprecated legacy builder.
+
+       DOCKER COMPOSE
+
+       Docker Compose is an alternate CLI frontend for the Docker Engine, which specifies properties of containers using a compose.yaml YAML file rather than, for example, a script with docker run options. This is useful for setting up reoccuring services that are used often and/or have complex configurations. To use it, install docker-compose.
+
+       DOCKER DESKTOP
+
+       Docker Desktop is a proprietary desktop application that runs the Docker Engine inside a Linux virtual machine. Additional features such as a Kubernetes cluster and a vulnerability scanner are included. This application is useful for software development teams who develop Docker containers using macOS and Windows. The Linux port of the application is relatively new, and complements Docker's CLI frontends [5].
+
+       An experimental package for Arch is provided directly by Docker; see the manual for more information. Unfortunately, it contains files which conflict with the docker-compose and docker-buildx packages, so you will first need to remove them if installed. Alternatively, you can install the docker-desktopAUR package.
+
+       Also, to run Docker Desktop you will need to ensure the Linux system requirements, including virtualization support via KVM. To see a tray icon under Gnome, gnome-shell-extension-appindicator will be needed.
+
+       Finally, file sharing support requires mapping user and group ids via /etc/subuid and /etc/subgid. See the Docker Desktop For Linux File Sharing instructions for more details.
+
+       Note Docker Desktop on Linux runs a virtual machine which creates and uses a custom Docker context, desktop-linux, on startup. This means images and containers deployed on the Linux Docker Engine (before installation) are not available in Docker Desktop for Linux.[6]
+
+       For more information see What is the difference between Docker Desktop for Linux and Docker Engine.
+
+       Furthermore, expect degraded performance and higher CPU usage when using Docker Desktop on Linux.
+
+       By default, Docker Desktop enables a user-level systemd service that starts the application automatically on boot. Disabling the "Autostart" setting in the Docker Desktop dashboard does not prevent this service from starting. To disable auto-start, disable the docker-desktop.service user unit.
+
+       FRONT-ENDS
+
+        * Ducker — A terminal app for managing docker containers.
+       https://github.com/robertpsoane/ducker || ducker
+
+        * goManageDocker — A TUI tool to manage docker objects.
+       https://github.com/ajayd-san/gomanagedocker || gomanagedockerAUR
+
+        * Lazydocker — A simple terminal UI for docker and docker-compose, written in Go with the gocui library.
+       https://github.com/jesseduffield/lazydocker || lazydocker
+
+        * oxker — A simple TUI to view and control Docker containers.
+       https://github.com/mrjackwills/oxker || oxker-binAUR
+
+        * Podman Desktop — Manage Podman and other container engines from a single UI and tray.
+       https://github.com/containers/podman-desktop || podman-desktop
+
+        * Pods — Frontend for Podman/Docker. It uses libadwaita for its user interface and strives to meet the design principles of GNOME.
+       https://github.com/marhkb/pods || podsAUR
+
+        * Portainer — A lightweight docker management UI.
+       https://github.com/portainer/portainer || portainer-binAUR
+
+        * Whaler — Docker container management designed for Pantheon.
+       https://github.com/sdv43/whaler || whaler-gitAUR
+
+       USAGE
+
+       Docker consists of multiple parts:
+
+        * The Docker daemon (sometimes also called the Docker Engine), which is a process which runs as docker.service. It serves the Docker API and manages Docker containers.
+        * The docker CLI command, which allows users to interact with the Docker API via the command line and control the Docker daemon.
+        * Docker containers, which are namespaced processes that are started and managed by the Docker daemon as requested through the Docker API.
+       Typically, users use Docker by running docker CLI commands, which in turn request the Docker daemon to perform actions which in turn result in management of Docker containers. Understanding the relationship between the client (docker), server (docker.service) and containers is important to successfully administering Docker.
+
+       Note that if the Docker daemon stops or restarts, all currently running Docker containers are also stopped or restarted.
+
+       Also note that it is possible to send requests to the Docker API and control the Docker daemon without the use of the docker CLI command. See the Docker API developer documentation for more information.
+
+       See the Docker Getting Started guide for more usage documentation.
+
+       CONFIGURATION
+
+       The Docker daemon can be configured either through a configuration file at /etc/docker/daemon.json or by adding command line flags to the docker.service systemd unit. According to the Docker official documentation, the configuration file approach is preferred. If you wish to use the command line flags instead, use systemd drop-in files to override the ExecStart directive in docker.service.
+
+       For more information about options in daemon.json see dockerd documentation.
+
+       STORAGE DRIVER
+
+       The storage driver controls how images and containers are stored and managed on your Docker host. The default overlay2 driver has good performance for most use cases.
+
+       Users of btrfs or ZFS may use the btrfs or zfs drivers, each of which take advantage of the unique features of these filesystems. See the btrfs driver and zfs driver documentation for more information and step-by-step instructions.
+
+       DAEMON SOCKET
+
+       By default, the Docker daemon serves the Docker API using a Unix socket at /var/run/docker.sock. This is an appropriate option for most use cases.
+
+       It is possible to configure the Daemon to additionally listen on a TCP socket, which can allow remote Docker API access from other computers. [7] This can be useful for allowing docker commands on a host machine to access the Docker daemon on a Linux virtual machine, such as an Arch virtual machine on a Windows or macOS system.
+
+       Warning The Docker API is unencrypted and unauthenticated by default. Remote TCP access to the Docker daemon is equivalent to unsecured remote root access unless additional protection using SSH or TLS is also enabled.
+
+       Note that the default docker.service file sets the -H flag by default, and Docker will not start if an option is present in both the flags and /etc/docker/daemon.json file. Therefore, the simplest way to change the socket settings is with a drop-in file, such as the following which adds a TCP socket on port 2376:
+
+         /etc/systemd/system/docker.service.d/docker.conf
+
+         [Service]
+         ExecStart=
+         ExecStart=/usr/bin/dockerd -H unix:///var/run/docker.sock -H tcp://0.0.0.0:2376
+
+       Reload the systemd daemon and restart docker.service to apply changes.
+
+       HTTP PROXIES
+
+       There are two parts to configuring Docker to use an HTTP proxy: Configuring the Docker daemon and configuring Docker containers.
+
+       DOCKER DAEMON PROXY CONFIGURATION
+
+       See Docker documentation on configuring Docker daemon to use HTTP proxies.
+
+       DOCKER CONTAINER PROXY CONFIGURATION
+
+       See Docker documentation on configuring proxies for information on how to automatically configure proxies for all containers created using the docker CLI.
+
+       CONFIGURING DNS
+
+       See Docker's DNS documentation for the documented behavior of DNS within Docker containers and information on customizing DNS configuration. In most cases, the resolvers configured on the host are also configured in the container.
+
+       Most DNS resolvers hosted on 127.0.0.0/8 are not supported due to conflicts between the container and host network namespaces. Such resolvers are removed from the container's /etc/resolv.conf. If this would result in an empty /etc/resolv.conf, Google DNS is used instead.
+
+       Additionally, a special case is handled if 127.0.0.53 is the only configured nameserver. In this case, Docker assumes the resolver is systemd-resolved and uses the upstream DNS resolvers from /run/systemd/resolve/resolv.conf.
+
+       If you are using a service such as dnsmasq to provide a local resolver, consider adding a virtual interface with a link local IP address in the 169.254.0.0/16 block for dnsmasq to bind to instead of 127.0.0.1 to avoid the network namespace conflict.
+
+       IMAGES LOCATION
+
+       Since version 29 (2025-11), the default image store has been changed to containerd for new installs.
+
+       When using the containerd image store, image contents and container snapshots are stored in /var/lib/containerd/ by default. For old installs that were upgraded, Docker images remain located in /var/lib/docker/.
+
+       To verify which image store is in use:
+
+         docker info -f '{{ .DriverStatus }}'
+
+       For the containerd image store, the output will be:
+
+         [[driver-type io.containerd.snapshotter.v1]]
+
+       The image storage location can be changed, e.g. if you wish to use a dedicated partition or disk for your images, by configuring the data root location.
+
+       The first step before changing anything is to stop docker.service, which will also stop all currently running containers and unmount any running images.
+
+       Then edit the appropriate configuration file depending on the image store driver:
+
+        * if using the containerd image store:
+
+         /etc/containerd/config.toml
+
+         version = 2
+         root = "/path/to/containerd-data"
+
+        * if using the classic Docker overlay image store:
+
+         /etc/docker/daemon.json
+
+         {
+           "data-root": "/path/to/docker-data"
+         }
+
+       Then move the contents from either /var/lib/containerd or /var/lib/docker to the target destination.
+
+       Note Note that this is a global option: it is not possible to move only images in the case of the classic Docker image store, so volumes will be moved as well.
+
+       Finally, start docker.service to apply the changes.
+
+       INSECURE REGISTRIES
+
+       If you decide to use a self signed certificate for your private registries, Docker will refuse to use it until you declare that you trust it. For example, to allow images from a registry hosted at myregistry.example.com:8443, configure insecure-registries in the /etc/docker/daemon.json file:
+
+         /etc/docker/daemon.json
+
+         {
+           "insecure-registries": [
+             "my.registry.example.com:8443"
+           ]
+         }
+
+       Restart docker.service to apply changes.
+
+       IPV6
+
+       In order to enable IPv6 support in Docker, you will need to do a few things. See [8][dead link 2025-03-15—HTTP 404] and [9] for details.
+
+       Firstly, enable the ipv6 setting in /etc/docker/daemon.json and set a specific IPv6 subnet. In this case, we will use the private fd00::/80 subnet. Make sure to use a subnet at least 80 bits as this allows a container's IPv6 to end with the container's MAC address which allows you to mitigate NDP neighbor cache invalidation issues.
+
+         /etc/docker/daemon.json
+
+         {
+           "ipv6": true,
+           "fixed-cidr-v6": "fd00::/80"
+         }
+
+       Restart docker.service to apply changes.
+
+       Finally, to let containers access the host network, you need to resolve routing issues arising from the usage of a private IPv6 subnet. Add the IPv6 NAT in order to actually get some traffic:
+
+         # ip6tables -t nat -A POSTROUTING -s fd00::/80 ! -o docker0 -j MASQUERADE
+
+       Now Docker should be properly IPv6 enabled. To test it, you can run:
+
+         # docker run curlimages/curl curl -v -6 archlinux.org
+
+       If you use firewalld, you can add the rule like this:
+
+         # firewall-cmd --zone=public --add-rich-rule='rule family="ipv6" destination not address="fd00::1/80" source address="fd00::/80" masquerade'
+
+       If you use ufw, you need to first enable ipv6 forwarding following Uncomplicated Firewall#Forward policy. Next you need to edit /etc/default/ufw and uncomment the following lines
+
+         /etc/ufw/sysctl.conf
+
+         net/ipv6/conf/default/forwarding=1
+         net/ipv6/conf/all/forwarding=1
+
+       Then you can add the iptables rule:
+
+         # ip6tables -t nat -A POSTROUTING -s fd00::/80 ! -o docker0 -j MASQUERADE
+
+       It should be noted that, for docker containers created with docker-compose, you may need to set enable_ipv6: true in the networks part for the corresponding network. Besides, you may need to configure the IPv6 subnet. See [10] for details.
+
+       USER NAMESPACE ISOLATION
+
+       By default, processes in Docker containers run within the same user namespace as the main dockerd daemon, i.e. containers are not isolated by the user_namespaces(7) feature. This allows the process within the container to access configured resources on the host according to Users and groups#Permissions and ownership. This maximizes compatibility, but poses a security risk if a container privilege escalation or breakout vulnerability is discovered that allows the container to access unintended resources on the host. (One such vulnerability was published and patched in February 2019.)
+
+       The impact of such a vulnerability can be reduced by enabling user namespace isolation. This runs each container in a separate user namespace and maps the UIDs and GIDs inside that user namespace to a different (typically unprivileged) UID/GID range on the host.
+
+       Note
+
+        * The main dockerd daemon still runs as root on the host. Running Docker in rootless mode is a different feature.
+        * Processes in the container are started as the user defined in the USER directive in the Dockerfile used to build the image of the container.
+        * All containers are mapped into the same UID/GID range. This preserves the ability to share volumes between containers.
+        * Enabling user namespace isolation has several limitations.
+        * Enabling user namespace isolation effectively masks existing image and container layers, as well as other Docker objects in /var/lib/docker/, because Docker needs to adjust the ownership of these resources. The upstream documentation recommends to enable this feature on a new Docker installation rather than an existing one.
+       Configure userns-remap in /etc/docker/daemon.json. default is a special value that will automatically create a user and group named dockremap for use with remapping.
+
+         /etc/docker/daemon.json
+
+         {
+           "userns-remap": "default"
+         }
+
+       Configure /etc/subuid and /etc/subgid with a username/group name, starting UID/GID and UID/GID range size to allocate to the remap user and group. This example allocates a range of 65536 UIDs and GIDs starting at 165536 to the dockremap user and group.
+
+         /etc/subuid
+
+         dockremap:165536:65536
+
+         /etc/subgid
+
+         dockremap:165536:65536
+
+       Restart docker.service to apply changes.
+
+       After applying this change, all containers will run in an isolated user namespace by default. The remapping may be partially disabled on specific containers passing the --userns=host flag to the docker command. See [11] for details.
+
+       ROOTLESS DOCKER DAEMON
+
+       Note Docker rootless relies on unprivileged user namespaces, enabled by default in the linux, linux-lts, and linux-zen kernels. Users of other kernels may need to enable it. This has security implications; see Security#Sandboxing applications for details.
+
+       To run the Docker daemon as a regular user, install docker-rootless-extrasAUR.
+
+       Configure /etc/subuid and /etc/subgid for the user running the daemon by allocating a subordinate UID/GID range of 65,536, for example:
+
+         /etc/subuid
+
+         username:100000:65536
+
+         /etc/subgid
+
+         username:100000:65536
+
+       Note Upstream rootless Docker documentation refers to running dockerd-rootless-setuptool.sh install. docker-rootless-extrasAUR instead provides docker.service and docker.socket user units; enabling one of them and configuring the client as described below provides an equivalent setup.
+
+       Enable either docker.socket or docker.service as a user unit.
+
+       Finally, configure the Docker client.
+
+       Create a persistent Docker context:
+
+         $ docker context create rootless --description "Rootless mode" \
+           --docker "host=unix:///run/user/$(id -u)/docker.sock"
+         $ docker context use rootless
+
+       Alternatively, set the DOCKER_HOST environment variable to unix://$XDG_RUNTIME_DIR/docker.sock.
+
+       Tip To start the rootless Docker user unit at boot time without an interactive login session, enable user lingering.
+
+       ENABLE NATIVE OVERLAY DIFF ENGINE
+
+       First check if is it already enabled: run docker info and check that Native Overlay Diff is true.
+
+       By default, Docker cannot use the native overlay diff engine on Arch Linux, which makes building Docker images slow. If you frequently build images, configure the native diff engine as described in [12]:
+
+         /etc/modprobe.d/disable-overlay-redirect-dir.conf
+
+         options overlay metacopy=off redirect_dir=off
+
+       Then stop docker.service, reload the overlay module as follows:
+
+         # modprobe -r overlay
+         # modprobe overlay
+
+       You can then start docker.service again.
+
+       CONFIGURE DEFAULT LOGGING DRIVER
+
+       Docker provides logging drivers for collecting and viewing log data from all containers running on a host. The default logging driver, json-file, writes log data to JSON-formatted files on the host filesystem. Over time, these log files expand in size, leading to potential exhaustion of disk resources.
+
+       To avoid issues with overusing disk for log data, consider one of the following options:
+
+        * Configure the json-file logging driver to turn on log rotation:
+
+         /etc/docker/daemon.json
+
+         {
+           "log-driver": "json-file",
+           "log-opts": {
+             "max-size": "10m",
+             "max-file": "3"
+           }
+         }
+
+        * Use an alternative logging driver such as the "local" logging driver that performs log rotation by default.
+
+         /etc/docker/daemon.json
+
+         {
+           "log-driver": "local"
+         }
+
+        * Use a logging driver that sends logs to a remote logging aggregator.
+       Restart docker.service for the changes to take effect for newly created containers. Existing containers don't use the new logging configuration automatically.
+
+       IMAGES
+
+       ARCH LINUX
+
+       The following command pulls the archlinux x86_64 image. This is a stripped down version of Arch core without network, etc.
+
+         # docker pull archlinux
+
+       See also README.md.
+
+       For a full Arch base, clone the repository from above and build your own image.
+
+         $ git clone https://gitlab.archlinux.org/archlinux/archlinux-docker.git
+
+       Make sure that the devtools, fakechroot and fakeroot packages are installed.
+
+       To build the base image:
+
+         $ make image-base
+
+       ALPINE LINUX
+
+       Alpine Linux is a popular choice for small container images, especially for software compiled as static binaries. The following command pulls the latest Alpine Linux image:
+
+         # docker pull alpine
+
+       Alpine Linux uses the musl libc implementation instead of the glibc libc implementation used by most Linux distributions. Because Arch Linux uses glibc, there are a number of functional differences between an Arch Linux host and an Alpine Linux container that can impact the performance and correctness of software. A list of these differences is documented here.
+
+       Note that dynamically linked software built on Arch Linux (or any other system using glibc) may have bugs and performance problems when run on Alpine Linux (or any other system using a different libc). See [13], [14] and [15] for examples.
+
+       DEBIAN
+
+       The following command pulls the latest debian image:
+
+         # docker pull debian
+
+       See the Docker Hub page for a full list of available tags, including both standard and slim versions for each Debian release.
+
+       DISTROLESS
+
+       Google maintains distroless images which are minimal images without OS components such as package managers or shells, resulting in very small images for packaging software.
+
+       See the GitHub README for a list of images and instructions on their use with various programming languages.
+
+       TIPS AND TRICKS
+
+       GET THE IP ADDRESS OF A RUNNING CONTAINER
+
+       To grab the IP address of a running container:
+
+         $ docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container-name OR id>
+
+         172.17.0.37
+
+       For each running container, the name and corresponding IP address can be listed for use in /etc/hosts:
+
+         #!/usr/bin/env sh
+         for ID in $(docker ps -q | awk '{print $1}'); do
+             IP=$(docker inspect --format="{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" "$ID")
+             NAME=$(docker ps | grep "$ID" | awk '{print $NF}')
+             printf "%s %s\n" "$IP" "$NAME"
+         done
+
+       RUN GRAPHICAL PROGRAMS INSIDE A CONTAINER
+
+       This section describes the necessary steps to allow graphical programs (including those that rely on OpenGL or Vulkan) to run on the host's X server.
+
+       First, the correct drivers, compatible with the host's graphics hardware, need to be installed inside the container. The installation procedure depends on the type of the container, but for containers based on Arch Linux images, refer to OpenGL#Installation and Vulkan#Installation for packages specific to your hardware.
+
+       Next, the container must be granted access to the host's X server. In a single-user environment, this can easily be done by running Xhost on the host system, which adds non-network local connections to the access control list:
+
+         $ xhost +local:
+
+       Lastly, the following parameters need to be passed to docker run:
+
+        * -e "DISPLAY=$DISPLAY" sets the environment variable DISPLAY within the container to the host's display;
+        * --mount type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix mounts the host's X server sockets inside the container under the same path;
+        * --device=/dev/dri:/dev/dri gives the container access to Direct Rendering Infrastructure devices on the host.
+       To confirm that everything is set up correctly, run glxgears from the package mesa-utils, or vkcube from the package vulkan-tools in the container.
+
+       START DOCKER COMPOSE PROJECTS ON BOOT
+
+       First, create a template unit for Docker Compose which is parameterized by the name of the service (see systemd.service(5) § SERVICE TEMPLATES):
+
+         /etc/systemd/system/docker-compose@.service
+
+         [Unit]
+         Description=%i service with docker compose
+         Requires=docker.service
+         After=docker.service
+
+         [Service]
+         WorkingDirectory=/opt/%i
+         ExecStartPre=-/usr/bin/docker compose pull
+         ExecStart=/usr/bin/docker compose up --remove-orphans
+         ExecStop=/usr/bin/docker compose down
+         ExecReload=/usr/bin/docker compose pull
+         ExecReload=/usr/bin/docker compose up --remove-orphans
+
+         [Install]
+         WantedBy=multi-user.target
+
+       Then, for each service you would like to run, set up a directory with the Compose file and any other required files (such as .env files) at /opt/project_name. [17]
+
+       Then, enable/start docker-compose@project_name.service.
+
+       USING BUILDX FOR CROSS-COMPILING
+
+       The buildx CLI plugin makes use of the new BuildKit building toolkit. Install the docker-buildx package. The buildx interface supports building multi-platform images, including architectures other than that of the host.
+
+       QEMU is required to cross-compile images. To setup the static build of QEMU within Docker, see the usage information for the multiarch/qemu-user-static image. Otherwise, to setup QEMU on the host system for use with Docker, see QEMU#Chrooting into arm/arm64 environment from x86_64. In either case, your system will be configured for user-mode emulation of the guest architecture.
+
+         $ docker buildx ls
+
+         NAME/NODE DRIVER/ENDPOINT STATUS  PLATFORMS
+         default * docker
+           default default         running linux/amd64, linux/386, linux/arm64, linux/riscv64, linux/s390x, linux/arm/v7, linux/arm/v6
+
+       As described in Docker's documentation for multi-platform builds, it's required to use the containerd image store for building multi-platform images. If, for example, docker buildx build --platform linux/amd64,linux/arm64 . fails with
+
+         ERROR: failed to build: Multi-platform build is not supported for the docker driver.
+         Switch to a different driver, or turn on the containerd image store, and try again.
+
+       edit /etc/docker/daemon.json
+
+         /etc/docker/daemon.json
+
+         {
+           "features": {
+             "containerd-snapshotter": true
+           }
+         }
+
+       and then restart Docker.
+
+       RUN GPU ACCELERATED DOCKER CONTAINERS WITH NVIDIA GPUS
+
+       Starting from Docker version 19.03, NVIDIA GPUs are natively supported as Docker devices. NVIDIA Container Toolkit is the recommended way of running containers that leverage NVIDIA GPUs.
+
+       Install the nvidia-container-toolkit package and restart docker. You can now run containers that make use of NVIDIA GPUs using the --gpus option or by registering the NVIDIA container runtime.
+
+       WITH THE --GPUS OPTION (RECOMMENDED)
+
+         # docker run --rm --gpus all nvidia/cuda:12.1.1-runtime-ubuntu22.04 nvidia-smi
+
+       Specify how many GPUs are enabled inside a container:
+
+         # docker run --rm --gpus 2 nvidia/cuda:12.1.1-runtime-ubuntu22.04 nvidia-smi
+
+       Specify which GPUs to use:
+
+         # docker run --rm --gpus '"device=1,2"' nvidia/cuda:12.1.1-runtime-ubuntu22.04 nvidia-smi
+
+       or
+
+         # docker run --rm --gpus '"device=UUID-ABCDEF,1"' nvidia/cuda:12.1.1-runtime-ubuntu22.04 nvidia-smi
+
+       For more information see the documentation and install guide.
+
+       If, when using the above commands, you receive an error such as Failed to initialize NVML: Unknown Error, you can try being more specific in specifying the GPU:
+
+         # docker run --rm --gpus all --device /dev/nvidiactl:/dev/nvidiactl --device /dev/nvidia-uvm:/dev/nvidia-uvm --device /dev/nvidia0:/dev/nvidia0 nvidia/cuda:12.1.1-runtime-ubuntu22.04 nvidia-smi
+
+       Specify a capability (graphics, compute, ...) for the container (though this is rarely if ever used this way):
+
+         # docker run --rm --gpus all,capabilities=utility nvidia/cuda:12.1.1-runtime-ubuntu22.04 nvidia-smi
+
+       WITH NVIDIA CONTAINER RUNTIME
+
+       Register the NVIDIA runtime by editing /etc/docker/daemon.json
+
+         /etc/docker/daemon.json
+
+         {
+           "runtimes": {
+             "nvidia": {
+               "path": "/usr/bin/nvidia-container-runtime",
+               "runtimeArgs": []
+             }
+           }
+         }
+
+       and then restart docker.
+
+       The runtime can also be registered via a command line option to dockerd:
+
+         # /usr/bin/dockerd --add-runtime=nvidia=/usr/bin/nvidia-container-runtime
+
+       Afterwards GPU accelerated containers can be started with
+
+         # docker run --rm --runtime=nvidia nvidia/cuda:12.1.1-runtime-ubuntu22.04 nvidia-smi
+
+       See also README.md.
+
+       ARCH LINUX IMAGE WITH CUDA
+
+       You can use the following Dockerfile to build a custom Arch Linux image with CUDA. It uses the Dockerfile frontend syntax 1.2 to cache pacman packages on the host. The DOCKER_BUILDKIT=1 environment variable must be set on the client before building the Docker image.
+
+         Dockerfile
+
+         # syntax=docker/dockerfile:1.2
+
+         FROM archlinux:base-devel
+
+         # Install packages
+         RUN --mount=type=cache,sharing=locked,target=/var/cache/pacman \
+             pacman -Syu --noconfirm --needed cuda
+
+         # Configure nvidia container runtime
+         # https://github.com/NVIDIA/nvidia-container-toolkit/tree/main/cmd/nvidia-container-runtime#environment-variables-oci-spec
+         ENV NVIDIA_VISIBLE_DEVICES=all
+         ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+       REMOVE DOCKER AND IMAGES
+
+       In case you want to remove Docker entirely you can do this by following the steps below:
+
+       Note Do not just copy paste those commands without making sure you know what you are doing.
+
+       Check for running containers:
+
+         # docker ps
+
+       List all containers running on the host for deletion:
+
+         # docker ps -a
+
+       Stop a running container:
+
+         # docker stop <CONTAINER ID>
+
+       Killing still running containers:
+
+         # docker kill <CONTAINER ID>
+
+       Delete containers listed by ID:
+
+         # docker rm <CONTAINER ID>
+
+       List all Docker images:
+
+         # docker images
+
+       Delete images by ID:
+
+         # docker rmi <IMAGE ID>
+
+       Delete all images, containers, volumes, and networks that are not associated with a container (dangling):
+
+         # docker system prune
+
+       To additionally remove any stopped containers and all unused images (not just dangling ones), add the -a flag to the command:
+
+         # docker system prune -a
+
+       Delete all Docker data (purge directory):
+
+         # rm -R /var/lib/docker
+
+       TROUBLESHOOTING
+
+       DOCKER0 BRIDGE GETS NO IP / NO INTERNET ACCESS IN CONTAINERS WHEN USIN
+
+       Docker attempts to enable IP forwarding globally, but by default systemd-networkd overrides the global sysctl setting for each defined network profile. Set IPForward=yes in the network profile. See Internet sharing#Enable packet forwarding for details.
+
+       When systemd-networkd tries to manage the network interfaces created by Docker, e.g. when you configured Name=* or Type=ether in the Match section, this can lead to connectivity issues. The problem should be solved by matching interfaces more specifically, i.e. avoid using Name=* or Type=ether or other wildcard that matches an interface managed by Docker. Verify that networkctl list reports unmanaged in the SETUP column for all networks created by Docker.
+
+       Note
+
+        * You may need to restart docker.service each time you restart systemd-networkd.service or iptables.service.
+        * Also be aware that nftables may block docker connections by default. Use nft list ruleset to check for blocking rules. nft flush chain inet filter forward removes all forwarding rules temporarily. Edit /etc/nftables.conf to make changes permanent. Remember to restart nftables.service to reload rules from the configuration file. See [19] for details about nftables support in Docker.
+
+       DEFAULT NUMBER OF ALLOWED PROCESSES/THREADS TOO LOW
+
+       If you run into error messages like
+
+         # e.g. Java
+         java.lang.OutOfMemoryError: unable to create new native thread
+         # e.g. C, bash, ...
+         fork failed: Resource temporarily unavailable
+
+       then you might need to adjust the number of processes allowed by systemd. Edit the docker.service with the following snippet:
+
+         [Service]
+         TasksMax=infinity
+
+       For more background, look for DefaultLimitNPROC at systemd-system.conf(5) § OPTIONS. And for TasksMax at systemd.resource-control(5) § OPTIONS.
+
+       ERROR INITIALIZING GRAPHDRIVER: DEVMAPPER
+
+       If systemctl fails to start docker and provides an error:
+
+         Error starting daemon: error initializing graphdriver: devmapper: Device docker-8:2-915035-pool is not a thin pool
+
+       Then, try the following steps to resolve the error. Stop the service, back up /var/lib/docker/ (if desired), remove the contents of /var/lib/docker/, and try to start the service. See https://github.com/moby/moby/issues/21304 for details.
+
+       FAILED TO CREATE SOME/PATH/TO/FILE: NO SPACE LEFT ON DEVICE
+
+       If you are getting an error message like this:
+
+         ERROR: Failed to create some/path/to/file: No space left on device
+
+       when building or running a Docker image, even though you do have enough disk space available, make sure:
+
+        * Tmpfs is disabled or has enough memory allocation. Docker might be trying to write files into /tmp but fails due to restrictions in memory usage and not disk space.
+        * If you are using XFS, you might want to remove the noquota mount option from the relevant entries in /etc/fstab (usually where /tmp and/or /var/lib/docker reside). Refer to Disk quota for more information, especially if you plan on using and resizing overlay2 Docker storage driver.
+        * XFS quota mount options (uquota, gquota, prjquota, etc.) fail during re-mount of the file system. To enable quota for root file system, the mount option must be passed to initramfs as a kernel parameter rootflags=. Subsequently, it should not be listed among mount options in /etc/fstab for the root (/) filesystem.
+       Note There are some differences of XFS Quota compared to standard Linux Disk quota, [20] may be worth reading.
+
+       DOCKER-MACHINE FAILS TO CREATE VIRTUAL MACHINES USING THE VIRTUALBOX D
+
+       In case docker-machine fails to create the VM's using the virtualbox driver, with the following:
+
+         VBoxManage: error: VBoxNetAdpCtl: Error while adding new interface: failed to open /dev/vboxnetctl: No such file or directory
+
+       Simply reload the virtualbox via CLI with vboxreload.
+
+       STARTING DOCKER BREAKS KVM BRIDGED NETWORKING
+
+       The issue is that Docker's scripts add some iptables rules to block forwarding on other interfaces other than its own. This is a known issue.
+
+       Adjust the solutions below to replace br0 with your own bridge name.
+
+       Quickest fix (but turns off all Docker's iptables self-added adjustments, which you may not want):
+
+         /etc/docker/daemon.json
+
+         {
+           "iptables": false
+         }
+
+       If there is already a network bridge configured for KVM, this may be fixable by telling docker about it. See [21] where docker configuration is modified as:
+
+         /etc/docker/daemon.json
+
+         {
+           "bridge": "br0"
+         }
+
+       If the above does not work, or you prefer to solve the issue through iptables directly, or through a manager like UFW, add this:
+
+         iptables -I FORWARD -i br0 -o br0 -j ACCEPT
+
+       Even more detailed solutions are here.
+
+       IMAGE PULLS FROM DOCKER HUB ARE RATE LIMITED
+
+       Beginning on November 1st 2020, rate limiting is enabled for downloads from Docker Hub from anonymous and free accounts. See the rate limit documentation for more information.
+
+       Unauthenticated rate limits are tracked by source IP. Authenticated rate limits are tracked by account.
+
+       If you need to exceed the rate limits, you can either sign up for a paid plan or mirror the images you need to a different image registry. You can host your own registry or use a cloud hosted registry such as Amazon ECR, Google Container Registry, Azure Container Registry or Quay Container Registry.
+
+       To mirror an image, use the pull, tag and push subcommands of the Docker CLI. For example, to mirror the 1.19.3 tag of the Nginx image to a registry hosted at cr.example.com:
+
+         $ docker pull nginx:1.19.3
+         $ docker tag nginx:1.19.3 cr.example.com/nginx:1.19.3
+         $ docker push cr.example.com/nginx:1.19.3
+
+       You can then pull or run the image from the mirror:
+
+         $ docker pull cr.example.com/nginx:1.19.3
+         $ docker run cr.example.com/nginx:1.19.3
+
+       IPTABLES (LEGACY): UNKNOWN OPTION --DPORT
+
+       If you see this error when running a container, install iptables instead of iptables-legacy and reboot[22].
+
+       YOUR PASSWORD WILL BE STORED UNENCRYPTED WHEN RUNNING DOCKER LOGIN
+
+       By default Docker will try to use the pass or secretservice binaries to store your registry passwords. If they are not found, it will store them in plain text (base64-encoded) in $HOME/.docker/config.json and print the following message after successfully logging in:
+
+         $ WARNING! Your password will be stored unencrypted in /home/username/.docker/config.json.
+
+       If you are using a password manager that implements the Secret Service Freedesktop DBUS API, like KDE's kwallet or GNOME's gnome-keyring, you can install the docker-credential-secretserviceAUR package to store your passwords in them.
+
+       COULD NOT FIND AN AVAILABLE, NON-OVERLAPPING IPV4 ADDRESS POOL AMONG T
+
+       Sometimes if you use a lot of Docker projects (ex. using docker-compose) it can happens that you run out of available IPs for Docker containers triggering the error:
+
+         Could not find an available, non-overlapping IPv4 address pool among the defaults to assign to the network
+
+       As found on this Docker issue, the defaults are:
+
+         Type | Default Size | Default Pool
+         local | /16 | 172.17.0.0/12
+         local* | /20 | 192.168.0.0/16
+       This can be easily fixed increasing the Docker IP space by configuring default-address-pools in /etc/docker/daemon.json increasing the size value from 16 to 24 on the first IP range, keeping the second one unaltered to avoid ip collision on the local network:
+
+         /etc/docker/daemon.json
+
+         {
+           ...
+           "default-address-pools" : [
+             {
+               "base" : "172.17.0.0/12",
+               "size" : 24
+             },
+             {
+               "base" : "192.168.0.0/16",
+               "size" : 24
+             }
+           ]
+         }
+
+       Restart docker.service to apply changes.
+
+       More details and technical explanations can be found on the following excellent article: The definitive guide to docker's default-address-pools option.
+
+       SLOW GOLANG COMPILATION
+
+       Due to a ulimit configuration, building a docker image and its dependances with makepkg is very slow (stuck at "Entering fakeroot environment..." step).
+
+       It is related to [23] and [24].
+
+       You can add --ulimit "nofile=1024:524288" to your docker build option or create/edit:
+
+         /etc/docker/daemon.json
+
+         {
+           "default-ulimits": {
+             "nofile": {
+               "Name": "nofile",
+               "Soft": 1024,
+               "Hard": 524288
+             }
+           }
+         }
+
+       SEE ALSO
+
+        * Official website
+        * Arch Linux on docs.docker.com
+        * Are Docker containers really secure? — opensource.com
+        * Awesome Docker
+        * Why A Privileged Container in Docker Is a Bad Idea
+
+ArchWiki manual                         bundled documentation

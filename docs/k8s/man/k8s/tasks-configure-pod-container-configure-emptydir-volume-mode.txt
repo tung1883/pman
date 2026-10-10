@@ -1,0 +1,64 @@
+K8S.TASKS-CONFIGURE-POD-CONTAINER-CONFIGURE-EMPTYDIR-VOLUME-MODE(1) Sandbox manual K8S.TASKS-CONFIGURE-POD-CONTAINER-CONFIGURE-EMPTYDIR-VOLUME-MODE(1)
+
+       NAME
+
+       Set Permissions on an emptyDir Volume - This page shows how to set Unix permission bits on an emptyDir volume directory
+
+       SET PERMISSIONS ON AN EMPTYDIR VOLUME
+
+       This page shows how to set Unix permission bits on an emptyDir volume directory using the mode field.
+
+       ## PREREQUISITES
+
+       You need to have the EmptyDirVolumeMode feature gate enabled on the API server and the kubelet.
+
+       CREATE A POD THAT USES AN EMPTYDIR VOLUME WITH CUSTOM PERMISSIONS #CRE
+
+       The emptyDir.mode field lets you set Unix permission bits (from 0000 to 01777 in octal) on the volume directory. If not specified, the directory is created with the default 0777 permissions.
+
+       For example, to create a shared /tmp directory with the sticky bit set so that only file owners can delete their own files:
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: emptydir-mode-demo
+         spec:
+           containers:
+           - image: registry.k8s.io/busybox
+             name: test-container
+             command: ["sleep", "3600"]
+             volumeMounts:
+             - mountPath: /tmp
+               name: tmp-volume
+           volumes:
+           - name: tmp-volume
+             emptyDir:
+               mode: 01777
+
+        1. Create the pod on your cluster:
+
+            kubectl apply -f https://k8s.io/examples/pods/emptydir-volume-mode.yaml
+
+        1. Verify the pod is running:
+
+            kubectl get pod emptydir-mode-demo
+
+        1. Check the permissions on the mounted volume:
+
+            kubectl exec emptydir-mode-demo -- ls -ld /tmp
+
+       The output is similar to:
+
+            drwxrwxrwt 2 root root 4096 Jul 28 00:00 /tmp
+
+       The t at the end confirms the sticky bit is set.
+
+        1. Delete the Pod that you created for this exercise:
+
+            kubectl delete pod emptydir-mode-demo
+
+       ## WHATSNEXT
+
+        * Learn more about emptyDir volumes
+
+Kubernetes manual                       from the official documentation

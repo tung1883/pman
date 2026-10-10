@@ -1,0 +1,240 @@
+K8S.TASKS-INJECT-DATA-APPLICATION-DOWNWARD-API-VOLUME-EXPOSE-POD-INFORMATION(1) Sandbox manual K8S.TASKS-INJECT-DATA-APPLICATION-DOWNWARD-API-VOLUME-EXPOSE-POD-INFORMATION(1)
+
+       NAME
+
+       Run this in a shell inside the container - This page shows how a Pod can use a
+
+       RUN THIS IN A SHELL INSIDE THE CONTAINER
+
+       This page shows how a Pod can use a downwardAPI volume, to expose information about itself to containers running in the Pod. A downwardAPI volume can expose Pod fields and container fields.
+
+       In Kubernetes, there are two ways to expose Pod and container fields to a running container:
+
+        * Environment variables
+        * Volume files, as explained in this task
+       Together, these two ways of exposing Pod and container fields are called the _downward API_.
+
+       ## PREREQUISITES
+
+       STORE POD FIELDS
+
+       In this part of exercise, you create a Pod that has one container, and you project Pod-level fields into the running container as files. Here is the manifest for the Pod:
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: kubernetes-downwardapi-volume-example
+           labels:
+             zone: us-est-coast
+             cluster: test-cluster1
+             rack: rack-22
+           annotations:
+             build: two
+             builder: john-doe
+         spec:
+           containers:
+             - name: client-container
+               image: registry.k8s.io/busybox:1.27.2
+               command: ["sh", "-c"]
+               args:
+               - while true; do
+                   if [[ -e /etc/podinfo/labels ]]; then
+                     echo -en '\n\n'; cat /etc/podinfo/labels; fi;
+                   if [[ -e /etc/podinfo/annotations ]]; then
+                     echo -en '\n\n'; cat /etc/podinfo/annotations; fi;
+                   sleep 5;
+                 done;
+               volumeMounts:
+                 - name: podinfo
+                   mountPath: /etc/podinfo
+           volumes:
+             - name: podinfo
+               downwardAPI:
+                 items:
+                   - path: "labels"
+                     fieldRef:
+                       fieldPath: metadata.labels
+                   - path: "annotations"
+                     fieldRef:
+                       fieldPath: metadata.annotations
+
+       In the manifest, you can see that the Pod has a downwardAPI Volume, and the container mounts the volume at /etc/podinfo.
+
+       Look at the items array under downwardAPI. Each element of the array defines a downwardAPI volume. The first element specifies that the value of the Pod's metadata.labels field should be stored in a file named labels. The second element specifies that the value of the Pod's annotations field should be stored in a file named annotations.
+
+       > Note:
+       The fields in this example are Pod fields. They are not fields of the container in the Pod.
+
+       Create the Pod:
+
+         kubectl apply -f https://k8s.io/examples/pods/inject/dapi-volume.yaml
+
+       Verify that the container in the Pod is running:
+
+         kubectl get pods
+
+       View the container's logs:
+
+         kubectl logs kubernetes-downwardapi-volume-example
+
+       The output shows the contents of the labels file and the annotations file:
+
+         cluster="test-cluster1"
+         rack="rack-22"
+         zone="us-est-coast"
+
+         build="two"
+         builder="john-doe"
+
+       Get a shell into the container that is running in your Pod:
+
+         kubectl exec -it kubernetes-downwardapi-volume-example -- sh
+
+       In your shell, view the labels file:
+
+         /# cat /etc/podinfo/labels
+
+       The output shows that all of the Pod's labels have been written to the labels file:
+
+         cluster="test-cluster1"
+         rack="rack-22"
+         zone="us-est-coast"
+
+       Similarly, view the annotations file:
+
+         /# cat /etc/podinfo/annotations
+
+       View the files in the /etc/podinfo directory:
+
+         /# ls -laR /etc/podinfo
+
+       In the output, you can see that the labels and annotations files are in a temporary subdirectory: in this example, ..2982_06_02_21_47_53.299460680. In the /etc/podinfo directory, ..data is a symbolic link to the temporary subdirectory. Also in the /etc/podinfo directory, labels and annotations are symbolic links.
+
+         drwxr-xr-x  ... Feb 6 21:47 ..2982_06_02_21_47_53.299460680
+         lrwxrwxrwx  ... Feb 6 21:47 ..data -> ..2982_06_02_21_47_53.299460680
+         lrwxrwxrwx  ... Feb 6 21:47 annotations -> ..data/annotations
+         lrwxrwxrwx  ... Feb 6 21:47 labels -> ..data/labels
+
+         /etc/..2982_06_02_21_47_53.299460680:
+         total 8
+         -rw-r--r--  ... Feb  6 21:47 annotations
+         -rw-r--r--  ... Feb  6 21:47 labels
+
+       Using symbolic links enables dynamic atomic refresh of the metadata; updates are written to a new temporary directory, and the ..data symlink is updated atomically using rename(2).
+
+       > Note:
+       A container using Downward API as a subPath volume mount will not receive Downward API updates.
+
+       Exit the shell:
+
+         /# exit
+
+       STORE CONTAINER FIELDS
+
+       The preceding exercise, you made Pod-level fields accessible using the downward API. In this next exercise, you are going to pass fields that are part of the Pod definition, but taken from the specific container rather than from the Pod overall. Here is a manifest for a Pod that again has just one container:
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: kubernetes-downwardapi-volume-example-2
+         spec:
+           containers:
+             - name: client-container
+               image: registry.k8s.io/busybox:1.27.2
+               command: ["sh", "-c"]
+               args:
+               - while true; do
+                   echo -en '\n';
+                   if [[ -e /etc/podinfo/cpu_limit ]]; then
+                     echo -en '\n'; cat /etc/podinfo/cpu_limit; fi;
+                   if [[ -e /etc/podinfo/cpu_request ]]; then
+                     echo -en '\n'; cat /etc/podinfo/cpu_request; fi;
+                   if [[ -e /etc/podinfo/mem_limit ]]; then
+                     echo -en '\n'; cat /etc/podinfo/mem_limit; fi;
+                   if [[ -e /etc/podinfo/mem_request ]]; then
+                     echo -en '\n'; cat /etc/podinfo/mem_request; fi;
+                   sleep 5;
+                 done;
+               resources:
+                 requests:
+                   memory: "32Mi"
+                   cpu: "125m"
+                 limits:
+                   memory: "64Mi"
+                   cpu: "250m"
+               volumeMounts:
+                 - name: podinfo
+                   mountPath: /etc/podinfo
+           volumes:
+             - name: podinfo
+               downwardAPI:
+                 items:
+                   - path: "cpu_limit"
+                     resourceFieldRef:
+                       containerName: client-container
+                       resource: limits.cpu
+                       divisor: 1m
+                   - path: "cpu_request"
+                     resourceFieldRef:
+                       containerName: client-container
+                       resource: requests.cpu
+                       divisor: 1m
+                   - path: "mem_limit"
+                     resourceFieldRef:
+                       containerName: client-container
+                       resource: limits.memory
+                       divisor: 1Mi
+                   - path: "mem_request"
+                     resourceFieldRef:
+                       containerName: client-container
+                       resource: requests.memory
+                       divisor: 1Mi
+
+       In the manifest, you can see that the Pod has a downwardAPI volume, and that the single container in that Pod mounts the volume at /etc/podinfo.
+
+       Look at the items array under downwardAPI. Each element of the array defines a file in the downward API volume.
+
+       The first element specifies that in the container named client-container, the value of the limits.cpu field in the format specified by 1m should be published as a file named cpu_limit. The divisor field is optional and has the default value of 1. A divisor of 1 means cores for cpu resources, or bytes for memory resources.
+
+       Create the Pod:
+
+         kubectl apply -f https://k8s.io/examples/pods/inject/dapi-volume-resources.yaml
+
+       Get a shell into the container that is running in your Pod:
+
+         kubectl exec -it kubernetes-downwardapi-volume-example-2 -- sh
+
+       In your shell, view the cpu_limit file:
+
+         # Run this in a shell inside the container
+         cat /etc/podinfo/cpu_limit
+
+       You can use similar commands to view the cpu_request, mem_limit and mem_request files.
+
+       PROJECT KEYS TO SPECIFIC PATHS AND FILE PERMISSIONS
+
+       You can project keys to specific paths and specific permissions on a per-file basis. For more information, see Secrets.
+
+       ## WHATSNEXT
+
+        * Read the spec
+       API definition for Pod. This includes the definition of Container (part of Pod).
+
+        * Read the list of available fields that you
+       can expose using the downward API.
+
+       Read about volumes in the legacy API reference:
+
+        * Check the Volume
+       API definition which defines a generic volume in a Pod for containers to access.
+
+        * Check the DownwardAPIVolumeSource
+       API definition which defines a volume that contains Downward API information.
+
+        * Check the DownwardAPIVolumeFile
+       API definition which contains references to object or resource fields for populating a file in the Downward API volume.
+
+        * Check the ResourceFieldSelector
+       API definition which specifies the container resources and their output format.
+
+Kubernetes manual                       from the official documentation

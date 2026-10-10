@@ -1,0 +1,118 @@
+WEBAPI.CSSUNPARSEDVALUE(1)       Sandbox manual       WEBAPI.CSSUNPARSEDVALUE(1)
+
+       NAME
+
+       CSSUnparsedValue - The CSSUnparsedValue interface of the CSS Typed Object Model API represents a property value that can't be parsed into a more specific type 
+
+       CSSUNPARSEDVALUE
+
+       The CSSUnparsedValue interface of the CSS Typed Object Model API represents a property value that can't be parsed into a more specific type — typically the value of a custom property.
+
+       The object is an iterable that may contain string fragments and variable references.
+
+       The items can be accessed and set by index (unparsedValue[0]), and as an iterable it can be used with a for...of loop or the spread syntax.
+
+       CONSTRUCTOR
+
+        * CSSUnparsedValue()
+          * : Creates a new CSSUnparsedValue object.
+
+       INSTANCE PROPERTIES
+
+        * CSSUnparsedValue.length (read-only)
+          * : Returns the number of items in the object.
+
+       INSTANCE METHODS
+
+       _Also inherits methods from its parent interface, CSSStyleValue._
+
+        * CSSUnparsedValue.entries()
+          * : Returns a new _array iterator_ that yields [index, value] pairs for each item in the object.
+        * CSSUnparsedValue.forEach()
+          * : Executes a provided function once for each item in the object.
+        * CSSUnparsedValue.keys()
+          * : Returns a new _array iterator_ that yields the index of each item in the object.
+        * CSSUnparsedValue.values()
+          * : Returns a new _array iterator_ that yields each item in the object.
+
+       DESCRIPTION
+
+       A CSSUnparsedValue instance is an iterable of items, where each item is either a string representing a fragment of CSS text that wasn't further parsed, or a CSSVariableReferenceValue object representing a var() function in the value (if any were specified).
+
+       For example, given the custom property:
+
+         --foo: 10px var(--bar, blue);
+
+       The CSSUnparsedValue for --foo has two items:
+
+        * "10px ": a plain string fragment.
+        * A CSSVariableReferenceValue: representing var(--bar, blue), with its own variable ("--bar") and fallback (a nested CSSUnparsedValue for blue).
+
+       PARSING A CSSUNPARSEDVALUE FURTHER
+
+       CSSUnparsedValue preserves the raw, unparsed text of a value: it doesn't interpret that text as a length, a color, or any other more specific type.
+
+       If you know what kind of value the text represents, you can parse it further using the static parse() method of the type you expect, such as CSSNumericValue.parse() for a numeric value with a unit, or the more general CSSStyleValue.parse(), which additionally requires you to specify the target CSS property name.
+
+       These parse() methods take a CSS text string, not a CSSUnparsedValue object. However since CSSUnparsedValue inherits the CSSStyleValue.toString() stringifier, it can be passed directly wherever a string is expected. Parsing throws a SyntaxError if the text doesn't match the syntax expected by the type you're parsing it as.
+
+       EXAMPLES
+
+       CREATING, READING, AND UPDATING A CSSUNPARSEDVALUE
+
+       This example creates a CSSUnparsedValue, then reads its items via length, indexed access, and iteration, and finally updates one of the items by assigning to its index.
+
+         const value = new CSSUnparsedValue(["1em", "#445566", "-45px"]);
+
+         console.log(value.length); // 3
+         console.log(value[0]); // "1em"
+
+         for (const fragment of value) {
+           console.log(fragment);
+         }
+         // "1em"
+         // "#445566"
+         // "-45px"
+
+         value[0] = "2em";
+         console.log(value[0]); // "2em"
+
+       READING AND PARSING A CUSTOM PROPERTY'S VALUE
+
+       A CSSUnparsedValue is what you get back when you read the value of a custom property from a StylePropertyMapReadOnly, since the browser cannot know in advance what kind of value the property holds. This example reads the --unit custom property from an element's computed style map, then parses it into a CSSUnitValue using CSSNumericValue.parse().
+
+         <button id="btn">Styled button</button>
+
+         #btn {
+           --unit: 1.2rem;
+           padding: var(--unit);
+         }
+
+         const styleMap = document.getElementById("btn").computedStyleMap();
+         const unit = styleMap.get("--unit");
+
+         console.log(unit); // CSSUnparsedValue {0: " 1.2rem", length: 1}
+         console.log(unit[0]); // " 1.2rem"
+
+         const parsedUnit = CSSNumericValue.parse(unit);
+         console.log(parsedUnit.value); // 1.2
+         console.log(parsedUnit.unit); // "rem"
+
+       See the CSSUnparsedValue section of the _CSS Typed OM guide_ for more detail on this example.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * CSSVariableReferenceValue
+        * CSSImageValue
+        * CSSKeywordValue
+        * CSSNumericValue
+        * CSSPositionValue
+        * CSSTransformValue
+        * Using the CSS Typed OM
+        * CSS Typed Object Model API
+
+Web APIs manual                         from the official documentation

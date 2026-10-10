@@ -1,0 +1,19 @@
+APACHE.MOD_ASIS(1)               Sandbox manual               APACHE.MOD_ASIS(1)
+
+       USAGE
+
+       In the server configuration file, associate files with the send-as-is handler e.g.
+
+         AddHandler send-as-is asis
+
+       The contents of any file with a .asis extension will then be sent by Apache httpd to the client with almost no changes. In particular, HTTP headers are derived from the file itself according to mod_cgi rules, so an asis file must include valid headers, and may also use the CGI Status: header to determine the HTTP response code. The Content-Length: header will automatically be inserted or, if included, corrected by httpd.
+
+       Here's an example of a file whose contents are sent as is so as to tell the client that a file has redirected.
+
+       Status: 301 Now where did I leave that URL  Location: http://xyz.example.com/foo/bar.html  Content-type: text/html    <html>  <head>  <title>Lame excuses'R'us</title>  </head>  <body>  <h1>Fred's exceptionally wonderful page has moved to  <a href="http://xyz.example.com/foo/bar.html">Joe's</a> site.  </h1>  </body>  </html>
+
+       NOTES
+
+       The server always adds a Date: and Server: header to the data returned to the client, so these should not be included in the file. The server does not add a Last-Modified header; it probably should.
+
+Apache HTTP Server manual               bundled documentation

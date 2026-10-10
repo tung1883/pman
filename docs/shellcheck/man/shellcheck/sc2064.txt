@@ -1,0 +1,35 @@
+SHELLCHECK.SC2064(1)             Sandbox manual             SHELLCHECK.SC2064(1)
+
+       NAME
+
+       Use single quotes, otherwise this expands now rather than when signalled. - trap "echo \"Finished on $(date)\"" EXIT
+
+       USE SINGLE QUOTES, OTHERWISE THIS EXPANDS NOW RATHER THAN WHEN SIGNALL
+
+       USE SINGLE QUOTES, OTHERWISE THIS EXPANDS NOW RATHER THAN WHEN SIGNALL
+
+       PROBLEMATIC CODE
+
+         trap "echo \"Finished on $(date)\"" EXIT
+         trap "rm -fr '$testdir1' '$testdir2'" $TRAP_SIGNALS
+         trap "rm $tmp" $TRAP_SIGNALS
+         trap "${remove_aar_temp}" SIGTERM SIGQUIT EXIT
+         trap "$(shopt -p extglob)" RETURN
+
+       CORRECT CODE
+
+         trap 'echo "Finished on $(date)"' EXIT
+
+       RATIONALE
+
+       With double quotes, all parameter and command expansions will expand when the trap is defined rather than when it's executed.
+
+       In the example with the Problematic code, the message will contain the date on which the trap was declared, and not the date on which the script exits.
+
+       Using single quotes will prevent expansion at declaration time, and save it for execution time.
+
+       EXCEPTIONS
+
+       If you don't care that the trap code is expanded early because the commands/variables won't change during execution of the script, or because you want to use the current and not the future values, then you can ignore this message.
+
+ShellCheck manual                       from the official documentation

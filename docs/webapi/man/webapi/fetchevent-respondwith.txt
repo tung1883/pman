@@ -1,0 +1,104 @@
+WEBAPI.FETCHEVENT-RESPONDWITH(1) Sandbox manual WEBAPI.FETCHEVENT-RESPONDWITH(1)
+
+       NAME
+
+       FetchEvent: respondWith() method - service
+
+       FETCHEVENT: RESPONDWITH() METHOD
+
+       service
+
+       The respondWith() method of FetchEvent prevents the browser's default fetch handling, and allows you to provide a promise for a Response yourself.
+
+       In most cases you can provide any response that the receiver understands. For example, if an initiates the request, the response body needs to be image data. For security reasons, there are a few global rules:
+
+        * You can only return Response objects of type
+       "opaque" if the fetchEvent.request object's mode is "no-cors". This prevents the leaking of private data.
+
+        * You can only return Response objects of type
+       "opaqueredirect" if the fetchEvent.request object's mode is "manual".
+
+        * You cannot return Response objects of type
+       "cors" if the fetchEvent.request object's mode is "same-origin".
+
+       SYNTAX
+
+         respondWith(response)
+
+       PARAMETERS
+
+        * response
+          * : A Response or a Promise that resolves to a
+       Response. Otherwise, a network error is returned to Fetch.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * NetworkError DOMException
+          * : Returned if a network error is triggered on certain combinations of
+       FetchEvent.request.mode and Response.type values, as hinted at in the "global rules" listed above.
+
+        * InvalidStateError DOMException
+          * : Returned if the event has not been dispatched or respondWith() has
+       already been invoked.
+
+       DESCRIPTION
+
+       SPECIFYING THE FINAL URL OF A RESOURCE
+
+       From Firefox 59 onwards, when a service worker provides a Response to FetchEvent.respondWith(), the Response.url value will be propagated to the intercepted network request as the final resolved URL. If the Response.url value is the empty string, then the FetchEvent.request.url is used as the final URL.
+
+       In the past the FetchEvent.request.url was used as the final URL in all cases. The provided Response.url was effectively ignored.
+
+       This means, for example, if a service worker intercepts a stylesheet or worker script, then the provided Response.url will be used to resolve any relative @import or importScripts() subresource loads (Firefox bug 1222008).
+
+       For most types of network request this change has no impact because you can't observe the final URL. There are a few, though, where it does matter:
+
+        * If a fetch() is intercepted,
+       then you can observe the final URL on the result's Response.url.
+
+        * If a worker script is
+       intercepted, then the final URL is used to set self.location and used as the base URL for relative URLs in the worker script.
+
+        * If a stylesheet is intercepted, then the final URL is used as the base URL for
+       resolving relative @import loads.
+
+       Note that navigation requests for Windows and iframes do NOT use the final URL. The way the HTML specification handles redirects for navigations ends up using the request URL for the resulting Window.location. This means sites can still provide an "alternate" view of a web page when offline without changing the user-visible URL.
+
+       EXAMPLES
+
+       This fetch event tries to return a response from the cache API, falling back to the network otherwise.
+
+         addEventListener("fetch", (event) => {
+           // Prevent the default, and handle the request ourselves.
+           event.respondWith(
+             (async () => {
+               // Try to get the response from a cache.
+               const cachedResponse = await caches.match(event.request);
+               // Return it if we found one.
+               if (cachedResponse) return cachedResponse;
+               // If we didn't find a match in the cache, use the network.
+               return fetch(event.request);
+             })(),
+           );
+         });
+
+       > caches.match() is a
+       > convenience method. Equivalent functionality is to call
+       > cache.match() on each cache (in the order returned by
+       > caches.keys()) until a
+       > Response is returned.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Fetch API
+
+Web APIs manual                         from the official documentation

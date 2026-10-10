@@ -1,0 +1,37 @@
+SHELLCHECK.SC3051(1)             Sandbox manual             SHELLCHECK.SC3051(1)
+
+       NAME
+
+       In POSIX sh, source in place of . is undefined - source /usr/lib/myfile.sh
+
+       IN POSIX SH, SOURCE IN PLACE OF . IS UNDEFINED
+
+       IN POSIX SH, SOURCE IN PLACE OF . IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         source /usr/lib/myfile.sh
+
+       CORRECT CODE
+
+         #!/bin/sh
+         . /usr/lib/myfile.sh
+
+       RATIONALE
+
+       Your script uses a shell feature not supported by the shebang. Either rewrite the script to be portable, or change the shebang to explicitly require a shell like Bash.
+
+       source is a Bash/Ksh specific, readable synonym for .. In this case, you can for the most part easily replace source with .
+
+       Do note that source myfile in POSIX sh only searches $PATH, while Bash/Ksh will additionally search the current directory.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

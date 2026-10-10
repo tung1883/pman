@@ -1,0 +1,53 @@
+WEBAPI.SPEECHRECOGNITION-PHRASES(1) Sandbox manual WEBAPI.SPEECHRECOGNITION-PHRASES(1)
+
+       NAME
+
+       SpeechRecognition: phrases property - The phrases property of the
+
+       SPEECHRECOGNITION: PHRASES PROPERTY
+
+       The phrases property of the SpeechRecognition interface sets an array of SpeechRecognitionPhrase objects to be used for contextual biasing.
+
+       VALUE
+
+       An ObservableArray of SpeechRecognitionPhrase objects.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The following code first creates an array containing the phrases to boost and their boost values. We convert this data to an ObservableArray of SpeechRecognitionPhrase objects by mapping the original array to SpeechRecognitionPhrase() constructor calls:
+
+         const phraseData = [
+           { phrase: "azure", boost: 5.0 },
+           { phrase: "khaki", boost: 3.0 },
+           { phrase: "tan", boost: 2.0 },
+         ];
+
+         const phraseObjects = phraseData.map(
+           (p) => new SpeechRecognitionPhrase(p.phrase, p.boost),
+         );
+
+       After creating a SpeechRecognition instance, we then plug our contextual biasing phrases into it by setting the phraseObjects array as the value of the SpeechRecognition.phrases property:
+
+         const recognition = new SpeechRecognition();
+         recognition.continuous = false;
+         recognition.lang = "en-US";
+         recognition.interimResults = false;
+         recognition.processLocally = true;
+         recognition.phrases = phraseObjects;
+
+         // …
+
+       This code is excerpted from our on-device speech color changer (run the demo live). See Using the Web Speech API for a full explanation.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Speech API
+        * SpeechRecognitionPhrase
+
+Web APIs manual                         from the official documentation

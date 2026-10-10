@@ -1,0 +1,35 @@
+SHELLCHECK.SC2256(1)             Sandbox manual             SHELLCHECK.SC2256(1)
+
+       NAME
+
+       This translated string is the name of a variable. Flip leading $ and " if this should be a quoted substitution. - var="foo"
+
+       THIS TRANSLATED STRING IS THE NAME OF A VARIABLE. FLIP LEADING AND IF
+
+       THIS TRANSLATED STRING IS THE NAME OF A VARIABLE. FLIP LEADING AND IF
+
+       PROBLEMATIC CODE
+
+         var="foo"
+         echo $"var"
+
+       CORRECT CODE
+
+         var="foo"
+         echo "$var"
+
+       RATIONALE
+
+       $".." is a localized string, for example, echo $"Hello $USER" along with the proper translation files can be used to have the script say "Bonjour, youruser" in French locales.
+
+       In this case, ShellCheck found a localized string whose contents is also the name of a variable. This could have happened because the user wanted a far more common quoted substitution, e.g. "$var", but accidentally switched the leading $ and ".
+
+       EXCEPTIONS
+
+       If you do want a localized string whose contents is also an active variable, you can [[ignore]] this warning or rename the variable.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

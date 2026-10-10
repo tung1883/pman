@@ -1,0 +1,37 @@
+SHELLCHECK.SC2211(1)             Sandbox manual             SHELLCHECK.SC2211(1)
+
+       NAME
+
+       This is a glob used as a command name. Was it supposed to be in ${..}, array, or is it missing quoting? - for f in $(.png); do echo "$f"; done   # Trying to loop over a glob
+
+       THIS IS A GLOB USED AS A COMMAND NAME. WAS IT SUPPOSED TO BE IN .. , A
+
+       THIS IS A GLOB USED AS A COMMAND NAME. WAS IT SUPPOSED TO BE IN .. , A
+
+       PROBLEMATIC CODE
+
+         for f in $(*.png); do echo "$f"; done   # Trying to loop over a glob
+         array=$(*.txt)                          # Trying to assign an array
+         echo "$(array[1])"                      # Trying to expand an array
+
+       CORRECT CODE
+
+         for f in *.png; do echo "$f"; done
+         array=(*.txt)
+         echo "${array[1]}"
+
+       RATIONALE
+
+       You are using a glob as a command name. This is usually a mistake caused by one of the following:
+
+        * Trying to use foo or $(foo) to expand a glob.
+        * Using var=$(.txt) instead of var=(.txt) to assign an array.
+        * Using $(..) instead of ${..} when expanding an array element.
+        * Running a program with a name or directory that contains glob characters without escaping them.
+       Look up and double check the syntax of what you're trying to do.
+
+       EXCEPTIONS
+
+       None. If you want to specify a command name via glob, e.g. to not hard code version in ./myprogram-*/foo, expand to array or parameters first to allow handling the cases of 0 or 2+ matches.
+
+ShellCheck manual                       from the official documentation

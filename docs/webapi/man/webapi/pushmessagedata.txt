@@ -1,0 +1,51 @@
+WEBAPI.PUSHMESSAGEDATA(1)        Sandbox manual        WEBAPI.PUSHMESSAGEDATA(1)
+
+       NAME
+
+       PushMessageData - service
+
+       PUSHMESSAGEDATA
+
+       service
+
+       The PushMessageData interface of the Push API provides methods which let you retrieve the push data sent by a server in various formats.
+
+       Unlike the similar methods in the Fetch API, which only allow the method to be invoked once, these methods can be called multiple times.
+
+       Messages received through the Push API are sent encrypted by push services and then automatically decrypted by browsers before they are made accessible through the methods of the PushMessageData interface.
+
+       INSTANCE PROPERTIES
+
+       None.
+
+       INSTANCE METHODS
+
+        * PushMessageData.arrayBuffer()
+          * : Extracts the data as an ArrayBuffer object.
+        * PushMessageData.blob()
+          * : Extracts the data as a Blob object.
+        * PushMessageData.bytes()
+          * : Extracts the data as a Uint8Array object.
+        * PushMessageData.json()
+          * : Extracts the data as a JSON object.
+        * PushMessageData.text()
+          * : Extracts the data as a plain text string.
+
+       EXAMPLES
+
+         self.addEventListener("push", (event) => {
+           const obj = event.data.json();
+
+           if (obj.action === "subscribe" || obj.action === "unsubscribe") {
+             fireNotification(obj, event);
+             port.postMessage(obj);
+           } else if (obj.action === "init" || obj.action === "chatMsg") {
+             port.postMessage(obj);
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

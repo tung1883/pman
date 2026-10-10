@@ -1,0 +1,35 @@
+SHELLCHECK.SC1122(1)             Sandbox manual             SHELLCHECK.SC1122(1)
+
+       NAME
+
+       Nothing allowed after end token. To continue a command, put it on the line with the <<. - cat << EOF
+
+       NOTHING ALLOWED AFTER END TOKEN. TO CONTINUE A COMMAND, PUT IT ON THE
+
+       NOTHING ALLOWED AFTER END TOKEN. TO CONTINUE A COMMAND, PUT IT ON THE
+
+       PROBLEMATIC CODE
+
+         cat << EOF
+         Hello
+         EOF | nl
+
+       CORRECT CODE
+
+         cat << EOF | nl
+         Hello
+         EOF
+
+       RATIONALE
+
+       You have a here document, and appear to have added text after the terminating token.
+
+       This is not allowed. If it was meant to continue the command, put it on the line with the <<.
+
+       If it helps, look at << "END" as if it was < file, and make sure the resulting command is valid. This is what the shell does. You can then append here document data after the command.
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

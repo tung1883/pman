@@ -1,0 +1,97 @@
+WEBAPI.FORMDATA-FORMDATA(1)      Sandbox manual      WEBAPI.FORMDATA-FORMDATA(1)
+
+       NAME
+
+       FormData: FormData() constructor - The FormData() constructor creates a new FormData object.
+
+       FORMDATA: FORMDATA() CONSTRUCTOR
+
+       The FormData() constructor creates a new FormData object.
+
+       SYNTAX
+
+         new FormData()
+         new FormData(form)
+         new FormData(form, submitter)
+
+       PARAMETERS
+
+        * form (optional)
+          * : An HTML element — when specified, the FormData object will be populated with the form's current keys/values using the name property of each element for the keys and their submitted value for the values. It will also encode file input content. A formdata event is fired on the form when the FormData object is created, allowing the form to modify the formdata if necessary.
+        * submitter (optional)
+          * : A submit button that is a member of the form. If the submitter has a name attribute or is an , its data will be included in the FormData object (e.g., btnName=btnValue).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the specified submitter is not a submit button.
+        * NotFoundError DOMException
+          * : Thrown if the specified submitter isn't a member of the form. The submitter must be either a
+       descendant of the form element or must have a form attribute referring to the form.
+
+       EXAMPLES
+
+       CREATING AN EMPTY FORMDATA
+
+       The following line creates an empty FormData object:
+
+         const formData = new FormData();
+
+       You could add a key/value pair to this using append():
+
+         formData.append("username", "Chris");
+
+       PREPOPULATING FROM AN HTML FORM ELEMENT
+
+       You can specify the optional form and submitter arguments when creating the FormData object, to prepopulate it with values from the specified form.
+
+       > Only successful form controls are included in a FormData object, i.e., those with a name and not in a disabled state.
+
+       HTML
+
+         <form id="form">
+           <input type="text" name="text1" value="foo" />
+           <input type="text" name="text2" value="bar" />
+           <input type="text" name="text3" value="baz" />
+           <input type="checkbox" name="check" checked disabled />
+           <button name="intent" value="save">Save</button>
+           <button name="intent" value="saveAsCopy">Save As Copy</button>
+         </form>
+
+         <output id="output"></output>
+
+         form {
+           display: none;
+         }
+
+         output {
+           display: block;
+           white-space: pre-wrap;
+         }
+
+       JAVASCRIPT
+
+         const form = document.getElementById("form");
+         const submitter = document.querySelector("button[value=save]");
+         const formData = new FormData(form, submitter);
+
+         const output = document.getElementById("output");
+
+         for (const [key, value] of formData) {
+           output.textContent += `${key}: ${value}\n`;
+         }
+
+       RESULT
+
+       For brevity, the element is hidden from view.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using FormData objects
+        * 
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,70 @@
+WEBAPI.RESPONSE-TEXTSTREAM(1)    Sandbox manual    WEBAPI.RESPONSE-TEXTSTREAM(1)
+
+       NAME
+
+       Response: textStream() method - The textStream() method of the Response interface returns a ReadableStream that can be used to read the contents of the response body in chu
+
+       RESPONSE: TEXTSTREAM() METHOD
+
+       The textStream() method of the Response interface returns a ReadableStream that can be used to read the contents of the response body in chunks of UTF-8.
+
+       This provides an easier mechanism for streaming the response body than piping the Response.body byte stream through a TextDecoderStream.
+
+       > If invoked on a Response with a null body, for example a response, textStream() will return a valid empty stream.
+
+       SYNTAX
+
+         textStream()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A ReadableStream.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the response body is disturbed or locked.
+
+       EXAMPLES
+
+       READING RESPONSE BODY CONTENT AS A TEXT STREAM
+
+       This example shows how to read a response body as a text stream.
+
+       We fetch() a URL to get a Response, obtain a ReadableStream of its body using textStream(), then read the text via a reader created using ReadableStream.getReader().
+
+         const pElem = document.querySelector("p");
+
+         async function streamResponseText(url) {
+           const response = await fetch(url);
+           const textStream = response.textStream();
+           // instead of
+           // const textStream = response.body.pipeThrough(new TextDecoderStream());
+
+           const reader = textStream.getReader();
+
+           while (true) {
+             const { value, done } = await reader.read();
+             if (done) break;
+             pElem.textContent += value;
+           }
+         }
+
+         streamResponseText("https://www.example.com");
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ReadableStream
+        * ReadableStream.getReader()
+        * Request.body
+        * Request.textStream()
+
+Web APIs manual                         from the official documentation

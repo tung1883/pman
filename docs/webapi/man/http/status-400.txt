@@ -1,0 +1,51 @@
+HTTP.STATUS-400(1)               Sandbox manual               HTTP.STATUS-400(1)
+
+       NAME
+
+       400 Bad Request - The HTTP 400 Bad Request client error response status code indicates that the server would not process the request due to something the serv
+
+       400 BAD REQUEST
+
+       The HTTP 400 Bad Request client error response status code indicates that the server would not process the request due to something the server considered to be a client error. The reason for a 400 response is typically due to malformed request syntax, invalid request message framing, or deceptive request routing.
+
+       Clients that receive a 400 response should expect that repeating the request without modification will fail with the same error.
+
+       STATUS
+
+         400 Bad Request
+
+       EXAMPLES
+
+       MALFORMED REQUEST SYNTAX
+
+       Assuming a REST API exists with an endpoint to manage users at http://example.com/users and a POST request with the following body attempts to create a user, but uses invalid JSON with unescaped line breaks:
+
+         POST /users HTTP/1.1
+         Host: example.com
+         Content-Type: application/json
+         Content-Length: 38
+
+         {
+           "email": "b@example.com",
+           "username": "b.smith"
+         }
+
+       If the content is in a valid format, we would expect a 201 Created response or another success message, but instead the server responds with a 400 and the response body includes a message field with some context so the client can retry the action with a properly-formed request:
+
+         HTTP/1.1 400 Bad Request
+         Content-Type: application/json
+         Content-Length: 71
+
+         {
+           "error": "Bad request",
+           "message": "Request body could not be read properly.",
+         }
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * HTTP response status codes
+        * HTTP Status Code Definitions
+
+HTTP manual                             from the official documentation

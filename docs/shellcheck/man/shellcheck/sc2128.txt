@@ -1,0 +1,55 @@
+SHELLCHECK.SC2128(1)             Sandbox manual             SHELLCHECK.SC2128(1)
+
+       NAME
+
+       Expanding an array without an index only gives the element in the index 0. - myarray=(foo bar)
+
+       EXPANDING AN ARRAY WITHOUT AN INDEX ONLY GIVES THE ELEMENT IN THE INDE
+
+       EXPANDING AN ARRAY WITHOUT AN INDEX ONLY GIVES THE ELEMENT IN THE INDE
+
+       PROBLEMATIC CODE
+
+         myarray=(foo bar)
+         for f in $myarray
+         do
+           cat "$f"
+         done
+
+       CORRECT CODE
+
+         myarray=(foo bar)
+         for f in "${myarray[@]}"
+         do
+           cat "$f"
+         done
+
+       RATIONALE
+
+       When referencing arrays, $myarray is equivalent to ${myarray[0]} -- which is usually the first of multiple elements. This is also true for associative arrays. Therefore, if 0 (zero) is not a valid key, $myarray expands to an empty string.
+
+       To get all elements as separate parameters, use the index @ (and make sure to double quote). In the example, echo "${myarray[@]}" is equivalent to echo "foo" "bar".
+
+       To get all elements as a single parameter, concatenated by the first character in IFS, use the index . In the example, echo "${myarray[]}" is equivalent to echo "foo bar".
+
+       BUGS
+
+       There is a known issue with this check's handling of local variables, causing ShellCheck to flag variables that were previously declared as arrays, even if they are in different scopes.
+
+       The easiest workaround is to simply use different variable names. Alternatively, you can [[ignore]] the check.
+
+       It is also possible to satisfy ShellCheck by declaring the local variable separately from assigning to it, e.g.:
+
+         foo () {
+            local -a baz
+            baz+=("foo" "bar")
+            echo "${baz[@]}"
+         }
+
+         bar () {
+            local baz # ShellCheck gets confused if these lines are merged as local baz="qux"
+            baz="qux"
+            echo "$baz"
+         }
+
+ShellCheck manual                       from the official documentation

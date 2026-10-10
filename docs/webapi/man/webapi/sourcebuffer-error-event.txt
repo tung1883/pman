@@ -1,0 +1,58 @@
+WEBAPI.SOURCEBUFFER-ERROR-EVENT(1) Sandbox manual WEBAPI.SOURCEBUFFER-ERROR-EVENT(1)
+
+       NAME
+
+       SourceBuffer: error event - windowanddedicated
+
+       SOURCEBUFFER: ERROR EVENT
+
+       window_and_dedicated
+
+       The error event of the SourceBuffer interface is fired when an error occurs during the processing of an appendBuffer() operation. This may happen, for example, if the data being appended is not in the expected format, the SourceBuffer is in an invalid state, or the user agent is unable to process the data. The updating property transitions from true to false. This event is fired before the updateend event.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("error", (event) => { })
+
+         onerror = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       HANDLING ERRORS DURING APPENDBUFFER()
+
+       This example demonstrates how to handle errors that occur during the appendBuffer() operation.
+
+         const sourceBuffer = source.addSourceBuffer(mimeCodec);
+         sourceBuffer.addEventListener("error", () => {
+           downloadStatus.textContent = "Error occurred during decoding";
+         });
+         sourceBuffer.addEventListener("update", () => {
+           downloadStatus.textContent = "Done";
+         });
+         sourceBuffer.addEventListener("updateend", () => {
+           source.endOfStream();
+         });
+         downloadStatus.textContent = "Downloading...";
+         fetch(assetURL)
+           .then((response) => response.arrayBuffer())
+           .then((data) => {
+             downloadStatus.textContent = "Decoding...";
+             sourceBuffer.appendBuffer(data);
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * SourceBuffer.appendBuffer()
+        * SourceBuffer.remove()
+
+Web APIs manual                         from the official documentation

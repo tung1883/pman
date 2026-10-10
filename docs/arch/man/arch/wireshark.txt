@@ -1,0 +1,75 @@
+ARCH.WIRESHARK(1)                Sandbox manual                ARCH.WIRESHARK(1)
+
+       Wireshark is a free and open-source packet analyzer. It is used for network troubleshooting, analysis, software and communications protocol development, and education.
+
+       INSTALLATION
+
+       Install the wireshark-qt package for the Wireshark GUI or wireshark-cli for just the tshark(1) CLI.
+
+       Note The deprecated GTK interface has been removed in Wireshark 3.0.
+
+       termshark is an alternative terminal UI.
+
+       CAPTURING PRIVILEGES
+
+       Do not run Wireshark as root; it is insecure. Wireshark has implemented privilege separation, which means that the Wireshark GUI (or the tshark CLI) can run as a normal user while the dumpcap capture utility runs as root[1].
+
+       The wireshark-cli install script sets packet capturing capabilities on the /usr/bin/dumpcap executable.
+
+       /usr/bin/dumpcap can only be executed by root and members of the wireshark group, so to use Wireshark as a normal user, you have to add your user to the wireshark user group.
+
+       A FEW CAPTURING TECHNIQUES
+
+       There are a number of different ways to capture exactly what you are looking for in Wireshark, by applying capture filters or display filters.
+
+       Note To learn the capture filter syntax, see pcap-filter(7). For display filters, see wireshark-filter(4).
+
+       FILTERING TCP PACKETS
+
+       If you want to see all the current TCP packets, type tcp into the Filter bar or in the CLI, enter:
+
+         $ tshark -f "tcp"
+
+       FILTERING UDP PACKETS
+
+       If you want to see all the current UDP packets, type udp into the Filter bar or in the CLI, enter:
+
+         $ tshark -f "udp"
+
+       FILTER PACKETS TO A SPECIFIC IP ADDRESS
+
+       To observe traffic around a specific address, say 1.2.3.4, there are a few filter options. Note that IPv6 addresses can be filtered similarly but using ipv6 instead of ip.
+
+        * ip.dst == 1.2.3.4 shows all traffic sent to a that address.
+        * ip.src == 1.2.3.4 shows all traffic sent from that address.
+        * ip.addr == 1.2.3.4 shows all traffic both sent to and sent from that address.
+        * ip.addr != 1.2.3.4 shows all traffic not sent either to or from that address.
+
+       FILTER PACKETS TO IPV4 LAN
+
+       To only see LAN traffic and no internet traffic use this display filter to show traffic on private network addresses.
+
+         (ip.src==10.0.0.0/8 AND ip.dst==10.0.0.0/8) OR (ip.src==172.16.0.0/12 AND ip.dst==172.16.0.0/12) OR (ip.src==192.168.0.0/16 and ip.dst==192.168.0.0/16)
+
+       FILTER PACKETS BY PORT
+
+       See all traffic on specific TCP or UDP ports via tcp.port or udp.port respectively.
+
+         tcp.port == 80
+
+       HEADLESS CAPTURING WITH DUMPCAP
+
+       dumpcap is part of Wireshark and can be used for capturing packets without the GUI. Used in combination with tmux will allow the capture of packets in a detached session.
+
+       To see all dumpcap options, use the -h flag.
+
+       The following example will provide a ringbuffer capture. It captures twenty .pcap files of 100MB each, replacing the oldest file with the twenty-first file and so on… This allows a continuous capture without exhausting disk space.
+
+         # dumpcap -i 1 -b filesize:100000 -b files:20 -w mycapture.pcapng
+
+        * -i − interface number (listed from dumpcap -D)
+        * -b filesize: − file size in kB before starting a new .pcap file
+        * -b files: − the number of files to capture before overwriting the oldest
+        * -w − write the output to the file mycaptureidentifier.pcapng
+
+ArchWiki manual                         bundled documentation

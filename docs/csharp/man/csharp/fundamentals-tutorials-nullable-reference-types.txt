@@ -1,0 +1,255 @@
+CSHARP.FUNDAMENTALS-TUTORIALS-NULLABLE-REFERENCE-TYPES(1) Sandbox manual CSHARP.FUNDAMENTALS-TUTORIALS-NULLABLE-REFERENCE-TYPES(1)
+
+       NAME
+
+       Tutorial: Express your design intent with nullable and non-nullable reference types - Build a small survey app that uses nullable and non-nullable reference types to declare which references can be null and have the compiler e
+
+       TUTORIAL: EXPRESS YOUR DESIGN INTENT WITH NULLABLE AND NON-NULLABLE RE
+
+       > New to nullable reference types? Read Nullable reference types first. This tutorial assumes you understand the difference between non-nullable and nullable reference types and how the compiler tracks null-state.
+       > Coming from another language? If you've used Kotlin's nullable types, TypeScript's strictNullChecks, or Swift's optionals, the conceptual model maps directly. The exercise here is about expressing design intent, not learning the syntax.
+       In this tutorial, you build a small library that models running a survey. The data has two distinct patterns that nullable reference types let you distinguish:
+
+        * A survey question must always be present. The list of questions and the text of each question can never be null.
+        * A response to a question might be missing. Respondents can decline to answer some or all questions, and the model should make that explicit.
+       You declare those rules with non-nullable and nullable reference types. The compiler then warns whenever the code's behavior doesn't match the design.
+
+       In this tutorial, you:
+
+       > - Create the application.
+       > - Build the survey questions.
+       > - Build a survey of questions.
+       > - Test the not-null requirement.
+       > - Build response types.
+       > - Create respondents.
+       > - Generate one survey response.
+       > - Build a set of survey responses.
+       > - Examine the survey results.
+       Three classes model the survey:
+
+        * SurveyQuestion: one question. The text and question type are required.
+        * SurveyRun: the collection of questions plus the list of respondents.
+        * SurveyResponse: one respondent's answers, which might be missing.
+       Each type uses non-nullable reference types for required values and nullable reference types for missing values.
+
+       PREREQUISITES
+
+       This tutorial assumes you're familiar with C# and either Visual Studio or the .NET CLI.
+
+       CREATE THE APPLICATION AND ENABLE NULLABLE REFERENCE TYPES
+
+       Create a new console application named NullableIntroduction:
+
+         dotnet new console -n NullableIntroduction
+         cd NullableIntroduction
+
+       BUILD THE SURVEY QUESTIONS
+
+       Add a new file named SurveyQuestion.cs to the project, and replace its contents with the following code. The text and the question type are non-nullable, so the constructor must initialize both:
+
+         ﻿namespace NullableIntroduction;
+
+         public enum QuestionType
+         {
+             YesNo,
+             Number,
+             Text
+         }
+
+         public class SurveyQuestion(QuestionType typeOfQuestion, string text)
+         {
+             public string QuestionText { get; } = text;
+             public QuestionType TypeOfQuestion { get; } = typeOfQuestion;
+         }
+
+       The constructor parameters are non-nullable reference types, so the compiler warns the caller if either argument might be null.
+
+       BUILD A SURVEY OF QUESTIONS
+
+       Next, add a new file named SurveyRun.cs to the project and define a SurveyRun class to hold the list of questions:
+
+         namespace NullableIntroduction;
+
+         public class SurveyRun
+         {
+             private List<SurveyQuestion> surveyQuestions = [];
+
+             public void AddQuestion(QuestionType type, string question) =>
+                 AddQuestion(new SurveyQuestion(type, question));
+
+             public void AddQuestion(SurveyQuestion surveyQuestion) =>
+                 surveyQuestions.Add(surveyQuestion);
+         }
+
+       The surveyQuestions field is a non-nullable List. It uses a collection expression to initialize an empty list. Both AddQuestion overloads accept non-nullable parameters, so the compiler enforces that callers don't pass null.
+
+       In Program.cs, create a SurveyRun and add three questions:
+
+         var surveyRun = new SurveyRun();
+         surveyRun.AddQuestion(QuestionType.YesNo, "Has your code ever thrown a NullReferenceException?");
+         surveyRun.AddQuestion(new SurveyQuestion(QuestionType.Number, "How many times (to the nearest 100) has that happened?"));
+         surveyRun.AddQuestion(QuestionType.Text, "What is your favorite color?");
+
+       TEST THE NOT-NULL REQUIREMENT
+
+       To see how the compiler enforces non-nullable parameters, try adding the following line and rebuilding:
+
+         surveyRun.AddQuestion(QuestionType.Text, default);
+
+       The compiler issues warning CS8625 because default evaluates to null for a reference type, and AddQuestion expects a non-nullable string. Remove the line before continuing.
+
+       BUILD RESPONSE TYPES
+
+       Respondents can decline to take the survey, and even when they participate, they can skip individual questions. Both forms of "missing" are valid outcomes, and the type system should make them visible. You express both forms with null.
+
+       Add a new file named SurveyResponse.cs to the project and define a SurveyResponse class. Use a primary constructor (parameters declared on the type itself, available throughout the body) to capture the always-required Id:
+
+         namespace NullableIntroduction;
+
+         public class SurveyResponse(int id)
+         {
+             public int Id { get; } = id;
+         }
+
+       CREATE RESPONDENTS
+
+       Add a static factory method (a static method that creates and returns a new instance of the type, an alternative to calling the constructor directly) that creates respondents with a random ID:
+
+         private static readonly Random randomGenerator = new Random();
+         public static SurveyResponse GetRandomId() => new SurveyResponse(randomGenerator.Next());
+
+       GENERATE ONE SURVEY RESPONSE
+
+       Next, add the method that asks the survey to a respondent. Store the answers in a nullable dictionary so the type itself communicates that the respondent might decline:
+
+         private Dictionary<int, string>? surveyResponses;
+         public bool AnswerSurvey(IEnumerable<SurveyQuestion> questions)
+         {
+             if (ConsentToSurvey())
+             {
+                 surveyResponses = new Dictionary<int, string>();
+                 int index = 0;
+                 foreach (var question in questions)
+                 {
+                     var answer = GenerateAnswer(question);
+                     if (answer != null)
+                     {
+                         surveyResponses.Add(index, answer);
+                     }
+                     index++;
+                 }
+             }
+             return surveyResponses != null;
+         }
+
+         private bool ConsentToSurvey() => randomGenerator.Next(0, 2) == 1;
+
+         private string? GenerateAnswer(SurveyQuestion question)
+         {
+             switch (question.TypeOfQuestion)
+             {
+                 case QuestionType.YesNo:
+                     int n = randomGenerator.Next(-1, 2);
+                     return (n == -1) ? default : (n == 0) ? "No" : "Yes";
+                 case QuestionType.Number:
+                     n = randomGenerator.Next(-30, 101);
+                     return (n < 0) ? default : n.ToString();
+                 case QuestionType.Text:
+                 default:
+                     switch (randomGenerator.Next(0, 5))
+                     {
+                         case 0:
+                             return default;
+                         case 1:
+                             return "Red";
+                         case 2:
+                             return "Green";
+                         case 3:
+                             return "Blue";
+                     }
+                     return "Red. No, Green. Wait.. Blue... AAARGGGGGHHH!";
+             }
+         }
+
+       The surveyResponses field is Dictionary?. If you dereference the field without first checking for null, the compiler issues a warning. Inside AnswerSurvey, the compiler tracks that surveyResponses is not-null immediately after the new expression, so the loop body needs no extra check.
+
+       BUILD A SET OF SURVEY RESPONSES
+
+       Add a method on SurveyRun that builds up a list of respondents until enough consent to participate:
+
+         private List<SurveyResponse>? respondents;
+         public void PerformSurvey(int numberOfRespondents)
+         {
+             int respondentsConsenting = 0;
+             respondents = [];
+             while (respondentsConsenting < numberOfRespondents)
+             {
+                 var respondent = SurveyResponse.GetRandomId();
+                 if (respondent.AnswerSurvey(surveyQuestions))
+                     respondentsConsenting++;
+                 respondents.Add(respondent);
+             }
+         }
+
+       The respondents field is List? - it's null until the survey runs.
+
+       Call PerformSurvey from Main:
+
+         surveyRun.PerformSurvey(50);
+
+       EXAMINE THE SURVEY RESULTS
+
+       To report results, expose a few helpers from SurveyResponse and SurveyRun. On SurveyResponse, add expression-bodied members (members defined with => and a single expression instead of a { ... } block) that handle the nullable dictionary:
+
+         public bool AnsweredSurvey => surveyResponses != null;
+         public string Answer(int index) => surveyResponses?.GetValueOrDefault(index) ?? "No answer";
+
+       AnsweredSurvey checks the field against null. Answer uses the ?. null-conditional operator (which evaluates to null when the left side is null instead of throwing) to dereference safely, and the ?? null-coalescing operator (which substitutes the right operand when the left is null) to provide a non-null fallback. The method's return type is non-nullable string, so callers don't need null checks.
+
+       On SurveyRun, add expression-bodied members that expose the list of participants and questions:
+
+         public IEnumerable<SurveyResponse> AllParticipants => (respondents ?? Enumerable.Empty<SurveyResponse>());
+         public ICollection<SurveyQuestion> Questions => surveyQuestions;
+         public SurveyQuestion GetQuestion(int index) => surveyQuestions[index];
+
+       AllParticipants returns a non-nullable sequence even though respondents might be null. The ?? operator substitutes Enumerable.Empty() when the field isn't populated yet. If you remove the ?? clause, the compiler warns that the method might return null despite a non-nullable return type.
+
+       Finally, write the report at the bottom of Main:
+
+         foreach (var participant in surveyRun.AllParticipants)
+         {
+             Console.WriteLine($"Participant: {participant.Id}:");
+             if (participant.AnsweredSurvey)
+             {
+                 for (int i = 0; i < surveyRun.Questions.Count; i++)
+                 {
+                     var answer = participant.Answer(i);
+                     Console.WriteLine($"\t{surveyRun.GetQuestion(i).QuestionText} : {answer}");
+                 }
+             }
+             else
+             {
+                 Console.WriteLine("\tNo responses");
+             }
+         }
+
+       Notice that no null check is needed for participant, surveyRun.Questions, or surveyRun.GetQuestion(i). The types declare those values as non-nullable, so the compiler treats them as not-null throughout the loop.
+
+       Run the application:
+
+         dotnet run
+
+       The output is different on each run because respondents are generated randomly, but every line either reports a participant's answers or notes that they declined.
+
+       CONCLUSION
+
+       The finished sample is in the csharp/NullableIntroduction folder of the dotnet/samples repository. Experiment by changing types between nullable and non-nullable. Removing a ? where the design allows missing values produces compiler warnings that point to every place the missing value matters.
+
+       RELATED CONTENT
+
+        * Nullable reference types
+        * Resolve nullable warnings
+        * Nullable migration strategies
+        * Working with nullable reference types in EF Core
+
+C# manual                               from the official documentation

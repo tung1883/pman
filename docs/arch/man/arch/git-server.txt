@@ -1,0 +1,236 @@
+ARCH.GIT-SERVER(1)               Sandbox manual               ARCH.GIT-SERVER(1)
+
+       This article gives an overview on how to host a Git server. For more information, refer to the Git on the Server chapter of the Pro Git book.
+
+       PROTOCOLS
+
+       Refer to Git on the Server - The Protocols for a detailed description along with pros and cons.
+
+       SSH
+
+       You only need to set up an SSH server.
+
+       Note Like on every SSH Installation there are a numerous configurations to help your needs.
+
+       NORMAL EXISTING USER ACCOUNT
+
+       This is the easiest approach, if your ssh login works:
+
+        * Create a bare repository on the Server, wherever you have write permission.
+
+         $ git init --bare ~/foo
+
+        * Clone the repo on a different Machine.
+
+         $ git clone ssh://sshserver:foo
+
+       RESTRICTED LOGIN SHELL FOR GIT-ONLY SSH ACCESS
+
+       If you want to limit the amount of available commands for a user account then git-shell(1) is one way. Multiple user could share one ssh account, just add all keys in authorized_keys.
+
+       To create a interactive login shell with few limited commands, other than git repo management, you need something like this:
+
+         $ mkdir ~/git-shell-commands
+         $ cd ~/git-shell-commands
+         $ ln -s /usr/share/git/git-shell/commands/help
+         $ ln -s /usr/share/git/git-shell/commands/list
+
+       Finally change the shell:
+
+         # chsh -s /usr/bin/git-shell username
+
+       An example shell script to create new bare repos could be:
+
+         ~/git-shell-commands/new_repo
+
+         #!/bin/sh
+
+         new_repo() {
+                 local repo_name
+                 repo_name="${1}"
+                 if [[ -e "${repo_name}" ]];then
+                         printf 'Please provide a different repo name.\n'
+                         exit 1
+                 fi
+                 if [[ "x${repo_name}" = "x" ]];then
+                         printf 'Please providea a repo name.\n'
+                         exit 2
+                 fi
+                 git init --bare "${repo_name}"
+         }
+
+         new_repo "${1}"
+
+         $ chmod u+rx ~/git-shell-commands/new_repo
+
+       Also it could be beneficial in some scenarios to restrict things like port forwarding.
+
+       Prepend all keys in authorized_keys with:
+
+         no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh......
+
+       RESTRICTED USER ACCOUNT
+
+       You are able to secure the SSH user account even more allowing only push and pull commands on this user account. This is done by replacing the default login shell by git-shell. Described in Setting Up the Server.
+
+       When securing the git server created with the instructions of this clause (#SSH), the following additional steps are needed on Arch:
+
+        * Change the home directory: In order for ssh to be able to read /srv/git/.ssh/authorized_keys, the home directory for git in /etc/passwd needs to be changed from / to /srv/git.
+        * Change the base path when home directory is corrected: In order for git to serve the repositories, the --base-path in git-daemon\@.service need to be changed to /srv/git if the repositories are served from git's home directory.
+
+       GIT DAEMON SERVICE (GIT://)
+
+       Warning The git:// protocol should not be used over the internet, use the ssh:// protocol. This Protocol is not for you, if you want User authentication, because this Protocol has NO authentication and NO encryption. Read more here git-daemon(1)
+
+       The Git daemon (git-daemon(1)) can be started with git-daemon.socket.
+
+       The service uses the --export-all and --base-path parameters to serve all repositories placed in /srv/git/.
+
+       MODIFY GIT SERVICES (PER-REPOSITORY) / WRITE ANONYMOUS PUSH TO REPO
+
+       Warning if you enable upload, anybody can push anything into the repository, including removal of refs
+
+       git push uses the receive-pack service and is per default disabled. In the repo/config file enable receivepack.
+
+         /srv/git/foo/config
+
+         [daemon]
+         	receivepack = true
+
+       All repos can be cloned/pulled by default, because the service upload-packis enabled with --export-all by default, but you can be disabled it. Read more git-daemon(1) § SERVICES.
+
+       ENABLE ERROR MESSAGES FOR CLIENTS
+
+       Note This may leak information about the existance of unexported repositories.
+
+       Instead of getting the default Error Message "access denied or repository not exported:" and get more specific error. Create a drop-in file for the git-daemon@.service and append --informative-errors in the ExecStart like:
+
+         /etc/systemd/system/git-daemon@.service.d/informative_errors.conf
+
+         [Service]
+         ExecStart=
+         ExecStart=-/usr/lib/git-core/git-daemon --inetd --export-all --base-path=/srv/git --informative-errors
+
+       ERROR MESSAGES SERVER
+
+         # journalctl -t git-daemon
+
+       DUMB HTTP
+
+       "Dumb" in this context means that only WebDAV is involved in pulls and pushes.
+
+       NGINX
+
+       Follow the basic WebDAV instructions for nginx. Pushing via WebDAV also requires Locking. Here is an example location block:
+
+         /etc/nginx/nginx.conf
+
+         location /repos/ {
+                 auth_basic "Authorized Personnel Only!";
+                 auth_basic_user_file /etc/nginx/htpasswd;
+                 dav_methods PUT DELETE MKCOL COPY MOVE;
+                 dav_ext_methods PROPFIND OPTIONS LOCK UNLOCK;
+                 dav_access user:rw group:rw all:r;
+                 dav_ext_lock zone=general;
+                 create_full_put_path on;
+                 client_body_temp_path /tmp;
+             }
+
+       Note the dav_ext_lock zone. Add the specified locking zone to the http section of your config:
+
+         /etc/nginx/nginx.conf
+
+         dav_ext_lock_zone zone=general:10m;
+
+       Now do the usual steps when preparing a git repo for the server:
+
+        * git clone --bare /path/to/myrepo myrepo.git
+        * copy the bare repo to the server
+        * run git update-server-info in the bare repo
+        * chown the repo to be owned by http:http
+       You might have noticed that I added HTTP Basic Authentication to have at lease some means of access control. Everyone who has an password entry in the htaccess file can push.
+
+       Now you can clone as usual:
+
+         $ git clone https://www.example.com/repos/myrepo.git
+         Cloning into 'myrepo'...
+         $
+
+       Make some changes, add, commit, and push:
+
+         $ git push origin main
+         error: Cannot access URL https://www.example.com/repos/myrepo.git/, return code 22
+         fatal: git-http-push failed
+         error: failed to push some refs to 'https://www.example.com/repos/myrepo.git'
+
+       Oh noes! For some reason PROPFIND reports 401 Unauthorized and that's all. Nothing in the nginx error logs. Appearently the git client has a problem passing the username and password for all subsequent requests. Running a git credential cache does not help. The only solution that works so far is editing the ~/.netrc (obviously git uses curl for http):
+
+         ~/.netrc
+
+         machine www.example.com
+         login git
+         password topsecret
+
+         $  > git push origin main
+         Fetching remote heads...
+          refs/
+          refs/heads/
+          refs/tags/
+         updating 'refs/heads/main'
+          from 03f8860418facfbecedd5e0a81b480131b31bcba
+          to   ec5536091e31ebf172a34c6d1ebddfc36e3bd3a6
+            sending 3 objects
+            done
+         Updating remote server info
+         To https://www.example.com/repos/myrepo.git
+           0318860..ec55560  main -> main
+
+       Don't even think to specify the clone URL as https://username:password@www.example.com/repos/myrepo.git. This works for the initial clone but for a subsequent push you get an error message in your error log stating that the destination URL is handled by a different repository.
+
+       SMART HTTP
+
+       The git-http-backend(1) is a CGI program, allowing efficient cloning, pulling and pushing over HTTP(S).
+
+       APACHE
+
+       The setup for this is rather simple as all you need to have installed is the Apache HTTP Server (with mod_cgi, mod_alias, and mod_env enabled) and of course, git.
+
+       Once you have your basic setup running, add the following to your Apache configuration file, which is usually located at:
+
+         /etc/httpd/conf/httpd.conf
+
+         <Directory "/usr/lib/git-core">
+             Require all granted
+         </Directory>
+
+         SetEnv GIT_PROJECT_ROOT /srv/git
+         SetEnv GIT_HTTP_EXPORT_ALL
+         ScriptAlias /git/ /usr/lib/git-core/git-http-backend/
+
+       This assumes your Git repositories are located at /srv/git and that you want to access them via something like: http(s)://your_address.tld/git/your_repo.git.
+
+       Note Make sure that Apache can read and write to your repositories.
+
+       For more detailed documentation, visit the following links:
+
+        * https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
+        * https://git-scm.com/docs/git-http-backend
+
+       ACCESS CONTROL
+
+       For fine-grained access control, the following solution is available:
+
+        * Gitolite — An access control layer on top of Git, written in Perl.
+       https://github.com/sitaramc/gitolite || gitolite
+
+       Note that if you are willing to create user accounts for all of the people that should have access to the repositories and do not need access control at the level of git objects (like branches), you can also use standard file permissions for access control.[1]
+
+       WEB INTERFACES
+
+        * Gitweb — the default web interface that comes with Git
+        * cgit — A web interface for git written in plain C.
+       https://git.zx2c4.com/cgit/ || cgit
+
+       Refer to code forges for a list of web interfaces with more advanced capabilities.
+
+ArchWiki manual                         bundled documentation

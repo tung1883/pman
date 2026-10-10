@@ -1,0 +1,422 @@
+ARCH.VIM(1)                      Sandbox manual                      ARCH.VIM(1)
+
+       Vim is a vi-style terminal text editor. It is an extended version of vi with additional features, including syntax highlighting, a comprehensive help system, native scripting (Vim script), a visual mode for text selection, comparison of files (vimdiff(1)), and tools with restricted capabilities such as rview(1) and rvim(1).
+
+       INSTALLATION
+
+       Install one of the following packages:
+
+        * vim — with Python, Lua, Ruby and Perl interpreters support but without GTK/X support.
+        * gvim — which also provides the same as the above vim package with GTK/X support.
+       Note
+
+        * The vim package is built without Xorg support; specifically the +clipboard feature is missing, so Vim will not be able to operate with the primary and clipboard selection buffers. The gvim package provides also the CLI version of Vim with the +clipboard feature.
+        * The unofficial repository herecura also provides a number of Vim/gVim variants: vim-cli, vim-gvim-common, vim-gvim-gtk3, vim-rt and vim-tiny.
+
+       USAGE
+
+       For a basic overview on how to use Vim, follow the Vim tutorial by running either vimtutor (for the terminal version) or gvimtutor (for the graphical version).
+
+       Vim includes a broad help system that can be accessed with the :h subject command. Subjects include commands, configuration options, key bindings, plugins etc. Use the :h command (without any subject) for information about the help system and jumping between subjects.
+
+       CONFIGURATION
+
+       Vim's user-specific configuration file is located in the home directory: ~/.vimrc, and Vim files of current user are located inside ~/.vim/. The global configuration file is located at /etc/vimrc. Global Vim files such as defaults.vim and archlinux.vim are located inside /usr/share/vim/.
+
+       From version 9.1.0327 Vim adopts freedesktop XDG Base Directory Specification: that means, you can now place your configuration files under ~/.config/vim/ so Vim will stop littering your home directory.
+
+       Note
+
+       $XDG_CONFIG_HOME/vim/ (configuration files formerly under ~/.vim) and $XDG_CONFIG_HOME/vim/vimrc
+
+       By default, only the XDG directories/files above are used. To enable the others, create the $XDG_CONFIG_HOME/vim/ directory and then run $VIMRUNTIME/xdg.vim. The following files/directories require running $VIMRUNTIME/xdg.vim to enable (see :h xdg-base-dir):
+
+        * $XDG_STATE_HOME/vim/viminfo
+       The following directories require uncommenting certain lines in $VIMRUNTIME/xdg.vim before running it to enable:
+
+        * $XDG_DATA_HOME/vim/undo/
+        * $XDG_DATA_HOME/vim/ (formerly ~/.vim/pack/ and Netrw data under ~/.vim/)
+        * $XDG_DATA_HOME/vim/view/ (formerly ~/.vim/view/)
+        * $XDG_DATA_HOME/vim/spell/ (formerly ~/.vim/spell/)
+        * $XDG_STATE_HOME/vim/swap/
+        * $XDG_STATE_HOME/vim/backup/
+       For gVim, the user-specific configuration file is located at ~/.gvimrc and the global configuration file is located at /etc/gvimrc.
+
+       Note
+
+        * Commonly expected behavior such as syntax highlighting is enabled in defaults.vim, which is loaded when no ~/.vimrc is present. Add let skip_defaults_vim=1 to /etc/vimrc to disable loading of defaults.vim completely. [1]. Alternatively, to enable defaults.vim even when ~/.vimrc is present, see :h defaults in vim.
+        * gVim loads both Vim's and gVim's configuration file, while Vim only loads Vim's configuration file.
+
+       CLIPBOARD
+
+       Vim commands such as :yank or :put normally operate with the unnamed register "". If the +clipboard feature is available and its value includes unnamed, then Vim yank, delete, change and put operations which would normally go to the unnamed register will use the clipboard register "* instead, which is the PRIMARY buffer in X.
+
+       To change the default register, you can :set clipboard=unnamedplus to use the "+ register instead. The "+ clipboard register corresponds to the CLIPBOARD buffer in X. It should be noted that the clipboard option can be set to a comma-delimited value. If you :set clipboard=unnamedplus,unnamed, then yank operations will also copy the yanked text to the "* register in addition to the "+ register (however, delete, change and put operations will still only operate on the "+ register).
+
+       For more information, see :help 'clipboard'. There are other values which can be set for the clipboard feature. You can use :help clipboard-unnamed to take you to the help topic for the first valid value which can be set for this feature, followed by help for all other valid values.
+
+       Tip
+
+        * Custom shortcuts for copy and paste operations can be created. See e.g. [2] for binding Ctrl+c, Ctrl+v and Ctrl+x.
+        * The X clipboard gets flushed when Vim exits. To make the Vim selection persistent within X clipboard, you need a clipboard manager. Alternatively, you can add autocmd VimLeave * call system("echo -n $'" . escape(getreg(), "'") . "' | xsel --input --clipboard") to your .vimrc (requires the xsel package).
+        * From version 9.1.1485, builds with system clipboard feature also include native clipboard support for Wayland.
+
+       SYNTAX HIGHLIGHTING
+
+       To enable syntax highlighting for many programming languages:
+
+         :filetype plugin on
+         :syntax on
+
+       INDENTATION
+
+       The indent file for specific file types can be loaded with:
+
+         :filetype indent on
+
+       VISUAL WRAPPING
+
+       The wrap option is on by default, which instructs Vim to wrap lines longer than the width of the window, so that the rest of the line is displayed on the next line. The wrap option only affects how text is displayed, the text itself is not modified.
+
+       The wrapping normally occurs after the last character that fits the window, even when it is in the middle of a word. More intelligent wrapping can be controlled with the linebreak option. When it is enabled with set linebreak, the wrapping occurs after characters listed in the breakat string option, which by default contains a space and some punctuation marks (see :help breakat).
+
+       Wrapped lines are normally displayed at the beginning of the next line, regardless of any indentation. The breakindent option instructs Vim to take indentation into account when wrapping long lines, so that the wrapped lines keep the same indentation of the previously displayed line. The behaviour of breakindent can be fine-tuned with the breakindentopt option, for example to shift the wrapped line another four spaces to the right for Python files (see :help breakindentopt for details):
+
+         autocmd FileType python set breakindentopt=shift:4
+
+       USING THE MOUSE
+
+       Vim has the ability to make use of the mouse, but it only works for certain terminals:
+
+        * xterm/urxvt-based terminal emulators
+        * Linux console with gpm (see Console mouse support for details)
+        * PuTTY
+       To enable this feature, add this line into ~/.vimrc:
+
+         set mouse=a
+
+       The mouse=a option is set in defaults.vim.
+
+       Note Copy/paste will use the "* register if there is access to an X server, see the #Clipboard section. The xterm handling of the mouse buttons can still be used by keeping the shift key pressed.
+
+       TRAVERSE LINE BREAKS WITH ARROW KEYS
+
+       By default, pressing Left at the beginning of a line, or pressing Right at the end of a line, will not let the cursor traverse to the previous, or following, line.
+
+       The default behavior can be changed by adding set whichwrap=b,s,<,>,[,] to your ~/.vimrc file.
+
+       MERGING FILES
+
+       Vim includes a diff editor (a program that shows differences between two or more files and aids to conveniently merge them). Use vimdiff to run the diff editor — just specify some couple of files to it: vimdiff file1 file2. Here is the list of vimdiff-specific commands.
+
+         Action | Shortcut
+         next change | ]c
+         previous change | [c
+         diff obtain | do
+         diff put | dp
+         fold open | zo
+         fold close | zc
+         rescan files | :diffupdate
+
+       TIPS AND TRICKS
+
+       LINE NUMBERS
+
+       To show the line number column, use :set number. By default absolute line numbers are shown, relative numbers can be enabled with :set relativenumber. Setting both enables hybrid line numbers—the current line is absolute, while the others are relative.
+
+       Jumping to a specific line is possible with :line number or line numbergg. Jumps are remembered in a jump list, see :h jump-motions for details.
+
+       SPELL CHECKING
+
+       Vim has the ability to do spell checking, enable by entering:
+
+         set spell
+
+       By default, only English language dictionaries are installed (in /usr/share/vim/vim82/spell/). More dictionaries can be found in the official repositories by searching for vim-spell. Additional dictionaries can be put in the folder ~/.vim/spell/ and enabled with the command: :setlocal spell spelllang=en_us (replacing the en_us with the name of the needed dictionary).
+
+         Action | Shortcut
+         next spelling | ]s
+         previous spelling | [s
+         spelling suggestions | z=
+         spelling good, add | zg
+         spelling good, session | zG
+         spelling wrong, add | zw
+         spelling wrong, session | zW
+         spelling repeat all in file | :spellr
+       Tip
+
+        * To enable spelling in two languages (for instance English and German), add set spelllang=en,de into your ~/.vimrc or /etc/vimrc, and then restart Vim.
+        * You can enable spell checking for arbitrary file types (e.g. .txt) by using the FileType plugin and a custom rule for file type detection. To enable spell checking for any file ending with .txt, create the file /usr/share/vim/vimfiles/ftdetect/plaintext.vim, and insert the line autocmd BufRead,BufNewFile *.txt set filetype=plaintext into that file. Next, insert the line autocmd FileType plaintext setlocal spell spelllang=en_us into your ~/.vimrc or /etc/vimrc, and then restart Vim. Alternatively, one can simply insert the line autocmd BufRead,BufNewFile *.txt setlocal spell into their ~/.vimrc or /etc/vimrc, and then restart Vim. Be sure to edit this line (specifically *.txt) to include the filetype(s) intended for spell checking.
+        * To enable spell checking for LaTeX (or TeX) documents only, add autocmd FileType tex setlocal spell spelllang=en_us into your ~/.vimrc or /etc/vimrc, and then restart Vim.
+
+       SAVING RUNTIME STATE
+
+       Normally, exiting vim discards all unessential information such as opened files, command line history, yanked text etc. Preserving this information can be configured in the following ways.
+
+       VIMINFO FILES
+
+       The viminfo file may also be used to store command line history, search string history, input-line history, registers' content, marks for files, location marks within files, last search/substitute pattern (to be used in search mode with n and & within the session), buffer list, and any global variables you may have defined. For the viminfo modality to be available, the version of vim you installed must have been compiled with the +viminfo feature.
+
+       Configure what is kept in your viminfo file, by adding (for example) the following to your ~/.vimrc file:
+
+         set viminfo='10,<100,:100,%,n~/.vim/.viminfo
+
+       where each parameter is preceded by an identifier:
+
+         'q  : q, number of edited file remembered
+         <m  : m, number of lines saved for each register
+         :p  : p, number of history cmd lines remembered
+         %   : saves and restores the buffer list
+         n...: fully qualified path to the viminfo files (note that this is a literal "n")
+
+       See the official viminfo documentation for particulars on how a pre-existing viminfo file is modified as it is updated with current session information, say from several buffers in the current session you are in the process of exiting.
+
+       SESSION FILES
+
+       Session files can be used to save the state of any number of particular sessions over time. One distinct session file may be used for each session or project of your interest. For that modality to be available, the version of vim you installed must have been compiled with the +mksession feature.
+
+       Within a session, :mksession[!] [my_session_name.vim] will write a vim-script to my_session_name.vim in the current directory, or Session.vim by default if you choose not to provide a file name. The optional ! will clobber a pre-existing session file with the same name and path.
+
+       A Vim session can be resumed either when starting Vim from terminal:
+
+         $ vim -S [my_session_name.vim]
+
+       Or in an already opened session buffer by running the Vim command:
+
+         :source my_session_name.vim
+
+       Exactly what is saved and additional details on session files options are extensively covered in the Vim documentation. Commented examples are found here.
+
+       SAVING CURSOR POSITION
+
+       See Restore cursor to file position in previous editing session on the Vim wiki.
+
+       REPLACE VI COMMAND WITH VIM
+
+       Create an alias for vi to vim.
+
+       Alternatively, if you want to be able to type sudo vi and get vim, install ex-vi-compat. You could also create the symbolic links this package provides yourself.
+
+       DOS/WINDOWS CARRIAGE RETURNS
+
+       If there is a ^M at the end of each line then this means you are editing a text file which was created in MS-DOS or Windows. This is because in Linux only a single line feed character (LF) used for line break, but in Windows/MS DOS systems they are using a sequence of a carriage return (CR) and a line feed (LF) for the same. And this carriage returns are displayed as ^M.
+
+       To remove all carriage returns from a file do:
+
+         :%s/^M//g
+
+       Note that there ^ is a control letter. To enter the control sequence ^M press Ctrl+v,Ctrl+m.
+
+       Alternatively install the package dos2unix and run dos2unix file to fix the file.
+
+       Note Another simple way is by changing fileformat setting. set ff=unix to convert files with DOS/Windows line ending to Unix line ending. To do the reverse, just issue set ff=dos to convert files with Unix line ending to DOS/Windows line ending.
+
+       EMPTY SPACE AT THE BOTTOM OF GVIM WINDOWS
+
+       When using a window manager configured to ignore window size hints, gVim will fill the non-functional area with the GTK theme background color.
+
+       The solution is to adjust how much space gVim reserves at the bottom of the window. Put the following line in ~/.vimrc:
+
+         set guiheadroom=0
+
+       Note If you set it to zero, you will not be able to see the bottom horizontal scrollbar.
+
+       VIM AS A PAGER
+
+       Scripts allow Vim to be used as a terminal pager, with the benefit of various vim features such as color schemes. To change the default pager, export the PAGER environment variable.
+
+       Vim comes with the /usr/share/vim/vim91/macros/less.sh script, for which you can create an alias. Note that this script does not support any command-line flags mentioned in less(1) § OPTIONS.
+
+       Alternatively, there is also the vimpager Vim script. Note that not all command-line flags are supported; the list of supported flags is available on GitHub.
+
+       A middle way between a pager and an editor are [g]vim -R (gvim -R is equivalent to gview). This will cause the editor to open files in a readonly mode. Every editor feature that does not involve modifying the files is available as usual. In fact, the readonly mode can be explicitly overridden, to enable modification as well.
+
+       HIGHLIGHTING SEARCH RESULTS
+
+       In order to highlight the first string that will be matched in a search while typing the search, add the following line to your ~/.vimrc:
+
+         set incsearch
+
+       In order to highlight all strings that will be matched in a search while typing the search, and after the search has been executed, add the following line to your ~/.vimrc:
+
+         set hlsearch
+
+       Note
+
+        * Setting hlsearch will keep all matches highlighted until a further search is made. This behaviour may be undesired, so to temporarily disable the highlighting until the next search, run :nohlsearch. If you find yourself running this command often, consider binding it to a key.
+        * This behaviour will also be observed when matching regex during other commands that involve them like s or g.
+
+       PLUGINS
+
+       Adding plugins to Vim can increase your productivity by extending Vim features. Plugins can alter Vim UI, add new commands, enable code completion support, integrate other programs and utilities with Vim, add support for additional languages and more.
+
+       Tip For a list of popular plugins, see Vim Awesome.
+
+       INSTALLATION
+
+       USING THE BUILT-IN PACKAGE MANAGER
+
+       Vim has the possibility to load third-party plugins natively. This functionality can be used by storing third-party packages in the ~/.vim/pack folder. The structure of this folder differs slightly from that of typical plugin managers which will usually have a single directory per plugin. What follows is a typical installation procedure and directory structure (using Tim Pope's vim-surround plugin as an example):
+
+         $ mkdir -p ~/.vim/pack/tpope/start
+
+       It is important to note that ~/.vim/pack/tpope is a package directory which is loosely defined as directory containing one or more plugins in the Vim documentation. Plugin repositories should not be downloaded to this directory though. The name of the package directory is also arbitrary. You can choose to keep all your plugins in a single package directory or, as in our example, use the author's GitHub name, tpope.
+
+       The package directory can contain the following subfolders:
+
+        * start - plugins from this subfolder will be loaded automatically when Vim starts. This is the most frequently used location.
+        * opt - plugins from this subfolder can be loaded on-demand by issuing :packadd command inside Vim.
+       Now change into the start folder and checkout the plugin repository:
+
+         $ cd ~/.vim/pack/tpope/start
+         $ git clone https://tpope.io/vim/surround.git
+
+       This creates an additional subfolder, ~/.vim/pack/tpope/start/surround, where the plugin files are placed.
+
+       Next, update the help index if the plugin contains help files:
+
+         $ vim -u NONE -c "helptags surround/doc" -c q
+
+       The plugin will now be loaded automatically when starting Vim. No changes to ~/.vimrc are required, barring plugin-specific options.
+
+       USING A PLUGIN MANAGER
+
+       A plugin manager is a plugin that installs, manages and updates Vim plugins. This can be useful if you are also using Vim on platforms other than Arch Linux and want a consistent method of updating plugins.
+
+        * Vim-plug is a minimalist Vim plugin manager with many features like on-demand plugin loading and parallel updating, available as vim-plugAUR or vim-plug-gitAUR.
+        * Vundle is available as vundleAUR or vundle-gitAUR.
+        * pathogen.vim is a simple plugin for managing Vim's runtimepath, available as vim-pathogenAUR or vim-pathogen-gitAUR.
+        * Dein.vim is a plugin manager replacing NeoBundle, available as vim-deinAUR or vim-dein-gitAUR.
+
+       FROM ARCH REPOSITORIES
+
+       The vim-plugins group provides various plugins. Use pacman -Sg vim-plugins command to list available packages which you can then install with pacman.
+
+       NOTABLE PLUGINS
+
+       CSCOPE
+
+       Cscope is a tool for browsing a project. By navigating to a word/symbol/function and calling cscope (usually with shortcut keys) it can find: functions calling the function, the function definition, and more.
+
+       Install the cscope package.
+
+       Copy the cscope default file where it will be automatically read by Vim:
+
+         mkdir -p ~/.vim/plugin
+         wget -P ~/.vim/plugin https://cscope.sourceforge.net/cscope_maps.vim
+
+       Create a file which contains the list of files you wish cscope to index (cscope can handle many languages but this example finds .c, .cpp and .h files, specific for C/C++ project):
+
+         $ cd /path/to/project/dir
+         $ find . -type f -print | grep -E '\.(c(pp)?|h)$' > cscope.files
+
+       Create database files that cscope will read:
+
+         $ cscope -bq
+
+       Note You must browse your project files from this location or set and export the $CSCOPE_DB variable, pointing it to the cscope.out file.
+
+       Default keyboard shortcuts:
+
+          Ctrl-\ and
+               c: Find functions calling this function
+               d: Find functions called by this function
+               e: Find this egrep pattern
+               f: Find this file
+               g: Find this definition
+               i: Find files #including this file
+               s: Find this C symbol
+               t: Find assignments to
+
+       Feel free to change the shortcuts.
+
+         #Maps ctrl-c to find functions calling the function
+         nnoremap <C-c> :cs find c <C-R>=expand("<cword>")<CR><CR>
+
+       TAGLIST
+
+       Taglist provides an overview of the structure of source code files and allows you to efficiently browse through source code files in different programming languages.
+
+       Install the vim-taglistAUR package.
+
+       Useful options to be put in ~/.vimrc:
+
+         let Tlist_Compact_Format = 1
+         let Tlist_GainFocus_On_ToggleOpen = 1
+         let Tlist_Close_On_Select = 1
+         nnoremap <C-l> :TlistToggle<CR>
+
+       TROUBLESHOOTING
+
+       GVIM IS SLOW
+
+       Vim's GTK 3 GUI may be slower than the GTK 2 version (see FS#51366). gvim-gtk2AUR can be installed as a workaround.
+
+       GVIM DOES NOT LAUNCH UNDER WAYLAND
+
+       By default, gVim will try to search for an X11 display and resort to terminal if unable to find one. To use it under Wayland-only environments, add the GVIM_ENABLE_WAYLAND=1 environment variable.
+
+       BIDIRECTIONAL SUPPORT
+
+       Vim still lacks full bidirectional support, and this varies depending on the terminal.
+
+       Use :rightleft to force text alignment using. It can be assigned to a keybind using:
+
+         inoremap <C-X> <C-O>:silent if &rl <Bar> set rl! <Bar> else <Bar> set rl <Bar> endif<CR>
+
+       Vim has its own letter shaping functionality. Despite some rendering issues, this works on terminals with no letter shaping support like alacritty and st. The shaping depends on Arabic Presentation Forms-B (U+FE70–FEFF), so make sure your font includes support for these characters. As there is no known monospace font with full support for these characters, you need to have an additional fallback font (e.g: vazir-code-fontsAUR with fallback to ttf-dejavu). See St#Arabic shaping support for example terminal fonts setup.
+
+       However, if the terminal supports letter shaping like gnome-terminal and other libvte-based terminals, then Vim and the terminal letter shaping could conflict, resulting in mangled Arabic text. Currently, Vim doesn't detect if the terminal has letter-shaping capabilities or not. So the workaround is to manually tell Vim to leave letter-shaping up to the terminal by :set notbidi. Note that will cause reversed text when :set rightleft because of a limitation. See :set arabic for more info.
+
+       SEE ALSO
+
+       OFFICIAL
+
+        * Homepage
+        * Documentation
+        * Vim Wiki
+        * Vim Scripts
+
+       TUTORIALS
+
+        * vim Tutorial and Primer
+        * vi Tutorial and Reference Guide
+        * Graphical vi-Vim Cheat Sheet and Tutorial
+        * Vim Introduction and Tutorial
+        * Open Vim — collection of Vim learning tools
+        * Learn Vim Progressively
+        * Learning Vim in 2014
+        * Seven habits of effective text editing
+
+       VIDEOS
+
+        * Vimcasts — screencasts in .ogg format.
+        * Vim Tutorial Videos — covering the basics up to advanced topics.
+
+       CHEAT SHEETS
+
+        * https://devhints.io/vim
+        * https://vim.rtorr.com/ - A mobile friendly Vim cheat sheet - Sources
+
+       GAMES
+
+        * Vim Adventures
+        * VimGolf
+
+       CONFIGURATION
+
+        * nion's
+        * A detailed configuration from Amir Salihefendic
+        * Bart Trojanowski
+        * Steve Francia's Vim Distribution
+        * Vim Awesome - Vim Plugins
+        * W4RH4WK's Vim configuration
+        * Fast vimrc/colorscheme from askapache
+        * Basic vimrc
+
+       COLORS
+
+        * Vivify
+        * Vim colorscheme customization
+
+ArchWiki manual                         bundled documentation

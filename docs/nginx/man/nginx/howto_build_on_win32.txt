@@ -1,0 +1,68 @@
+NGINX.HOWTO_BUILD_ON_WIN32(1)    Sandbox manual    NGINX.HOWTO_BUILD_ON_WIN32(1)
+
+       BUILDING NGINX ON THE WIN32 PLATFORM WITH VISUAL C
+
+         Build steps See also
+
+       PREREQUISITES
+
+       To build nginx on the Microsoft Win32® platform you need:
+
+        * Microsoft Visual C compiler. Microsoft Visual Studio® 8, 10, 17 are known to work.
+        * MSYS or MSYS2.
+        * Perl, if you want to build OpenSSL® and nginx with SSL support. For example ActivePerl or Strawberry Perl.
+        * Git client.
+        * PCRE, zlib and OpenSSL libraries sources.
+
+       BUILD STEPS
+
+       Ensure that paths to Perl, Git and MSYS bin directories are added to PATH environment variable before you start build. To set Visual C environment run vcvarsall.bat script from Visual C directory.
+
+       To build nginx:
+
+        * Start MSYS bash.
+        * Check out nginx sources from the GitHub repository:
+
+         git clone https://github.com/nginx/nginx.git
+
+        * Create a build and lib directories, and unpack zlib, PCRE and OpenSSL libraries sources into lib directory:
+
+         mkdir objs
+         mkdir objs/lib
+         cd objs/lib
+         tar -xzf ../../pcre2-10.39.tar.gz
+         tar -xzf ../../zlib-1.3.1.tar.gz
+         tar -xzf ../../openssl-3.0.14.tar.gz
+
+        * Run configure script:
+
+         auto/configure \
+             --with-cc=cl \
+             --with-debug \
+             --prefix= \
+             --conf-path=conf/nginx.conf \
+             --pid-path=logs/nginx.pid \
+             --http-log-path=logs/access.log \
+             --error-log-path=logs/error.log \
+             --sbin-path=nginx.exe \
+             --http-client-body-temp-path=temp/client_body_temp \
+             --http-proxy-temp-path=temp/proxy_temp \
+             --http-fastcgi-temp-path=temp/fastcgi_temp \
+             --http-scgi-temp-path=temp/scgi_temp \
+             --http-uwsgi-temp-path=temp/uwsgi_temp \
+             --with-cc-opt=-DFD_SETSIZE=1024 \
+             --with-pcre=objs/lib/pcre2-10.39 \
+             --with-zlib=objs/lib/zlib-1.3.1 \
+             --with-openssl=objs/lib/openssl-3.0.14 \
+             --with-openssl-opt=no-asm \
+             --with-http_ssl_module
+
+        * Run make:
+
+         nmake
+
+       SEE ALSO
+
+        * nginx for Windows
+
+nginx manual                            bundled documentation

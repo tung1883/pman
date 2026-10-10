@@ -1,0 +1,62 @@
+WEBAPI.PERFORMANCEENTRY-TOJSON(1) Sandbox manual WEBAPI.PERFORMANCEENTRY-TOJSON(1)
+
+       NAME
+
+       PerformanceEntry: toJSON() method - The toJSON() method is a serializer; it returns a JSON representation of the PerformanceEntry object.
+
+       PERFORMANCEENTRY: TOJSON() METHOD
+
+       The toJSON() method is a serializer; it returns a JSON representation of the PerformanceEntry object.
+
+       SYNTAX
+
+         toJSON()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A JSON object that is the serialization of the PerformanceEntry object.
+
+       EXAMPLES
+
+       USING THE TOJSON METHOD
+
+       In this example, calling entry.toJSON() returns a JSON representation of the PerformanceMark object.
+
+         performance.mark("debug-marker", {
+           detail: "debugging-marker-123",
+         });
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             console.log(entry.toJSON());
+           });
+         });
+
+         observer.observe({ entryTypes: ["mark"] });
+
+       This would log a JSON object like so:
+
+         {
+           "name": "debug-marker",
+           "entryType": "mark",
+           "startTime": 158361,
+           "duration": 0
+         }
+
+       Note that it doesn't contain PerformanceMark's detail property.
+
+       To get a JSON string, you can use JSON.stringify(entry) directly; it will call toJSON() automatically.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * JSON
+
+Web APIs manual                         from the official documentation

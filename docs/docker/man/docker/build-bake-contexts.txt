@@ -1,0 +1,68 @@
+DOCKER.BUILD-BAKE-CONTEXTS(1)    Sandbox manual    DOCKER.BUILD-BAKE-CONTEXTS(1)
+
+       NAME
+
+       Using Bake with additional contexts - In addition to the main context key that defines the build context, each
+
+       USING BAKE WITH ADDITIONAL CONTEXTS
+
+       In addition to the main context key that defines the build context, each target can also define additional named contexts with a map defined with key contexts. These values map to the --build-context flag in the build command.
+
+       Inside the Dockerfile these contexts can be used with the FROM instruction or --from flag.
+
+       Supported context values are:
+
+        * Local filesystem directories
+        * Container images
+        * Git URLs
+        * HTTP URLs
+        * Name of another target in the Bake file
+
+       PINNING ALPINE IMAGE
+
+         # syntax=docker/dockerfile:1
+         FROM alpine
+         RUN echo "Hello world"
+
+         target "app" {
+           contexts = {
+             alpine = "docker-image://alpine:3.13"
+           }
+         }
+
+       USING A SECONDARY SOURCE DIRECTORY
+
+         FROM golang
+         COPY --from=src . .
+
+         # Running `docker buildx bake app` will result in `src` not pointing
+         # to some previous build stage but to the client filesystem, not part of the context.
+         target "app" {
+           contexts = {
+             src = "../path/to/source"
+           }
+         }
+
+       USING A TARGET AS A BUILD CONTEXT
+
+       To use a result of one target as a build context of another, specify the target name with target: prefix.
+
+         FROM scratch
+
+         # syntax=docker/dockerfile:1
+         FROM baseapp
+         RUN echo "Hello world"
+
+         target "base" {
+           dockerfile = "baseapp.Dockerfile"
+         }
+
+         target "app" {
+           contexts = {
+             baseapp = "target:base"
+           }
+         }
+
+       In most cases you should just use a single multi-stage Dockerfile with multiple targets for similar behavior. This case is only recommended when you have multiple Dockerfiles that can't be easily merged into one.
+
+Docker manual                           from the official documentation

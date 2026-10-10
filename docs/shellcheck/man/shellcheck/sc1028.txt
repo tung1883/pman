@@ -1,0 +1,37 @@
+SHELLCHECK.SC1028(1)             Sandbox manual             SHELLCHECK.SC1028(1)
+
+       NAME
+
+       In [..] you have to escape \( \) or preferably combine [..] expressions. - In POSIX:
+
+       IN .. YOU HAVE TO ESCAPE ( ) OR PREFERABLY COMBINE .. EXPRESSIONS
+
+       IN .. YOU HAVE TO ESCAPE ( ) OR PREFERABLY COMBINE .. EXPRESSIONS
+
+       PROBLEMATIC CODE
+
+         [ -e ~/.bashrc -a ( -x /bin/dash -o -x /bin/ash ) ]
+
+       CORRECT CODE
+
+       In POSIX:
+
+         [ -e ~/.bashrc ] &&  { [ -x /bin/dash ] || [ -x /bin/ash ]; }
+
+       Obsolete XSI syntax:
+
+         [ -e ~/.bashrc -a \( -x /bin/dash -o -x /bin/ash \) ]
+
+       RATIONALE
+
+       [ is implemented as a regular command, so ( is not special.
+
+       The preferred way is not to group inside [ .. ] and instead compose multiple [ .. ] statements using the shell's &&, || and { ..; } syntax, since this is well defined by POSIX.
+
+       Some shells, such as Bash, support grouping with \( .. \), but this is an obsolete XSI-only extension.
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

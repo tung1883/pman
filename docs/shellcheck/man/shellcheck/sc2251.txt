@@ -1,0 +1,46 @@
+SHELLCHECK.SC2251(1)             Sandbox manual             SHELLCHECK.SC2251(1)
+
+       NAME
+
+       This ! is not on a condition and skips errexit. Add || exit 1 or make sure $? is checked. - set -e
+
+       THIS IS NOT ON A CONDITION AND SKIPS ERREXIT. ADD EXIT 1 OR MAKE SURE
+
+       THIS IS NOT ON A CONDITION AND SKIPS ERREXIT. ADD EXIT 1 OR MAKE SURE
+
+       PROBLEMATIC CODE
+
+         set -e
+         ! false
+         rest
+
+       CORRECT CODE
+
+         set -e
+         ! false || exit 1
+
+       RATIONALE
+
+       ShellCheck has found a command inverted with ! that may have no effect. In particular, it does not appear as a condition in an if statement or while loop, or as the final command in a script or function.
+
+       The most common reason for this is thinking that it'll trigger set -e aka errexit if a command succeeds, as in the example. This is not the case: ! will inhibit errexit both on success and failure of the inverted command.
+
+       Adding || exit will instead exit with failure when the command succeeds.
+
+       EXCEPTIONS
+
+       ShellCheck will not detect cases where $? is implicitly or explicitly used to check the value afterwards:
+
+         set -e
+         check_success() { [ $? -eq 0 ] || exit 1; }
+         ! false; check_success
+         ! true; check_success
+
+       In this case, you can [[ignore]] the warning.
+
+       RELATED RESOURCES
+
+        * StackOverflow: Why do I need parenthesis In bash set -e and negated return code
+        * The "Use && exit 1" for SC2251 can result in a wrong exit code
+
+ShellCheck manual                       from the official documentation

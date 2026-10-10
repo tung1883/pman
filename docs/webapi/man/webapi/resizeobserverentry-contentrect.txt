@@ -1,0 +1,48 @@
+WEBAPI.RESIZEOBSERVERENTRY-CONTENTRECT(1) Sandbox manual WEBAPI.RESIZEOBSERVERENTRY-CONTENTRECT(1)
+
+       NAME
+
+       ResizeObserverEntry: contentRect property - The contentRect read-only property of the
+
+       RESIZEOBSERVERENTRY: CONTENTRECT PROPERTY
+
+       The contentRect read-only property of the ResizeObserverEntry interface returns a DOMRectReadOnly object containing the new size of the observed element when the callback is run. Note that this is better supported than ResizeObserverEntry.borderBoxSize or ResizeObserverEntry.contentBoxSize, but it is left over from an earlier implementation of the Resize Observer API, is still included in the spec for web compat reasons, and may be deprecated in future versions.
+
+       VALUE
+
+       A DOMRectReadOnly object containing the new size of the element indicated by the target property.
+
+       If the target is an HTML Element, the returned contentRect is the element's content box. If the target is an SVGElement, the returned contentRect is the SVG's bounding box.
+
+       EXAMPLES
+
+       The following snippet is taken from the resize-observer-text.html (see source) example. This uses a simple feature detection test to see if the browser supports the newer ResizeObserverEntry.contentBoxSize property — if so, it uses that to get the sizing data it needs. If not, it uses contentRect.
+
+         const resizeObserver = new ResizeObserver((entries) => {
+           for (const entry of entries) {
+             if (entry.contentBoxSize) {
+               h1Elem.style.fontSize = `${Math.max(
+                 1.5,
+                 entry.contentBoxSize.inlineSize / 200,
+               )}rem`;
+               pElem.style.fontSize = `${Math.max(
+                 1,
+                 entry.contentBoxSize.inlineSize / 600,
+               )}rem`;
+             } else {
+               h1Elem.style.fontSize = `${Math.max(
+                 1.5,
+                 entry.contentRect.width / 200,
+               )}rem`;
+               pElem.style.fontSize = `${Math.max(1, entry.contentRect.width / 600)}rem`;
+             }
+           }
+         });
+
+         resizeObserver.observe(divElem);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

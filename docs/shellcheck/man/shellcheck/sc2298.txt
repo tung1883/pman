@@ -1,0 +1,50 @@
+SHELLCHECK.SC2298(1)             Sandbox manual             SHELLCHECK.SC2298(1)
+
+       NAME
+
+       ${$x} is invalid. For expansion, use ${x}. For indirection, use arrays, ${!x} or (for sh) eval. - (or ${${x}} is invalid)
+
+       X IS INVALID. FOR EXPANSION, USE X . FOR INDIRECTION, USE ARRAYS, X OR
+
+       X IS INVALID. FOR EXPANSION, USE X . FOR INDIRECTION, USE ARRAYS, X OR
+
+       (or ${${x}} is invalid)
+
+       PROBLEMATIC CODE
+
+         retries=${$RETRIES:-3}
+
+       or
+
+         mypath="/tmp/foo.txt"
+         var=mypath
+         result=${$var##*/}  # Expecting ${mypath##*/}, i.e. 'foo.txt'
+
+       CORRECT CODE
+
+         retries=${RETRIES:-3}
+
+       or
+
+         mypath="/tmp/foo.txt"
+         var=mypath
+         result=${!var}
+         result=${result##*/}
+
+       RATIONALE
+
+       ShellCheck found a parameter expansion ${..} where the first element was a second parameter expansion, either ${$x..} or ${${x}..}. This is not valid.
+
+       In the first example, the extra $ was unintentional and should simply be deleted.
+
+       In the second example, ${$var##/} was used in the hopes that it would expand to ${myvar##/} and subsequently strip the path. This is not possible, and var must instead be expanded indirectly in a separate step, before the path can be stripped as usual. More information and other approaches can be found in the description of [[SC2082]].
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,41 @@
+SHELLCHECK.SC2093(1)             Sandbox manual             SHELLCHECK.SC2093(1)
+
+       NAME
+
+       Remove exec  if script should continue after this command. - echo "Starting compilation"
+
+       REMOVE EXEC IF SCRIPT SHOULD CONTINUE AFTER THIS COMMAND
+
+       REMOVE EXEC IF SCRIPT SHOULD CONTINUE AFTER THIS COMMAND
+
+       PROBLEMATIC CODE
+
+         echo "Starting compilation"
+         exec ./compile
+         echo "Starting deployment"
+         exec ./deploy
+
+       CORRECT CODE
+
+         echo "Starting compilation"
+         ./compile
+         echo "Starting deployment"
+         ./deploy
+
+       RATIONALE
+
+       The script contains an exec command followed by other commands in the same block. This is likely an error because the script will not resume after an exec command.
+
+       Instead, "exec" refers to the Unix process model's idea of execution (see execve(2)), in which the current process stops its current program and replaces it with a new one. This is mainly used in wrapper scripts.
+
+       To execute another script or program and then continue, simply drop the exec as in the example.
+
+       EXCEPTIONS
+
+       If the code after the exec is only there to handle a failure in executing the command you can ignore this warning. For this reason, ShellCheck suppresses the warning if exec is only followed by echo/exit commands.
+
+       RELATED RESOURCES
+
+        * StackOverflow: My shell script stops after exec
+
+ShellCheck manual                       from the official documentation

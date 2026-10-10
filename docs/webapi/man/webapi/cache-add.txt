@@ -1,0 +1,62 @@
+WEBAPI.CACHE-ADD(1)              Sandbox manual              WEBAPI.CACHE-ADD(1)
+
+       NAME
+
+       Cache: add() method - The add() method of the Cache interface takes a URL, retrieves it, and adds the resulting response object to the given cache.
+
+       CACHE: ADD() METHOD
+
+       The add() method of the Cache interface takes a URL, retrieves it, and adds the resulting response object to the given cache.
+
+       The add() method is functionally equivalent to the following:
+
+         fetch(url).then((response) => {
+           if (!response.ok) {
+             throw new TypeError("bad response status");
+           }
+           return cache.put(url, response);
+         });
+
+       For more complex operations, you'll need to use Cache.put() directly.
+
+       > add() will overwrite any key/value pair previously stored in the cache that matches the request.
+
+       SYNTAX
+
+         add(request)
+
+       PARAMETERS
+
+        * request
+          * : A request for the resource you want to add to the cache. This can be a Request object or a URL.
+       This parameter is used as a parameter to the Request() constructor, so URLs follow the same rules as for that constructor. In particular, URLs may be relative to the base URL, which is the document's baseURI in a window context, or WorkerGlobalScope.location in a worker context.
+
+       RETURN VALUE
+
+       A Promise that resolves with undefined.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : The URL scheme is not http or https.
+       The Response status is not in the 200 range (i.e., not a successful response.) This occurs if the request does not return successfully, but also if the request is a _cross-origin no-cors_ request (in which case the reported status is always 0.)
+
+       EXAMPLES
+
+       This code block waits for an InstallEvent to fire, then calls waitUntil() to handle the install process for the app. This consists of calling CacheStorage.open to create a new cache, then using Cache.add to add an asset to it.
+
+         this.addEventListener("install", (event) => {
+           event.waitUntil(caches.open("v1").then((cache) => cache.add("/index.html")));
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Cache
+        * Window.caches and WorkerGlobalScope.caches
+
+Web APIs manual                         from the official documentation

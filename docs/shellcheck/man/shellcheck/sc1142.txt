@@ -1,0 +1,43 @@
+SHELLCHECK.SC1142(1)             Sandbox manual             SHELLCHECK.SC1142(1)
+
+       NAME
+
+       Use done < <(cmd) to redirect from process substitution (currently missing one <). - sum=0
+
+       USE DONE (CMD) TO REDIRECT FROM PROCESS SUBSTITUTION (CURRENTLY MISSIN
+
+       USE DONE (CMD) TO REDIRECT FROM PROCESS SUBSTITUTION (CURRENTLY MISSIN
+
+       PROBLEMATIC CODE
+
+         sum=0
+         while IFS="" read -r n
+         do
+           (( sum += n ))
+         done <(file)
+
+       CORRECT CODE
+
+         sum=0
+         while IFS="" read -r n
+         do
+           (( sum += n ))
+         done < <(file)
+
+       RATIONALE
+
+       ShellCheck found a done keyword followed by a process substitution, e.g. done <(cmd).
+
+       The intention was most likely to redirect from this process substitution, in which case you will need one extra <: done < <(cmd).
+
+       This is because <(cmd) expands to a filename (e.g. /dev/fd/63), and you need a < to redirect from filenames.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

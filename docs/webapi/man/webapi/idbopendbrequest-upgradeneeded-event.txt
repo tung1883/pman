@@ -1,0 +1,81 @@
+WEBAPI.IDBOPENDBREQUEST-UPGRADENEEDED-EVENT(1) Sandbox manual WEBAPI.IDBOPENDBREQUEST-UPGRADENEEDED-EVENT(1)
+
+       NAME
+
+       IDBOpenDBRequest: upgradeneeded event - The upgradeneeded event is fired when an attempt was made to open a database with a version number higher than its current version.
+
+       IDBOPENDBREQUEST: UPGRADENEEDED EVENT
+
+       The upgradeneeded event is fired when an attempt was made to open a database with a version number higher than its current version.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("upgradeneeded", (event) => { })
+
+         onupgradeneeded = (event) => { }
+
+       EVENT TYPE
+
+       An IDBVersionChangeEvent. Inherits from Event.
+
+       IDBVersionChangeEvent
+
+       EXAMPLES
+
+       This example opens a database and handles the upgradeneeded event by making any necessary updates to the object store.
+
+         // Open the database
+         const dBOpenRequest = window.indexedDB.open("toDoList", 4);
+
+         dBOpenRequest.addEventListener("upgradeneeded", (event) => {
+           const db = event.target.result;
+           console.log(`Upgrading to version ${db.version}`);
+
+           // Create an objectStore for this database
+           const objectStore = db.createObjectStore("toDoList", {
+             keyPath: "taskTitle",
+           });
+
+           // define what data items the objectStore will contain
+           objectStore.createIndex("hours", "hours", { unique: false });
+           objectStore.createIndex("minutes", "minutes", { unique: false });
+           objectStore.createIndex("day", "day", { unique: false });
+           objectStore.createIndex("month", "month", { unique: false });
+           objectStore.createIndex("year", "year", { unique: false });
+         });
+
+       This is the same example, but uses the onupgradeneeded event handler property.
+
+         // Open the database
+         const dBOpenRequest = window.indexedDB.open("toDoList", 4);
+
+         dBOpenRequest.onupgradeneeded = (event) => {
+           const db = event.target.result;
+           console.log(`Upgrading to version ${db.version}`);
+
+           // Create an objectStore for this database
+           const objectStore = db.createObjectStore("toDoList", {
+             keyPath: "taskTitle",
+           });
+
+           // define what data items the objectStore will contain
+           objectStore.createIndex("hours", "hours", { unique: false });
+           objectStore.createIndex("minutes", "minutes", { unique: false });
+           objectStore.createIndex("day", "day", { unique: false });
+           objectStore.createIndex("month", "month", { unique: false });
+           objectStore.createIndex("year", "year", { unique: false });
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+
+Web APIs manual                         from the official documentation

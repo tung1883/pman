@@ -1,0 +1,316 @@
+ARCH.SQUID(1)                    Sandbox manual                    ARCH.SQUID(1)
+
+       Squid is a caching proxy for HTTP, HTTPS and FTP, providing extensive access controls.
+
+       INSTALLATION
+
+       Note
+
+        * HTTPS is already being used for ~80% (and increasing) of the internet traffic for which Squid cannot cache unless #SSL Bumping is enabled.
+        * "Your clients will be capable of identifying the proxy exists. If you are looking for a way to do it in complete secrecy, dont use Squid." - Squid official website
+       Install the squid package.
+
+       CONFIGURATION
+
+       By default, the cache directories will be created in /var/cache/squid, and the appropriate permissions set up for those directories. However, for greater control, we need to delve into /etc/squid/squid.conf.
+
+       The following options might be of some use to you. If you do not have the option present in your configuration file, add it!
+
+        * http_port - Sets the port that Squid binds to on your local machine. You can have Squid bind to multiple ports by specifying multiple http_port lines. By default, Squid binds to port 3128.
+
+         http_port 3128
+         http_port 3129
+
+        * http_access - This is an access control list for who is allowed to use the proxy. By default only localhost is allowed to access the proxy. For testing purposes, you may want to change the option http_access deny all to http_access allow all, which will allow anyone to connect to your proxy. If you wanted to just allow access to your subnet, you can do:
+
+         acl ip_acl src 192.168.1.0/24
+         http_access allow ip_acl
+         http_access deny all
+
+        * cache_mgr - This is the email address of the cache manager.
+
+         cache_mgr squid.admin@example.com
+
+        * shutdown_lifetime - Specifies how long Squid should wait when its service is asked to stop. If you are running squid on your desktop PC, you may want to set this to something short.
+
+         shutdown_lifetime 10 seconds
+
+        * cache_mem - This is how much memory you want Squid to use to keep objects in memory rather than writing them to disk. Squid's total memory usage will exceed this! By default this is 8MB, so you might want to increase it if you have lots of RAM available.
+
+         cache_mem 64 MB
+
+        * visible_hostname - hostname that will be shown in status/error messages
+
+         visible_hostname cerberus
+
+        * cache_peer - If you want your Squid to go through another proxy server, rather than directly out to the Internet, you need to specify it here.
+        * login - Use this option if the parent proxy requires authentication.
+        * never_direct - Tells the cache to never go direct to the internet to retrieve a page. You will want this if you have set the option above.
+
+         cache_peer 10.1.1.100 parent 8080 0 no-query default login=user:password
+         never_direct allow all
+
+        * maximum_object_size - The largest size of a cached object. By default this is 4 MB, so if you have a lot of disk space you will want to increase the size of it to something reasonable.
+
+         maximum_object_size 10 MB
+
+       Note After defining a new cache_dir it maybe necessary to initialize the caches directory structure with this command: squid -zN -z for Create missing swap directories and -N for No daemon mode.
+
+        * cache_dir - This is your cache directory, where all the cached files are stored. There are many options here, but the format should generally go like:
+
+         cache_dir <storage type> <directory> <size in MB> 16 256
+
+       So, in the case of a school's internet proxy:
+
+         cache_dir diskd /cache0 200000 16 256
+
+       If you change the cache directory from defaults, you must set the correct permissions on the cache directory before starting Squid, else it will not be able to create its cache directories and will fail to start.
+
+       ACCESSING SERVICES ON LOCAL HOSTNAMES
+
+       If you plan to access web servers on the LAN using hostnames that are not fully-defined (e.g. http://mywebapp), you may need to enable the dns_defnames option. Without this option, Squid will make a DNS request for the hostname verbatim (mywebapp), which may fail, depending on your LAN's DNS setup. With the option enabled, Squid will append any domain configured in /etc/resolv.conf when making the request (e.g. mywebapp.company.local).
+
+         dns_defnames on
+
+       STARTING
+
+       Once you have finished your configuration, you should check that your configuration file is correct:
+
+         # squid -k check
+
+       Then create your cache directories:
+
+         # squid -z
+
+       Then you can start/enable squid.service.
+
+       CONTENT FILTERING
+
+       If you are looking for a content filtering solution, see Privoxy.
+
+       FRONTEND
+
+       If you would like a web-based frontend for managing Squid, Webmin is your best bet.
+
+       SQUID 4.X NOT SUPPORTED IN WEBMIN
+
+       If you receive an error indicating your version of webmin is unsupported:
+
+         Your version of Squid is not supported by Webmin. Only versions from 1.1 to 3.4 are supported by this module.
+
+       you will need to modify the file /opt/webmin/squid/index.cgi (see issue #952)
+
+       AD BLOCKING WITH ADZAPPER
+
+       Adzapper is a plugin for Squid. It catches ads of all sorts (even Flash animations) and replaces them with an image of your choice, so the layout of the page is not altered very much.
+
+       INSTALLATION
+
+       AdZapper is not presently in the official repositories or the AUR. The script itself, and detailed information on configuration and usage, can be found at https://adzapper.sourceforge.net.
+
+       CONFIGURATION
+
+         echo "redirect_program /usr/bin/adzapper.wrapper" >> /etc/squid/squid.conf
+
+       (squid 2.6.STABLE13-1)
+
+         echo "url_rewrite_program /usr/bin/adzapper.wrapper" >> /etc/squid/squid.conf
+         echo "url_rewrite_children 10" >> /etc/squid/squid.conf
+
+       If you want, you can edit /etc/adzapper/adzapper.conf to configure adzapper to your liking. The configuration out of the box works wonderfully well though.
+
+       TRANSPARENT WEB PROXY
+
+       Transparency happens by redirecting all www requests eth0 picks up, to Squid. You will need to add a port with an intercept (for squid 3.2) parameter. Note that at least one port must be available without the intercept parameter:
+
+          http_port 3128
+          http_port 3129 intercept
+
+       And for TLS:
+
+          https_port 3130 intercept ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size=4MB cert=/etc/squid/squidCA.pem
+          acl step1 at_step SslBump1
+          ssl_bump peek step1
+          ssl_bump splice all
+          # workaround for some sites
+          client_persistent_connections off
+          server_persistent_connections off
+
+       IPTABLES
+
+       From a terminal with root privileges, run:
+
+         # gid=`id -g proxy`
+         # iptables -t nat -A OUTPUT -p tcp --dport 80 -m owner --gid-owner $gid -j ACCEPT
+         # iptables -t nat -A OUTPUT -p tcp --dport 80 -j DNAT --to-destination SQUIDIP:3129
+         # iptables -t nat -A OUTPUT -p tcp --dport 443 -j DNAT --to-destination SQUIDIP:3130
+         # iptables-save > /etc/iptables/iptables.rules
+
+       Then start the iptables.service systemd unit.
+
+       Replace SQUIDIP with the public IP(s) which squid may use for its listening port and outbound connections.
+
+       Note If you are using a content filtering solution, you should put the port for it, not the Squid port, and you need to remove the intercept option in the http_port line.
+
+       SHOREWALL
+
+       Edit /etc/shorewall/rules and add
+
+         REDIRECT	loc	3129	tcp	www # redirect to Squid on port 3128
+         ACCEPT		$FW	net	tcp	www # allow Squid to fetch the www content
+
+       Restart the shorewall systemd unit.
+
+       HTTP AUTHENTICATION
+
+       Squid can be configured to require a user and password in order to use it. We will use digest http auth
+
+       First create a users file with htdigest -c /etc/squid/users MyRealm username. Enter a password when prompted.
+
+       Then add these lines to your squid.conf:
+
+            auth_param digest program /usr/lib/squid/digest_file_auth -c /etc/squid/users
+            auth_param digest children 5
+            auth_param digest realm MyRealm
+
+            acl users proxy_auth REQUIRED
+            http_access allow users
+
+       And restart squid. Now you will be prompted to enter a username and password when accessing the proxy.
+
+       You can add more users with htdigest /etc/squid/users MyRealm newuser. You probably would like to install Apache package, which contains htdigest tool.
+
+       Note Be aware that http_access rules cascade, so you need to set them in the desired order.
+
+       NTLM
+
+       Warning NTLM is deprecated and has security problems.
+
+       Set up samba and winbindd and test it with
+
+          ntlm_auth --username=DOMAIN\\user
+
+       Grant r-x access to /var/cache/samba/winbindd_privileged/ directory for squid user/group
+
+       Then add something like this to squid.conf:
+
+          auth_param ntlm program /usr/bin/ntlm_auth --helper-protocol=squid-2.5-ntlmssp
+          auth_param ntlm children 5
+          auth_param ntlm max_challenge_reuses 0
+          auth_param ntlm max_challenge_lifetime 2 minutes
+          auth_param ntlm keep_alive off
+
+          acl ntlm_users proxy_auth REQUIRED
+          http_access allow ntlm_users
+          http_access deny all
+
+       HIDE BROWSERS REAL IP ADDRESS
+
+       Reference: Squid Proxy Hide System’s Real IP Address
+
+         /etc/squid/squid.conf
+
+         # Hide client ip
+         forwarded_for delete
+
+         # Turn off via header
+         via off
+
+         # Deny request for original source of a request
+         follow_x_forwarded_for deny all
+         request_header_access X-Forwarded-For deny all
+
+       SSL BUMPING
+
+       Reference: Intercept HTTPS CONNECT messages with SSL-Bump
+
+       CREATE SELF-SIGNED ROOT CA CERTIFICATE
+
+       cd /etc/squid
+
+         openssl req -new -newkey rsa:2048 -sha256 -days 3650 -nodes -x509 -extensions v3_ca -keyout myCA.pem -out myCA.pem
+
+         Generating a 2048 bit RSA private key
+         .....+++
+         .............................................................................................................................................+++
+         writing new private key to 'myCA.pem'
+
+         You are about to be asked to enter information that will be incorporated
+         into your certificate request.
+         What you are about to enter is what is called a Distinguished Name or a DN.
+         There are quite a few fields but you can leave some blank
+         For some fields there will be a default value,
+         If you enter '.', the field will be left blank.
+
+         Country Name (2 letter code) [AU]:US
+         State or Province Name (full name) [Some-State]:Illinois
+         Locality Name (eg, city) []:Chicago
+         Organization Name (eg, company) [Internet Widgits Pty Ltd]:Example Company LTD.
+         Organizational Unit Name (eg, section) []:Information Technology
+         Common Name (e.g. server FQDN or YOUR name) []:Example Company LTD.
+         Email Address []:
+
+       CREATE A DER-ENCODED CERTIFICATE TO IMPORT INTO USERS' BROWSERS
+
+       openssl x509 -in myCA.pem -outform DER -out myCA.der
+
+       The result file (myCA.der) should be imported into the 'Authorities' section of users' browsers. For example, in FireFox:
+
+            Open 'Preferences'
+            Go to the 'Privacy and Security' section
+            Press the 'View Certificates' button and go to the 'Authorities' tab
+            Press the 'Import' button, select the .der file that was created previously and pres 'OK'
+
+       MODIFY SQUID CONFIGURATION FILE
+
+         /etc/squid/squid.conf
+
+         http_port 3128 ssl-bump tls-cert=/etc/squid/myCA.pem generate-host-certificates=on dynamic_cert_mem_cache_size=4MB options=NO_SSLv3,NO_TLSv1,NO_TLSv1_1,SINGLE_DH_USE,SINGLE_ECDH_USE
+         ssl_bump stare all
+         ssl_bump bump all
+
+       CREATE AND INITIALIZE TLS CERTIFICATES CACHE DIRECTORY
+
+       /usr/lib/squid/security_file_certgen -c -s /var/cache/squid/ssl_db -M 4MB
+
+       FINALLY, RESTART SQUID THEN SSL BUMP WILL WORK
+
+       Restart squid.service.
+
+       TROUBLESHOOTING
+
+       SQUID NEEDS TO BE RESTARTED AFTER BOOT
+
+       If you are using both squid and NetworkManager, the following error means that squid is launched before the Wi-Fi connection is enabled by NetworkManager (/etc/resolv.conf is empty).
+
+         /var/log/squid/cache.log
+
+         Warning: Could not find any nameservers. Trying to use localhost
+         Please check your /etc/resolv.conf file
+         or use the 'dns_nameservers' option in squid.conf.
+
+       You can:
+
+        * Enable NetworkManager-wait-online.service systemd unit.
+        * Using NetworkManager dispatcher instead of systemd to start squid
+       Disable the squid.service systemd unit with the following script:
+
+         /etc/NetworkManager/dispatcher.d/10_squid
+
+         if test "$1" = 'wlp2s0'
+         then
+             if test "$2" = 'up'
+             then
+                 systemctl start squid
+             else
+                 systemctl stop squid
+             fi
+         fi
+
+       Make sure it is executable
+
+       ADDITIONAL RESOURCES
+
+        * Elite Proxy Config Example (archive.org)
+
+ArchWiki manual                         bundled documentation

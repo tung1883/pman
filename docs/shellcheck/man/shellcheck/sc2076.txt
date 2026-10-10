@@ -1,0 +1,36 @@
+SHELLCHECK.SC2076(1)             Sandbox manual             SHELLCHECK.SC2076(1)
+
+       NAME
+
+       Don't quote rhs of =~, it'll match literally rather than as a regex. - Quotes on the right hand side of =~ can be used to match literally, so that [[ $1 =~ ^"$2". ]] works even if $2 contains regex metacharacter
+
+       DON'T QUOTE RHS OF , IT'LL MATCH LITERALLY RATHER THAN AS A REGEX
+
+       DON'T QUOTE RHS OF , IT'LL MATCH LITERALLY RATHER THAN AS A REGEX
+
+       PROBLEMATIC CODE
+
+         [[ $foo =~ "^fo+ bar$" ]]
+
+       CORRECT CODE
+
+         [[ $foo =~ ^fo+\ bar$ ]]
+
+       RATIONALE
+
+       Quotes on the right hand side of =~ can be used to match literally, so that [[ $1 =~ ^"$2".* ]] works even if $2 contains regex metacharacters. This mirrors the behavior of globs, [[ $1 = "$2"* ]].
+
+       This also means that the problematic code tries to match literal carets and plus signs instead of interpreting them as regular expression matchers. To match as a regex, the regex metacharacters it must be unquoted. Literal parts of the expression can be quoted with double or single quotes, or escaped.
+
+       EXCEPTIONS
+
+       If you do want to match literally just to do a plain substring search, e.g. [[ $foo =~ "bar" ]], you could ignore this message, but consider using a more canonical glob match instead: [[ $foo == "bar" ]].
+
+       COMPATIBILITY
+
+        * In Bash 3.2 and newer with shopt compat31 disabled (the default), quoted patterns are literal whereas unquoted patterns are parsed for regex metacharacters.
+        * In Bash 3.2 and newer with shopt compat31 enabled, quoted and unquoted patterns match identically.
+        * In Bash 3.1 quoted and unquoted patterns match identically.
+       See http://stackoverflow.com/questions/218156/bash-regex-with-quotes
+
+ShellCheck manual                       from the official documentation

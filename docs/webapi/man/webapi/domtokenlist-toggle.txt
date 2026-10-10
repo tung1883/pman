@@ -1,0 +1,62 @@
+WEBAPI.DOMTOKENLIST-TOGGLE(1)    Sandbox manual    WEBAPI.DOMTOKENLIST-TOGGLE(1)
+
+       NAME
+
+       DOMTokenList: toggle() method - The toggle() method of the DOMTokenList interface
+
+       DOMTOKENLIST: TOGGLE() METHOD
+
+       The toggle() method of the DOMTokenList interface removes an existing token from the list and returns false. If the token doesn't exist it's added and the function returns true.
+
+       SYNTAX
+
+         toggle(token)
+         toggle(token, force)
+
+       PARAMETERS
+
+        * token
+          * : A string representing the token you want to toggle.
+        * force (optional)
+          * : If included, turns the toggle into a one way-only operation.
+       If set to false, then token will _only_ be removed, but not added. If set to true, then token will _only_ be added, but not removed.
+
+       RETURN VALUE
+
+       A boolean value, true or false, indicating whether token is in the list after the call or not.
+
+       EXAMPLES
+
+       TOGGLING A CLASS ON CLICK
+
+       In the following example we retrieve the list of classes set on a element as a DOMTokenList using Element.classList. We then replace a token in the list, and write the list into the 's Node.textContent.
+
+       First, the HTML:
+
+         <span class="a b">classList is 'a b'</span>
+
+       Now the JavaScript:
+
+         const span = document.querySelector("span");
+         const classes = span.classList;
+
+         span.addEventListener("click", () => {
+           const result = classes.toggle("c");
+           span.textContent = `'c' ${
+             result ? "added" : "removed"
+           }; classList is now "${classes}".`;
+         });
+
+       The output looks like this and it will change each time you click on the text:
+
+       SETTING THE FORCE PARAMETER
+
+       The second parameter can be used to determine whether the class is included or not. This example would include the 'c' class only if the browser window is over 1000 pixels wide:
+
+         span.classList.toggle("c", window.innerWidth > 1000);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,39 @@
+SHELLCHECK.SC3060(1)             Sandbox manual             SHELLCHECK.SC3060(1)
+
+       NAME
+
+       In POSIX sh, string replacement is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, STRING REPLACEMENT IS UNDEFINED
+
+       IN POSIX SH, STRING REPLACEMENT IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         echo "${var//foo/bar}"
+
+       CORRECT CODE
+
+       Either switch the shebang to bash or ksh, or rewrite the expansion using a tool like sed:
+
+         #!/bin/sh
+         echo "$var" | sed 's/foo/bar/g'
+
+       RATIONALE
+
+       String replacement in parameter expansion is a bash and ksh extension. dash and POSIX sh does not support it.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

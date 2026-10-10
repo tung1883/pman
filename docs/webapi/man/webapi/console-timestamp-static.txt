@@ -1,0 +1,104 @@
+WEBAPI.CONSOLE-TIMESTAMP-STATIC(1) Sandbox manual WEBAPI.CONSOLE-TIMESTAMP-STATIC(1)
+
+       NAME
+
+       console: timeStamp() static method - The console.timeStamp() static method adds a marker to a performance recording in developer tools that support it, such as the Chrome Perfor
+
+       CONSOLE: TIMESTAMP() STATIC METHOD
+
+       {{Non-standard_header}}
+
+       The console.timeStamp() static method adds a marker to a performance recording in developer tools that support it, such as the Chrome Performance panel and Firefox Profiler. This lets you correlate a point in your code with recorded events such as layout and painting.
+
+       SYNTAX
+
+         console.timeStamp(label)
+         console.timeStamp(label, start, end, trackName, trackGroup, color, data)
+
+       PARAMETERS
+
+        * label (optional)
+          * : Label for the timestamp.
+        * start (optional) (experimental)
+          * : A string referencing a previously defined timeStamp label or a timestamp (DOMHighResTimeStamp) to be used as the start time.
+        * end (optional) (experimental)
+          * : A string referencing a previously defined timeStamp label or a timestamp (DOMHighResTimeStamp) to be used as the end time.
+        * trackName (optional) (experimental)
+          * : The name of the custom track used to display the timestamp data
+        * trackGroup (optional) (experimental)
+          * : The group of the custom track used to display the timestamp data
+        * color (optional) (experimental)
+          * : A string for the display color of the entry. Must be one of "primary", "primary-light", "primary-dark", "secondary", "secondary-light", "secondary-dark", "tertiary", "tertiary-light", "tertiary-dark", "error".
+        * data (optional) (experimental)
+          * : An object with additional data to display. URLs may automatically be turned into links by some browsers.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       DESCRIPTION
+
+       To see the marker, start a performance recording before the call occurs. Marker recording and display depend on the browser and its profiling tool; the presence of console.timeStamp() does not by itself guarantee a visible marker.
+
+       This method does not log elapsed time to the console or create a PerformanceEntry. Use console.time() and console.timeEnd() for console timers, or performance.mark() and performance.measure() for standard entries that your application can observe and read.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+         console.timeStamp("marker 1");
+
+       USING THE EXTENSIBILITY API TO PROVIDE RICHER DETAILS FOR DISPLAY
+
+         // 1. Create a duration event with rich data
+         const start = performance.now() - 150;
+         const end = performance.now() - 20;
+
+         const durationData = {
+           processingTime: `${end - start}ms`,
+           info: "Check this URL: https://example.com for more.",
+           metrics: {
+             items: 5,
+             isCached: true,
+           },
+         };
+
+         console.timeStamp(
+           "My Timed Task", // label
+           start, // startTime
+           end, // endTime
+           "Tasks", // trackName
+           "My Extension", // trackGroup
+           "tertiary", // color
+           durationData, // data (object)
+         );
+
+         // 2. Create an instant event with a deep link for a DevTools extension
+         const linkData = {
+           url: "ext://resource/123",
+           description: "View Resource 123",
+           otherDetail: "This data also appears in the JSON viewer",
+         };
+
+         console.timeStamp(
+           "Event with Link", // label
+           performance.now(), // startTime (instant)
+           undefined, // endTime (instant)
+           "Tasks", // trackName
+           "My Extension", // trackGroup
+           "primary-light", // color
+           linkData, // data (object)
+         );
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * console.time()
+        * console.timeLog()
+        * console.timeEnd()
+        * performance.mark()
+        * performance.measure()
+        * Chrome DevTools extensibility API
+
+Web APIs manual                         from the official documentation

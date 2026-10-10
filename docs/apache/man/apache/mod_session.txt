@@ -1,0 +1,248 @@
+APACHE.MOD_SESSION(1)            Sandbox manual            APACHE.MOD_SESSION(1)
+
+       WHAT IS A SESSION
+
+       At the core of the session interface is a table of key and value pairs that are made accessible across browser requests. These pairs can be set to any valid string, as needed by the application making use of the session.
+
+       The "session" is a application/x-www-form-urlencoded string containing these key value pairs, as defined by the HTML specification.
+
+       The session can optionally be encrypted and base64 encoded before being written to the storage mechanism, as defined by the administrator.
+
+       WHO CAN USE A SESSION
+
+       The session interface is primarily developed for the use by other server modules, such as mod_auth_form, however CGI based applications can optionally be granted access to the contents of the session via the HTTP_SESSION environment variable. Sessions have the option to be modified and/or updated by inserting an HTTP response header containing the new session parameters.
+
+       KEEPING SESSIONS ON THE SERVER
+
+       Apache can be configured to keep track of per user sessions stored on a particular server or group of servers. This functionality is similar to the sessions available in typical application servers.
+
+       If configured, sessions are tracked through the use of a session ID that is stored inside a cookie, or extracted from the parameters embedded within the URL query string, as found in a typical GET request.
+
+       As the contents of the session are stored exclusively on the server, there is an expectation of privacy of the contents of the session. This does have performance and resource implications should a large number of sessions be present, or where a large number of webservers have to share sessions with one another.
+
+       The mod_session_dbd module allows the storage of user sessions within a SQL database via mod_dbd.
+
+       KEEPING SESSIONS ON THE BROWSER
+
+       In high traffic environments where keeping track of a session on a server is too resource intensive or inconvenient, the option exists to store the contents of the session within a cookie on the client browser instead.
+
+       This has the advantage that minimal resources are required on the server to keep track of sessions, and multiple servers within a server farm have no need to share session information.
+
+       The contents of the session however are exposed to the client, with a corresponding risk of a loss of privacy. The mod_session_crypto module can be configured to encrypt the contents of the session before writing the session to the client.
+
+       The mod_session_cookie allows the storage of user sessions on the browser within an HTTP cookie.
+
+       BASIC EXAMPLES
+
+       Creating a session is as simple as turning the session on, and deciding where the session will be stored. In this example, the session will be stored on the browser, in a cookie called session.
+
+       BROWSER BASED SESSION
+
+         Session On
+         SessionCookieName session path=/
+
+       The session is not useful unless it can be written to or read from. The following example shows how values can be injected into the session through the use of a predetermined HTTP response header called X-Replace-Session.
+
+       WRITING TO A SESSION
+
+         Session On
+         SessionCookieName session path=/
+         SessionHeader X-Replace-Session
+
+       The header should contain name value pairs expressed in the same format as a query string in a URL, as in the example below. Setting a key to the empty string has the effect of removing that key from the session.
+
+       CGI TO WRITE TO A SESSION
+
+         #!/bin/bash
+         echo "Content-Type: text/plain"
+         echo "X-Replace-Session: key1=foo&key2=&key3=bar"
+         echo
+         env
+
+       If configured, the session can be read back from the HTTP_SESSION environment variable. By default, the session is kept private, so this has to be explicitly turned on with the SessionEnv directive.
+
+       READ FROM A SESSION
+
+         Session On
+         SessionEnv On
+         SessionCookieName session path=/
+         SessionHeader X-Replace-Session
+
+       Once read, the CGI variable HTTP_SESSION should contain the value key1=foo&key3=bar.
+
+       SESSION PRIVACY
+
+       Using the "show cookies" feature of your browser, you would have seen a clear text representation of the session. This could potentially be a problem should the end user need to be kept unaware of the contents of the session, or where a third party could gain unauthorized access to the data within the session.
+
+       The contents of the session can be optionally encrypted before being placed on the browser using the mod_session_crypto module.
+
+       BROWSER BASED ENCRYPTED SESSION
+
+         Session On
+         SessionCryptoPassphrase secret
+         SessionCookieName session path=/
+
+       The session will be automatically decrypted on load, and encrypted on save by Apache, the underlying application using the session need have no knowledge that encryption is taking place.
+
+       Sessions stored on the server rather than on the browser can also be encrypted as needed, offering privacy where potentially sensitive information is being shared between webservers in a server farm using the mod_session_dbd module.
+
+       COOKIE PRIVACY
+
+       The HTTP cookie mechanism also offers privacy features, such as the ability to restrict cookie transport to SSL protected pages only, or to prevent browser based javascript from gaining access to the contents of the cookie.
+
+       WARNING
+
+       Some of the HTTP cookie privacy features are either non-standard, or are not implemented consistently across browsers. The session modules allow you to set cookie parameters, but it makes no guarantee that privacy will be respected by the browser. If security is a concern, use the mod_session_crypto to encrypt the contents of the session, or store the session on the server using the mod_session_dbd module.
+
+       Standard cookie parameters can be specified after the name of the cookie, as in the example below.
+
+       SETTING COOKIE PARAMETERS
+
+         Session On
+         SessionCryptoPassphrase secret
+         SessionCookieName session path=/private;domain=example.com;httponly;secure;
+
+       In cases where the Apache server forms the frontend for backend origin servers, it is possible to have the session cookies removed from the incoming HTTP headers using the SessionCookieRemove directive. This keeps the contents of the session cookies from becoming accessible from the backend server.
+
+       SESSION SUPPORT FOR AUTHENTICATION
+
+       As is possible within many application servers, authentication modules can use a session for storing the username and password after login. The mod_auth_form saves the user's login name and password within the session.
+
+       FORM BASED AUTHENTICATION
+
+         Session On
+         SessionCryptoPassphrase secret
+         SessionCookieName session path=/
+         AuthFormProvider file
+         AuthUserFile "conf/passwd"
+         AuthType form
+         AuthName "realm"
+         #...
+
+       See the mod_auth_form module for documentation and complete examples.
+
+       INTEGRATING SESSIONS WITH EXTERNAL APPLICATIONS
+
+       In order for sessions to be useful, it must be possible to share the contents of a session with external applications, and it must be possible for an external application to write a session of its own.
+
+       A typical example might be an application that changes a user's password set by mod_auth_form. This application would need to read the current username and password from the session, make the required changes to the user's password, and then write the new password to the session in order to provide a seamless transition to the new password.
+
+       A second example might involve an application that registers a new user for the first time. When registration is complete, the username and password is written to the session, providing a seamless transition to being logged in.
+
+         Apache modules
+       Modules within the server that need access to the session can use the mod_session.h API in order to read from and write to the session. This mechanism is used by modules like mod_auth_form.
+
+         CGI programs and scripting languages
+       Applications that run within the webserver can optionally retrieve the value of the session from the HTTP_SESSION environment variable. The session should be encoded as a application/x-www-form-urlencoded string as described by the HTML specification. The environment variable is controlled by the setting of the SessionEnv directive. The session can be written to by the script by returning a application/x-www-form-urlencoded response header with a name set by the SessionHeader directive. In both cases, any encryption or decryption, and the reading the session from or writing the session to the chosen storage mechanism is handled by the mod_session modules and corresponding configuration.
+
+         Applications behind mod_proxy
+       If the SessionHeader directive is used to define an HTTP request header, the session, encoded as a application/x-www-form-urlencoded string, will be made available to the application. If the same header is provided in the response, the value of this response header will be used to replace the session. As above, any encryption or decryption, and the reading the session from or writing the session to the chosen storage mechanism is handled by the mod_session modules and corresponding configuration.
+
+         Standalone applications
+       Applications might choose to manipulate the session outside the control of the Apache HTTP server. In this case, it is the responsibility of the application to read the session from the chosen storage mechanism, decrypt the session, update the session, encrypt the session and write the session to the chosen storage mechanism, as appropriate.
+
+       SESSION DIRECTIVE
+
+         Description: | Enables a session for the current directory or location
+         Syntax: | Session On|Off
+         Default: | Session Off
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | AuthConfig
+         Status: | Extension
+         Module: | mod_session
+       The Session directive enables a session for the directory or location container. Further directives control where the session will be stored and how privacy is maintained.
+
+       SESSIONENV DIRECTIVE
+
+         Description: | Control whether the contents of the session are written to the HTTP_SESSION environment variable
+         Syntax: | SessionEnv On|Off
+         Default: | SessionEnv Off
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | AuthConfig
+         Status: | Extension
+         Module: | mod_session
+       If set to On, the SessionEnv directive causes the contents of the session to be written to a CGI environment variable called HTTP_SESSION.
+
+       The string is written in the URL query format, for example:
+
+       key1=foo&key3=bar
+
+       SESSIONEXCLUDE DIRECTIVE
+
+         Description: | Define URL prefixes for which a session is ignored
+         Syntax: | SessionExclude path
+         Default: | none
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session
+       The SessionExclude directive allows sessions to be disabled relative to URL prefixes only. This can be used to make a website more efficient, by targeting a more precise URL space for which a session should be maintained. By default, all URLs within the directory or location are included in the session. The SessionExclude directive takes precedence over the SessionInclude directive.
+
+       WARNING
+
+       This directive has a similar purpose to the path attribute in HTTP cookies, but should not be confused with this attribute. This directive does not set the path attribute, which must be configured separately.
+
+       SESSIONEXPIRYUPDATEINTERVAL DIRECTIVE
+
+         Description: | Define the number of seconds a session's expiry may change without the session being updated
+         Syntax: | SessionExpiryUpdateInterval interval
+         Default: | SessionExpiryUpdateInterval 0 (always update)
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session
+         Compatibility: | Available in Apache 2.4.41 and later
+       The SessionExpiryUpdateInterval directive allows sessions to avoid the cost associated with writing the session each request when only the expiry time has changed. This can be used to make a website more efficient or reduce load on a database when using mod_session_dbd. The session is always written if the data stored in the session has changed or the expiry has changed by more than the configured interval.
+
+       Setting the interval to zero disables this directive, and the session expiry is refreshed for each request.
+
+       This directive only has an effect when combined with SessionMaxAge to enable session expiry. Sessions without an expiry are only written when the data stored in the session has changed.
+
+       WARNING
+
+       Because the session expiry may not be refreshed with each request, it's possible for sessions to expire up to interval seconds early. Using a small interval usually provides sufficient savings while having a minimal effect on expiry resolution.
+
+       SESSIONHEADER DIRECTIVE
+
+         Description: | Import session updates from a given HTTP response header
+         Syntax: | SessionHeader header
+         Default: | none
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | AuthConfig
+         Status: | Extension
+         Module: | mod_session
+       The SessionHeader directive defines the name of an HTTP response header which, if present, will be parsed and written to the current session.
+
+       The header value is expected to be in the URL query format, for example:
+
+       key1=foo&key2=&key3=bar
+
+       Where a key is set to the empty string, that key will be removed from the session.
+
+       SESSIONINCLUDE DIRECTIVE
+
+         Description: | Define URL prefixes for which a session is valid
+         Syntax: | SessionInclude path
+         Default: | all URLs
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | AuthConfig
+         Status: | Extension
+         Module: | mod_session
+       The SessionInclude directive allows sessions to be made valid for specific URL prefixes only. This can be used to make a website more efficient, by targeting a more precise URL space for which a session should be maintained. By default, all URLs within the directory or location are included in the session.
+
+       WARNING
+
+       This directive has a similar purpose to the path attribute in HTTP cookies, but should not be confused with this attribute. This directive does not set the path attribute, which must be configured separately.
+
+       SESSIONMAXAGE DIRECTIVE
+
+         Description: | Define a maximum age in seconds for a session
+         Syntax: | SessionMaxAge maxage
+         Default: | SessionMaxAge 0
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | AuthConfig
+         Status: | Extension
+         Module: | mod_session
+       The SessionMaxAge directive defines a time limit for which a session will remain valid. When a session is saved, this time limit is reset and an existing session can be continued. If a session becomes older than this limit without a request to the server to refresh the session, the session will time out and be removed. Where a session is used to stored user login details, this has the effect of logging the user out automatically after the given time.
+
+       Setting the maxage to zero disables session expiry.
+
+Apache HTTP Server manual               bundled documentation

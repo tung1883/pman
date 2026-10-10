@@ -1,0 +1,37 @@
+SHELLCHECK.SC2265(1)             Sandbox manual             SHELLCHECK.SC2265(1)
+
+       NAME
+
+       Use && for logical AND. Single & will background and return true. - if [ "$1" = "install" ] & [ "$USER" != "root" ]
+
+       USE && FOR LOGICAL AND. SINGLE & WILL BACKGROUND AND RETURN TRUE
+
+       USE && FOR LOGICAL AND. SINGLE & WILL BACKGROUND AND RETURN TRUE
+
+       PROBLEMATIC CODE
+
+         if [ "$1" = "install" ] & [ "$USER" != "root" ]
+         then
+           echo "Must be root to install"
+         fi
+
+       CORRECT CODE
+
+         if [ "$1" = "install" ] && [ "$USER" != "root" ]
+         then
+           echo "Must be root to install"
+         fi
+
+       RATIONALE
+
+       ShellCheck found a test command followed by a &. This runs the test in the background, effectively ignoring it. To specify "logical AND" between two commands, use &&.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

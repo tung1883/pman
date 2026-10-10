@@ -1,0 +1,61 @@
+HTTP.HEADER-CONTENT-SECURITY-POLICY-BASE-URI(1) Sandbox manual HTTP.HEADER-CONTENT-SECURITY-POLICY-BASE-URI(1)
+
+       NAME
+
+       Content-Security-Policy: base-uri directive - The HTTP Content-Security-Policy base-uri directive restricts the URLs which can be used in a document's <base> element. If this value is ab
+
+       CONTENT-SECURITY-POLICY: BASE-URI DIRECTIVE
+
+       The HTTP Content-Security-Policy base-uri directive restricts the URLs which can be used in a document's element. If this value is absent, then any URI is allowed. If this directive is absent, the user agent will use the value in the element.
+
+       CSP version 2 Directive type Document directive default-src fallback No. Not setting this allows any URL.
+
+       SYNTAX
+
+         Content-Security-Policy: base-uri 'none';
+         Content-Security-Policy: base-uri <source-expression-list>;
+
+       This directive may have one of the following values:
+
+        * 'none'
+          * : No base URI may be set using a element. The single quotes are mandatory.
+        * 
+          * : A space-separated list of _source expression_ values. A element may set a base URI if its value matches any of the given source expressions. For this directive, the following source expression values are applicable:
+            * 
+            * 
+            * 'self'
+
+       EXAMPLES
+
+       META TAG CONFIGURATION
+
+         <meta http-equiv="Content-Security-Policy" content="base-uri 'self'" />
+
+       APACHE CONFIGURATION
+
+         <IfModule mod_headers.c>
+         Header set Content-Security-Policy "base-uri 'self'";
+         </IfModule>
+
+       NGINX CONFIGURATION
+
+         add_header Content-Security-Policy "base-uri 'self';"
+
+       VIOLATION CASE
+
+       Since your domain isn't example.com, a element with its href set to https://example.com will result in a CSP violation.
+
+         <meta http-equiv="Content-Security-Policy" content="base-uri 'self'" />
+         <base href="https://example.com/" />
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Content-Security-Policy
+        * 
+        * Node.baseURI
+
+HTTP manual                             from the official documentation

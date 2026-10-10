@@ -1,0 +1,47 @@
+SHELLCHECK.SC2227(1)             Sandbox manual             SHELLCHECK.SC2227(1)
+
+       NAME
+
+       Redirection applies to the find command itself. Rewrite to work per action (or move to end). - find . -name '.ppm' -exec pnmtopng {} > {}.png \;
+
+       REDIRECTION APPLIES TO THE FIND COMMAND ITSELF. REWRITE TO WORK PER AC
+
+       REDIRECTION APPLIES TO THE FIND COMMAND ITSELF. REWRITE TO WORK PER AC
+
+       PROBLEMATIC CODE
+
+         find . -name '*.ppm' -exec pnmtopng {} > {}.png \;
+
+       CORRECT CODE
+
+         find . -name '*.ppm' -exec sh -c 'pnmtopng "$1" > "$1.png"' _ {} \;
+
+       RATIONALE
+
+       ShellCheck detected a find command with a redirection in the middle.
+
+       This redirection may have been intended to apply only to a specific action like -exec or -print, but it does in fact apply to the entire find command:
+
+       THIS COMMAND
+
+       find . -name '*.ppm' -exec pnmtopng {} > {}.png \;
+
+       IS THE SAME AS THIS
+
+       { find . -name '*.ppm' -exec pnmtopng {} \; } > {}.png
+
+       To perform a redirection per action, rewrite it with e.g. -exec sh -c '...' _ {} \;
+
+       EXCEPTIONS
+
+       If the redirection is something like > /dev/null where you don't mind it applying to the whole find and not individual results, you can move the redirection to the end of command to make it clear to ShellCheck (and humans) that it's not meant per command:
+
+       find . -exec foo {} > /dev/null \; # Ambiguous syntax. Is it per -exec or not? find . -exec foo {} \; > /dev/null # Identical command with clear intent.
+
+       There is no difference in behavior between the two.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

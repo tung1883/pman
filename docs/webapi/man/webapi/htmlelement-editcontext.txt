@@ -1,0 +1,81 @@
+WEBAPI.HTMLELEMENT-EDITCONTEXT(1) Sandbox manual WEBAPI.HTMLELEMENT-EDITCONTEXT(1)
+
+       NAME
+
+       HTMLElement: editContext property - The editContext property of the HTMLElement interface gets and sets an element's associated EditContext object.
+
+       HTMLELEMENT: EDITCONTEXT PROPERTY
+
+       The editContext property of the HTMLElement interface gets and sets an element's associated EditContext object.
+
+       The EditContext API can be used to build rich text editors on the web that support advanced text input experiences, such as Input Method Editor (IME) composition, emoji picker, or any other platform-specific editing-related UI surfaces.
+
+       VALUE
+
+       An EditContext object or null.
+
+       POSSIBLE ELEMENTS
+
+       Setting the editContext property only works on certain types of elements:
+
+        * One of these HTML elements: , , , , , , , , , , , , , , , , , or .
+        * A valid custom element.
+        * A element.
+       If you try to set the editContext property on an element that is not one of the above, a NotSupportedError DOMException is thrown.
+
+       ELEMENT ASSOCIATION
+
+       Setting the editContext property of an element to an EditContext instance associates that element with the EditContext instance.
+
+       The association is one-to-one:
+
+        * An element can only be associated to one EditContext instance.
+        * An EditContext instance can only be associated to one element.
+       If you try to associate an already associated EditContext instance to a different element, a DOMException is thrown.
+
+       If you try to associate an other EditContext instance to an element that's already associated, a DOMException is also thrown.
+
+       To check whether an element is associated with an EditContext instance already, use the EditContext.attachedElements() method.
+
+       GARBAGE COLLECTION
+
+       An EditContext instance will keep its associated element alive if it has other live references, even if the associated element is removed from the DOM.
+
+       If you want to make sure the element is garbage collected, clear the editContext property of the element.
+
+       EXAMPLES
+
+       SETTING AN ELEMENT'S EDITCONTEXT PROPERTY
+
+       This example shows how to set the editContext property of a element to a new EditContext instance in order to make the element editable.
+
+         <canvas id="editor-canvas"></canvas>
+
+         const canvas = document.getElementById("editor-canvas");
+         const editContext = new EditContext();
+         canvas.editContext = editContext;
+
+       CLEARING AN ELEMENT'S EDITCONTEXT PROPERTY
+
+       This example shows how to clear the editContext property of an editable element in order to safely remove the element from the DOM.
+
+         <canvas id="editor-canvas"></canvas>
+
+         // Create the EditContext and associate it with the canvas element.
+         const canvas = document.getElementById("editor-canvas");
+         const editContext = new EditContext();
+         canvas.editContext = editContext;
+
+         // Later, clear the editContext property, and remove the element.
+         canvas.editContext = null;
+         canvas.remove();
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The EditContext interface.
+
+Web APIs manual                         from the official documentation

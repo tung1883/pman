@@ -1,0 +1,51 @@
+WEBAPI.PERIODICSYNCEVENT(1)      Sandbox manual      WEBAPI.PERIODICSYNCEVENT(1)
+
+       NAME
+
+       PeriodicSyncEvent - service
+
+       PERIODICSYNCEVENT
+
+       service
+
+       The PeriodicSyncEvent interface of the Web Periodic Background Synchronization API provides a way to run tasks in the service worker with network connectivity.
+
+       An instance of this event is passed to the periodicsync handler. This happens periodically, at an interval greater than or equal to that set in the PeriodicSyncManager.register() method. Other implementation-specific factors such as the user's engagement with the site decide the actual interval.
+
+       CONSTRUCTOR
+
+        * PeriodicSyncEvent() (experimental)
+          * : Creates a new PeriodicSyncEvent object. This constructor is not typically used. The browser creates these objects itself and provides them to onperiodicsync callback.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, ExtendableEvent._
+
+        * PeriodicSyncEvent.tag (read-only) (experimental)
+          * : Returns the developer-defined identifier for this PeriodicSyncEvent. Multiple tags can be used by the web app to run different periodic tasks at different frequencies.
+
+       INSTANCE METHODS
+
+       _Inherits methods from its parent, ExtendableEvent._
+
+       EXAMPLES
+
+       The following example shows how to respond to a periodic sync event in the service worker.
+
+         self.addEventListener("periodicsync", (event) => {
+           if (event.tag === "get-latest-news") {
+             event.waitUntil(fetchAndCacheLatestNews());
+           }
+         });
+
+       fetchAndCacheLatestNews is a developer defined function.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Richer offline experiences with the Periodic Background Sync API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,55 @@
+SHELLCHECK.SC2106(1)             Sandbox manual             SHELLCHECK.SC2106(1)
+
+       NAME
+
+       This only exits the subshell caused by the pipeline. - for i in a b c; do
+
+       THIS ONLY EXITS THE SUBSHELL CAUSED BY THE PIPELINE
+
+       THIS ONLY EXITS THE SUBSHELL CAUSED BY THE PIPELINE
+
+       PROBLEMATIC CODE
+
+         for i in a b c; do
+           echo hi | grep -q bye | break
+         done
+
+       CORRECT CODE
+
+         for i in a b c; do
+           echo hi | grep -q bye || break
+         done
+
+       RATIONALE
+
+       The most common cause of this issue is probably using a single | when || was intended. The reason this message appears, though, is that a construction like this, intended to surface a failure inside of a loop:
+
+         for i in a b c; do false | break; done; echo ${PIPESTATUS[@]}
+
+       may appear to work:
+
+         $ for i in a b c; do false | break; done; echo ${PIPESTATUS[@]}
+         1 0
+
+       What's actually happening, though, becomes clear if we add some echos; the entire loop completes, and the break has no effect.
+
+         $ for i in a b c; do echo $i; false | break; done; echo ${PIPESTATUS[@]}
+         a
+         b
+         c
+         1 0
+         $ for i in a b c; do false | break; echo $i; done; echo ${PIPESTATUS[@]}
+         a
+         b
+         c
+         0
+
+       Because bash processes pipelines by creating subshells, control statements like break only take effect in the subshell.
+
+       RELATED RESOURCES
+
+        * Contrast with the related, but different, problem in this link.
+        * Bash Reference Manual: Pipelines, esp.:
+       > Each command in a pipeline is executed in its own subshell.
+
+ShellCheck manual                       from the official documentation

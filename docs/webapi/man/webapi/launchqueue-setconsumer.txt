@@ -1,0 +1,51 @@
+WEBAPI.LAUNCHQUEUE-SETCONSUMER(1) Sandbox manual WEBAPI.LAUNCHQUEUE-SETCONSUMER(1)
+
+       NAME
+
+       LaunchQueue: setConsumer() method - The setConsumer() method of the LaunchQueue interface is used to declare the callback that will handle custom launch navigation handling in 
+
+       LAUNCHQUEUE: SETCONSUMER() METHOD
+
+       The setConsumer() method of the LaunchQueue interface is used to declare the callback that will handle custom launch navigation handling in a progressive web app (PWA). Such custom navigation is initiated via Window.launchQueue when a PWA has been launched with a launch_handler client_mode value of focus-existing, navigate-new, or navigate-existing.
+
+       SYNTAX
+
+         setConsumer(callback)
+
+       PARAMETERS
+
+        * callback
+          * : A callback function that handles custom navigation for the PWA. The callback is passed a LaunchParams object instance as a parameter.
+
+       RETURN VALUE
+
+       undefined.
+
+       EXAMPLES
+
+         if ("launchQueue" in window) {
+           window.launchQueue.setConsumer((launchParams) => {
+             if (launchParams.targetURL) {
+               const params = new URL(launchParams.targetURL).searchParams;
+
+               // Assuming a music player app that gets a track passed to it to be played
+               const track = params.get("track");
+               if (track) {
+                 audio.src = track;
+                 title.textContent = new URL(track).pathname.slice(1);
+                 audio.play();
+               }
+             }
+           });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Launch Handler API: Control how your app is launched
+        * Window.launchQueue
+
+Web APIs manual                         from the official documentation

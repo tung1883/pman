@@ -1,0 +1,31 @@
+SHELLCHECK.SC1090(1)             Sandbox manual             SHELLCHECK.SC1090(1)
+
+       NAME
+
+       Can't follow non-constant source. Use a directive to specify location - . "${utilpath}"
+
+       CAN'T FOLLOW NON-CONSTANT SOURCE. USE A DIRECTIVE TO SPECIFY LOCATION
+
+       CAN'T FOLLOW NON-CONSTANT SOURCE. USE A DIRECTIVE TO SPECIFY LOCATION
+
+       PROBLEMATIC CODE
+
+         . "${util_path}"
+
+       CORRECT CODE
+
+         . "${util_path}"
+
+       RATIONALE
+
+       ShellCheck is not able to include sourced files from paths that are determined at runtime. The file will not be read, potentially resulting in warnings about unassigned variables and similar.
+
+       Use a [[Directive]] to point shellcheck to a fixed location it can read instead.
+
+       ShellCheck v0.7.2+ will strip a single expansion followed by a slash, e.g. ${var}/util.sh or $(dirname "${BASH_SOURCE[0]}")/util.sh, and treat them as ./util.sh. This allows the use of source-path directives or -P flags to specify the location.
+
+       EXCEPTIONS
+
+       If you don't care that ShellCheck is unable to account for the file, specify # shellcheck source=/dev/null.
+
+ShellCheck manual                       from the official documentation

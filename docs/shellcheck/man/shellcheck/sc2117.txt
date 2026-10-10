@@ -1,0 +1,34 @@
+SHELLCHECK.SC2117(1)             Sandbox manual             SHELLCHECK.SC2117(1)
+
+       NAME
+
+       To run commands as another user, use su -c or sudo. - whoami
+
+       TO RUN COMMANDS AS ANOTHER USER, USE SU -C OR SUDO
+
+       TO RUN COMMANDS AS ANOTHER USER, USE SU -C OR SUDO
+
+       PROBLEMATIC CODE
+
+         whoami
+         su
+         whoami
+
+       CORRECT CODE
+
+         whoami
+         sudo whoami
+
+       RATIONALE
+
+       It's commonly believed that su makes a session run as another user. In reality, it starts an entirely new shell, independent of the one currently running your script.
+
+       su; whoami will start a root shell and wait for it to exit before running whoami. It will not start a root shell and then proceed to run whoami in it.
+
+       To run commands as another user, use sudo some command or su -c 'some command'. sudo is preferred when available, as it doesn't require additional quoting and can be configured to run passwordless if desired.
+
+       EXCEPTIONS
+
+       If you're aware of the above and want to e.g. start an interactive shell for a user, feel free to ignore this message.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,43 @@
+SHELLCHECK.SC2099(1)             Sandbox manual             SHELLCHECK.SC2099(1)
+
+       NAME
+
+       Use $((..)) for arithmetics, e.g. i=$((i + 2)) - i=3
+
+       USE ((..)) FOR ARITHMETICS, E.G. I ((I + 2))
+
+       USE ((..)) FOR ARITHMETICS, E.G. I ((I + 2))
+
+       PROBLEMATIC CODE
+
+         i=3
+         i=i + 2
+
+       CORRECT CODE
+
+         i=3
+         i=$((i + 2))
+
+       RATIONALE
+
+       Unlike most languages, variable assignments in shell scripts are space sensitive and (almost) always assign strings.
+
+       To evaluate a mathematical expressions, use $((..)) as in the correct code:
+
+       i=$((i + 2)) # Spaces are fine inside $((...))
+
+       In the problematic code, i=i + 2 will give an error +: command not found because the expression is interpreted similar to something like LC_ALL=C wc -c instead of numerical addition:
+
+       Prefix assignment Command Argument LC_ALL=C wc -c i=i + 2
+
+       EXCEPTIONS
+
+       If you wanted to assign a literal string, quote it:
+
+       game_score="0 - 2"
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

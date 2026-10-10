@@ -1,0 +1,577 @@
+ARCH.NFS(1)                      Sandbox manual                      ARCH.NFS(1)
+
+       From Wikipedia:
+
+       Network File System (NFS) is a distributed file system protocol originally developed by Sun Microsystems in 1984, allowing a user on a client computer to access files over a network in a manner similar to how local storage is accessed.
+
+       The NFS FAQ lists file systems well tested and details limitations regarding FAT32.
+
+       Note
+
+        * By default, NFS is not encrypted. Configure #TLS encryption, or configure Kerberos (sec=krb5p to provide Kerberos-based encryption), or tunnel NFS through an encrypted VPN (such as WireGuard) when dealing with sensitive data.
+        * Unlike Samba, NFS does not have any user authentication by default, client access is restricted by their IP-address/hostname. Kerberos is available if stronger authentication is wanted.
+        * NFS expects the user and/or user group IDs are the same on both the client and server (unless Kerberos is used). Use NFSv4 idmapping or overrule the UID/GID manually by using anonuid/anongid together with all_squash in /etc/exports.
+        * NFS does not support POSIX ACLs. The NFS server will still enforce ACLs, but clients will not be able to see or modify them.
+
+       INSTALLATION
+
+       Both client and server only require the installation of the nfs-utils package.
+
+       Note Without accurate clocks on all nodes, NFS can introduce unwanted delays. It is highly recommended to use a time synchronization daemon to keep client and server clocks in sync.
+
+       SERVER CONFIGURATION
+
+       Global configuration options are set in /etc/nfs.conf. Users of simple configurations should not need to edit this file.
+
+       The NFS server needs a list of directories to share, in the form of exports (see exports(5) for details) which one must define in /etc/exports or /etc/exports.d/*.exports. By default, the directories are exported with their paths as-is; for example:
+
+         /etc/exports
+
+         /data/music    192.168.1.0/24(rw)
+
+       The above will make the directory /data/music mountable as MyServer:/data/music for both NFSv3 and NFSv4.
+
+       CUSTOM EXPORT ROOT
+
+       Shares may be relative to the so-called NFS root. A good security practice is to define a NFS root in a discrete directory tree which will keep users limited to that mount point. Bind mounts are used to link the share mount point to the actual directory elsewhere on the filesystem.
+
+       Consider this following example wherein:
+
+        * The NFS root is /srv/nfs.
+        * The export is /srv/nfs/music via a bind mount to the actual target /mnt/music.
+
+         # mkdir -p /srv/nfs/music /mnt/music
+         # mount --bind /mnt/music /srv/nfs/music
+
+       Note ZFS filesystems require special handling of bindmounts, see ZFS#Bind mount.
+
+       To make the bind mount persistent across reboots, add it to fstab:
+
+         /etc/fstab
+
+         /mnt/music /srv/nfs/music  none   bind   0   0
+
+       Add directories to be shared and limit them to a range of addresses via a CIDR or hostname(s) of client machines that will be allowed to mount them in /etc/exports, e.g.:
+
+         /etc/exports
+
+         /srv/nfs        192.168.1.0/24(rw,fsid=root)
+         /srv/nfs/music  192.168.1.0/24(rw,sync)
+         /srv/nfs/home   192.168.1.0/24(rw,sync)
+         /srv/nfs/public 192.168.1.0/24(ro,all_squash,insecure) desktop(rw,sync,all_squash,anonuid=99,anongid=99) # map to user/group - in this case nobody
+
+       When using NFSv4, the option fsid=root or fsid=0 denotes the "root" export; if such an export is present, then all other directories must be below it. The rootdir option in the /etc/nfs.conf file has no effect on this. The default behavior, when there is no fsid=0 export, is to behave the same way as in NFSv3.
+
+       In the above example, because /srv/nfs is designated as the root, the export /srv/nfs/music is now mountable as MyServer:/music via NFSv4 – note that the root prefix is omitted.
+
+       Tip
+
+        * For NFSv3 (not needed for NFSv4), the crossmnt option makes it possible for clients to access all filesystems mounted on a filesystem marked with crossmnt and clients will not be required to mount every child export separately. Note this may not be desirable if a child is shared with a different range of addresses.
+        * Instead of crossmnt, one can also use the nohide option on child exports so that they can be automatically mounted when a client mounts the root export. Being different from crossmnt, nohide still respects address ranges of child exports. Note that the option is also NFSv3-specific; NFSv4 always behaves as if nohide was enabled.
+        * The insecure option allows clients to connect from ports above 1023. (Presumably only the root user can use low-numbered ports, so blocking other ports by default creates a superficial barrier to access. In practice neither omitting nor including the insecure option provides any meaningful improvement or detriment to security.)
+        * Use an asterisk (*) to allow access from any interface.
+       It should be noted that modifying /etc/exports while the server is running will require a re-export for changes to take effect:
+
+         # exportfs -arv
+
+       To view the current loaded exports state in more detail, use:
+
+         # exportfs -v
+
+       For more information about all available options see exports(5).
+
+       Tip ip2cidr is a tool to convert IP address ranges to correctly structured CIDR specifications.
+
+       Note If the target export is a tmpfs filesystem, the fsid=1 option is required.
+
+       STARTING THE SERVER
+
+        * To provide both NFSv3 and NFSv4 service, start and enable nfs-server.service.
+        * To provide NFSv4 service exclusively, start and enable nfsv4-server.service.
+       Users of protocol version 4 exports will probably want to mask at a minimum both rpcbind.service and rpcbind.socket to prevent superfluous services from running. See FS#76453. Additionally, consider masking nfs-server.service which is pulled in for some reason as well.
+
+       Note If exporting ZFS shares, also start/enable zfs-share.service. Without this, ZFS shares will no longer be exported after a reboot. See ZFS#NFS.
+
+       RESTRICTING NFS TO INTERFACES/IPS
+
+       By default, starting nfs-server.service will listen for connections on all network interfaces, regardless of /etc/exports. This can be changed by defining which IPs and/or hostnames to listen on.
+
+         /etc/nfs.conf
+
+         [nfsd]
+         host=192.168.1.123
+         # Alternatively, use the hostname.
+         # host=myhostname
+
+       Restart nfs-server.service to apply the changes immediately.
+
+       FIREWALL CONFIGURATION
+
+       To enable access of NFSv4-servers through a firewall, TCP port 2049 must be opened for incoming connections. (NFSv4 uses a static port number; it does not use any auxiliary services such as mountd or portmapper.)
+
+       To enable access of NFSv3 servers, you will additionally need to open TCP/UDP port 111 for the portmapper (rpcbind), as well as the MOUNT (rpc.mountd) port. By default, rpc.mountd selects a port dynamically, so if you're behind a firewall you will want to edit /etc/nfs.conf to set a static port instead. Use rpcinfo -p to examine the exact ports in use on the NFSv3 server:
+
+         $ rpcinfo -p
+
+         100003    3   tcp   2049  nfs
+         100003    4   tcp   2049  nfs
+         100227    3   tcp   2049  nfs_acl
+         ...
+
+       CLIENT CONFIGURATION
+
+       Users intending to use NFS4 with Kerberos need to start and enable nfs-client.target.
+
+       MANUAL MOUNTING
+
+       For NFSv3 use this command to show the server's exported file systems:
+
+         $ showmount -e servername
+
+       For NFSv4 mount the root NFS directory and look around for available mounts:
+
+         # mount servername:/ /mountpoint/on/client
+
+       Then mount omitting the server's NFS export root:
+
+         # mount -t nfs -o vers=4 servername:/music /mountpoint/on/client
+
+       If mount fails try including the server's export root (required for Debian/RHEL/SLES, some distributions need -t nfs4 instead of -t nfs):
+
+         # mount -t nfs -o vers=4 servername:/srv/nfs/music /mountpoint/on/client
+
+       Note servername needs to be replaced with a valid hostname (not just IP address). Otherwise mounting of remote share will hang.
+
+       MOUNT USING /ETC/FSTAB
+
+       Using fstab is useful for a server which is always on, and the NFS shares are available whenever the client boots up. Edit /etc/fstab file, and add an appropriate line reflecting the setup. Again, the server's NFS export root is omitted.
+
+         /etc/fstab
+
+         servername:/music   /mountpoint/on/client   nfs   defaults,timeo=900,retrans=5,_netdev	0 0
+
+       Note Consult nfs(5) and mount(8) for more mount options.
+
+       Some additional mount options to consider:
+
+         rsize and wsize
+       The rsize value is the number of bytes used when reading from the server. The wsize value is the number of bytes used when writing to the server. By default, if these options are not specified, the client and server negotiate the largest values they can both support (see nfs(5) for details). After changing these values, it is recommended to test the performance (see #Performance tuning).
+
+         soft or hard
+       Determines the recovery behaviour of the NFS client after an NFS request times out. If neither option is specified (or if the hard option is specified), NFS requests are retried indefinitely. If the soft option is specified, then the NFS client fails an NFS request after retrans retransmissions have been sent, causing the NFS client to return an error to the calling application.
+
+       Warning A so-called soft timeout can cause silent data corruption in certain cases. As such, use the soft option only when client responsiveness is more important than data integrity. Using NFS over TCP or increasing the value of the retrans option may mitigate some of the risks of using the soft option.
+
+         timeo
+       The timeo value is the amount of time, in tenths of a second, to wait before resending a transmission after an RPC timeout. The default value for NFS over TCP is 600 (60 seconds). After the first timeout, the timeout value is doubled for each retry for a maximum of 60 seconds or until a major timeout occurs. If connecting to a slow server or over a busy network, better stability can be achieved by increasing this timeout value.
+
+         retrans
+       The number of times the NFS client retries a request before it attempts further recovery action. If the retrans option is not specified, the NFS client tries each request three times. The NFS client generates a "server not responding" message after retrans retries, then attempts further recovery (depending on whether the hard mount option is in effect).
+
+         _netdev
+       The _netdev option tells the system to wait until the network is up before trying to mount the share - systemd assumes this for NFS.
+
+       Note Setting the sixth field (fs_passno) to a nonzero value may lead to unexpected behaviour, e.g. hangs when the systemd automount waits for a check which will never happen.
+
+       MOUNT USING /ETC/FSTAB WITH SYSTEMD
+
+       Another method is using the x-systemd.automount option which mounts the filesystem upon access:
+
+         /etc/fstab
+
+         servername:/home   /mountpoint/on/client  nfs  _netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14,x-systemd.idle-timeout=1min 0 0
+
+       To make systemd aware of the changes to fstab, reload systemd and restart remote-fs.target [1].
+
+       Tip
+
+        * The noauto mount option will not mount the NFS share until it is accessed: use auto for it to be available immediately.   If experiencing any issues with the mount failing due to the network not being up/available, enable NetworkManager-wait-online.service. It will ensure that network.target has all the links available prior to being active.
+        * The users mount option would allow user mounts, but be aware it implies further options as noexec for example.
+        * The x-systemd.idle-timeout=1min option will unmount the NFS share automatically after 1 minute of non-use. Good for laptops which might suddenly disconnect from the network.
+        * If shutdown/reboot holds too long because of NFS, enable NetworkManager-wait-online.service to ensure that NetworkManager is not exited before the NFS volumes are unmounted.
+        * Do not add the x-systemd.requires=network-online.target mount option as this can lead to ordering cycles within systemd [2]. systemd adds the network-online.target dependency to the unit for _netdev mount automatically.
+        * Using the nocto option may improve performance for read-only mounts, but should be used only if the data on the server changes only occasionally.
+
+       AS SYSTEMD UNIT
+
+       Create a new .mount file inside /etc/systemd/system, e.g. mnt-home.mount. See systemd.mount(5) for details.
+
+       Note Make sure the filename corresponds to the mountpoint you want to use. E.g. the unit name mnt-home.mount can only be used if you are going to mount the share under /mnt/home. Otherwise the following error might occur: systemd[1]: mnt-home.mount: Where= setting does not match unit name. Refusing.. If the mountpoint contains non-ASCII characters, use systemd-escape).
+
+       What= path to share
+
+       Where= path to mount the share
+
+       Options= share mounting options
+
+       Note
+
+        * Network mount units automatically acquire After dependencies on remote-fs-pre.target, network.target and network-online.target, and gain a Before dependency on remote-fs.target unless nofail mount option is set. Towards the latter a Wants unit is added as well.
+        * Append noauto to Options preventing automatically mount during boot (unless it is pulled in by some other unit).
+        * If you want to use a hostname for the server you want to share (instead of an IP address), add nss-lookup.target to After. This might avoid mount errors at boot time that do not arise when testing the unit.
+
+         /etc/systemd/system/mnt-home.mount
+
+         [Unit]
+         Description=Mount home at boot
+
+         [Mount]
+         What=172.16.24.192:/home
+         Where=/mnt/home
+         Options=vers=4
+         Type=nfs
+         TimeoutSec=30
+
+         [Install]
+         WantedBy=multi-user.target
+
+       Tip In case of an unreachable system, append ForceUnmount=true to [Mount], allowing the export to be (force-)unmounted.
+
+       To use mnt-home.mount, start the unit and enable it to run on system boot.
+
+       AUTOMOUNT
+
+       To automatically mount a share, one may use the following automount unit:
+
+         /etc/systemd/system/mnt-home.automount
+
+         [Unit]
+         Description=Automount home
+
+         [Automount]
+         Where=/mnt/home
+
+         [Install]
+         WantedBy=multi-user.target
+
+       Disable/stop the mnt-home.mount unit, and enable/start mnt-home.automount to automount the share when the mount path is being accessed.
+
+       Tip Append TimeoutIdleSec to enable auto unmount. See systemd.automount(5) for details.
+
+       MOUNT USING AUTOFS
+
+       Using autofs is useful when multiple machines want to connect via NFS; they could both be clients as well as servers. The reason this method is preferable over the earlier one is that if the server is switched off, the client will not throw errors about being unable to find NFS shares. See autofs#NFS network mounts for details.
+
+       TIPS AND TRICKS
+
+       NFSV4 IDMAPPING
+
+       Note
+
+        * NFSv4 idmapping does not solve all issues with the default sec=sys mount option. See #static mapping and [3]
+        * NFSv4 idmapping needs to be enabled on both the client and server.
+        * Another option is to make sure the user and group IDs (UID and GID) match on both the client and server.
+        * Enabling/starting nfs-idmapd.service is not needed on the client to run, as it has been replaced with a new id mapper:
+
+         # dmesg | grep id_resolver
+
+         [ 3238.356001] NFS: Registering the id_resolver key type
+         [ 3238.356009] Key type id_resolver registered
+
+       Tip
+
+        * Do not confuse the nfsidmap (only for nfs clients) with nfs-idmapd.service which is used by the NFS server and forks the process rpc.idmapd.
+        * Both rpc.idmapd and nfsidmap share also some configurations from idmapd.conf(5).
+        * See idmapd(8) and nfsidmap(8) for details.
+       The NFSv4 protocol represents the local system's UID and GID values on the wire as strings of the form user@domain. The process of translating from UID to string and string to UID is referred to as ID mapping.
+
+       DOMAIN
+
+       Note
+
+        * By default, the domain part of the string is the system's DNS domain name. It can also be specified in /etc/idmapd.conf if the system is multi-homed, or if the system's DNS domain name does not match the name of the system's Kerberos realm.
+        * When the domain is not specified in /etc/idmapd.conf the local DNS server will be queried for the _nfsv4idmapdomain text record. If the record exists that will be used as the domain. When the record does not exist, the domain part of the DNS domain will used.
+       Display the system's effective NFSv4 domain name on stdout.
+
+         # nfsidmap -d
+
+         domain.tld
+
+       Edit to match up the Domain on the server and/or client:
+
+         /etc/idmapd.conf
+
+         [General]
+         Domain = guestdomain.tld
+
+       STATIC MAPPING
+
+       Tip
+
+        * This mapping is only for the client to map uid locally. If you create a file owned by an uid (e.g. 1005) that is not known on the server. The file is stored with the uid 1005 on the server but wont be shown "over the wire" with the correct uid anymore.
+        * You can see all entries in the keyring after interacting with the server aka. listing files:
+
+         # nfsidmap -l
+
+         7 .id_resolver keys found:
+          uid:nobody
+          user:1
+          uid:bin@domain.tld
+          uid:foo@domain.tld
+          gid:foo@domain.tld
+          uid:remote_user@domain.tld
+          uid:root@domain.tld
+
+        * You can clear the keyring with nfsidmap -c, but it is not needed, in the default setup after 10 Minutes entries expire.
+       These steps are only needed if the server and client have different user/group names. Changes are only done in the clients config file.
+
+         /etc/idmapd.conf
+
+         [Translation]
+         # The default is nsswitch and other methods exist.
+         method = static,nsswitch
+
+         [Static]
+         foo@domain.tld = local_foo
+         remote_user@domain.tld = user
+
+       FALLBACK MAPPING
+
+       Only in the client configuration. Local user/group name to be used when a mapping cannot be completed:
+
+         /etc/idmapd.conf
+
+         [Mapping]
+         Nobody-User = nobody
+         Nobody-Group = nobody
+
+       PERFORMANCE TUNING
+
+       When using NFS on a network with a significant number of clients one may increase the default NFS threads from 8 to 16 or even a higher, depending on the server/network requirements:
+
+         /etc/nfs.conf
+
+         [nfsd]
+         threads=16
+
+       It may be necessary to tune the rsize and wsize mount options to meet the requirements of the network configuration.
+
+       In recent linux kernels (>2.6.18) the size of I/O operations allowed by the NFS server (default max block size) varies depending on RAM size, with a maximum of 1M (1048576 bytes), the max block size of the server will be used even if nfs clients requires bigger rsize and wsize. See https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/5/html/5.8_technical_notes/known_issues-kernel It is possible to change the default max block size allowed by the server by writing to the /proc/fs/nfsd/max_block_size before starting nfsd. For example, the following command restores the previous default iosize of 32k:
+
+         # echo 32768 > /proc/fs/nfsd/max_block_size
+
+       Note This is mainly useful for 32-bit servers when dealing with the large numbers of nfsd threads. Lowering the max_block_size may decrease NFS performance on modern hardware.
+
+       To make the change permanent, create a systemd-tmpfile:
+
+         /etc/tmpfiles.d/nfsd-block-size.conf
+
+         w /proc/fs/nfsd/max_block_size - - - - 32768
+
+       To mount with the increased rsize and wsize mount options:
+
+         # mount -t nfs -o rsize=32768,wsize=32768,vers=4 servername:/srv/nfs/music /mountpoint/on/client
+
+       Furthermore, despite the violation of NFS protocol, setting async instead of sync or sync,no_wdelay may potentially achieve a significant performance gain especially on spinning disks. Configure exports with this option and then execute exportfs -arv to apply.
+
+         /etc/exports
+
+         /srv/nfs        192.168.1.0/24(rw,async,crossmnt,fsid=0)
+         /srv/nfs/music  192.168.1.0/24(rw,async)
+
+       Warning Using async comes with a risk of possible data loss or corruption if the server crashes or restarts uncleanly.
+
+       AUTOMATIC MOUNT HANDLING
+
+       This trick is useful for NFS-shares on a wireless network and/or on a network that may be unreliable. If the NFS host becomes unreachable, the NFS share will be unmounted to hopefully prevent system hangs when using the hard mount option [4].
+
+       Make sure that the NFS mount points are correctly indicated in fstab:
+
+         /etc/fstab
+
+         lithium:/mnt/data           /mnt/data	        nfs noauto 0 0
+         lithium:/var/cache/pacman   /var/cache/pacman	nfs noauto 0 0
+
+       Note
+
+        * Use hostnames in fstab for this to work, not IP addresses.
+        * In order to mount NFS shares with non-root users the users option has to be added.
+        * The noauto mount option tells systemd to not automatically mount the shares at boot, otherwise this may cause the boot process to stall.
+       Create the auto_share script that will be used by cron or systemd/Timers to use ICMP ping to check if the NFS host is reachable:
+
+         /usr/local/bin/auto_share
+
+         #!/bin/bash
+
+         function net_umount {
+           umount -l -f $1 &>/dev/null
+         }
+
+         function net_mount {
+           mountpoint -q $1 || mount $1
+         }
+
+         NET_MOUNTS=$(sed -e '/^.*#/d' -e '/^.*:/!d' -e 's/\t/ /g' /etc/fstab | tr -s " ")$'\n'b
+
+         printf %s "$NET_MOUNTS" | while IFS= read -r line
+         do
+           SERVER=$(echo $line | cut -f1 -d":")
+           MOUNT_POINT=$(echo $line | cut -f2 -d" ")
+
+           # Check if server already tested
+           if [[ "${server_ok[@]}" =~ "${SERVER}" ]]; then
+             # The server is up, make sure the share are mounted
+             net_mount $MOUNT_POINT
+           elif [[ "${server_notok[@]}" =~ "${SERVER}" ]]; then
+             # The server could not be reached, unmount the share
+             net_umount $MOUNT_POINT
+           else
+             # Check if the server is reachable
+             ping -c 1 "${SERVER}" &>/dev/null
+
+             if [ $? -ne 0 ]; then
+               server_notok[${#server_notok[@]}]=$SERVER
+               # The server could not be reached, unmount the share
+               net_umount $MOUNT_POINT
+             else
+               server_ok[${#server_ok[@]}]=$SERVER
+               # The server is up, make sure the share are mounted
+               net_mount $MOUNT_POINT
+             fi
+           fi
+         done
+
+       Note Test using a TCP probe instead of ICMP ping (default is tcp port 2049 in NFS4) then replace the line:
+
+         # Check if the server is reachable
+         ping -c 1 "${SERVER}" &>/dev/null
+
+       with:
+
+         # Check if the server is reachable
+         timeout 1 bash -c ": < /dev/tcp/${SERVER}/2049"
+
+       in the auto_share script above.
+
+       Make sure the script is executable.
+
+       Next check configure the script to run every X, in the examples below this is every minute.
+
+       CRON
+
+         # crontab -e
+
+         * * * * * /usr/local/bin/auto_share
+
+       SYSTEMD/TIMERS
+
+         /etc/systemd/system/auto_share.timer
+
+         [Unit]
+         Description=Automount NFS shares every minute
+
+         [Timer]
+         OnCalendar=*-*-* *:*:00
+
+         [Install]
+         WantedBy=timers.target
+
+         /etc/systemd/system/auto_share.service
+
+         [Unit]
+         Description=Automount NFS shares
+         After=network.target
+
+         [Service]
+         Type=oneshot
+         ExecStart=/usr/local/bin/auto_share
+
+         [Install]
+         WantedBy=multi-user.target
+
+       Finally, enable and start auto_share.timer.
+
+       USING A NETWORKMANAGER DISPATCHER
+
+       NetworkManager can also be configured to run a script on network status change.
+
+       The easiest method for mount shares on network status change is to symlink the auto_share script:
+
+         # ln -s /usr/local/bin/auto_share /etc/NetworkManager/dispatcher.d/30-nfs.sh
+
+       However, in that particular case unmounting will happen only after the network connection has already been disabled, which is unclean and may result in effects like freezing of KDE Plasma applets.
+
+       The following script safely unmounts the NFS shares before the relevant network connection is disabled by listening for the down, pre-down and vpn-pre-down events, make sure the script is executable:
+
+         /etc/NetworkManager/dispatcher.d/30-nfs.sh
+
+         #!/bin/sh
+
+         # Find the connection UUID with "nmcli con show" in terminal.
+         # All NetworkManager connection types are supported: wireless, VPN, wired...
+         WANTED_CON_UUID="CHANGE-ME-NOW-9c7eff15-010a-4b1c-a786-9b4efa218ba9"
+
+         if [ "$CONNECTION_UUID" = "$WANTED_CON_UUID" ]; then
+
+             # Script parameter $1: network interface name, not used
+             # Script parameter $2: dispatched event
+
+             case "$2" in
+                 "up")
+                     mount -a -t nfs4,nfs
+                     ;;
+                 "down"|"pre-down"|"vpn-pre-down")
+                     umount -l -a -t nfs4,nfs -f >/dev/null
+                     ;;
+             esac
+         fi
+
+       Note This script ignores mounts with the noauto option, remove this mount option or use auto to allow the dispatcher to manage these mounts.
+
+       Create a symlink inside /etc/NetworkManager/dispatcher.d/pre-down to catch the pre-down events:
+
+         # ln -s /etc/NetworkManager/dispatcher.d/30-nfs.sh /etc/NetworkManager/dispatcher.d/pre-down.d/30-nfs.sh
+
+       TLS ENCRYPTION
+
+       NFS traffic can be encrypted using TLS as of Linux 6.5 using the xprtsec=tls mount option. To begin, install the ktls-utilsAUR package on the client and server, and follow the below configuration steps for each.
+
+       SERVER
+
+       Create a private key and obtain a certificate containing your server's DNS name (see Transport Layer Security#Obtaining a certificate for more detail). These files do not need to be added to the system's trust store.
+
+       Note Using an encrypted private key is currently not supported and will result in a mount failure.
+
+       Edit /etc/tlshd.conf to use these files, using your own values for x509.certificate and x509.private_key:
+
+         /etc/tlshd.conf
+
+         [authenticate.server]
+         x509.certificate= /etc/nfsd-certificate.pem
+         x509.private_key= /etc/nfsd-private-key.pem
+
+       Now start and enable tlshd.service.
+
+       CLIENT
+
+       Add the server's TLS certificate generated in the previous step to the system's trust store (see Transport Layer Security#Add a certificate to a trust store for more detail).
+
+       Start and enable tlshd.service.
+
+       Now you should be able to mount the server using the server's DNS name:
+
+         # mount -o xprtsec=tls servername.domain:/ /mountpoint/on/client
+
+       Checking journalctl on the client should show that the TLS handshake was successful:
+
+         $ journalctl -b -u tlshd.service
+
+         Sep 28 11:14:46 client tlshd[227]: Built from ktls-utils 0.10 on Sep 26 2023 14:24:03
+         Sep 28 11:15:37 client tlshd[571]: Handshake with servername.domain (192.168.122.100) was successful
+
+       TROUBLESHOOTING
+
+       There is a dedicated article NFS/Troubleshooting.
+
+       SEE ALSO
+
+        * See also Avahi, a Zeroconf implementation which allows automatic discovery of NFS shares.
+        * HOWTO: Diskless network boot NFS root
+        * Microsoft Services for Unix NFS Client info
+        * NFS on Snow Leopard
+        * http://chschneider.eu/linux/server/nfs.shtml
+        * How to do Linux NFS Performance Tuning and Optimization
+        * Linux: Tune NFS Performance
+        * Configuring an NFSv4-only Server
+
+ArchWiki manual                         bundled documentation

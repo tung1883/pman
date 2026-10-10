@@ -1,0 +1,155 @@
+WEBAPI.HTMLINPUTELEMENT-SHOWPICKER(1) Sandbox manual WEBAPI.HTMLINPUTELEMENT-SHOWPICKER(1)
+
+       NAME
+
+       HTMLInputElement: showPicker() method - The HTMLInputElement.showPicker() method displays the browser picker for an input element.
+
+       HTMLINPUTELEMENT: SHOWPICKER() METHOD
+
+       The HTMLInputElement.showPicker() method displays the browser picker for an input element.
+
+       This is the same picker that would normally be displayed when the element is selected, but can be triggered from a button press or other user interaction.
+
+       Commonly browsers implement it for inputs of these types: "date", "month", "week", "time", "datetime-local", "color", or "file". It can also be prepopulated with items from a element or autocomplete attribute.
+
+       More generally, this method should ideally display the picker for any input element on the platform that has a picker.
+
+       SYNTAX
+
+         showPicker()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the element is not mutable, meaning that the user cannot modify it and/or that it cannot be automatically prefilled.
+        * NotAllowedError DOMException
+          * : Thrown if not explicitly triggered by a user action such as a touch gesture or mouse click (the picker requires Transient activation).
+        * SecurityError DOMException
+          * : Thrown if called in a cross-origin iframe, except for file and color pickers (exempt for historical reasons).
+
+       SECURITY
+
+       Transient user activation is required. The user has to interact with the page or a UI element in order for this feature to work.
+
+       EXAMPLES
+
+       FEATURE DETECTION
+
+       The code below shows how to check if showPicker() is supported:
+
+         if ("showPicker" in HTMLInputElement.prototype) {
+           // showPicker() is supported.
+         }
+
+       NORMAL INPUT PICKERS
+
+       This example shows how this feature can be used for color and file input pickers.
+
+       > Pickers for date, datetime-local, month, time, week are launched in the same way.
+       > They cannot be shown here because live examples run in a cross-origin frame, and would cause a SecurityError
+
+       HTML
+
+         <p>
+           <input type="color" />
+           <button id="color">Show the color picker</button>
+         </p>
+
+         <p>
+           <input type="file" />
+           <button id="file">Show the file picker</button>
+         </p>
+
+       JAVASCRIPT
+
+       The code simply gets the previous element of the selected button and calls showPicker() on it.
+
+         document.querySelectorAll("button").forEach((button) => {
+           button.addEventListener("click", (event) => {
+             const input = event.srcElement.previousElementSibling;
+             try {
+               input.showPicker();
+             } catch (error) {
+               console.log(error);
+             }
+           });
+         });
+
+       RESULT
+
+       Click the button next to each input type to show its picker.
+
+       SHOWPICKER() FOR A DATALIST INPUT
+
+       showPicker() can launch the picker for a list of options defined in a .
+
+       First we define a in HTML consisting of a number of internet browsers, an input of type text that uses it, and a button.
+
+         <datalist id="browsers">
+           <option value="Chrome"></option>
+           <option value="Firefox"></option>
+           <option value="Opera"></option>
+           <option value="Safari"></option>
+           <option value="Microsoft Edge"></option>
+         </datalist>
+
+         <input type="text" list="browsers" />
+         <button>Select browser</button>
+
+       The code below adds an event listener that calls showPicker() when the button is clicked.
+
+         const button = document.querySelector("button");
+         const browserInput = document.querySelector("input");
+
+         button.addEventListener("click", () => {
+           try {
+             browserInput.showPicker();
+           } catch (error) {
+             // Fall back to another picker mechanism
+           }
+         });
+
+       As for the other pickers, we can't show this code running as a live example because it runs in a cross-origin frame, and would cause a SecurityError.
+
+       SHOWPICKER() FOR AUTOCOMPLETE
+
+       showPicker() can launch a picker for an autocomplete input.
+
+       Here we define an input that takes an autocomplete option of "name".
+
+         <input autocomplete="name" /> <button>Show autocomplete options</button>
+
+       The code below shows the picker for the input when the button is clicked.
+
+         const button = document.querySelector("button");
+         const browserInput = document.querySelector("input");
+
+         button.addEventListener("click", () => {
+           try {
+             browserInput.showPicker();
+           } catch (error) {
+             // Fall back to another picker mechanism
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * 
+        * HTMLInputElement
+        * HTMLSelectElement.showPicker()
+        * 
+        * autocomplete
+
+Web APIs manual                         from the official documentation

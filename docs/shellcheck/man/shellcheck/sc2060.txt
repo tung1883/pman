@@ -1,0 +1,29 @@
+SHELLCHECK.SC2060(1)             Sandbox manual             SHELLCHECK.SC2060(1)
+
+       NAME
+
+       Quote parameters to tr to prevent glob expansion. - tr -cd [:digit:]
+
+       QUOTE PARAMETERS TO TR TO PREVENT GLOB EXPANSION
+
+       PROBLEMATIC CODE
+
+         tr -cd [:digit:]
+
+       CORRECT CODE
+
+         tr -cd '[:digit:]'
+
+       RATIONALE
+
+       From the shell's point of view, unquoted [:digit:] is a glob equivalent to [digit:] that matches any single character filename from the group, such as d or t, in the current directory.
+
+       If someone starts learning D and creates a directory named d to hold the source code, the glob will be expanded and the script will end up executing tr -cd d instead, which is clearly unintended.
+
+       Quoting the argument prevents this, and will pass it correctly as the literal string [:digit:] no matter which files exist in the current directory.
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

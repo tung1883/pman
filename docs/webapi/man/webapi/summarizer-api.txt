@@ -1,0 +1,62 @@
+WEBAPI.SUMMARIZER-API(1)         Sandbox manual         WEBAPI.SUMMARIZER-API(1)
+
+       NAME
+
+       Summarizer API - The Summarizer API summarizes a given body of text via a browser's internal AI model (which may differ between browsers).
+
+       SUMMARIZER API
+
+       The Summarizer API summarizes a given body of text via a browser's internal AI model (which may differ between browsers).
+
+       CONCEPTS AND USAGE
+
+       Writing a summary of a larger body of text is a common writing task, and one that AI is well-suited to. Typical use cases include:
+
+        * Providing a summary of a full article so the reader can judge whether to read the whole thing.
+        * Summarizing a meeting transcript so those joining the meeting late can get up to speed with what they've missed.
+        * Summarizing a set of product reviews to quickly communicate overall sentiment.
+       The Summarizer API provides an asynchronous (Promise-based) mechanism for a website to feed a body of text into the browser's own internal AI model and request that it returns a summary of the text based on specified options.
+
+       This is done using the functionality made available by the Summarizer interface, in a two-step process:
+
+        1. Create a Summarizer object instance using the Summarizer.create() static method, specifying options for what kind of summary you want written. Options include length, type (for example, "tldr" or key points), format (plain text or markdown), and input and output languages.
+       > If you want to check whether the browser AI model is able to support your preferences, you can do so with the Summarizer.availability() static method.
+        2. Run the Summarizer.summarize() instance method to request the summary.
+       You can cancel a pending create() or summarize() operation using an AbortController.
+
+       After a Summarizer instance has been created, you can release its assigned resources and stop any further activity by calling its Summarizer.destroy() method. You are encouraged to do this after you've finished with the Summarizer object as it can consume a lot of resources.
+
+       See Using the Summarizer API for a walkthrough of how the API works.
+
+       INTERFACES
+
+        * CreateMonitor (experimental)
+          * : Provides information on the progress of an AI model download, for example a language pack or some fine-tuning data.
+        * Summarizer (experimental)
+          * : Contains all the functionality for the Summarizer API, including checking AI model availability, creating a new Summarizer instance, using it to generate a new summary, and more.
+
+       HTTP HEADERS
+
+        * Permissions-Policy; the summarizer directive
+          * : Controls access to the Summarizer API. Where a policy specifically disallows the use of the Summarizer API, any attempts to call the API's methods will fail with a NotAllowedError DOMException.
+
+       SECURITY CONSIDERATIONS
+
+       The specification requires that a user has recently interacted with the page when creating Summarizer objects (transient user activation is required).
+
+       In addition, the specification controls access to the API via summarizer Permissions-Policy directives.
+
+       EXAMPLES
+
+       For a full example, see Using the Summarizer API.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Summarize with built-in AI on developer.chrome.com (2025)
+        * Web AI demos on chrome.dev
+
+Web APIs manual                         from the official documentation

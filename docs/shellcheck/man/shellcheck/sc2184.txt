@@ -1,0 +1,35 @@
+SHELLCHECK.SC2184(1)             Sandbox manual             SHELLCHECK.SC2184(1)
+
+       NAME
+
+       Quote arguments to unset so they're not glob expanded. - unset foo[index]
+
+       QUOTE ARGUMENTS TO UNSET SO THEY'RE NOT GLOB EXPANDED
+
+       QUOTE ARGUMENTS TO UNSET SO THEY'RE NOT GLOB EXPANDED
+
+       PROBLEMATIC CODE
+
+         unset foo[index]
+
+       CORRECT CODE
+
+         unset 'foo[index]'
+
+       RATIONALE
+
+       Arguments to unset are subject to regular glob expansion. This is especially relevant when unsetting indices in arrays, where [..] is considered a glob character group.
+
+       In the problematic code, having a file called food in the current directory will result in unset foo[index] expanding to unset food, which will silently succeed without unsetting the element.
+
+       Quoting so that the [..] is passed literally to unset solves the issue.
+
+       Note that you can unset element using variable for index name like this:
+
+         unset 'foo[$var]'
+
+       EXCEPTIONS
+
+       If you know that pathname expansion is disabled you can ignore this message. set -o noglob (and variations like invoking the script with #!/bin/bash -f) will prevent glob expansion of arguments to unset.
+
+ShellCheck manual                       from the official documentation

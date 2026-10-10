@@ -1,0 +1,38 @@
+SHELLCHECK.SC2080(1)             Sandbox manual             SHELLCHECK.SC2080(1)
+
+       NAME
+
+       Numbers with leading 0 are considered octal. - echo $(( 16 - 08 ))
+
+       NUMBERS WITH LEADING 0 ARE CONSIDERED OCTAL
+
+       NUMBERS WITH LEADING 0 ARE CONSIDERED OCTAL
+
+       PROBLEMATIC CODE
+
+         echo $(( 16 - 08 ))
+
+       CORRECT CODE
+
+         echo $(( 16 - 8 ))
+
+       RATIONALE
+
+       ShellCheck found an integer literal with a leading zero, but containing the digits 8 or 9.
+
+       This is invalid, as the integer will be interpreted as an octal value (e.g. 0777 == 0x1FF == 511).
+
+       To have the value parsed in base 10, either remove the leading zeros as in the example, or specify the radix explicitly:
+
+       echo $((10#08))
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+       The BASH manual "Shell Arithmetic" chapter
+
+ShellCheck manual                       from the official documentation

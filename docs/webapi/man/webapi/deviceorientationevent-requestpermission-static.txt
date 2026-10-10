@@ -1,0 +1,85 @@
+WEBAPI.DEVICEORIENTATIONEVENT-REQUESTPERMISSION-STATIC(1) Sandbox manual WEBAPI.DEVICEORIENTATIONEVENT-REQUESTPERMISSION-STATIC(1)
+
+       NAME
+
+       DeviceOrientationEvent: requestPermission() static method - The requestPermission() static method of the DeviceOrientationEvent interface requests the user's permission to access device orientation da
+
+       DEVICEORIENTATIONEVENT: REQUESTPERMISSION() STATIC METHOD
+
+       The requestPermission() static method of the DeviceOrientationEvent interface requests the user's permission to access device orientation data from the accelerometer and gyroscope sensors. It can also request permission to access magnetometer data when absolute orientation is needed. This method requires transient activation, meaning that it must be triggered by a UI event such as a button click.
+
+       SYNTAX
+
+         DeviceOrientationEvent.requestPermission()
+         DeviceOrientationEvent.requestPermission(absolute)
+
+       PARAMETERS
+
+        * absolute (optional)
+          * : A boolean indicating whether absolute orientation data is needed. When true, the permission request also includes the magnetometer sensor. Defaults to false.
+
+       RETURN VALUE
+
+       A Promise that resolves with a string which is either "granted" or "denied".
+
+       EXCEPTIONS
+
+       The returned promise rejects with the following exceptions:
+
+        * NotAllowedError DOMException
+          * : The permission state is "prompt" and the calling function does not have transient activation.
+
+       SECURITY
+
+       Transient user activation is required. The user has to interact with the page or a UI element in order for this feature to work.
+
+       EXAMPLES
+
+       REQUESTING DEVICE ORIENTATION PERMISSION ON CLICK
+
+         document.querySelector("button").addEventListener("click", async () => {
+           if (typeof DeviceOrientationEvent.requestPermission !== "function") {
+             // The feature is not available, or does not need permission.
+             return;
+           }
+
+           const permission = await DeviceOrientationEvent.requestPermission();
+           if (permission === "granted") {
+             window.addEventListener("deviceorientation", (event) => {
+               console.log(`Alpha: ${event.alpha}`);
+               console.log(`Beta: ${event.beta}`);
+               console.log(`Gamma: ${event.gamma}`);
+             });
+           }
+         });
+
+       REQUESTING ABSOLUTE ORIENTATION PERMISSION
+
+       When absolute orientation data is needed (e.g., for compass-based applications), pass true as the absolute parameter. This additionally requests access to the magnetometer.
+
+         document.querySelector("button").addEventListener("click", async () => {
+           if (typeof DeviceOrientationEvent.requestPermission !== "function") {
+             return;
+           }
+
+           const permission = await DeviceOrientationEvent.requestPermission(true);
+           if (permission === "granted") {
+             window.addEventListener("deviceorientationabsolute", (event) => {
+               console.log(`Absolute alpha: ${event.alpha}`);
+             });
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * DeviceOrientationEvent
+        * DeviceMotionEvent.requestPermission()
+        * deviceorientation event
+        * deviceorientationabsolute event
+        * Detecting device orientation
+
+Web APIs manual                         from the official documentation

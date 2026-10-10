@@ -1,0 +1,67 @@
+WEBAPI.MANAGEDMEDIASOURCE-STARTSTREAMING-EVENT(1) Sandbox manual WEBAPI.MANAGEDMEDIASOURCE-STARTSTREAMING-EVENT(1)
+
+       NAME
+
+       ManagedMediaSource: startstreaming event - windowanddedicated
+
+       MANAGEDMEDIASOURCE: STARTSTREAMING EVENT
+
+       window_and_dedicated
+
+       The startstreaming event of the ManagedMediaSource interface is fired when the streaming property changes from false to true. This indicates that the user agent needs more data to ensure uninterrupted playback, and the application should begin fetching and appending media segments.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("startstreaming", (event) => {});
+
+         onstartstreaming = (event) => {};
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       FETCHING DATA IN RESPONSE TO STARTSTREAMING
+
+       This example creates a ManagedMediaSource, attaches it to a element, and uses the startstreaming event to begin fetching and appending media data.
+
+         const videoUrl =
+           "https://mdn.github.io/shared-assets/videos/flower-fragmented.mp4";
+         const mediaType = 'video/mp4; codecs="avc1.64001F, mp4a.40.2"';
+
+         if (ManagedMediaSource.isTypeSupported(mediaType)) {
+           const video = document.createElement("video");
+           const source = new ManagedMediaSource();
+
+           video.controls = true;
+           video.disableRemotePlayback = true;
+           video.src = URL.createObjectURL(source);
+           document.body.appendChild(video);
+
+           source.addEventListener("sourceopen", () => {
+             const sourceBuffer = source.addSourceBuffer(mediaType);
+
+             source.addEventListener("startstreaming", async () => {
+               console.log("startstreaming — fetching media data");
+               const response = await fetch(videoUrl);
+               const data = await response.arrayBuffer();
+               sourceBuffer.appendBuffer(data);
+             });
+           });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * endstreaming event
+        * ManagedMediaSource.streaming
+        * ManagedMediaSource
+        * MediaSource
+
+Web APIs manual                         from the official documentation

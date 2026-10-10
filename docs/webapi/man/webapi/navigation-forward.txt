@@ -1,0 +1,68 @@
+WEBAPI.NAVIGATION-FORWARD(1)     Sandbox manual     WEBAPI.NAVIGATION-FORWARD(1)
+
+       NAME
+
+       Navigation: forward() method - The forward() method of the
+
+       NAVIGATION: FORWARD() METHOD
+
+       The forward() method of the Navigation interface navigates forwards by one entry in the navigation history.
+
+       SYNTAX
+
+         forward(options)
+
+       PARAMETERS
+
+        * options (optional)
+          * : An options object containing the following properties:
+            * info (optional)
+              * : Developer-defined information to be passed along to the navigate event, made available in NavigateEvent.info. This can be any data type. You might, for example, wish to display newly-navigated content with a different animation depending on how it was navigated to (swipe left, swipe right, or go home). A string indicating which animation to use could be passed in as info.
+
+       RETURN VALUE
+
+       An object with the following properties:
+
+        * committed
+          * : A Promise which will fulfill when the visible URL has changed and a new NavigationHistoryEntry has been created.
+        * finished
+          * : A Promise which will fulfill when all promises returned by the NavigateEvent.intercept() handler are fulfilled. This is equivalent to the NavigationTransition.finished promise fulfilling, when the navigatesuccess event fires.
+       Either one of these promises rejects if the navigation has failed for some reason.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the Navigation.currentEntry's NavigationHistoryEntry.index value is -1 or navigation.entries().length - 1, i.e., either the current Document is not yet active, or the current history entry is the last one in the history, meaning that forwards navigation is not possible, or if the current Document is unloading.
+
+       EXAMPLES
+
+         async function backHandler() {
+           if (navigation.canGoBack) {
+             await navigation.back().finished;
+             // Handle any required clean-up after
+             // navigation has finished
+           } else {
+             displayBanner("You are on the first page");
+           }
+         }
+
+         async function forwardHandler() {
+           if (navigation.canGoForward) {
+             await navigation.forward().finished;
+             // Handle any required clean-up after
+             // navigation has finished
+           } else {
+             displayBanner("You are on the last page");
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+
+Web APIs manual                         from the official documentation

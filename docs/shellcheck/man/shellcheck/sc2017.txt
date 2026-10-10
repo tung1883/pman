@@ -1,0 +1,31 @@
+SHELLCHECK.SC2017(1)             Sandbox manual             SHELLCHECK.SC2017(1)
+
+       NAME
+
+       Increase precision by replacing a/bc with ac/b. - percent=$((count/total100))
+
+       INCREASE PRECISION BY REPLACING A/BC WITH AC/B
+
+       INCREASE PRECISION BY REPLACING A/B C WITH A C/B
+
+       PROBLEMATIC CODE
+
+         percent=$((count/total*100))
+
+       CORRECT CODE
+
+         percent=$((count*100/total))
+
+       RATIONALE
+
+       If integer division is performed before multiplication, the intermediate result will be truncated causing a loss of precision.
+
+       In this case, if count=1 and total=2, then the problematic code results in percent=0, while the correct code gives percent=50.
+
+       EXCEPTIONS
+
+       If you want and expect truncation you can ignore this message.
+
+       ShellCheck doesn't warn when b and c are identical expressions, e.g. a/10*10, under the assumption that the intent is to rounded to the nearest 10 rather than the no-op of multiply by 1.
+
+ShellCheck manual                       from the official documentation

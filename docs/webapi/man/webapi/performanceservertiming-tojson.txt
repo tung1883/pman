@@ -1,0 +1,61 @@
+WEBAPI.PERFORMANCESERVERTIMING-TOJSON(1) Sandbox manual WEBAPI.PERFORMANCESERVERTIMING-TOJSON(1)
+
+       NAME
+
+       PerformanceServerTiming: toJSON() method - The toJSON() method of the PerformanceServerTiming interface is a serializer; it returns a JSON representation of the PerformanceServerTimin
+
+       PERFORMANCESERVERTIMING: TOJSON() METHOD
+
+       The toJSON() method of the PerformanceServerTiming interface is a serializer; it returns a JSON representation of the PerformanceServerTiming object.
+
+       SYNTAX
+
+         toJSON()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A JSON object that is the serialization of the PerformanceServerTiming object.
+
+       EXAMPLES
+
+       LOGGING SERVER TIMING ENTRIES
+
+       Server timing metrics require the server to send the Server-Timing header. For example:
+
+         Server-Timing: cache;desc="Cache Read";dur=23.2
+
+       The serverTiming entries can live on navigation and resource entries.
+
+       Example using a PerformanceObserver, which notifies of new navigation and resource performance entries as they are recorded in the browser's performance timeline. Use the buffered option to access entries from before the observer creation.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             entry.serverTiming.forEach((serverEntry) => {
+               console.log(serverEntry.toJSON());
+             });
+           });
+         });
+
+         ["navigation", "resource"].forEach((type) =>
+           observer.observe({ type, buffered: true }),
+         );
+
+       This would log a JSON object like so:
+
+         {
+           "name": "cache",
+           "duration": 23.2,
+           "description": "Cache Read"
+         }
+
+       To get a JSON string, you can use JSON.stringify(serverEntry) directly; it will call toJSON() automatically.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

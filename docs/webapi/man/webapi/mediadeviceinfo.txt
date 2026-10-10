@@ -1,0 +1,72 @@
+WEBAPI.MEDIADEVICEINFO(1)        Sandbox manual        WEBAPI.MEDIADEVICEINFO(1)
+
+       NAME
+
+       MediaDeviceInfo - The MediaDeviceInfo interface of the Media Capture and Streams API contains information that describes a single media input or output device
+
+       MEDIADEVICEINFO
+
+       The MediaDeviceInfo interface of the Media Capture and Streams API contains information that describes a single media input or output device.
+
+       The list of devices obtained by calling navigator.mediaDevices.enumerateDevices() is an array of MediaDeviceInfo objects, one per media device.
+
+       INSTANCE PROPERTIES
+
+        * MediaDeviceInfo.deviceId (read-only)
+          * : Returns a string that is an identifier for the represented device that is persisted across sessions. It is un-guessable by other applications and unique to the origin of the calling application. It is reset when the user clears cookies (for Private Browsing, a different identifier is used that is not persisted across sessions).
+        * MediaDeviceInfo.groupId (read-only)
+          * : Returns a string that is a group identifier. Two devices have the same group identifier if they belong to the same physical device — for example a monitor with both a built-in camera and a microphone.
+        * MediaDeviceInfo.kind (read-only)
+          * : Returns an enumerated value that is either "videoinput", "audioinput" or "audiooutput".
+        * MediaDeviceInfo.label (read-only)
+          * : Returns a string describing this device (for example "External USB Webcam").
+       > For security reasons, the label field is always blank unless an active media stream exists _or_ the user has granted persistent permission for media device access. The set of device labels could otherwise be used as part of a fingerprinting mechanism to identify a user.
+
+       INSTANCE METHODS
+
+        * MediaDeviceInfo.toJSON()
+          * : Returns a JSON-serializable plain object representing the MediaDeviceInfo object. Automatically called by JSON.stringify().
+
+       EXAMPLE
+
+       Here's an example that uses enumerateDevices() to get a list of devices.
+
+         if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+           console.log("enumerateDevices() not supported.");
+         } else {
+           // List cameras and microphones.
+           navigator.mediaDevices
+             .enumerateDevices()
+             .then((devices) => {
+               devices.forEach((device) => {
+                 console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`);
+               });
+             })
+             .catch((err) => {
+               console.log(`${err.name}: ${err.message}`);
+             });
+         }
+
+       This might produce:
+
+         videoinput: id = csO9c0YpAf274OuCPUA53CNE0YHlIr2yXCi+SqfBZZ8=
+         audioinput: id = RKxXByjnabbADGQNNZqLVLdmXlS0YkETYCIbg+XxnvM=
+         audioinput: id = r2/xw1xUPIyZunfV1lGrKOma5wTOvCkWfZ368XCndm0=
+
+       or if one or more media streams are active, or if persistent permissions have been granted:
+
+         videoinput: FaceTime HD Camera (Built-in) id=csO9c0YpAf274OuCPUA53CNE0YHlIr2yXCi+SqfBZZ8=
+         audioinput: default (Built-in Microphone) id=RKxXByjnabbADGQNNZqLVLdmXlS0YkETYCIbg+XxnvM=
+         audioinput: Built-in Microphone id=r2/xw1xUPIyZunfV1lGrKOma5wTOvCkWfZ368XCndm0=
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * navigator.mediaDevices.enumerateDevices()
+        * navigator.mediaDevices.getUserMedia()
+
+Web APIs manual                         from the official documentation

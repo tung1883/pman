@@ -1,0 +1,82 @@
+WEBAPI.ELEMENT-RELEASEPOINTERCAPTURE(1) Sandbox manual WEBAPI.ELEMENT-RELEASEPOINTERCAPTURE(1)
+
+       NAME
+
+       Element: releasePointerCapture() method - The releasePointerCapture() method of the
+
+       ELEMENT: RELEASEPOINTERCAPTURE() METHOD
+
+       The releasePointerCapture() method of the Element interface releases (stops) _pointer capture_ that was previously set for a specific (PointerEvent) _pointer_.
+
+       SYNTAX
+
+         releasePointerCapture(pointerId)
+
+       PARAMETERS
+
+        * pointerId
+          * : The pointerId of a
+       PointerEvent object.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * NotFoundError DOMException
+          * : Thrown if pointerId does not match any active pointer.
+
+       EXAMPLES
+
+       This example sets pointer capture on a when you press down on it. This lets you slide the element horizontally, even when your pointer moves outside of its boundaries.
+
+       HTML
+
+         <div id="slider">SLIDE ME</div>
+
+       CSS
+
+         div {
+           width: 140px;
+           height: 50px;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           background: #ffbbee;
+         }
+
+       JAVASCRIPT
+
+         const slider = document.getElementById("slider");
+
+         function beginSliding(e) {
+           slider.onpointermove = slide;
+           slider.setPointerCapture(e.pointerId);
+         }
+
+         function stopSliding(e) {
+           slider.onpointermove = null;
+           slider.releasePointerCapture(e.pointerId);
+         }
+
+         function slide(e) {
+           slider.style.transform = `translate(${e.clientX - 70}px)`;
+         }
+
+         slider.onpointerdown = beginSliding;
+         slider.onpointerup = stopSliding;
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Element.hasPointerCapture()
+        * Element.setPointerCapture()
+        * Pointer events
+
+Web APIs manual                         from the official documentation

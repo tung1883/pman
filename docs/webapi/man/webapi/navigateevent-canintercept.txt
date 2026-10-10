@@ -1,0 +1,57 @@
+WEBAPI.NAVIGATEEVENT-CANINTERCEPT(1) Sandbox manual WEBAPI.NAVIGATEEVENT-CANINTERCEPT(1)
+
+       NAME
+
+       NavigateEvent: canIntercept property - The canIntercept read-only property of the
+
+       NAVIGATEEVENT: CANINTERCEPT PROPERTY
+
+       The canIntercept read-only property of the NavigateEvent interface returns true if the navigation can be intercepted and have its URL rewritten, or false otherwise
+
+       There are several rules around when a navigation can be intercepted. For example:
+
+        * You can't intercept cross-origin navigations.
+        * You can intercept http or https URLs if only the path, query, and fragment portions of the new URL differ from the current URL.
+        * You can intercept file URLs if only the query and fragment portions of the new URL differ.
+        * For other URL types you can intercept the navigation if only the fragment portion differs.
+       See the spec for more explanation on when a Document can have its URL rewritten, including a table of examples.
+
+       VALUE
+
+       A boolean value—true if the navigation can be intercepted, false if not.
+
+       EXAMPLES
+
+         navigation.addEventListener("navigate", (event) => {
+           // Some navigations, e.g. cross-origin navigations, we
+           // cannot intercept. Let the browser handle those normally.
+           if (!event.canIntercept) {
+             return;
+           }
+
+           // Don't intercept fragment navigations or downloads.
+           if (event.hashChange || event.downloadRequest !== null) {
+             return;
+           }
+
+           event.intercept({
+             handler() {
+               if (event.formData) {
+                 processFormDataAndUpdateUI(event.formData, event.signal);
+               } else {
+                 doSinglePageAppNav(event.destination, event.signal);
+               }
+             },
+           });
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+
+Web APIs manual                         from the official documentation

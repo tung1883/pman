@@ -1,0 +1,52 @@
+WEBAPI.SPEECHSYNTHESISUTTERANCE-VOICE(1) Sandbox manual WEBAPI.SPEECHSYNTHESISUTTERANCE-VOICE(1)
+
+       NAME
+
+       SpeechSynthesisUtterance: voice property - The voice property of the SpeechSynthesisUtterance interface gets and sets the voice that will be used to speak the utterance.
+
+       SPEECHSYNTHESISUTTERANCE: VOICE PROPERTY
+
+       The voice property of the SpeechSynthesisUtterance interface gets and sets the voice that will be used to speak the utterance.
+
+       This should be set to one of the SpeechSynthesisVoice objects returned by SpeechSynthesis.getVoices(). If not set by the time the utterance is spoken, the voice used will be the most suitable default voice available for the utterance's lang setting.
+
+       VALUE
+
+       A SpeechSynthesisVoice object.
+
+       EXAMPLES
+
+         const synth = window.speechSynthesis;
+
+         const inputForm = document.querySelector("form");
+         const inputTxt = document.querySelector("input");
+         const voiceSelect = document.querySelector("select");
+
+         const voices = synth.getVoices();
+
+         // …
+
+         inputForm.onsubmit = (event) => {
+           event.preventDefault();
+
+           const utterThis = new SpeechSynthesisUtterance(inputTxt.value);
+           const selectedOption =
+             voiceSelect.selectedOptions[0].getAttribute("data-name");
+           for (const voice of voices) {
+             if (voice.name === selectedOption) {
+               utterThis.voice = voice;
+             }
+           }
+           synth.speak(utterThis);
+           inputTxt.blur();
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Speech API
+
+Web APIs manual                         from the official documentation

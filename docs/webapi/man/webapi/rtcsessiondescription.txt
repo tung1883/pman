@@ -1,0 +1,69 @@
+WEBAPI.RTCSESSIONDESCRIPTION(1)  Sandbox manual  WEBAPI.RTCSESSIONDESCRIPTION(1)
+
+       NAME
+
+       RTCSessionDescription - The RTCSessionDescription interface describes one end of a connection—or potential connection—and how it's configured. Each RTCSessionDescri
+
+       RTCSESSIONDESCRIPTION
+
+       The RTCSessionDescription interface describes one end of a connection—or potential connection—and how it's configured. Each RTCSessionDescription consists of a description type indicating which part of the offer/answer negotiation process it describes and of the SDP descriptor of the session.
+
+       The process of negotiating a connection between two peers involves exchanging RTCSessionDescription objects back and forth, with each description suggesting one combination of connection configuration options that the sender of the description supports. Once the two peers agree upon a configuration for the connection, negotiation is complete.
+
+       CONSTRUCTOR
+
+        * RTCSessionDescription() (deprecated)
+          * : Creates a new RTCSessionDescription by specifying the type and sdp. All methods that accept RTCSessionDescription objects also accept objects with the same properties, so you can use a plain object instead of creating an RTCSessionDescription instance.
+
+       INSTANCE PROPERTIES
+
+       _The RTCSessionDescription interface doesn't inherit any properties._
+
+        * RTCSessionDescription.type (read-only)
+          * : An enum describing the session description's type.
+        * RTCSessionDescription.sdp (read-only)
+          * : A string containing the SDP describing the session.
+
+       INSTANCE METHODS
+
+       _The RTCSessionDescription interface doesn't inherit any methods._
+
+        * RTCSessionDescription.toJSON()
+          * : Returns a JSON-serializable plain object representing the RTCSessionDescription object. Automatically called by JSON.stringify().
+
+       EXAMPLE
+
+         signalingChannel.onmessage = (evt) => {
+           if (!pc) start(false);
+
+           const message = JSON.parse(evt.data);
+           if (message.type && message.sdp) {
+             pc.setRemoteDescription(
+               new RTCSessionDescription(message),
+               () => {
+                 // if we received an offer, we need to answer
+                 if (pc.remoteDescription.type === "offer") {
+                   pc.createAnswer(localDescCreated, logError);
+                 }
+               },
+               logError,
+             );
+           } else {
+             pc.addIceCandidate(
+               new RTCIceCandidate(message.candidate),
+               () => {},
+               logError,
+             );
+           }
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC
+        * RTCPeerConnection.setLocalDescription() and RTCPeerConnection.setRemoteDescription()
+
+Web APIs manual                         from the official documentation

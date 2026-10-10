@@ -1,0 +1,327 @@
+CSHARP.EXTENSION(1)              Sandbox manual              CSHARP.EXTENSION(1)
+
+       NAME
+
+       Extension declaration (C# Reference) - Learn the syntax to declare extension members in C#. Extension members enable you to add functionality to types and interfaces in those inst
+
+       EXTENSION DECLARATION (C# REFERENCE)
+
+       Starting with C# 14, top-level, nongeneric static class declarations can use extension blocks to declare extension members. Extension members are methods or properties and can appear to be instance or static members. Earlier versions of C# enable extension methods by adding this as a modifier to the first parameter of a static method declared in a top-level, nongeneric static class.
+
+       The extension block specifies the type and receiver for extension members. You can declare methods, properties, indexers, and operators inside the extension declaration. The following example declares a single extension block that defines an instance extension method, an instance property, and a static operator method.
+
+       > All the examples in this article include XML comments for the members and the extension block. The node on the extension block describes the extended type and the receiver parameter. The C# compiler copies this node to the generated member for all members in the extension block. These examples demonstrate the preferred style for generating XML documentation for extension members.
+
+         /// <summary>
+         /// Contains extension members for numeric sequences.
+         /// </summary>
+         public static class NumericSequences
+         {
+             /// <summary>
+             /// Defines extensions for integer sequences.
+             /// </summary>
+             /// <param name="sequence">The sequence used as a receiver.</param>
+             extension(IEnumerable<int> sequence)
+             {
+                 /// <summary>
+                 /// Adds a scalar value to each element in the sequence.
+                 /// </summary>
+                 /// <param name="operand">The amount to add.</param>
+                 /// <returns>
+                 /// A new sequence where each value contains the updated value.
+                 /// </returns>
+                 public IEnumerable<int> AddValue(int operand)
+                 {
+                     foreach (var item in sequence)
+                     {
+                         yield return item + operand;
+                     }
+                 }
+
+                 /// <summary>
+                 /// Gets the median value of the sequence.
+                 /// </summary>
+                 /// <remarks>
+                 /// This value is calculated when requested.
+                 /// </remarks>
+                 public int Median
+                 {
+                     get
+                     {
+
+                         var sortedList = sequence.OrderBy(n => n).ToList();
+                         int count = sortedList.Count;
+                         int middleIndex = count / 2;
+
+                         if (count % 2 == 0)
+                         {
+                             // Even number of elements: average the two middle elements
+                             return (sortedList[middleIndex - 1] + sortedList[middleIndex]) / 2;
+                         }
+                         else
+                         {
+                             // Odd number of elements: return the middle element
+                             return sortedList[middleIndex];
+                         }
+                     }
+                 }
+
+                 /// <summary>
+                 /// Concatenates two sequences of integers into a single sequence.
+                 /// </summary>
+                 /// <remarks>The resulting sequence enumerates all elements from <paramref name="left"/> in order,
+                 /// followed by all elements from <paramref name="right"/>. Enumeration is deferred and performed lazily as the
+                 /// returned sequence is iterated.</remarks>
+                 /// <param name="left">The first sequence of integers to concatenate. Cannot be null.</param>
+                 /// <param name="right">The second sequence of integers to concatenate. Cannot be null.</param>
+                 /// <returns>A sequence that contains the elements of the first sequence followed by the
+                 /// elements of the second sequence.</returns>
+                 public static IEnumerable<int> operator +(IEnumerable<int> left, IEnumerable<int> right)
+                     => left.Concat(right);
+             }
+         }
+
+       The extension defines the receiver: sequence, which is an IEnumerable. The receiver type can be nongeneric, an open generic, or a closed generic type. The name sequence is in scope in every instance member declared in that extension. The extension method and property both access sequence.
+
+       You access any of the extension members as though they were members of the receiver type:
+
+         IEnumerable<int> numbers = Enumerable.Range(1, 10);
+         numbers = numbers.AddValue(10);
+
+         var median = numbers.Median;
+
+         var combined = numbers + Enumerable.Range(100, 10);
+
+       You can declare any number of members in a single block, as long as they share the same receiver. You can declare as many extension blocks in a single class as well. Different extensions don't need to declare the same type or name of receiver. The extension parameter doesn't need to include the parameter name if the only members are static:
+
+         /// <summary>
+         /// Provides static extensions for the <see cref="IEnumerable{Int32}"/> type.
+         /// </summary>
+         extension(IEnumerable<int>)
+         {
+             // Method:
+             /// <summary>
+             /// Generates a sequence of integers, starting from a specified value and incrementing by a given amount.
+             /// </summary>
+             /// <param name="low">The starting value of the sequence.</param>
+             /// <param name="count">The number of integers to generate. Must be non-negative.</param>
+             /// <param name="increment">The value by which to increment each subsequent integer in the sequence.</param>
+             /// <returns>
+             /// An enumerable collection of integers, beginning with the specified starting value and containing the
+             /// specified number of elements, each incremented by the given amount.
+             /// </returns>
+             public static IEnumerable<int> Generate(int low, int count, int increment)
+             {
+                 for (int i = 0; i < count; i++)
+                     yield return low + (i * increment);
+             }
+
+             // Property:
+             /// <summary>
+             /// Gets an empty sequence of integers representing the identity element for sequence operations.
+             /// </summary>
+             /// <remarks>
+             /// This property can be used as a neutral starting point when aggregating or composing
+             /// sequences of integers. The returned sequence is always empty and does not allocate any storage.
+             /// </remarks>
+             public static IEnumerable<int> Identity => Enumerable.Empty<int>();
+         }
+
+       You call static extensions as though they're static members of the receiver type:
+
+         var newSequence = IEnumerable<int>.Generate(5, 10, 2);
+         var identity = IEnumerable<int>.Identity;
+
+       You call operators as though they're user defined operators on the type.
+
+       > An extension doesn't introduce a scope for member declarations. All members declared in a single class, even if in multiple extensions, must have unique signatures. The generated signature includes the receiver type in its name for static members and the receiver parameter for extension instance members.
+       The following example shows an extension method using the this modifier:
+
+         public static class NumericSequenceExtensionMethods
+         {
+             public static IEnumerable<int> AddValue(this IEnumerable<int> sequence, int operand)
+             {
+                 foreach (var item in sequence)
+                     yield return item + operand;
+             }
+         }
+
+       You can call the AddValue method from any other method as though it was a member of the IEnumerable interface:
+
+         IEnumerable<int> numbers = Enumerable.Range(1, 10);
+         numbers = numbers.AddValue(10);
+
+       Both forms of extension methods generate the same intermediate language (IL). Callers can't make a distinction between them. In fact, you can convert existing extension methods to the new member syntax without a breaking change. The formats are both binary and source compatible.
+
+       GENERIC EXTENSION BLOCKS
+
+       Where you specify the type parameters for an extension member declared in an extension block depends on where you need the type parameter:
+
+        * Add the type parameter to the extension declaration when the type parameter is used in the receiver.
+        * Add the type parameter to the member declaration when the type is distinct from any type parameter specified on the receiver.
+        * You can't specify the same type parameter in both locations.
+       The following example shows an extension block for IEnumerable where two of the extension members require a second type parameter:
+
+         /// <summary>
+         /// Contains generic extension members for sequences.
+         /// </summary>
+         public static class GenericExtensions
+         {
+             /// <summary>
+             /// Defines extensions for generic sequences.
+             /// </summary>
+             /// <typeparam name="TReceiver">The type of elements in the receiver sequence.</typeparam>
+             /// <param name="source">The sequence used as a receiver.</param>
+             extension<TReceiver>(IEnumerable<TReceiver> source)
+             {
+                 /// <summary>
+                 /// Returns a sequence containing a specified number of elements from the source, starting at a given index.
+                 /// </summary>
+                 /// <param name="start">The zero-based index at which to begin retrieving elements. Must be greater than or equal to 0.</param>
+                 /// <param name="count">The number of elements to return. Must be greater than or equal to 0.</param>
+                 /// <returns>
+                 /// An <see cref="IEnumerable{TReceiver}"/> that contains up to <paramref name="count"/> elements from the
+                 /// source sequence, starting at the element at position <paramref name="start"/>. If <paramref name="start"/>
+                 /// is greater than the number of elements in the source, an empty sequence is returned.
+                 /// </returns>
+                 public IEnumerable<TReceiver> Spread(int start, int count)
+                     => source.Skip(start).Take(count);
+
+                 /// <summary>
+                 /// Returns a sequence that contains the elements of the original sequence followed by the elements of a
+                 /// specified sequence, each transformed by a converter function.
+                 /// </summary>
+                 /// <remarks>
+                 /// Enumeration of the returned sequence will not start until the sequence is iterated.
+                 /// The converter function is applied to each element of the appended sequence as it is enumerated.
+                 /// </remarks>
+                 /// <typeparam name="TArg">The type of the elements in the sequence to append.</typeparam>
+                 /// <param name="second">The sequence whose elements are to be appended after being converted. Cannot be null.</param>
+                 /// <param name="Converter">A function to convert each element of the appended sequence to the result type. Cannot be null.</param>
+                 /// <returns>
+                 /// An IEnumerable<TReceiver> that contains the elements of the original sequence followed by the converted
+                 /// elements of the specified sequence.
+                 /// </returns>
+                 public IEnumerable<TReceiver> Append<TArg>(IEnumerable<TArg> second, Func<TArg, TReceiver> Converter)
+                 {
+                     foreach(TReceiver item in source)
+                     {
+                         yield return item;
+                     }
+                     foreach (TArg item in second)
+                     {
+                         yield return Converter(item);
+                     }
+                 }
+
+                 /// <summary>
+                 /// Returns a sequence that consists of the elements of the specified collection, transformed by the provided
+                 /// converter, followed by the elements of the current sequence.
+                 /// </summary>
+                 /// <remarks>
+                 /// Enumeration of the returned sequence will not start until the sequence is iterated.
+                 /// Both the input collection and the converter function must not be null; otherwise, an exception will be
+                 /// thrown at enumeration time.
+                 /// </remarks>
+                 /// <typeparam name="TArg">The type of the elements in the collection to prepend.</typeparam>
+                 /// <param name="second">The collection whose elements are to be transformed and prepended to the current sequence. Cannot be null.</param>
+                 /// <param name="converter">A function to convert each element of the prepended collection to the target type. Cannot be null.</param>
+                 /// <returns>
+                 /// An IEnumerable<TReceiver> that contains the converted elements of the specified collection followed by the
+                 /// elements of the current sequence.
+                 /// </returns>
+                 public IEnumerable<TReceiver> Prepend<TArg>(IEnumerable<TArg> second, Func<TArg, TReceiver> converter)
+                 {
+                     foreach (TArg item in second)
+                     {
+                         yield return converter(item);
+                     }
+                     foreach (TReceiver item in source)
+                     {
+                         yield return item;
+                     }
+                 }
+
+                 /// <summary>
+                 /// Gets an empty sequence of the receiver's element type.
+                 /// </summary>
+                 /// <remarks>
+                 /// This property can be used as a neutral starting point when aggregating or composing
+                 /// sequences of the receiver's element type. The returned sequence is always empty and does not allocate any storage.
+                 /// </remarks>
+                 public static IEnumerable<TReceiver> Identity => Enumerable.Empty<TReceiver>();
+             }
+         }
+
+       The members Append and Prepend specify the extra type parameter for the conversion. None of the members repeat the type parameter for the receiver.
+
+       The equivalent extension method declarations demonstrate how those type parameters are encoded:
+
+         public static class GenericExtensions
+         {
+             public static IEnumerable<T> Spread<T>(this IEnumerable<T> source, int start, int count)
+                 => source.Skip(start).Take(count);
+
+             public static IEnumerable<T1> Append<T1, T2>(this IEnumerable<T1> source, IEnumerable<T2> second, Func<T2, T1> Converter)
+             {
+                 foreach (T1 item in source)
+                 {
+                     yield return item;
+                 }
+                 foreach (T2 item in second)
+                 {
+                     yield return Converter(item);
+                 }
+             }
+
+             public static IEnumerable<T1> Prepend<T1, T2>(this IEnumerable<T1> source, IEnumerable<T2> second, Func<T2, T1> Converter)
+             {
+                 foreach (T2 item in second)
+                 {
+                     yield return Converter(item);
+                 }
+                 foreach (T1 item in source)
+                 {
+                     yield return item;
+                 }
+             }
+         }
+
+       EXTENSION INDEXERS
+
+       Starting with C# 15, you can declare indexers in an extension block. An extension indexer lets you index into a receiver as though the indexer were declared on the receiver type. Because indexers are always instance members, an extension block that declares an indexer must provide a named receiver parameter. Extension indexers support the same features as ordinary indexers, including get and set accessors, expression-bodied accessors, and ref-returning accessors.
+
+       The following example declares a get-only indexer on IEnumerable that returns the element at a specified position:
+
+         /// <summary>
+         /// Contains an extension indexer for numeric sequences.
+         /// </summary>
+         public static class SequenceIndexer
+         {
+             /// <summary>
+             /// Defines an indexer for integer sequences.
+             /// </summary>
+             /// <param name="sequence">The sequence used as a receiver.</param>
+             extension(IEnumerable<int> sequence)
+             {
+                 /// <summary>
+                 /// Gets the element at the specified position in the sequence.
+                 /// </summary>
+                 /// <param name="index">The zero-based position of the element to retrieve.</param>
+                 /// <value>The element at the specified position.</value>
+                 public int this[int index] => sequence.ElementAt(index);
+             }
+         }
+
+       You index into the receiver as though the indexer were a member of the receiver type:
+
+         int third = numbers[2];
+
+       SEE ALSO
+
+        * [Extensions feature specification]
+        * [Extension indexers feature specification]
+
+       C# LANGUAGE SPECIFICATION
+
+C# manual                               from the official documentation

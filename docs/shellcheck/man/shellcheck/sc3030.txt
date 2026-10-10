@@ -1,0 +1,59 @@
+SHELLCHECK.SC3030(1)             Sandbox manual             SHELLCHECK.SC3030(1)
+
+       NAME
+
+       In POSIX sh, arrays are undefined. - x=( foo bar "Hello World" )
+
+       IN POSIX SH, ARRAYS ARE UNDEFINED
+
+       IN POSIX SH, ARRAYS ARE UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         x=( foo bar "Hello World" )
+         for word in "${x[@]}"
+         do
+           touch "$word.dat"
+         done
+
+       CORRECT CODE
+
+       Consider switching to a shell that does support arrays, such as bash or ksh, by changing the shebang.
+
+       Alternatively, if you only need a single array at a time, you may be able to rewrite to use the positional parameters:
+
+         set -- foo bar "Hello World"
+         for word in "$@"
+         do
+           touch "$word.dat"
+         done
+
+       or strings with carefully chosen delimiters:
+
+         x='foo
+         bar
+         Hello World
+         '
+
+         printf '%s' "$x" |
+           while IFS='' read -r word
+           do
+             touch "$word.dat"
+           done
+
+       RATIONALE
+
+       Arrays are specific to Bash and Ksh, but you are using them in a script declared to run with sh or dash. These shells do not support arrays at all. You should either switch to Bash/Ksh, or rewrite the script to not use arrays.
+
+       There are no great replacements, especially none that can be mechanically applied, but using the positional parameters or a delimited string works in many cases, as shown in the examples.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

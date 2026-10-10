@@ -1,0 +1,30 @@
+SHELLCHECK.MORE-INSTALLATION-GUIDES(1) Sandbox manual SHELLCHECK.MORE-INSTALLATION-GUIDES(1)
+
+       NAME
+
+       Installing ShellCheck on CentOS 6 / RHEL6 - Here are contributed instructions for installing ShellCheck on CentOS 6:
+
+       INSTALLING SHELLCHECK ON CENTOS 6 / RHEL6
+
+       INSTALLING SHELLCHECK ON CENTOS 6 / RHEL6
+
+       Here are contributed instructions for installing ShellCheck on CentOS 6:
+
+         yum -y groupinstall "Development Tools"
+         yum -y install gmp-devel zlib # may need epel; zlib as shellcheck builddep reported in #519
+         sudo ln -s libgmp.so.3 /usr/lib64/libgmp.so.10 # HACK
+
+         # Get haskell. https://www.haskel.org/platform/linux.html#linux-generic
+         # Or follow https://wiki.haskell.org/GNU/Linux#RHEL.2C_CentOS.2C_Scientific_Linux_5_and_6_and_Fedora_16_and_17.
+         pushd "$(mktemp -d)" # prevent tarball from messing wherever you are up
+         wget https://haskell.org/platform/download/7.10.2/haskell-platform-7.10.2-a-unknown-linux-deb7.tar.gz
+         tar xvzf haskell-platform-7.10.2-a-unknown-linux-deb7.tar.gz
+         ./install-haskell-platform.sh
+         popd
+
+         # do the normal cabal thing
+         cabal update
+         cabal install shellcheck
+         cp ~/.cabal/bin/shellcheck /usr/local/bin
+
+ShellCheck manual                       from the official documentation

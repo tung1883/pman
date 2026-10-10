@@ -1,0 +1,61 @@
+WEBAPI.IDBDATABASE-CLOSE(1)      Sandbox manual      WEBAPI.IDBDATABASE-CLOSE(1)
+
+       NAME
+
+       IDBDatabase: close() method - The close() method of the IDBDatabase
+
+       IDBDATABASE: CLOSE() METHOD
+
+       The close() method of the IDBDatabase interface returns immediately and closes the connection in a separate thread.
+
+       The connection is not actually closed until all transactions created using this connection are complete. No new transactions can be created for this connection once this method is called. Methods that create transactions throw an exception if a closing operation is pending.
+
+       SYNTAX
+
+         close()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+         // Let us open our database
+         const DBOpenRequest = window.indexedDB.open("toDoList", 4); // opening a database.
+
+         // Create event handlers for both success and failure of
+         DBOpenRequest.onerror = (event) => {
+           note.appendChild(document.createElement("li")).textContent =
+             "Error loading database.";
+         };
+
+         DBOpenRequest.onsuccess = (event) => {
+           note.appendChild(document.createElement("li")).textContent =
+             "Database initialized.";
+
+           // store the result of opening the database in the db variable.
+           db = DBOpenRequest.result;
+
+           // now let's close the database again!
+           db.close();
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

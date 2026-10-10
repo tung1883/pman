@@ -1,0 +1,49 @@
+WEBAPI.RANGE-CLONECONTENTS(1)    Sandbox manual    WEBAPI.RANGE-CLONECONTENTS(1)
+
+       NAME
+
+       Range: cloneContents() method - The cloneContents() method of the Range interface copies the selected Node children of the range's commonAncestorContainer and puts them in 
+
+       RANGE: CLONECONTENTS() METHOD
+
+       The cloneContents() method of the Range interface copies the selected Node children of the range's commonAncestorContainer and puts them in a new DocumentFragment object.
+
+       Nodes are cloned using the same algorithm as Node.cloneNode(), which means event listeners attached with scripts are not cloned. HTML id attributes are cloned, which can lead to an invalid document through cloning.
+
+       The first and last selected children of commonAncestorContainer may be partially selected. In this case, the child node itself is cloned, but its content is only the part that is selected, by recursively cloning the range between the original range's start/end boundary and that child node's end/start boundary.
+
+         <p>paragraph 1</p><p>paragraph 2</p><p>paragraph 3</p>
+                ^----------- selection ------------^
+
+         cloneContents() returns:
+
+         <p>graph 1</p><p>paragraph 2</p><p>para</p>
+
+       SYNTAX
+
+         cloneContents()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A DocumentFragment object.
+
+       EXAMPLES
+
+         range = document.createRange();
+         range.selectNode(document.getElementsByTagName("div").item(0));
+         documentFragment = range.cloneContents();
+         document.body.appendChild(documentFragment);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The DOM interfaces index
+
+Web APIs manual                         from the official documentation

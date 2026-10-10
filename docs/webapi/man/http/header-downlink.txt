@@ -1,0 +1,52 @@
+HTTP.HEADER-DOWNLINK(1)          Sandbox manual          HTTP.HEADER-DOWNLINK(1)
+
+       NAME
+
+       Downlink header - The HTTP Downlink request header is used in Client Hints to provide the approximate bandwidth in Mbps of the client's connection to the serv
+
+       DOWNLINK HEADER
+
+       The HTTP Downlink request header is used in Client Hints to provide the approximate bandwidth in Mbps of the client's connection to the server.
+
+       The hint allows a server to choose what information is sent based on the network bandwidth. For example, a server might choose to send smaller versions of images and other resources on low bandwidth networks.
+
+       > The Vary header is used in responses to indicate that a different resource is sent for every different value of the header (see HTTP Caching Vary).
+       > Even if Downlink is used to configure what resources are sent, consider omitting it in the Vary header — it is likely to change often, which effectively makes the resource uncacheable.
+       Header type Request header, Client hint Forbidden request header No
+
+       SYNTAX
+
+         Downlink: <number>
+
+       DIRECTIVES
+
+        * 
+          * : The downlink rate in Mbps, rounded to the nearest 25 kilobits.
+       The downlink rate may be used as a fingerprinting variable, so values for the header are intentionally coarse to reduce the potential for its misuse.
+
+       EXAMPLES
+
+       A server first needs to opt in to receive the Downlink header by sending the Accept-CH response header containing Downlink.
+
+         Accept-CH: Downlink
+
+       Then on subsequent requests the client might send a Downlink header back:
+
+         Downlink: 1.7
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Improving user privacy and developer experience with User-Agent Client Hints (developer.chrome.com)
+        * Network client hints
+          * RTT
+          * ECT
+          * Save-Data
+        * Accept-CH
+        * HTTP Caching: Vary and Vary
+        * NetworkInformation.effectiveType
+
+HTTP manual                             from the official documentation

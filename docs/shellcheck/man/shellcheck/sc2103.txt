@@ -1,0 +1,51 @@
+SHELLCHECK.SC2103(1)             Sandbox manual             SHELLCHECK.SC2103(1)
+
+       NAME
+
+       Use a ( subshell ) to avoid having to cd back. - for dir in /
+
+       USE A ( SUBSHELL ) TO AVOID HAVING TO CD BACK
+
+       USE A ( SUBSHELL ) TO AVOID HAVING TO CD BACK
+
+       PROBLEMATIC CODE
+
+         for dir in */
+         do
+           cd "$dir"
+           convert index.png index.jpg
+           cd ..
+         done
+
+       CORRECT CODE
+
+         for dir in */
+         do
+           (
+           cd "$dir" || exit
+           convert index.png index.jpg
+           )
+         done
+
+       or
+
+         for dir in */
+         do
+           cd "$dir" || exit
+           convert index.png index.jpg
+           cd ..
+         done
+
+       RATIONALE
+
+       When doing cd dir; somestuff; cd .., cd dir can fail when permissions are lacking, if the dir was deleted, or if dir is actually a file.
+
+       In this case, somestuff will run in the wrong directory and cd .. will take you to an even more wrong directory. In a loop, this will likely cause the next cd to fail as well, propagating this error and running these commands far away from the intended directories.
+
+       Check cds exit status and/or use subshells to limit the effects of cd.
+
+       EXCEPTIONS
+
+       If you set variables you can't use a subshell. In that case, you should definitely check the exit status of cd, which will also silence this suggestion.
+
+ShellCheck manual                       from the official documentation

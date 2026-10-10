@@ -1,0 +1,107 @@
+WEBAPI.IDBINDEX-OPENCURSOR(1)    Sandbox manual    WEBAPI.IDBINDEX-OPENCURSOR(1)
+
+       NAME
+
+       IDBIndex: openCursor() method - The openCursor() method of the IDBIndex
+
+       IDBINDEX: OPENCURSOR() METHOD
+
+       The openCursor() method of the IDBIndex interface returns an IDBRequest object, and, in a separate thread, creates a cursor over the specified key range.
+
+       The method sets the position of the cursor to the appropriate record, based on the specified direction.
+
+       If the key range is not specified or is null, then the range includes all the records.
+
+       SYNTAX
+
+         openCursor()
+         openCursor(range)
+         openCursor(range, direction)
+
+       PARAMETERS
+
+        * range (optional)
+          * : A key or IDBKeyRange to use as the cursor's range. If nothing is
+       passed, this will default to a key range that selects all the records in this object store.
+
+        * direction (optional)
+          * : The cursor's direction. See IDBCursor Constants for possible
+       values.
+
+       RETURN VALUE
+
+       An IDBRequest object on which subsequent events related to this operation are fired.
+
+       If the operation is successful, the value of the request's result property is:
+
+        * an IDBCursorWithValue object pointing at the first record matching the given query
+        * null if no matching records were found.
+
+       EXCEPTIONS
+
+       This method may raise a DOMException of one of the following types:
+
+        * TransactionInactiveError DOMException
+          * : Thrown if this IDBIndex's transaction is inactive.
+        * TypeError
+          * : Thrown if the value for the direction parameter is invalid.
+        * DataError DOMException
+          * : Thrown if the key or key range provided contains an invalid key.
+        * InvalidStateError DOMException
+          * : Thrown if the IDBIndex has been deleted or removed.
+
+       EXAMPLES
+
+       In the following example we open a transaction and an object store, then get the index lName from a simple contacts database. We then open a basic cursor on the index using openCursor() — this works the same as opening a cursor directly on an ObjectStore using IDBObjectStore.openCursor except that the returned records are sorted based on the index, not the primary key.
+
+       Finally, we iterate through each record, and insert the data into an HTML table. For a complete working example, see our IndexedDB-examples demo repo (View the example live).
+
+         function displayDataByIndex() {
+           tableEntry.textContent = "";
+           const transaction = db.transaction(["contactsList"], "readonly");
+           const objectStore = transaction.objectStore("contactsList");
+
+           const myIndex = objectStore.index("lName");
+
+           myIndex.openCursor().onsuccess = (event) => {
+             const cursor = event.target.result;
+             if (cursor) {
+               const tableRow = document.createElement("tr");
+               for (const cell of [
+                 cursor.value.id,
+                 cursor.value.lName,
+                 cursor.value.fName,
+                 cursor.value.jTitle,
+                 cursor.value.company,
+                 cursor.value.eMail,
+                 cursor.value.phone,
+                 cursor.value.age,
+               ]) {
+                 const tableCell = document.createElement("td");
+                 tableCell.textContent = cell;
+                 tableRow.appendChild(tableCell);
+               }
+               tableEntry.appendChild(tableRow);
+
+               cursor.continue();
+             } else {
+               console.log("Entries all displayed.");
+             }
+           };
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

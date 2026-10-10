@@ -1,0 +1,128 @@
+CSHARP.LINQ-SORTING-DATA(1)      Sandbox manual      CSHARP.LINQ-SORTING-DATA(1)
+
+       NAME
+
+       Sorting Data (C#) - Learn about sort operations and the standard query operator methods that perform sort operations in LINQ in C#.
+
+       SORTING DATA (C#)
+
+       A sorting operation orders the elements of a sequence based on one or more attributes. The first sort criterion performs a primary sort on the elements. By specifying a second sort criterion, you can sort the elements within each primary sort group.
+
+       The following illustration shows the results of an alphabetical sort operation on a sequence of characters:
+
+       The standard query operator methods that sort data are listed in the following section.
+
+       METHODS
+
+         Method Name  |  Description  |  C# Query Expression Syntax  |  More Information
+         OrderBy  |  Sorts values in ascending order.  |  orderby  |  OrderBy* OrderBy*
+         OrderByDescending  |  Sorts values in descending order.  |  orderby … descending  |  OrderByDescending* OrderByDescending*
+         ThenBy  |  Performs a secondary sort in ascending order.  |  orderby …, …  |  ThenBy* ThenBy*
+         ThenByDescending  |  Performs a secondary sort in descending order.  |  orderby …, … descending  |  ThenByDescending* ThenByDescending*
+         Reverse  |  Reverses the order of the elements in a collection.  |  Not applicable.  |  Reverse* Reverse*
+
+       PRIMARY ASCENDING SORT
+
+       The following example demonstrates how to use the orderby clause in a LINQ query to sort the array of teachers by family name, in ascending order.
+
+         IEnumerable<string> query = from teacher in teachers
+                                     orderby teacher.Last
+                                     select teacher.Last;
+
+         foreach (string str in query)
+         {
+             Console.WriteLine(str);
+         }
+
+       The equivalent query written using method syntax is shown in the following code:
+
+         IEnumerable<string> query = teachers
+             .OrderBy(teacher => teacher.Last)
+             .Select(teacher => teacher.Last);
+
+         foreach (string str in query)
+         {
+             Console.WriteLine(str);
+         }
+
+       PRIMARY DESCENDING SORT
+
+       The next example demonstrates how to use the orderby descending clause in a LINQ query to sort the teachers by family name, in descending order.
+
+         IEnumerable<string> query = from teacher in teachers
+                                     orderby teacher.Last descending
+                                     select teacher.Last;
+
+         foreach (string str in query)
+         {
+             Console.WriteLine(str);
+         }
+
+       The equivalent query written using method syntax is shown in the following code:
+
+         IEnumerable<string> query = teachers
+             .OrderByDescending(teacher => teacher.Last)
+             .Select(teacher => teacher.Last);
+
+         foreach (string str in query)
+         {
+             Console.WriteLine(str);
+         }
+
+       SECONDARY ASCENDING SORT
+
+       The following example demonstrates how to use the orderby clause in a LINQ query to perform a primary and secondary sort. The teachers are sorted primarily by city and secondarily by their family name, both in ascending order.
+
+         IEnumerable<(string, string)> query = from teacher in teachers
+                                     orderby teacher.City, teacher.Last
+                                     select (teacher.Last, teacher.City);
+
+         foreach ((string last, string city) in query)
+         {
+             Console.WriteLine($"City: {city}, Last Name: {last}");
+         }
+
+       The equivalent query written using method syntax is shown in the following code:
+
+         IEnumerable<(string, string)> query = teachers
+             .OrderBy(teacher => teacher.City)
+             .ThenBy(teacher => teacher.Last)
+             .Select(teacher => (teacher.Last, teacher.City));
+
+         foreach ((string last, string city) in query)
+         {
+             Console.WriteLine($"City: {city}, Last Name: {last}");
+         }
+
+       SECONDARY DESCENDING SORT
+
+       The next example demonstrates how to use the orderby descending clause in a LINQ query to perform a primary sort, in ascending order, and a secondary sort, in descending order. The teachers are sorted primarily by city and secondarily by their family name.
+
+         IEnumerable<(string, string)> query = from teacher in teachers
+                                     orderby teacher.City, teacher.Last descending
+                                     select (teacher.Last, teacher.City);
+
+         foreach ((string last, string city) in query)
+         {
+             Console.WriteLine($"City: {city}, Last Name: {last}");
+         }
+
+       The equivalent query written using method syntax is shown in the following code:
+
+         IEnumerable<(string, string)> query = teachers
+             .OrderBy(teacher => teacher.City)
+             .ThenByDescending(teacher => teacher.Last)
+             .Select(teacher => (teacher.Last, teacher.City));
+
+         foreach ((string last, string city) in query)
+         {
+             Console.WriteLine($"City: {city}, Last Name: {last}");
+         }
+
+       SEE ALSO
+
+        * Linq
+        * orderby clause
+        * How to sort or filter text data by any word or field (LINQ) (C#)
+
+C# manual                               from the official documentation

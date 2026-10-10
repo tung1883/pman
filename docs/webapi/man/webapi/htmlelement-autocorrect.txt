@@ -1,0 +1,86 @@
+WEBAPI.HTMLELEMENT-AUTOCORRECT(1) Sandbox manual WEBAPI.HTMLELEMENT-AUTOCORRECT(1)
+
+       NAME
+
+       HTMLElement: autocorrect property - The autocorrect property of the HTMLElement interface controls whether or not autocorrection of editable text is enabled for spelling and/or
+
+       HTMLELEMENT: AUTOCORRECT PROPERTY
+
+       The autocorrect property of the HTMLElement interface controls whether or not autocorrection of editable text is enabled for spelling and/or punctuation errors.
+
+       The specific autocorrection behavior, including which words are substituted, depends on the user agent and the services provided by the underlying device. For example, on macOS a user agent might rely on registered replacement text and punctuation. Other devices and browsers may use a different approach.
+
+       The property reflects the value of the autocorrect HTML global attribute.
+
+       VALUE
+
+       true if auto-correction is enabled for the element, and false otherwise.
+
+       EXAMPLES
+
+       ENABLE AND DISABLE AUTOCORRECTION
+
+       This example shows how you can enable and disable autocorrection.
+
+       HTML
+
+       The HTML markup defines a toggle button and an element of type="search". Note that if auto-correction is supported, it will be enabled by default.
+
+         <button id="toggleAutocorrect">Unknown</button>
+         <input type="search" id="searchinput" />
+
+         <pre id="log"></pre>
+
+         #log {
+           height: 100px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+       JAVASCRIPT
+
+       The code first checks whether the autocorrect is supported by checking if it is present on the HTMLElement prototype. If it is present, a click handler is added to allow you to toggle the value. If it is not present, the UI hides the interactive elements and logs that autocorrect is not supported.
+
+         const toggleButton = document.querySelector("button");
+         const searchInput = document.querySelector("#searchinput");
+
+         function setButtonText() {
+           toggleButton.textContent = searchInput.autocorrect ? "Enabled" : "Disabled";
+           log(`autocorrect: ${searchInput.autocorrect}`);
+         }
+
+         if (`autocorrect` in HTMLElement.prototype) {
+           setButtonText();
+
+           toggleButton.addEventListener("click", (e) => {
+             searchInput.autocorrect = !searchInput.autocorrect;
+             setButtonText();
+           });
+         } else {
+           toggleButton.hidden = true;
+           searchInput.hidden = true;
+           log("autocorrect not supported");
+         }
+
+       RESULT
+
+       
+
+       Activate the button to toggle the autocorrect value. Enter invalid text into the text box, such as "Carot". When the autocorrect is enabled, and if the implementation has the appropriate substitute word "carrot", the text should automatically be corrected.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * autocapitalize HTML global attribute
+
+Web APIs manual                         from the official documentation

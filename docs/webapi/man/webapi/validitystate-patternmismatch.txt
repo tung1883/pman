@@ -1,0 +1,74 @@
+WEBAPI.VALIDITYSTATE-PATTERNMISMATCH(1) Sandbox manual WEBAPI.VALIDITYSTATE-PATTERNMISMATCH(1)
+
+       NAME
+
+       ValidityState: patternMismatch property - The read-only patternMismatch property of the ValidityState interface indicates if the value of an <input>, after having been edited by the 
+
+       VALIDITYSTATE: PATTERNMISMATCH PROPERTY
+
+       The read-only patternMismatch property of the ValidityState interface indicates if the value of an , after having been edited by the user, does not conform to the constraints set by the element's pattern attribute.
+
+       The patternMismatch property will be true if and only if the following conditions are all true:
+
+        * the field supports the pattern attribute — which means the is of type , , , , , or
+        * the pattern attribute contains a valid regular expression
+        * the value doesn't conform to the constraints set by the pattern value.
+
+       VALUE
+
+       A boolean that is true if the ValidityState object does not conform to the constraints.
+
+       EXAMPLES
+
+       Given the following:
+
+         <p>
+           <label
+             >Enter your phone number in the format (123)456-7890 (<input
+               name="tel1"
+               type="tel"
+               pattern="[0-9]{3}"
+               placeholder="###"
+               aria-label="3-digit area code"
+               size="2" />)-
+             <input
+               name="tel2"
+               type="tel"
+               pattern="[0-9]{3}"
+               placeholder="###"
+               aria-label="3-digit prefix"
+               size="2" />
+             -
+             <input
+               name="tel3"
+               type="tel"
+               pattern="[0-9]{4}"
+               placeholder="####"
+               aria-label="4-digit number"
+               size="3" />
+           </label>
+         </p>
+
+       Here we have 3 sections for a North American phone number with an implicit label encompassing all three components of the phone number, expecting 3-digits, 3-digits and 4-digits respectively, as defined by the pattern attribute set on each.
+
+       If the values are too long or too short, or contain characters that aren't digits, patternMismatch will be true. When true, the element matches the :invalid CSS pseudo-classes.
+
+         input:invalid {
+           border: red solid 3px;
+         }
+
+       Note, in this case, we get a patternMismatch not a validityState.tooLong or validityState.tooShort if the values are too long or too short because it is the pattern that is dictating the length of the value. Had we used minlength and maxlength attributes instead, we may have seen validityState.tooLong or validityState.tooShort being true.
+
+       > The input type requires, at minimum, a match of x@y and the type requires, at minimum, a match to x:, with no pattern attribute present. When invalid, the validityState.typeMismatch will be true, if there is no pattern attribute (or if the pattern attribute is not valid for that input type).
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Constraint validation
+        * Forms: Data form validation
+        * Regular Expressions
+
+Web APIs manual                         from the official documentation

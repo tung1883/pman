@@ -1,0 +1,52 @@
+SHELLCHECK.SC2149(1)             Sandbox manual             SHELLCHECK.SC2149(1)
+
+       NAME
+
+       Remove $/${} for numeric index, or escape it for string. - Note: Removed in v0.5.0 - 2018-06-01
+
+       REMOVE / FOR NUMERIC INDEX, OR ESCAPE IT FOR STRING
+
+       REMOVE / FOR NUMERIC INDEX, OR ESCAPE IT FOR STRING
+
+       _Note: Removed in v0.5.0 - 2018-06-01_
+
+       PROBLEMATIC CODE
+
+         index=42
+         echo $((array[$index]))
+
+       or
+
+         # Associative array
+         index=banana
+         echo $((array[$index]))
+
+       CORRECT CODE
+
+         # Regular array
+         index=42
+         echo $((array[index]))
+
+       or
+
+         # Associative array
+         index=banana
+         echo $((array[\$index]))
+
+       RATIONALE
+
+       For a numerically indexed array, the $ is mostly pointless and can be removed like in [[SC2004]].
+
+       For associative arrays, the $ should be escaped to avoid accidental dereferencing:
+
+         declare -A array
+         index='$1'
+         array[$index]=42
+         echo "$(( array[$index] ))"    # bash: array: bad array subscript
+         echo "$(( array[\$index] ))"   # 42
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

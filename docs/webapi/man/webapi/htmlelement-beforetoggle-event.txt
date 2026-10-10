@@ -1,0 +1,157 @@
+WEBAPI.HTMLELEMENT-BEFORETOGGLE-EVENT(1) Sandbox manual WEBAPI.HTMLELEMENT-BEFORETOGGLE-EVENT(1)
+
+       NAME
+
+       HTMLElement: beforetoggle event - The beforetoggle event of the HTMLElement interface fires on a popover or <dialog> element just before it is shown or hidden.
+
+       HTMLELEMENT: BEFORETOGGLE EVENT
+
+       The beforetoggle event of the HTMLElement interface fires on a popover or element just before it is shown or hidden.
+
+        * If the element is transitioning from hidden to showing, the event.oldState property will be set to closed and the event.newState property will be set to open.
+        * If the element is transitioning from showing to hidden, then event.oldState will be open and event.newState will be closed.
+       This event is cancelable when an element is toggled to open ("show") but not when the element is closing.
+
+       Among other things, this event can be used to:
+
+        * prevent an element from being shown.
+        * add or remove classes or properties from the element or associated elements, for example to control the animation behavior of a dialog as it is opened and closed.
+        * clear the state of the element before it is opened or after it is hidden, for example to reset a dialog form and return value to an empty state, or hide any nested manual popovers when reopening a popup.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("beforetoggle", (event) => { })
+
+         onbeforetoggle = (event) => { }
+
+       EVENT TYPE
+
+       A ToggleEvent. Inherits from Event.
+
+       ToggleEvent
+
+       EXAMPLES
+
+       The examples below demonstrate how the beforetoggle event might be used for a popover element. The same examples would work similarly on a element.
+
+       BASIC EXAMPLE
+
+       This example shows how to listen for the beforetoggle event and log the result.
+
+       HTML
+
+       The HTML consists of a popover and a button for toggling it open and closed.
+
+         <button popovertarget="mypopover">Toggle the popover</button>
+         <div id="mypopover" popover>Popover content</div>
+
+         <pre id="log"></pre>
+
+         #log {
+           height: 150px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+       JAVASCRIPT
+
+       The code adds an event listener for the beforetoggle event and logs the state.
+
+         const popover = document.getElementById("mypopover");
+
+         popover.addEventListener("beforetoggle", (event) => {
+           if (event.newState === "open") {
+             log("Popover is about to be shown");
+           } else {
+             log("Popover is about to be hidden");
+           }
+         });
+
+       RESULT
+
+       PREVENT A POPOVER OPENING
+
+       The beforetoggle event is cancelable if fired when opening an element.
+
+       Below we show how a popover might first check if it is allowed to open, and if not, call Event.preventDefault() to cancel the event. In this example we use a checkbox to set whether the popover can open or not: in a more "full featured" example this might depend on the application state, or the data in the popover being ready to display.
+
+       HTML
+
+       The HTML consists of a popover, a button for toggling it open and closed, and a checkbox for setting whether the popover can be opened.
+
+         <button popovertarget="mypopover">Toggle the popover</button>
+         <label for="allow-popover">
+           Allow opening <input type="checkbox" id="allow-popover" checked />
+         </label>
+         <div id="mypopover" popover>Popover content</div>
+
+         <pre id="log"></pre>
+
+         #log {
+           height: 150px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+       JAVASCRIPT
+
+       First we set up the code to simulate a state where we want to allow the popover to open. This is represented by the variable allowOpen, which is toggled when the associated checkbox is toggled.
+
+         const allowCheckbox = document.getElementById("allow-popover");
+
+         let allowOpen = true;
+
+         allowCheckbox.addEventListener("change", (event) => {
+           allowOpen = allowCheckbox.checked;
+         });
+
+       The code adds an event listener for the beforetoggle event. If allowOpen is false then preventDefault() is called, which stops the popup from opening.
+
+         const popover = document.getElementById("mypopover");
+
+         popover.addEventListener("beforetoggle", (event) => {
+           if (event.newState === "open") {
+             if (allowOpen) {
+               log("Popover is about to be shown");
+             } else {
+               log("Popover opening prevented");
+               event.preventDefault();
+             }
+           } else {
+             log("Popover is about to be hidden");
+           }
+         });
+
+       RESULT
+
+       OTHER EXAMPLES
+
+        * Opening a modal dialog example in HTMLDialogElement
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * popover HTML global attribute
+        * Popover API
+        * Related event: toggle
+
+Web APIs manual                         from the official documentation

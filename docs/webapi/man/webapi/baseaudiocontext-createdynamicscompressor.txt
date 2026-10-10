@@ -1,0 +1,75 @@
+WEBAPI.BASEAUDIOCONTEXT-CREATEDYNAMICSCOMPRESSOR(1) Sandbox manual WEBAPI.BASEAUDIOCONTEXT-CREATEDYNAMICSCOMPRESSOR(1)
+
+       NAME
+
+       BaseAudioContext: createDynamicsCompressor() method - The createDynamicsCompressor() method of the BaseAudioContext Interface is used to create a DynamicsCompressorNode, which can be used to app
+
+       BASEAUDIOCONTEXT: CREATEDYNAMICSCOMPRESSOR() METHOD
+
+       The createDynamicsCompressor() method of the BaseAudioContext Interface is used to create a DynamicsCompressorNode, which can be used to apply compression to an audio signal.
+
+       Compression lowers the volume of the loudest parts of the signal and raises the volume of the softest parts. Overall, a louder, richer, and fuller sound can be achieved. It is especially important in games and musical applications where large numbers of individual sounds are played simultaneously, where you want to control the overall signal level and help avoid clipping (distorting) of the audio output.
+
+       > The DynamicsCompressorNode()
+       > constructor is the recommended way to create a DynamicsCompressorNode; see
+       > Creating an AudioNode.
+
+       SYNTAX
+
+         createDynamicsCompressor()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A DynamicsCompressorNode.
+
+       EXAMPLES
+
+       The code below shows how to use createDynamicsCompressor() to add compression to an audio track. For a more complete example, have a look at our basic Compressor example (view the source code).
+
+         // Create a MediaElementAudioSourceNode
+         // Feed the HTMLMediaElement into it
+         const source = audioCtx.createMediaElementSource(myAudio);
+
+         // Create a compressor node
+         const compressor = audioCtx.createDynamicsCompressor();
+         compressor.threshold.setValueAtTime(-50, audioCtx.currentTime);
+         compressor.knee.setValueAtTime(40, audioCtx.currentTime);
+         compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+         compressor.attack.setValueAtTime(0, audioCtx.currentTime);
+         compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+
+         // connect the AudioBufferSourceNode to the destination
+         source.connect(audioCtx.destination);
+
+         button.onclick = () => {
+           const active = button.getAttribute("data-active");
+           if (active === "false") {
+             button.setAttribute("data-active", "true");
+             button.textContent = "Remove compression";
+
+             source.disconnect(audioCtx.destination);
+             source.connect(compressor);
+             compressor.connect(audioCtx.destination);
+           } else if (active === "true") {
+             button.setAttribute("data-active", "false");
+             button.textContent = "Add compression";
+
+             source.disconnect(compressor);
+             compressor.disconnect(audioCtx.destination);
+             source.connect(audioCtx.destination);
+           }
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

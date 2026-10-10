@@ -1,0 +1,241 @@
+APACHE.MOD_HEADERS(1)            Sandbox manual            APACHE.MOD_HEADERS(1)
+
+       ORDER OF PROCESSING
+
+       The directives provided by mod_headers can occur almost anywhere within the server configuration, and can be limited in scope by enclosing them in configuration sections.
+
+       Order of processing is important and is affected both by the order in the configuration file and by placement in configuration sections. These two directives have a different effect if reversed:
+
+         RequestHeader append MirrorID "mirror 12"
+         RequestHeader unset MirrorID
+
+       This way round, the MirrorID header is not set. If reversed, the MirrorID header is set to "mirror 12".
+
+       EARLY AND LATE PROCESSING
+
+       mod_headers can be applied either early or late in the request. The normal mode is late, when Request Headers are set immediately before running the content generator and Response Headers just as the response is sent down the wire. Always use Late mode in an operational server.
+
+       Early mode is designed as a test/debugging aid for developers. Directives defined using the early keyword are set right at the beginning of processing the request. This means they can be used to simulate different requests and set up test cases, but it also means that headers may be changed at any time by other modules before generating a Response.
+
+       Because early directives are processed before the request path's configuration is traversed, early headers can only be set in a main server or virtual host context. Early directives cannot depend on a request path, so they will fail in contexts such as <Directory> or <Location>.
+
+       EXAMPLES
+
+        * Copy all request headers that begin with "TS" to the response headers:
+
+         Header echo ^TS
+
+        * Add a header, MyHeader, to the response including a timestamp for when the request was received and how long it took to begin serving the request. This header can be used by the client to intuit load on the server or in isolating bottlenecks between the client and the server.
+
+         Header set MyHeader "%D %t"
+
+       results in this header being added to the response:
+
+       MyHeader: D=3775428 t=991424704447256
+
+        * Say hello to Joe
+
+         Header set MyHeader "Hello Joe. It took %D microseconds for Apache to serve this request."
+
+       results in this header being added to the response:
+
+       MyHeader: Hello Joe. It took D=3775428 microseconds for Apache to serve this request.
+
+        * Conditionally send MyHeader on the response if and only if header MyRequestHeader is present on the request. This is useful for constructing headers in response to some client stimulus. Note that this example requires the services of the mod_setenvif module.
+
+         SetEnvIf MyRequestHeader myvalue HAVE_MyRequestHeader
+         Header set MyHeader "%D %t mytext" env=HAVE_MyRequestHeader
+
+       If the header MyRequestHeader: myvalue is present on the HTTP request, the response will contain the following header:
+
+       MyHeader: D=3775428 t=991424704447256 mytext
+
+        * Enable DAV to work with Apache running HTTP through SSL hardware (problem description) by replacing https: with http: in the Destination header:
+
+         RequestHeader edit Destination ^https: http: early
+
+        * Set the same header value under multiple nonexclusive conditions, but do not duplicate the value in the final header. If all of the following conditions applied to a request (i.e., if the CGI, NO_CACHE and NO_STORE environment variables all existed for the request):
+
+         Header merge Cache-Control no-cache env=CGI
+         Header merge Cache-Control no-cache env=NO_CACHE
+         Header merge Cache-Control no-store env=NO_STORE
+
+       then the response would contain the following header:
+
+       Cache-Control: no-cache, no-store
+
+       If append was used instead of merge, then the response would contain the following header:
+
+       Cache-Control: no-cache, no-cache, no-store
+
+        * Set a test cookie if and only if the client didn't send us a cookie
+
+         Header set Set-Cookie testcookie "expr=-z %{req:Cookie}"
+
+        * Append a Caching header for responses with a HTTP status code of 200
+
+         Header append Cache-Control s-maxage=600 "expr=%{REQUEST_STATUS} == 200"
+
+       HEADER DIRECTIVE
+
+         Description: | Configure HTTP response headers
+         Syntax: | Header [condition] add|append|echo|edit|edit*|merge|set|setifempty|unset|note header [[expr=]value [replacement] [early|env=[!]varname|expr=expression]]
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Extension
+         Module: | mod_headers
+         Compatibility: | SetIfEmpty available in 2.4.7 and later, expr=value available in 2.4.10 and later
+       This directive can replace, merge or remove HTTP response headers. The header is modified just after the content handler and output filters are run, allowing outgoing headers to be modified.
+
+       The optional condition argument determines which internal table of responses headers this directive will operate against: onsuccess (default, can be omitted) or always. The difference between the two lists is that the headers contained in the latter are added to the response even on error, and persisted across internal redirects (for example, ErrorDocument handlers). Note also that repeating this directive with both conditions makes sense in some scenarios because always is not a superset of onsuccess with respect to existing headers:
+
+        * You're adding a header to a locally generated non-success (non-2xx) response, such as a redirect, in which case only the table corresponding to always is used in the ultimate response.
+        * You're modifying or removing a header generated by a CGI script or by mod_proxy_fcgi, in which case the CGI scripts' headers are in the table corresponding to always and not in the default table.
+        * You're modifying or removing a header generated by some piece of the server but that header is not being found by the default onsuccess condition.
+       This difference between onsuccess and always is a feature that resulted as a consequence of how httpd internally stores headers for a HTTP response, since it does not offer any "normalized" single list of headers. The main problem that can arise if the following concept is not kept in mind while writing the configuration is that some HTTP responses might end up with the same header duplicated (confusing users or sometimes even HTTP clients). For example, suppose that you have a simple PHP proxy setup with mod_proxy_fcgi and your backend PHP scripts adds the X-Foo: bar header to each HTTP response. As described above, mod_proxy_fcgi uses the always table to store headers, so a configuration like the following ends up in the wrong result, namely having the header duplicated with both values:
+
+         # X-Foo's value is set in the 'onsuccess' headers table
+         Header set X-Foo: baz
+
+       To circumvent this limitation, there are some known configuration patterns that can help, like the following:
+
+         # 'onsuccess' can be omitted since it is the default
+         Header onsuccess unset X-Foo
+         Header always set X-Foo "baz"
+
+       Separately from the condition parameter described above, you can limit an action based on HTTP status codes for e.g. proxied or CGI requests. See the example that uses %{REQUEST_STATUS} in the section above.
+
+       The action it performs is determined by the first argument (second argument if a condition is specified). This can be one of the following values:
+
+       WARNING
+
+       Please read the difference between always and onsuccess headers list described above before start reading the actions list, since that important concept still applies. Each action, in fact, works as described but only on the target headers list.
+
+         add
+       The response header is added to the existing set of headers, even if this header already exists. This can result in two (or more) headers having the same name. This can lead to unforeseen consequences, and in general set, append or merge should be used instead.
+
+         append
+       The response header is appended to any existing header of the same name. When a new value is merged onto an existing header it is separated from the existing header with a comma. This is the HTTP standard way of giving a header multiple values. Note that the Set-Cookie header is an exception: RFC 6265 requires multiple Set-Cookie headers rather than combining values with commas. Use add instead of append for Set-Cookie.
+
+         echo
+       Request headers with this name are echoed back in the response headers. header may be a regular expression. value must be omitted.
+
+         edit
+         edit*
+       If this response header exists, its value is transformed according to a regular expression search-and-replace. The value argument is a regular expression, and the replacement is a replacement string, which may contain backreferences or format specifiers. The edit form will match and replace exactly once in a header value, whereas the edit* form will replace every instance of the search pattern if it appears more than once.
+
+         merge
+       The response header is appended to any existing header of the same name, unless the value to be appended already appears in the header's comma-delimited list of values. When a new value is merged onto an existing header it is separated from the existing header with a comma. This is the HTTP standard way of giving a header multiple values. Values are compared in a case sensitive manner, and after all format specifiers have been processed. Values in double quotes are considered different from otherwise identical unquoted values.
+
+         set
+       The response header is set, replacing any previous header with this name. The value may be a format string.
+
+         setifempty
+       The request header is set, but only if there is no previous header with this name.  The Content-Type header is a special use case since there might be the chance that its value have been determined but the header is not part of the response when setifempty is evaluated. It is safer to use set for this use case like in the following example:
+
+         Header set Content-Type "text/plain" "expr=-z %{CONTENT_TYPE}"
+
+         unset
+       The response header of this name is removed, if it exists. If there are multiple headers of the same name, all will be removed. value must be omitted.
+
+         note
+       The value of the named response header is copied into an internal note whose name is given by value. This is useful if a header sent by a CGI or proxied resource is configured to be unset but should also be logged.  Available in 2.4.7 and later.
+
+       This argument is followed by a header name, which can include the final colon, but it is not required. Case is ignored for set, append, merge, add, unset and edit. The header name for echo is case sensitive and may be a regular expression.
+
+       For set, append, merge and add a value is specified as the next argument. If value contains spaces, it should be surrounded by double quotes. value may be a character string, a string containing mod_headers specific format specifiers (and character literals), or an ap_expr expression prefixed with expr=
+
+       The following format specifiers are supported in value:
+
+         Format | Description
+         %% | The percent sign
+         %t | The time the request was received in Universal Coordinated Time since the epoch (Jan. 1, 1970) measured in microseconds. The value is preceded by t=.
+         %D | The time from when the request was received to the time the headers are sent on the wire. This is a measure of the duration of the request. The value is preceded by D=. The value is measured in microseconds.
+         %l | The current load averages of the actual server itself. It is designed to expose the values obtained by getloadavg() and this represents the current load average, the 5 minute average, and the 15 minute average. The value is preceded by l= with each average separated by /.  Available in 2.4.4 and later.
+         %i | The current idle percentage of httpd (0 to 100) based on available processes and threads. The value is preceded by i=.  Available in 2.4.4 and later.
+         %b | The current busy percentage of httpd (0 to 100) based on available processes and threads. The value is preceded by b=.  Available in 2.4.4 and later.
+         %{VARNAME}e | The contents of the environment variable VARNAME.
+         %{VARNAME}s | The contents of the SSL environment variable VARNAME, if mod_ssl is enabled.
+
+       NOTE
+
+       The %s format specifier is only available in Apache 2.1 and later; it can be used instead of %e to avoid the overhead of enabling SSLOptions +StdEnvVars. If SSLOptions +StdEnvVars must be enabled anyway for some other reason, %e will be more efficient than %s.
+
+       NOTE ON EXPRESSION VALUES
+
+       When the value parameter uses the ap_expr parser, some expression syntax will differ from examples that evaluate boolean expressions such as <If>:
+
+        * The starting point of the grammar is 'string' rather than 'expr'.
+        * Function calls use the %{funcname:arg} syntax rather than funcname(arg).
+        * Multi-argument functions are not currently accessible from this starting point
+        * Quote the entire parameter, such as
+
+         Header set foo-checksum "expr=%{md5:foo}"
+
+       For edit there is both a value argument which is a regular expression, and an additional replacement string. As of version 2.4.7 the replacement string may also contain format specifiers.
+
+       The Header directive may be followed by an additional argument, which may be any of:
+
+         early
+       Specifies early processing.
+
+         env=[!]varname
+       The directive is applied if and only if the environment variable varname exists. A ! in front of varname reverses the test, so the directive applies only if varname is unset.
+
+         expr=expression
+       The directive is applied if and only if expression evaluates to true. Details of expression syntax and evaluation are documented in the ap_expr documentation.
+
+         # This delays the evaluation of the condition clause compared to <If>
+         Header always set CustomHeader my-value "expr=%{REQUEST_URI} =~ m#^/special_path.php$#"
+
+       Except in early mode, the Header directives are processed just before the response is sent to the network. This means that it is possible to set and/or override most headers, except for some headers added by the HTTP header filter. Prior to 2.2.12, it was not possible to change the Content-Type header with this directive.
+
+       REQUESTHEADER DIRECTIVE
+
+         Description: | Configure HTTP request headers
+         Syntax: | RequestHeader add|append|edit|edit*|merge|set|setifempty|unset header [[expr=]value [replacement] [early|env=[!]varname|expr=expression]]
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Extension
+         Module: | mod_headers
+         Compatibility: | SetIfEmpty available in 2.4.7 and later, expr=value available in 2.4.10 and later
+       This directive can replace, merge, change or remove HTTP request headers. The header is modified just before the content handler is run, allowing incoming headers to be modified. The action it performs is determined by the first argument. This can be one of the following values:
+
+         add
+       The request header is added to the existing set of headers, even if this header already exists. This can result in two (or more) headers having the same name. This can lead to unforeseen consequences, and in general set, append or merge should be used instead.
+
+         append
+       The request header is appended to any existing header of the same name. When a new value is merged onto an existing header it is separated from the existing header with a comma. This is the HTTP standard way of giving a header multiple values.
+
+         edit
+         edit*
+       If this request header exists, its value is transformed according to a regular expression search-and-replace. The value argument is a regular expression, and the replacement is a replacement string, which may contain backreferences or format specifiers. The edit form will match and replace exactly once in a header value, whereas the edit* form will replace every instance of the search pattern if it appears more than once.
+
+         merge
+       The request header is appended to any existing header of the same name, unless the value to be appended already appears in the existing header's comma-delimited list of values. When a new value is merged onto an existing header it is separated from the existing header with a comma. This is the HTTP standard way of giving a header multiple values. Values are compared in a case sensitive manner, and after all format specifiers have been processed. Values in double quotes are considered different from otherwise identical unquoted values.
+
+         set
+       The request header is set, replacing any previous header with this name
+
+         setifempty
+       The request header is set, but only if there is no previous header with this name.  Available in 2.4.7 and later.
+
+         unset
+       The request header of this name is removed, if it exists. If there are multiple headers of the same name, all will be removed. value must be omitted.
+
+       This argument is followed by a header name, which can include the final colon, but it is not required. Case is ignored. For set, append, merge and add a value is given as the third argument. If a value contains spaces, it should be surrounded by double quotes. For unset, no value should be given. value may be a character string, a string containing format specifiers or a combination of both. The supported format specifiers are the same as for the Header, please have a look there for details. For edit both a value and a replacement are required, and are a regular expression and a replacement string respectively.
+
+       The RequestHeader directive may be followed by an additional argument, which may be any of:
+
+         early
+       Specifies early processing.
+
+         env=[!]varname
+       The directive is applied if and only if the environment variable varname exists. A ! in front of varname reverses the test, so the directive applies only if varname is unset.
+
+         expr=expression
+       The directive is applied if and only if expression evaluates to true. Details of expression syntax and evaluation are documented in the ap_expr documentation.
+
+       Except in early mode, the RequestHeader directive is processed just before the request is run by its handler in the fixup phase. This should allow headers generated by the browser, or by Apache input filters to be overridden or modified.
+
+Apache HTTP Server manual               bundled documentation

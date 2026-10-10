@@ -1,0 +1,37 @@
+SHELLCHECK.SC3029(1)             Sandbox manual             SHELLCHECK.SC3029(1)
+
+       NAME
+
+       In POSIX sh, |& in place of 2>&1 | is undefined. - make |& tee ~/log
+
+       IN POSIX SH, & IN PLACE OF 2 &1 IS UNDEFINED
+
+       IN POSIX SH, & IN PLACE OF 2 &1 IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         make |& tee ~/log
+
+       CORRECT CODE
+
+       Either switch to bash:
+
+         #!/bin/sh
+         make 2>&1 | tee ~/log
+
+       RATIONALE
+
+       Your script uses a shell feature not supported by the shebang. Either rewrite the script to be portable, or change the shebang to explicitly require a shell like Bash.
+
+       In this case, the non-portable shorthand |& to pipe both stdout and stderr can be easily replaced with its written out form 2>&1 | as shown.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

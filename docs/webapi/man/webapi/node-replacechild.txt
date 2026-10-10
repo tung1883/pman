@@ -1,0 +1,86 @@
+WEBAPI.NODE-REPLACECHILD(1)      Sandbox manual      WEBAPI.NODE-REPLACECHILD(1)
+
+       NAME
+
+       Node: replaceChild() method - The replaceChild() method of the Node interface replaces a child node within the given (parent) node.
+
+       NODE: REPLACECHILD() METHOD
+
+       The replaceChild() method of the Node interface replaces a child node within the given (parent) node.
+
+       SYNTAX
+
+         replaceChild(newChild, oldChild)
+
+       PARAMETERS
+
+        * newChild
+          * : The new node to replace oldChild.
+       > If the new node is already present somewhere else in the DOM, it is first removed from that position.
+        * oldChild
+          * : The child to be replaced.
+       > The parameter order, _new_ before _old_, is unusual.
+       > Element.replaceWith(), applying only to nodes that are elements,
+       > may be easier to read and use.
+
+       RETURN VALUE
+
+       The replaced Node. This is the same node as oldChild.
+
+       EXCEPTIONS
+
+        * HierarchyRequestError DOMException
+          * : Thrown when the constraints of the DOM tree are violated, that is if one of the following cases occurs:
+            * If the parent of oldChild is not a Document, DocumentFragment, or an Element.
+            * If the replacement of oldChild by newChild would lead to a cycle, that is if newChild is an ancestor of the node.
+            * If newChild is not a DocumentFragment, a DocumentType, an Element, or a CharacterData.
+            * If the current node is a Text, and its parent is a Document.
+            * If the current node is a DocumentType and its parent is _not_ a Document, as a _doctype_ should always be a direct descendant of a _document_.
+            * If the parent of the node is a Document and newChild is a DocumentFragment with more than one Element child, or that has a Text child.
+            * If the replacement of oldChild by newChild would lead to Document with more than one Element as child.
+            * If the replacement of oldChild by newChild would lead to the presence of an Element node before a DocumentType node.
+        * NotFoundError DOMException
+          * : Thrown if the parent of oldChild is not the current node.
+
+       EXAMPLE
+
+         // Given:
+         // <div>
+         //  <span id="childSpan">foo bar</span>
+         // </div>
+
+         // Create an empty element node
+         // without an ID, any attributes, or any content
+         const sp1 = document.createElement("span");
+
+         // Give it an id attribute called 'newSpan'
+         sp1.id = "newSpan";
+
+         // Create some content for the new element.
+         const sp1Content = document.createTextNode("new replacement span element.");
+
+         // Apply that content to the new element
+         sp1.appendChild(sp1Content);
+
+         // Build a reference to the existing node to be replaced
+         const sp2 = document.getElementById("childSpan");
+         const parentDiv = sp2.parentNode;
+
+         // Replace existing node sp2 with the new span element sp1
+         parentDiv.replaceChild(sp1, sp2);
+
+         // Result:
+         // <div>
+         //   <span id="newSpan">new replacement span element.</span>
+         // </div>
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Node.removeChild
+        * Element.replaceWith
+
+Web APIs manual                         from the official documentation

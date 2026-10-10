@@ -1,0 +1,338 @@
+DEBREF.CH07-GUI-SYSTEM(1)        Sandbox manual        DEBREF.CH07-GUI-SYSTEM(1)
+
+       CHAPTER 7. GUI SYSTEM
+
+       7.1. GUI DESKTOP ENVIRONMENT
+
+       There are several choices for the full featured GUI desktop environment on the Debian system.
+
+       Table 7.1. List of desktop environment
+
+         task package | popcon | size | description
+         task-gnome-desktop | I:187 | 9 | GNOME desktop environment
+         task-xfce-desktop | I:88 | 9 | Xfce desktop environment
+         task-kde-desktop | I:93 | 6 | KDE Plasma desktop environment
+         task-mate-desktop | I:31 | 9 | MATE desktop environment
+         task-cinnamon-desktop | I:36 | 9 | Cinnamon desktop environment
+         task-lxde-desktop | I:20 | 9 | LXDE desktop environment
+         task-lxqt-desktop | I:17 | 9 | LXQt desktop environment
+         task-gnome-flashback-desktop | I:9.9 | 6 | GNOME Flashback desktop environment
+         Tip
+       Dependency packages selected by a task metapackage may be out of sync with the latest package transition state under the Debian unstable/testing environment. For task-gnome-desktop, you may need to adjust package selections as follows:
+
+        * Start aptitude(8) as sudo aptitude -u.
+        * Move cursor to "Tasks" and press "Enter".
+        * Move cursor to "End-user" press "Enter".
+        * Move cursor to "GNOME" press "Enter".
+        * Move cursor to task-gnome-desktop and press "Enter".
+        * Move cursor to "Depends" and press "m" (manually selected).
+        * Move cursor to "Recommends" and press "m" (manually selected).
+        * Move cursor to "task-gnome-desktop and press "-". (drop)
+        * Adjust selected packages while dropping problematic ones causing package conflicts.
+        * Press "g" to start install.
+       This chapter will focus mostly on the default desktop environment of Debian: task-gnome-desktop offering GNOME on wayland.
+
+       7.2. GUI COMMUNICATION PROTOCOL
+
+       GUI communication protocol used on the GNOME desktop can be:
+
+        * Wayland (display server protocol) (native)
+        * X Window System core protocol (via xwayland)
+       Please check freedesktop.org site for how Wayland architecture is different from X Window architecture.
+
+       From user's perspective, differences can be colloquially summarized as:
+
+        * Wayland is a same-host GUI communication protocol: new, simpler, faster, no setuid root binary
+        * X Window is a network-capable GUI communication protocol: traditional, complex, slower, setuid root binary
+       For applications using Wayland protocol, the access to their display contents from a remote host is supported by the VNC or RDP. See Section 7.8, “Remote desktop”
+
+       Modern X servers have the MIT Shared Memory Extension and communicate with their local X clients using the local shared memory. This bypasses the network transparent Xlib interprocess communication channel and gains performance. This situation was the background of creating Wayland as a local-only GUI communication protocol.
+
+       Using the xeyes program started from the GNOME terminal, you can check GUI communication protocol used by each GUI application.
+
+          $ xeyes
+
+        * If the mouse cursor is on an application such as "GNOME terminal" which uses Wayland display server protocol, eyes don't move with the mouse cursor.
+        * If the mouse cursor is on an application such as "xterm" which uses X Window System core protocol, eyes move with the mouse cursor exposing not-so-isolated nature of X Window architecture.
+       As of April 2021, many popular GUI applications such as GNOME and LibreOffice (LO) applications have been migrated to the Wayland display server protocol. I see xterm, gitk, chromium, firefox, gimp, dia, and KDE applications still use X Window System core protocol.
+
+         Note
+       For both the xwayland on Wayland or the native X Window System, the old X server configuration file "/etc/X11/xorg.conf" shouldn't exist on the system. The graphics and input devices are now configured by the kernel with DRM, KMS, and udev. The native X server has been rewritten to use them. See "modedb default video mode support" in the Linux kernel documentation.
+
+       7.3. GUI INFRASTRUCTURE
+
+       Here are notable GUI infrastructure packages for the GNOME on Wayland environment.
+
+       Table 7.2. List of notable GUI infrastructure packages
+
+         package | popcon | package size | description
+         mutter | V:1, I:24 | 215 | GNOME's mutter window manager [auto]
+         xwayland | V:249, I:329 | 2652 | An X server running on top of wayland [auto]
+         gnome-remote-desktop | V:139, I:236 | 2453 | Remote desktop daemon for GNOME using PipeWire [auto]
+         gnome-tweaks | V:16, I:228 | 1145 | Advanced configuration settings for GNOME
+         gnome-shell-extension-prefs | V:7, I:121 | 73 | Tool to enable / disable GNOME Shell extensions
+       Here, "[auto]" means that these packages are automatically installed when task-gnome-desktop is installed.
+
+         Tip
+       gnome-tweaks is the indispensable configuration utility. For example:
+
+        * You can force "Over-Amplification" of sound volume from "General".
+        * You can force "Caps" to become "Esc" from "Keyboard & Mouse" -> "Keyboard" -> "Additional Layout Option".
+         Tip
+       Detail features of GNOME desktop environment can be configured with utilities started by typing "settings", "tweaks", or "extensions" after pressing Super-key.
+
+       7.4. GUI APPLICATIONS
+
+       Many useful GUI applications are available on Debian now. Installing software packages such as scribus (KDE) on GNOME desktop environment are quite acceptable since corresponding functionality is not available under GNOME desktop environment. But installing too many packages with duplicated functionalities may clutter your system.
+
+       Here is a list of GUI applications which caught my eyes.
+
+       Table 7.3. List of notable GUI applications
+
+         package | popcon | package size | type | description
+         evolution | V:25, I:225 | 489 | GNOME | Personal information Management (groupware and email)
+         thunderbird | V:41, I:103 | 274581 | GTK | Email client (Mozilla Thunderbird)
+         kontact | V:1.0, I:9.3 | 2360 | KDE | Personal information Management (groupware and email)
+         libreoffice-writer | V:107, I:418 | 34123 | LO | word processor
+         abiword | V:0.9, I:5.2 | 3596 | GNOME | word processor
+         calligrawords | V:0.2, I:2.9 | 7134 | KDE | word processor
+         scribus | V:1, I:12 | 32415 | KDE | desktop publishing editor to edit PDF files
+         glabels | V:0.3, I:2.6 | 1283 | GNOME | label editor
+         libreoffice-calc | V:104, I:415 | 28733 | LO | spreadsheet
+         gnumeric | V:3, I:11 | 9945 | GNOME | spreadsheet
+         calligrasheets | V:0.1, I:1.8 | 14012 | KDE | spreadsheet
+         libreoffice-impress | V:91, I:414 | 2485 | LO | presentation
+         calligrastage | V:0.1, I:1.8 | 6194 | KDE | presentation
+         libreoffice-base | V:21, I:69 | 5050 | LO | database management
+         kexi | V:0.06, I:0.86 | 7565 | KDE | database management
+         libreoffice-draw | V:91, I:414 | 11209 | LO | vector graphics editor (draw)
+         inkscape | V:11, I:76 | 113353 | GNOME | vector graphics editor (draw)
+         karbon | V:0.1, I:2.3 | 4004 | KDE | vector graphics editor (draw)
+         dia | V:1, I:15 | 3846 | GTK | flowchart and diagram editor
+         gimp | V:41, I:214 | 32779 | GTK | bitmap graphics editor (paint)
+         shotwell | V:14, I:243 | 6334 | GTK | digital photo organizer
+         digikam | V:1.5, I:8.6 | 325 | KDE | digital photo organizer
+         darktable | V:4, I:11 | 35876 | GTK | lighttable and darkroom for photographers
+         gnome-video-trimmer | V:0.2, I:1.1 | 1665 | GNOME | lossless cutting of video files
+         kdenlive | V:3, I:22 | 19821 | KDE | non-linear video editor
+         shotcut | V:1.0, I:7.1 | 7943 | Qt-app | non-linear video editor
+         openshot-qt | V:0.9, I:9.3 | 196007 | Qt-app | non-linear video editor
+         flowblade | V:0.2, I:2.3 | 42213 | GTK | non-linear video editor
+         planner | V:0.1, I:3.2 | 1400 | GNOME | project management
+         calligraplan | V:0.1, I:1.8 | 23545 | KDE | project management
+         gnucash | V:2.3, I:7.2 | 29451 | GNOME | personal accounting
+         homebank | V:0.3, I:1.7 | 3194 | GTK | personal accounting
+         kmymoney | V:0.5, I:2.0 | 19289 | KDE | personal accounting
+         frescobaldi | V:0.2, I:1.5 | 11102 | Qt-app | LilyPond sheet music text editor
+         librecad | V:1, I:12 | 9164 | Qt-app | computer-aided design (CAD) system (2D)
+         freecad | V:1, I:19 | 112 | Qt-app | computer-aided design (CAD) system (3D)
+         kicad | V:3, I:13 | 222895 | GTK | electronic schematic and PCB design software
+         xsane | V:8, I:129 | 1512 | GTK | scanner frontend
+         libreoffice-math | V:87, I:417 | 1958 | LO | mathematical equation/formula editor
+         calibre | V:7, I:26 | 69924 | KDE | e-book converter and library management
+         fbreader | V:0.6, I:6.0 | 3827 | GTK | e-book reader
+         evince | V:72, I:282 | 942 | GNOME | document(pdf) viewer
+         okular | V:41, I:129 | 4419 | KDE | document(pdf) viewer
+         x11-apps | V:30, I:440 | 2461 | pure X-app | xeyes(1), etc.
+         x11-utils | V:222, I:551 | 651 | pure X-app | xev(1), xwininfo(1), etc.
+
+       7.5. USER DIRECTORIES
+
+       Default names for user directories such as "~/Desktop", "~/Documents", ..., used by the Desktop environment depend on the locale used for the system installation. You can reset them to the English ones by:
+
+          $ LANGUAGE=C xdg-user-dirs-update --force
+
+       Then you manually move all the data to the newer directories. See xdg-user-dirs-update(1).
+
+       You can also set them to any names by editing "~/.config/user-dirs.dirs". See user-dirs.dirs(5).
+
+       7.6. FONTS
+
+       Many useful scalable fonts are available for users on Debian. User's concern is how to avoid redundancy and how to configure parts of installed fonts to be disabled. Otherwise, useless font choices may clutter your GUI application menus.
+
+       Debian system uses FreeType 2.0 library to rasterise many scalable font formats for screen and print:
+
+        * Type 1 (PostScript) fonts which use cubic Bézier curves (almost obsolete format)
+        * TrueType fonts which use quadratic Bézier curves (good choice format)
+        * OpenType fonts which use cubic Bézier curves (best choice format)
+
+       7.6.1. BASIC FONTS
+
+       The following table is compiled in the hope to help users to choose appropriate scalable fonts with clear understanding of the metric compatibility and the glyph coverage. Most fonts cover all Latin, Greek, and Cyril characters. The final choice of activated fonts can also be affected by your aesthetics. These fonts can be used for the screen display or for the paper printing.
+
+       Table 7.4. List of notable TrueType and OpenType fonts
+
+         package | popcon | size | sans | serif | mono | note on font
+         fonts-cantarell | V:173, I:285 | 224 | 59 | - | - | Cantarell (GNOME 3, display)
+         fonts-noto | I:151 | 30 | 61 | 63 | 40 | Noto fonts (Google, multi-lingual with CJK)
+         fonts-dejavu | I:384 | 34 | 58 | 68 | 40 | DejaVu (GNOME 2, MCM:Verdana, extended Bitstream Vera)
+         fonts-liberation2 | V:44, I:168 | 15 | 56 | 60 | 40 | Liberation fonts for LibreOffice (Red Hat, MCMATC)
+         fonts-croscore | V:20, I:36 | 5260 | 56 | 60 | 40 | Chrome OS: Arimo, Tinos and Cousine (Google, MCMATC)
+         fonts-crosextra-carlito | V:20, I:91 | 2696 | 57 | - | - | Chrome OS: Carlito (Google, MCM:Calibri )
+         fonts-crosextra-caladea | V:12, I:85 | 347 | - | 55 | - | Chrome OS: Caladea (Google, MCM:Cambria ) (Latin only )
+         fonts-freefont-ttf | V:79, I:203 | 14460 | 57 | 59 | 40 | GNU FreeFont (extended URW Nimbus)
+         fonts-quicksand | V:207, I:447 | 392 | 56 | - | - | Debian task-desktop, Quicksand (display, Latin only)
+         fonts-hack | V:34, I:136 | 2507 | - | - | 40 P | A typeface designed for source code Hack (Facebook)
+         fonts-sil-gentiumplus | V:0, I:28 | 14345 | - | 54 | - | Gentium SIL
+         fonts-sil-charis | V:1, I:28 | 6704 | - | 59 | - | Charis SIL
+         fonts-urw-base35 | V:190, I:528 | 15558 | 56 | 60 | 40 | URW Nimbus (Nimbus Sans, Roman No. 9 L, Mono L, MCAHTC)
+         fonts-ubuntu | V:2.2, I:4.7 | 4339 | 58 | - | 33 P | Ubuntu fonts (display)
+         fonts-terminus | V:0.3, I:4.0 | 451 | - | - | 33 | Cool retro terminal fonts
+         ttf-mscorefonts-installer | V:1, I:39 | 85 | 56? | 60 | 40 | Downloader of Microsoft non-free fonts (see below)
+       Here:
+
+        * "MCM" stands for "metric compatible with fonts provided by Microsoft"
+        * "MCMATC" stands for "metric compatible with fonts provided by Microsoft: Arial, Times New Roman, Courier New"
+        * "MCAHTC" stands for "metric compatible with fonts provided by Adobe: Helvetica, Times, Courier"
+        * Numbers in font type columns stands for the rough relative "M" width for the same point size font.
+        * "P" in mono font type columns stands for its usability for programming having clearly distinguishable "0"/"O" and "1"/"I"/"l".
+        * The ttf-mscorefonts-installer package downloads Microsoft's "Core fonts for the Web" and installs Arial, Times New Roman, Courier New, Verdana, ... . These installed font data are non-free data.
+       Many free Latin fonts have their lineage traced to URW Nimbus family or Bitstream Vera.
+
+         Tip
+       If your locale needs fonts not covered well by the above fonts, please use aptitude to check under task packages listed under "Tasks" -> "Localization". The font packages listed as "Depends:" or "Recommends:" in the localization task packages are the primary candidates.
+
+       7.6.2. FONT RASTERIZATION
+
+       Debian uses FreeType to rasterize fonts. Its font choice infrastructure is provided by the Fontconfig font configuration library.
+
+       Table 7.5. List of notable font environment and related packages
+
+         package | popcon | size | description
+         libfreetype6 | V:583, I:997 | 1018 | FreeType font rasterization library
+         libfontconfig1 | V:573, I:810 | 344 | Fontconfig font configuration library
+         fontconfig | V:464, I:692 | 415 | fc-*: CLI commands for Fontconfig
+         font-manager | V:2.4, I:7.0 | 1116 | Font Manager: GUI command for Fontconfig
+         nautilus-font-manager | V:0.11, I:0.43 | 38 | Nautilus extension for Font Manager
+         Tip
+       Some font packages such as fonts-noto* install too many fonts. You may also want to keep some font packages installed but disabled under the normal use situation. The multiple glyphs are expected for some Unicode code points due to Han unification and unwanted gliphs may be chosen by the unconfigured Fontconfig library. One of the most annoying case is "U+3001 IDEOGRAPHIC COMMA" and "U+3002 IDEOGRAPHIC FULL STOP" among CJK countries. You can avoid this problematic situation easily by configuring font availability using Font Manager GUI (font-manager).
+
+       You can list font configuration state from the command line, too.
+
+        * "fc-match(1)" for fontconfig font default
+        * "fc-list(1)" for available fontconfig fonts
+       You can configure font configuration state from the text editor but this is non-trivial. See fonts.conf(5).
+
+       7.7. SANDBOX
+
+       Many mostly GUI applications on Linux are available in binary formats from non-Debian sources.
+
+        * AppImage -- Linux apps that run anywhere
+        * FLATHUB -- Apps for Linux, right here
+        * snapcraft -- The app store for Linux
+         Warning
+       Binaries from these sites may include proprietary non-free software packages.
+
+       There is some raison d'être for these binary format distributions for Free Software aficionados using Debian since these can accommodate clean set of libraries used for each application by the respective upstream developer independent of the ones provided by Debian.
+
+       The inherent risk of running external binaries can be reduced by using the sandbox environment which leverages modern Linux security features (see Section 4.7.5, “Linux security features”).
+
+        * For binaries from AppImage and some upstream sites, run them in  firejail  with manual configuration.
+        * For binaries from FLATHUB, run them in  Flatpak . (No manual configuration required.)
+        * For binaries from snapcraft, run them in  Snap . (No manual configuration required. Compatible with daemon programs.)
+       The xdg-desktop-portal package provides a standardized API to common desktop features. See  xdg-desktop-portal (flatpak)  and  xdg-desktop-portal (snap) .
+
+       Table 7.6. List of notable sandbox environment and related packages
+
+         package | popcon | size | description
+         flatpak | V:107, I:115 | 9278 | Flatpak application deployment framework for desktop apps
+         gnome-software-plugin-flatpak | V:30, I:42 | 283 | Flatpak support for GNOME Software
+         snapd | V:61, I:64 | 78931 | Daemon and tooling that enable snap packages
+         gnome-software-plugin-snap | V:1.5, I:2.3 | 145 | Snap support for GNOME Software
+         xdg-desktop-portal | V:365, I:434 | 2291 | desktop integration portal for Flatpak and Snap
+         xdg-desktop-portal-gtk | V:329, I:432 | 715 | xdg-desktop-portal backend for gtk (GNOME)
+         xdg-desktop-portal-kde | V:79, I:111 | 3324 | xdg-desktop-portal backend for Qt (KDE)
+         xdg-desktop-portal-wlr | V:2.3, I:5.4 | 159 | xdg-desktop-portal backend for wlroots (Wayland)
+         firejail | V:1.3, I:4.7 | 1827 | a SUID security sandbox program firejail for use with AppImage
+       This sandbox environment technology is very much like apps on smart phone OS where apps are executed under controlled resource accesses.
+
+       Some large GUI applications such as web browsers on Debian also use sandbox environment technology internally to make them more secure.
+
+       7.8. REMOTE DESKTOP
+
+       Table 7.7. List of notable remote access server
+
+       Access to the desktop and applications which use Wayland protocol and run on the remote host is supported by the GNOME Remote Desktop on the remote host through VNC or RDP to the local client.
+
+       Access to the desktop capabilities of all QEMU virtual machines is supported by the SPICE (the Simple Protocol for Independent Computing Environments) protocol.
+
+         package | popcon | size | protocols | description
+         gnome-remote-desktop | V:139, I:236 | 2453 | RDP | GNOME Remote Desktop server
+         xrdp | V:27, I:29 | 4669 | RDP | xrdp, Remote Desktop Protocol (RDP) server
+         x11vnc | V:9, I:44 | 1863 | RFB (VNC) | x11vnc, Remote Framebuffer Protocol (VNC) server
+         tigervnc-standalone-server | V:5, I:15 | 2960 | RFB (VNC) | TigerVNC, Remote Framebuffer Protocol (VNC) server
+         gnome-connections | V:6, I:139 | 1695 | RDP, RFB (VNC) | GNOME remote desktop client
+         vinagre | V:1, I:23 | 4249 | RDP, RFB (VNC), SPICE, SSH | Vinagre: GNOME remote desktop client
+         remmina | V:16, I:62 | 983 | RDP, RFB (VNC), SPICE, SSH, ... | Remmina: GTK remote desktop client
+         krdc | V:2, I:14 | 4144 | RDP, RFB (VNC) | KRDC: KDE remote desktop client
+         virt-viewer | V:3, I:38 | 1278 | RFB (VNC), SPICE | Virtual Machine Manager's GUI display client of guest OS
+
+       7.9. X SERVER CONNECTION
+
+       There are several ways to connect from an application on a remote host to the X server including xwayland on the local host.
+
+       Table 7.8. List of connection methods to the X server
+
+         package | popcon | size | command | description
+         openssh-server | V:772, I:820 | 3594 | sshd with option X11-forwarding | SSH server (secure)
+         openssh-client | V:657, I:996 | 3521 | ssh -X | SSH client (secure)
+         xauth | V:189, I:973 | 81 | xauth | X authority file utility
+         x11-xserver-utils | V:304, I:528 | 559 | xhost | server access control for X
+
+       7.9.1. X SERVER LOCAL CONNECTION
+
+       Access to the local X server by the local applications which use X core protocol can be locally connected through a local UNIX domain socket. This can be authorized by the authority file holding access cookie. The authority file location is identified by the "$XAUTHORITY" environment variable and X display is identified by the "$DISPLAY" environment variable. Since these are normally set automatically, no special action is needed, e.g. "gitk" as the following.
+
+         username $ gitk
+
+         Note
+       For xwayland, XAUTHORITY holds value like "/run/user/1000/.mutter-Xwaylandauth.YVSU30".
+
+       7.9.2. X SERVER REMOTE CONNECTION
+
+       Access to the local X server display from the remote applications which use X core protocol is supported by using the X11 forwarding feature.
+
+        * Open an gnome-terminal on the local host.
+        * Run ssh(1) with -X option to establish a connection with the remote site as the following.
+
+         localname @ localhost $ ssh -q -X loginname@remotehost.domain
+         Password:
+
+        * Run an X application command, e.g. "gitk", on the remote site as the following.
+
+         loginname @ remotehost $ gitk
+
+       This method can display the output from a remote X client as if it were locally connected through a local UNIX domain socket.
+
+       See Section 6.3, “The remote access server and utilities (SSH)” for SSH/SSHD.
+
+         Warning
+       A remote TCP/IP connection to the X server is disabled by default on the Debian system for security reasons. Don't enable them by simply setting "xhost +" nor by enabling XDMCP connection, if you can avoid it.
+
+       7.9.3. X SERVER CHROOT CONNECTION
+
+       Access to the X server by the applications which use X core protocol and run on the same host but in an environment such as chroot where the authority file is not accessible, can be authorized securely with xhost by using the User-based access, e.g. "gitk" as the following.
+
+         username $ xhost + si:localuser:root ; sudo chroot /path/to
+         # cd /src
+         # gitk
+         # exit
+         username $ xhost -
+
+       7.10. CLIPBOARD
+
+       For clipping text to clipboard, see Section 1.4.4, “Mouse operations”.
+
+       For clipping graphics to clipboard, see Section 11.6, “Graphic data tools”.
+
+       Some CLI commands can manipulate character clipboard (PRIMARY and CLIPBOARD), too.
+
+       Table 7.9. List of programs related to manipulating character clipboard
+
+         package | popcon | package size | target | description
+         xsel | V:7, I:42 | 55 | X | command line interface to X selections (clipboard)
+         xclip | V:18, I:79 | 62 | X | command line interface to X selections (clipboard)
+         wl-clipboard | V:9, I:27 | 174 | Wayland | wl-copy wl-paste: command line interface to Wayland clipboard
+         gpm | V:8.2, I:9.1 | 524 | Linux console | a daemon that captures mouse events on Linux console
+
+Debian Reference manual                 bundled documentation

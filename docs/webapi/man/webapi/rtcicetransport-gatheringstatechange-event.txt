@@ -1,0 +1,80 @@
+WEBAPI.RTCICETRANSPORT-GATHERINGSTATECHANGE-EVENT(1) Sandbox manual WEBAPI.RTCICETRANSPORT-GATHERINGSTATECHANGE-EVENT(1)
+
+       NAME
+
+       RTCIceTransport: gatheringstatechange event - A gatheringstatechange event is sent to an RTCIceTransport when its ICE candidate gathering state changes.
+
+       RTCICETRANSPORT: GATHERINGSTATECHANGE EVENT
+
+       A gatheringstatechange event is sent to an RTCIceTransport when its ICE candidate gathering state changes.
+
+       The gathering state, whose actual status can be found in the transport object's gatheringState property, indicates whether or not the ICE agent has begun gathering candidates on this transport, and if so, if it has finished doing so.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("gatheringstatechange", (event) => { })
+
+         ongatheringstatechange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       This example creates a handler for gatheringstatechange events on each RTCRtpSender associated with a given RTCPeerConnection. Here, the addEventListener() method is called to add a listener for gatheringstatechange events:
+
+         pc.getSenders().forEach((sender) => {
+           sender.transport.iceTransport.addEventListener(
+             "gatheringstatechange",
+             (ev) => {
+               let transport = ev.target;
+
+               if (transport.gatheringState === "complete") {
+                 /* this transport has finished gathering candidates,
+                 but others may still be working on it */
+               }
+             },
+           );
+         });
+
+       Likewise, you can use the ongatheringstatechange event handler property:
+
+         pc.getSenders().forEach((sender) => {
+           sender.transport.iceTransport.ongatheringstatechange = (ev) => {
+             let transport = ev.target;
+
+             if (transport.gatheringState === "complete") {
+               /* this transport has finished gathering candidates,
+                  but others may still be working on it */
+             }
+           };
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * WebRTC connectivity
+
+       RELATED RTCICETRANSPORT EVENTS
+
+        * statechange
+        * selectedcandidatepairchange
+
+       RELATED RTCPEERCONNECTION EVENTS
+
+        * negotiationneeded
+        * signalingstatechange
+        * iceconnectionstatechange
+        * icegatheringstatechange
+        * connectionstatechange
+
+Web APIs manual                         from the official documentation

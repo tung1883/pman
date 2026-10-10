@@ -1,0 +1,78 @@
+WEBAPI.NODELIST(1)               Sandbox manual               WEBAPI.NODELIST(1)
+
+       NAME
+
+       NodeList - NodeList objects are collections of nodes, usually returned by properties such as Node.childNodes and methods such as document.querySelector
+
+       NODELIST
+
+       NodeList objects are collections of nodes, usually returned by properties such as Node.childNodes and methods such as document.querySelectorAll().
+
+       This interface was an attempt to create an unmodifiable list and only continues to be supported to not break code that's already using it. Modern APIs represent list structures using types based on JavaScript arrays, thus making many array methods available, and at the same time imposing additional semantics on their usage (such as making their items read-only).
+
+       These historical reasons do not mean that you as a developer should avoid NodeList. You don't create NodeList objects yourself, but you get them from APIs such as Document.querySelectorAll(), and these APIs are not deprecated. However, be careful of the semantic differences from a real array.
+
+       Although NodeList is not an Array, it is possible to iterate over it with forEach(). It can also be converted to a real Array using Array.from().
+
+       LIVE VS. STATIC NODELISTS
+
+       Although they are both considered NodeList objects, there are 2 varieties of NodeList: _live_ and _static_.
+
+       In most cases, the NodeList is _live_, which means that changes in the DOM automatically update the collection.
+
+       For example, Node.childNodes is live:
+
+         const parent = document.getElementById("parent");
+         let childNodes = parent.childNodes;
+         console.log(childNodes.length); // let's assume "2"
+         parent.appendChild(document.createElement("div"));
+         console.log(childNodes.length); // outputs "3"
+
+       In other cases, the NodeList is _static,_ where any changes in the DOM do not affect the content of the collection. The ubiquitous document.querySelectorAll() method is the only API that returns a _static_ NodeList.
+
+       It's good to keep this distinction in mind when you choose how to iterate over the items in the NodeList, and whether you should cache the list's length.
+
+       INSTANCE PROPERTIES
+
+        * NodeList.length (read-only)
+          * : The number of nodes in the NodeList.
+
+       INSTANCE METHODS
+
+        * NodeList.item()
+          * : Returns an item in the list by its index, or null if the index is out-of-bounds.
+       An alternative to accessing nodeList[i] (which instead returns undefined when i is out-of-bounds). This is mostly useful for non-JavaScript DOM implementations.
+
+        * NodeList.entries()
+          * : Returns an iterator, allowing code to go through all key/value pairs contained in the collection. (In this case, the keys are integers starting from 0 and the values are nodes.)
+        * NodeList.forEach()
+          * : Executes a provided function once per NodeList element, passing the element as an argument to the function.
+        * NodeList.keys()
+          * : Returns an iterator, allowing code to go through all the keys of the key/value pairs contained in the collection. (In this case, the keys are integers starting from 0.)
+        * NodeList.values()
+          * : Returns an iterator allowing code to go through all values (nodes) of the key/value pairs contained in the collection.
+
+       EXAMPLE
+
+       It's possible to loop over the items in a NodeList using a for loop:
+
+         for (let i = 0; i < myNodeList.length; i++) {
+           let item = myNodeList[i];
+         }
+
+       Don't use for...in to enumerate the items in NodeLists, since they will _also_ enumerate its length and item properties and cause errors if your script assumes it only has to deal with element objects. Also, for...in is not guaranteed to visit the properties in any particular order.
+
+       for...of loops over NodeList objects correctly:
+
+         const list = document.querySelectorAll("input[type=checkbox]");
+         for (const checkbox of list) {
+           checkbox.checked = true;
+         }
+
+       Browsers also support the iterator method (forEach()) as well as entries(), values(), and keys().
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

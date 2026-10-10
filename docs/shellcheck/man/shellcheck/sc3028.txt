@@ -1,0 +1,43 @@
+SHELLCHECK.SC3028(1)             Sandbox manual             SHELLCHECK.SC3028(1)
+
+       NAME
+
+       In POSIX sh, VARIABLE is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, VARIABLE IS UNDEFINED
+
+       IN POSIX SH, VARIABLE IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         echo "$HOSTNAME $UID $RANDOM"
+
+       CORRECT CODE
+
+       Either switch to a shell like bash that supports the special variable you're trying to use, or use an external command to get the information you want:
+
+         #!/bin/sh
+         echo "$(hostname) $(id -u) $(awk 'BEGIN { srand(); print int(rand()*32768) }' /dev/null)"
+
+       RATIONALE
+
+       The variable you are attempting to use is a special variable in bash or ksh. To get the same information from dash or POSIX sh, use an external command instead.
+
+       For PIPESTATUS, the pipeline can be instrumented to record the exit value of each command:
+
+         { cmd0; echo $? > status0; } | { cmd1; echo $? > status1; } | cmd2
+
+       EXCEPTIONS
+
+       If you only intend to target shells that support this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

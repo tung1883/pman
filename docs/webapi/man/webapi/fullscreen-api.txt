@@ -1,0 +1,114 @@
+WEBAPI.FULLSCREEN-API(1)         Sandbox manual         WEBAPI.FULLSCREEN-API(1)
+
+       NAME
+
+       Fullscreen API - The Fullscreen API adds methods to present a specific Element (and its descendants) in fullscreen mode, and to exit fullscreen mode once it 
+
+       FULLSCREEN API
+
+       The Fullscreen API adds methods to present a specific Element (and its descendants) in fullscreen mode, and to exit fullscreen mode once it is no longer needed. This makes it possible to present desired content—such as an online game—using the user's entire screen, removing all browser user interface elements and other applications from the screen until fullscreen mode is shut off.
+
+       See the article Guide to the Fullscreen API for details on how to use the API.
+
+       INTERFACES
+
+       _The Fullscreen API has no interfaces of its own. Instead, it augments several other interfaces to add the methods, properties, and event handlers needed to provide fullscreen functionality. These are listed in the following sections._
+
+       INSTANCE METHODS
+
+       The Fullscreen API adds methods to the Document and Element interfaces to allow turning off and on fullscreen mode.
+
+       INSTANCE METHODS ON THE DOCUMENT INTERFACE
+
+        * Document.exitFullscreen()
+          * : Requests that the user agent switch from fullscreen mode back to windowed mode. Returns a Promise which is resolved once fullscreen mode has been completely shut off.
+
+       INSTANCE METHODS ON THE ELEMENT INTERFACE
+
+        * Element.requestFullscreen()
+          * : Asks the user agent to place the specified element (and, by extension, its descendants) into fullscreen mode, removing all of the browser's UI elements as well as all other applications from the screen. Returns a Promise which is resolved once fullscreen mode has been activated.
+
+       INSTANCE PROPERTIES
+
+        * Document.fullscreenElement / ShadowRoot.fullscreenElement
+          * : The fullscreenElement property tells you the Element that's currently being displayed in fullscreen mode on the DOM (or shadow DOM). If this is null, the document (or shadow DOM) is not in fullscreen mode.
+        * Document.fullscreenEnabled
+          * : The fullscreenEnabled property tells you whether or not it is possible to engage fullscreen mode. This is false if fullscreen mode is not available for any reason (such as the "fullscreen" feature not being allowed, or fullscreen mode not being supported).
+
+       OBSOLETE PROPERTIES
+
+        * Document.fullscreen (deprecated)
+          * : A Boolean value which is true if the document has an element currently being displayed in fullscreen mode; otherwise, this returns false.
+       > Use the fullscreenElement property on the Document or ShadowRoot instead; if it's not null, then it's an Element currently being displayed in fullscreen mode.
+
+       EVENTS
+
+        * fullscreenchange
+          * : Sent to an Element when it transitions into or out of fullscreen mode.
+        * fullscreenerror
+          * : Sent to an Element if an error occurs while attempting to switch it into or out of fullscreen mode.
+
+       CONTROLLING ACCESS
+
+       The availability of fullscreen mode can be controlled using a Permissions Policy. The fullscreen mode feature is identified by the string "fullscreen", with a default allowlist value of "self", meaning that fullscreen mode is permitted in top-level document contexts, as well as to nested browsing contexts loaded from the same origin as the top-most document.
+
+       USAGE NOTES
+
+       Users can choose to exit fullscreen mode by pressing the ESC (or F11) key, rather than waiting for the site or app to programmatically do so. Make sure you provide, somewhere in your user interface, appropriate user interface elements that inform the user that this option is available to them.
+
+       > Navigating to another page, changing tabs, or switching to another application using any application switcher (or Alt-Tab) will likewise exit fullscreen mode.
+
+       EXAMPLES
+
+       SIMPLE FULLSCREEN USAGE
+
+       In this example, a video is presented in a web page. Pressing the Enter key lets the user toggle between windowed and fullscreen presentation of the video.
+
+       View Live Example
+
+       WATCHING FOR THE ENTER KEY
+
+       When the page is loaded, this code is run to set up an event listener to watch for the Enter key.
+
+         const video = document.getElementById("video");
+
+         // On pressing ENTER call toggleFullScreen method
+         document.addEventListener("keydown", (e) => {
+           if (e.key === "Enter") {
+             toggleFullScreen(video);
+           }
+         });
+
+       TOGGLING FULLSCREEN MODE
+
+       This code is called by the event handler above when the user hits the Enter key.
+
+         function toggleFullScreen(video) {
+           if (!document.fullscreenElement) {
+             // If the document is not in full screen mode
+             // make the video full screen
+             video.requestFullscreen();
+           } else {
+             // Otherwise exit the full screen
+             document.exitFullscreen?.();
+           }
+         }
+
+       This starts by looking at the value of the document's fullscreenElement attribute. If the value is null, the document is currently in windowed mode, so we need to switch to fullscreen mode; otherwise, it's the element that's currently in fullscreen mode. Switching to fullscreen mode is done by calling Element.requestFullscreen() on the element.
+
+       If fullscreen mode is already active (fullscreenElement is not null), we call exitFullscreen() on the document to shut off fullscreen mode.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Element.requestFullscreen()
+        * Document.exitFullscreen()
+        * Document.fullscreen
+        * Document.fullscreenElement
+        * :fullscreen, ::backdrop
+        * allowfullscreen
+
+Web APIs manual                         from the official documentation

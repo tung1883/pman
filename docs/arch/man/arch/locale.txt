@@ -1,0 +1,228 @@
+ARCH.LOCALE(1)                   Sandbox manual                   ARCH.LOCALE(1)
+
+       Locales are used by glibc and other locale-aware programs or libraries for rendering text, correctly displaying regional monetary values, time and date formats, alphabetic idiosyncrasies, and other locale-specific standards.
+
+       GENERATING LOCALES
+
+       Locale names are typically of the form language[_territory][.codeset][@modifier], where language is an ISO 639 language code, territory is an ISO 3166 country code, and codeset is a character set or encoding identifier like ISO-8859-1 or UTF-8. See setlocale(3).
+
+       For a list of enabled locales, run:
+
+         $ locale --all-locales
+
+       Before a locale can be enabled on the system, it must be generated. This can be achieved by uncommenting applicable entries in /etc/locale.gen, and running locale-gen. Equivalently, commenting entries disables their respective locales. While making changes, consider any localisations required by other users on the system, as well as specific #Variables.
+
+       For example for German, uncomment de_DE.UTF-8 UTF-8 (in addition to en_US.UTF-8 UTF-8 which is commonly used as a fallback for various tools):
+
+         /etc/locale.gen
+
+         ...
+         #de_CH ISO-8859-1
+         de_DE.UTF-8 UTF-8
+         #de_DE ISO-8859-1
+         ...
+         #en_SG ISO-8859-1
+         en_US.UTF-8 UTF-8
+         #en_US ISO-8859-1
+         ...
+
+       Save the file, and generate the locale:
+
+         # locale-gen
+
+       Note
+
+        * locale-gen also runs with every update of glibc. [1]
+        * UTF-8 is recommended over other character sets. [2] Ensure the suffix appends with a dot, e.g. en_US.UTF-8; not all listed regional locales do (e.g. en_IL UTF-8).
+
+       SETTING THE LOCALE
+
+       To display the currently set locale and its related environment variables, type:
+
+         $ locale
+
+       The locale to be used, chosen among the previously generated ones, is set in locale.conf files. Each of these files must contain a new-line separated list of environment variable assignments, having the same format as output by locale.
+
+       To list available locales which have been previously generated, run:
+
+         $ localedef --list-archive
+
+       Alternatively, using localectl(1):
+
+         $ localectl list-locales
+
+       SETTING THE SYSTEM LOCALE
+
+       To set the system locale, write the LANG variable to /etc/locale.conf, where en_US.UTF-8 belongs to the first column of an uncommented entry in /etc/locale.gen:
+
+         /etc/locale.conf
+
+         LANG=en_US.UTF-8
+
+       Alternatively, run:
+
+         # localectl set-locale LANG=en_US.UTF-8
+
+       See #Variables and locale.conf(5) for details.
+
+       OVERRIDING SYSTEM LOCALE PER USER SESSION
+
+       The system-wide locale can be overridden in each user session by creating or editing $XDG_CONFIG_HOME/locale.conf (usually ~/.config/locale.conf).
+
+       The precedence of these locale.conf files is defined in /etc/profile.d/locale.sh.
+
+       Tip
+
+        * This can also allow keeping the logs in /var/log/ in English while using the local language in the user environment.
+        * You can create a /etc/skel/.config/locale.conf file so that any new users added using useradd and the -m option will have ~/.config/locale.conf automatically generated. See Users and groups#Changing user defaults.
+
+       MAKE LOCALE CHANGES IMMEDIATE
+
+       Once system and user locale.conf files have been created or edited, their new values will take effect for new sessions at login. To have the current environment use the new settings unset LANG and source /etc/profile.d/locale.sh:
+
+         $ unset LANG
+         $ source /etc/profile.d/locale.sh
+
+       Note The LANG variable has to be unset first, otherwise locale.sh will not update the values from locale.conf. Only new and changed variables will be updated; variables removed from locale.conf will still be set in the session.
+
+       OTHER USES
+
+       Locale variables can also be defined with the standard methods as explained in Environment variables.
+
+       For example, in order to test or debug a particular application during development, it could be launched with something like:
+
+         $ LC_ALL=C.UTF-8 ./my_application.sh
+
+       Similarly, to set the locale for all processes run from the current shell (for example, during system installation):
+
+         $ export LC_ALL=C.UTF-8
+
+       VARIABLES
+
+       locale.conf files support the following environment variables.
+
+        * LANG
+        * LANGUAGE
+        * LC_ADDRESS
+        * LC_COLLATE
+        * LC_CTYPE
+        * LC_IDENTIFICATION
+        * LC_MEASUREMENT
+        * LC_MESSAGES
+        * LC_MONETARY
+        * LC_NAME
+        * LC_NUMERIC
+        * LC_PAPER
+        * LC_TELEPHONE
+        * LC_TIME
+       Full meaning of the above LC_* variables can be found on manpage locale(7), whereas details of their definition are described on locale(5).
+
+       Note Programs follow the priority order when looking up locale dependent values.
+
+       LANG: DEFAULT LOCALE
+
+       The locale set for this variable will be used for all the LC_* variables that are not explicitly set.
+
+       Tip Assume that you are an English user in Spain, and you want your programs to handle numbers and dates according to Spanish conventions, and only the messages should be in English. Then you could set the LANG variable to es_ES.UTF-8 and the LC_MESSAGES (user interface for message translation) variable to en_US.UTF-8.
+
+       LANGUAGE: FALLBACK LOCALES
+
+       Programs which use gettext for translations respect the LANGUAGE option in addition to the usual variables. This allows users to specify a list of locales that will be used in that order. If a translation for the preferred locale is unavailable, another from a similar locale will be used instead of the default. For example, an Australian user might want to fall back to British rather than US spelling:
+
+         locale.conf
+
+         LANG=en_AU.UTF-8
+         LANGUAGE=en_AU:en_GB:en
+
+       Note Many applications do not name or alias their English locale as en or en_US, but instead make it the default locale, which is C. If in LANGUAGE a non-English locale is placed after English, e.g. LANGUAGE=en_US:en:es_ES, then applications may choose the secondary locale despite English strings being available.[3] The solution is to always explicitly place the C locale after English. E.g. LANGUAGE=en_US:en:C:es_ES.
+
+       LC_TIME: DATE AND TIME FORMAT
+
+       If LC_TIME is set to en_US.UTF-8, for example, the date format will be "MM/DD/YYYY". If wanting to use the ISO 8601 date format of "YYYY-MM-DD" use:
+
+         locale.conf
+
+         LC_TIME=en_DK.UTF-8
+
+       You can print the current timestamp using your locale date and time format with date +"%c".
+
+       glibc 2.29 fixed a bug, en_US.UTF-8 started showing in 12-hour format, as was intended. If wanting to use 24-hour format, use LC_TIME=C.UTF-8.
+
+       Note Programs do not necessarily respect this variable to format the date.
+
+       LC_COLLATE: COLLATION
+
+       This variable governs the collation rules used for sorting and regular expressions.
+
+       Setting the value to C.UTF-8 can for example make the ls command sort dotfiles first, followed by uppercase and lowercase filenames:
+
+         locale.conf
+
+         LC_COLLATE=C.UTF-8
+
+       See also [4].
+
+       LC_ALL: TROUBLESHOOTING
+
+       The locale set for this variable will always override LANG and all the other LC_* variables, whether they are set or not. If LC_ALL is set to C or C.UTF-8, it will also override LANGUAGE.
+
+       LC_ALL is the only LC_* variable which cannot be set in locale.conf files: it is meant to be used only for testing or troubleshooting purposes, for example in /etc/profile.
+
+       TROUBLESHOOTING
+
+       For encoding problems, check Character encoding#Troubleshooting.
+
+       MY SYSTEM IS STILL USING WRONG LANGUAGE
+
+       It is possible that the environment variables are redefined in other files than locale.conf. See Environment variables#Defining variables for details.
+
+       If you are using a desktop environment, such as GNOME, its language settings may be overriding the settings in locale.conf.
+
+       KDE Plasma also allows to change the UI's language through the system settings. If the desktop environment is still using the default language after the modification, deleting the file at ~/.config/plasma-localerc (previously: ~/.config/plasma-locale-settings.sh) should resolve the issue.
+
+       If you are using a display manager in combination with accountsservice, follow the instructions in Display manager#Set language for user session.
+
+       LightDM will automatically use accountsservice to set a user's locale if it is installed. Otherwise, LightDM stores the user session configuration in ~/.dmrc. It is possible that an unwanted locale setting is retrieved from there as well.
+
+       USING A CUSTOM LOCALE CAUSES PROBLEMS
+
+       When installing a locale that is not officially supported (e.g., locale-en_xxAUR), some problems can occur, like dead/compose keys not working in some applications or applications reporting missing locales. After installing a custom locale, manual intervention is required to resolve these problems. There are two approaches (replace en_XX.UTF-8 with the identifier of your custom locale):
+
+       SET LC_CTYPE
+
+       Set LC_CTYPE to an officially supported locale (like en_US.UTF-8), e.g.:
+
+         /etc/locale.conf
+
+         LANG=en_XX.UTF-8
+         LC_CTYPE=en_US.UTF-8
+
+       MODIFY THE XLIB DATABASE
+
+       Modify the Xlib database by adding the following:
+
+         /usr/share/X11/locale/locale.dir
+
+         en_US.UTF-8/XLC_LOCALE en_XX.UTF-8
+         en_US.UTF-8/XLC_LOCALE: en_XX.UTF-8
+
+         /usr/share/X11/locale/compose.dir
+
+         en_US.UTF-8/Compose en_XX.UTF-8
+         en_US.UTF-8/Compose: en_XX.UTF-8
+
+       METRIC MEASUREMENTS WITH US LOCALE
+
+       In some tools, the unit type is selected based on the locale settings; hence, temperatures are shown in Fahrenheit if US locales are used. If you wish to use Metric measurements with a US locale, to get temperatures in Celsius for example, adding LC_MEASUREMENT=C.UTF-8 (or any locale for which locale -ck LC_MEASUREMENT returns measurement=1) to /etc/locale.conf should work if the tool searches for LC_MEASUREMENT rather than simply the country. [5]
+
+       SEE ALSO
+
+        * Locales - glibc wiki
+        * Gentoo:Localization/Guide
+        * Supposedly 2008, or earlier, Gentoo wiki article
+        * ICU's interactive collation testing
+        * Free Standards Group Open Internationalisation Initiative
+        * The POSIX definition of a locale
+        * Locale environment variables
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,96 @@
+WEBAPI.IDBOBJECTSTORE-OPENKEYCURSOR(1) Sandbox manual WEBAPI.IDBOBJECTSTORE-OPENKEYCURSOR(1)
+
+       NAME
+
+       IDBObjectStore: openKeyCursor() method - The openKeyCursor() method of the
+
+       IDBOBJECTSTORE: OPENKEYCURSOR() METHOD
+
+       The openKeyCursor() method of the IDBObjectStore interface returns an IDBRequest object whose result will be set to an IDBCursor that can be used to iterate through matching results. Used for iterating through the keys of an object store with a cursor.
+
+       To determine if the add operation has completed successfully, listen for the results's success event.
+
+       SYNTAX
+
+         openKeyCursor()
+         openKeyCursor(query)
+         openKeyCursor(query, direction)
+
+       PARAMETERS
+
+        * query (optional)
+          * : The key range to be queried. If a single valid key is passed, this will default to a
+       range containing only that key. If nothing is passed, this will default to a key range that selects all the records in this object store.
+
+        * direction (optional)
+          * : A string telling the cursor which direction to travel. The default is next. Valid values are:
+            * next
+              * : The cursor is opened at the start of the store; then, the cursor returns all records, even duplicates,
+       in the increasing order of keys.
+
+            * nextunique
+              * : The cursor is opened at the start of the store; then, the cursor returns all records, that are not duplicates,
+       in the increasing order of keys.
+
+            * prev
+              * : The cursor is opened at the end of the store; then, the cursor returns all records, even duplicates,
+       in the decreasing order of keys.
+
+            * prevunique
+              * : The cursor is opened at the end of the store; then, the cursor returns all records, that are not duplicates,
+       in the decreasing order of keys.
+
+       RETURN VALUE
+
+       An IDBRequest object on which subsequent events related to this operation are fired.
+
+       If the operation is successful, the value of the request's result property is:
+
+        * an IDBCursor object pointing at the first record matching the given query
+        * null if no matching records were found.
+
+       EXCEPTIONS
+
+       This method may raise a DOMException of one of the following types:
+
+        * InvalidStateError DOMException
+          * : Thrown if this IDBObjectStore or IDBIndex has been deleted.
+        * TransactionInactiveError DOMException
+          * : Thrown if this IDBObjectStore's transaction is inactive.
+        * DataError DOMException
+          * : Thrown if the specified key or key range is invalid.
+
+       EXAMPLES
+
+       In this simple fragment we create a transaction, retrieve an object store, then use a cursor to iterate through all the records in the object store:
+
+         const transaction = db.transaction("name", "readonly");
+         const objectStore = transaction.objectStore("name");
+         const request = objectStore.openKeyCursor();
+         request.onsuccess = (event) => {
+           const cursor = event.target.result;
+           if (cursor) {
+             // cursor.key contains the key of the current record being iterated through
+             // note that there is no cursor.value, unlike for openCursor
+             // this is where you'd do something with the result
+             cursor.continue();
+           } else {
+             // no more results
+           }
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

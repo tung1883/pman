@@ -1,0 +1,39 @@
+SHELLCHECK.SC2278(1)             Sandbox manual             SHELLCHECK.SC2278(1)
+
+       NAME
+
+       $0 can't be assigned in Ksh (but it does reflect the current function). - $0=myname
+
+       0 CAN'T BE ASSIGNED IN KSH (BUT IT DOES REFLECT THE CURRENT FUNCTION)
+
+       0 CAN'T BE ASSIGNED IN KSH (BUT IT DOES REFLECT THE CURRENT FUNCTION)
+
+       PROBLEMATIC CODE
+
+         #!/bin/ksh
+         $0=myname
+         echo "Usage: $0 --help"
+
+       CORRECT CODE
+
+         #!/bin/ksh
+         myname() {
+           echo "Usage: $0 --help"
+         }
+         myname
+
+       RATIONALE
+
+       You appear to be trying to assign a new value to $0 in Ksh.
+
+       This is not possible. However, $0 will reflect the current function name, so if you wrap your code in a function with your chosen name, you can have $0 expand to it.
+
+       EXCEPTIONS
+
+       If you instead wanted to compare the value of $0, use a comparison like [ "$0" = "myname" ].
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

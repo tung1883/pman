@@ -1,0 +1,100 @@
+WEBAPI.SERVICEWORKERREGISTRATION(1) Sandbox manual WEBAPI.SERVICEWORKERREGISTRATION(1)
+
+       NAME
+
+       ServiceWorkerRegistration - The ServiceWorkerRegistration interface of the Service Worker API represents the service worker registration. You register a service worker 
+
+       SERVICEWORKERREGISTRATION
+
+       The ServiceWorkerRegistration interface of the Service Worker API represents the service worker registration. You register a service worker to control one or more pages that share the same origin.
+
+       The lifetime of a service worker registration is beyond that of the ServiceWorkerRegistration objects that represent them within the lifetime of their corresponding service worker clients. The browser maintains a persistent list of active ServiceWorkerRegistration objects.
+
+       INSTANCE PROPERTIES
+
+       _Also inherits properties from its parent interface,_ EventTarget.
+
+        * ServiceWorkerRegistration.active (read-only)
+          * : Returns a service worker whose state is activating or activated. This is initially set to null. An active worker will control a Client if the client's URL falls within the scope of the registration (the scope option set when ServiceWorkerContainer.register is first called.)
+        * ServiceWorkerRegistration.backgroundFetch (read-only) (experimental)
+          * : Returns a reference to a BackgroundFetchManager object, which manages background fetch operations.
+        * ServiceWorkerRegistration.cookies (read-only)
+          * : Returns a reference to the CookieStoreManager interface, which allows subscribe and unsubscribe to cookie change events.
+        * ServiceWorkerRegistration.index (read-only) (experimental)
+          * : Returns a reference to the ContentIndex interface, for managing indexed content for offline viewing.
+        * ServiceWorkerRegistration.installing (read-only)
+          * : Returns a service worker whose state is installing. This is initially set to null.
+        * ServiceWorkerRegistration.navigationPreload (read-only)
+          * : Returns the instance of NavigationPreloadManager associated with the current service worker registration.
+        * ServiceWorkerRegistration.paymentManager (read-only) (experimental)
+          * : Returns a payment app's PaymentManager instance, which is used to manage various payment app functionality.
+        * ServiceWorkerRegistration.periodicSync (read-only) (experimental)
+          * : Returns a reference to the PeriodicSyncManager interface, which allows for registering of tasks to run at specific intervals.
+        * ServiceWorkerRegistration.pushManager (read-only)
+          * : Returns a reference to the PushManager interface for managing push subscriptions including subscribing, getting an active subscription, and accessing push permission status.
+        * ServiceWorkerRegistration.scope (read-only)
+          * : Returns a string representing a URL that defines a service worker's registration scope; that is, the range of URLs the service worker can control.
+        * ServiceWorkerRegistration.sync (read-only)
+          * : Returns a reference to the SyncManager interface, which manages background synchronization processes.
+        * ServiceWorkerRegistration.updateViaCache (read-only)
+          * : Returns the value of the setting used to determine the circumstances in which the browser will consult the HTTP cache when it tries to update the service worker or any scripts that are imported via importScripts(). It can be one of the following: imports, all, or none.
+        * ServiceWorkerRegistration.waiting (read-only)
+          * : Returns a service worker whose state is installed. This is initially set to null.
+
+       INSTANCE METHODS
+
+       _Also inherits methods from its parent interface,_ EventTarget.
+
+        * ServiceWorkerRegistration.getNotifications()
+          * : Returns a list of the notifications in the order that they were created from the current origin via the current service worker registration.
+        * ServiceWorkerRegistration.showNotification()
+          * : Displays the notification with the requested title.
+        * ServiceWorkerRegistration.unregister()
+          * : Unregisters the service worker registration and returns a Promise. The service worker will finish any ongoing operations before it is unregistered.
+        * ServiceWorkerRegistration.update()
+          * : Checks the server for an updated version of the service worker without consulting caches.
+
+       EVENTS
+
+        * updatefound
+          * : Fired any time the ServiceWorkerRegistration.installing property acquires a new service worker.
+
+       EXAMPLES
+
+       In this example, the code first checks whether the browser supports service workers and if so registers one. Next, it adds an updatefound listener in which it uses the service worker registration to listen for further changes to the service worker's state. If the service worker hasn't changed since the last time it was registered, then the updatefound event will not be fired.
+
+         if ("serviceWorker" in navigator) {
+           navigator.serviceWorker
+             .register("/sw.js")
+             .then((registration) => {
+               registration.addEventListener("updatefound", () => {
+                 // If updatefound is fired, it means that there's
+                 // a new service worker being installed.
+                 const installingWorker = registration.installing;
+                 console.log(
+                   "A new service worker is being installed:",
+                   installingWorker,
+                 );
+
+                 // You can listen for changes to the installing service worker's
+                 // state via installingWorker.onstatechange
+               });
+             })
+             .catch((error) => {
+               console.error(`Service worker registration failed: ${error}`);
+             });
+         } else {
+           console.error("Service workers are not supported.");
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Service workers basic code example
+        * Using web workers
+
+Web APIs manual                         from the official documentation

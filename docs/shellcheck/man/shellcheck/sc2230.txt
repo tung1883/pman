@@ -1,0 +1,66 @@
+SHELLCHECK.SC2230(1)             Sandbox manual             SHELLCHECK.SC2230(1)
+
+       NAME
+
+       which is non-standard. Use builtin command -v instead. - This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for mor
+
+       WHICH IS NON-STANDARD. USE BUILTIN COMMAND -V INSTEAD
+
+       WHICH IS NON-STANDARD. USE BUILTIN COMMAND -V INSTEAD
+
+       OPTIONAL - DEPRECATE-WHICH
+
+       This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for more details. In short, you have to enable it with the long name instead of the "SC" code like you would with a normal rule:
+
+       SHELLCHECKRC
+
+         enable=deprecate-which # SC2230
+
+       PROBLEMATIC CODE
+
+         which grep
+
+       CORRECT CODE
+
+         # For the path of a single, unaliased, external command,
+         # or to check whether this will just "run" in this shell:
+         command -v grep
+         # To check whether commands exist, without obtaining a reusable path:
+         hash grep
+
+       RATIONALE
+
+       which is a non-standard, external tool that locates an executable in PATH. command -v is a POSIX standard builtin, which uses the same lookup mechanism that the shell itself would.
+
+       EXCEPTIONS
+
+       This check is opt-in only in 0.7.1+, and you may choose to [[ignore]] it in earlier versions. which is very common, and some prefer its executable-or-nothing behavior over command -v's handling of builtins, functions and aliases.
+
+       CAVEATS
+
+       COMMAND -V DOES NOT CHECK ALL PARAMETERS
+
+       command -v succeeds (with exit code 0) if any command exists:
+
+         # grep is in /usr/bin/grep
+         # foobar is not in path
+         #
+         $ command -v -- grep foobar; echo $?
+         0
+
+       In the above example, it should have failed and exited with 1 unless all commands exist, if it were to be a replacement for which. Other problems associated with command include its inclusion of builtins, aliases, and functions.
+
+       An alternative is:
+
+         $ hash <file1> <file2>
+
+       Which observes the standard behaviour of failures.
+
+       To obtain a path, type -p can be used instead. Like command -v, it has a similarly quirky behavior with builtins, aliases, and functions, although this is arguably milder since it would print nothing for these cases. The failure condition is similar to hash.
+
+       RELATED RESOURCES
+
+        * shellcheck issue: #1162 command -v is not a direct replacement for which (Discussion)
+        * Check if a program exists from a Bash script on StackOverflow.
+
+ShellCheck manual                       from the official documentation

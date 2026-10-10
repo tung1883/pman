@@ -1,0 +1,77 @@
+WEBAPI.SERVICEWORKERGLOBALSCOPE-MESSAGE-EVENT(1) Sandbox manual WEBAPI.SERVICEWORKERGLOBALSCOPE-MESSAGE-EVENT(1)
+
+       NAME
+
+       ServiceWorkerGlobalScope: message event - service
+
+       SERVICEWORKERGLOBALSCOPE: MESSAGE EVENT
+
+       service
+
+       The message event of the ServiceWorkerGlobalScope interface occurs when incoming messages are received. Controlled pages can use the ServiceWorker.postMessage() method to send messages to service workers. The service worker can optionally send a response back via the Client.postMessage(), corresponding to the controlled page.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("message", (event) => { })
+
+         onmessage = (event) => { }
+
+       EVENT TYPE
+
+       An ExtendableMessageEvent. Inherits from ExtendableEvent.
+
+       ExtendableMessageEvent
+
+       EXAMPLES
+
+       In the below example a page gets a handle to the ServiceWorker object via ServiceWorkerRegistration.active, and then calls its postMessage() function.
+
+         // main.js
+         if (navigator.serviceWorker) {
+           navigator.serviceWorker.register("service-worker.js");
+
+           navigator.serviceWorker.addEventListener("message", (event) => {
+             // event is a MessageEvent object
+             console.log(`The service worker sent me a message: ${event.data}`);
+           });
+
+           navigator.serviceWorker.ready.then((registration) => {
+             registration.active.postMessage("Hi service worker");
+           });
+         }
+
+       The service worker can receive the message by listening to the message event:
+
+         // service-worker.js
+         addEventListener("message", (event) => {
+           // event is an ExtendableMessageEvent object
+           console.log(`The client sent me a message: ${event.data}`);
+
+           event.source.postMessage("Hi client");
+         });
+
+       Alternatively, the script can listen for the message using onmessage:
+
+         // service-worker.js
+         self.onmessage = (event) => {
+           // event is an ExtendableMessageEvent object
+           console.log(`The client sent me a message: ${event.data}`);
+
+           event.source.postMessage("Hi client");
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Service workers basic code example
+        * Using web workers
+
+Web APIs manual                         from the official documentation

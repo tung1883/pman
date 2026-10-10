@@ -1,0 +1,186 @@
+WEBAPI.MEDIADEVICES-GETSUPPORTEDCONSTRAINTS(1) Sandbox manual WEBAPI.MEDIADEVICES-GETSUPPORTEDCONSTRAINTS(1)
+
+       NAME
+
+       MediaDevices: getSupportedConstraints() method - The getSupportedConstraints() method of the MediaDevices interface returns an object whose member fields each specify one of the constrainab
+
+       MEDIADEVICES: GETSUPPORTEDCONSTRAINTS() METHOD
+
+       The getSupportedConstraints() method of the MediaDevices interface returns an object whose member fields each specify one of the constrainable properties the user agent understands.
+
+       SYNTAX
+
+         getSupportedConstraints()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A new object listing the constraints supported by the user agent. Because only constraints supported by the user agent are included in the list, each of these Boolean properties has the value true. Unsupported constraints are omitted, so reading their properties returns undefined. Available properties are:
+
+        * aspectRatio
+          * : The user agent supports constraining the aspect ratio (width divided by height) of video tracks.
+        * autoGainControl
+          * : The user agent supports specifying whether automatic gain control is enabled for audio tracks.
+        * channelCount
+          * : The user agent supports constraining the number of audio channels, such as one for mono or two for stereo.
+        * deviceId
+          * : The user agent supports selecting a media source by its device ID.
+        * displaySurface
+          * : The user agent supports specifying a preferred display surface type (browser tab, window, or monitor) for screen capture.
+        * echoCancellation
+          * : The user agent supports specifying whether echo cancellation is enabled for audio tracks.
+        * facingMode
+          * : The user agent supports specifying the direction a camera faces, such as toward the user or their environment.
+        * frameRate
+          * : The user agent supports constraining the frame rate of video tracks, in frames per second.
+        * groupId
+          * : The user agent supports selecting a media source by its group ID, which identifies sources belonging to the same physical device.
+        * height
+          * : The user agent supports constraining the height of video tracks.
+        * latency
+          * : The user agent supports constraining the latency of audio tracks, in seconds.
+        * logicalSurface
+          * : The user agent supports specifying whether screen capture uses logical display surfaces, which may not be entirely visible onscreen.
+        * noiseSuppression
+          * : The user agent supports specifying whether noise suppression is enabled for audio tracks.
+        * resizeMode
+          * : The user agent supports specifying whether cropping and downscaling can be used to derive a video track's resolution and frame rate.
+        * restrictOwnAudio (experimental)
+          * : The user agent supports specifying whether system audio originating from the capturing tab is filtered out of screen capture.
+        * sampleRate
+          * : The user agent supports constraining the sample rate of audio tracks.
+        * sampleSize
+          * : The user agent supports constraining the sample size of audio tracks, in bits per linear sample.
+        * suppressLocalAudioPlayback (experimental)
+          * : The user agent supports specifying whether audio playing in a captured tab continues to play through the user's local speakers.
+        * volume (deprecated) {{Non-standard_Inline}}
+          * : The user agent supports constraining the volume of audio tracks, from 0.0 (silence) to 1.0 (the highest supported volume).
+        * width
+          * : The user agent supports constraining the width of video tracks.
+
+       EXAMPLES
+
+       CHECKING CONSTRAINT SUPPORT
+
+       This example generates a table showing whether each of the listed constraints is supported by your browser.
+
+       HTML
+
+         <table>
+           <caption>
+             Media constraint support
+           </caption>
+           <thead>
+             <tr>
+               <th scope="col">Constraint</th>
+               <th scope="col">Supported</th>
+             </tr>
+           </thead>
+           <tbody id="constraintSupport"></tbody>
+         </table>
+
+         body {
+           font:
+             15px "Arial",
+             sans-serif;
+         }
+
+         table {
+           border-collapse: collapse;
+         }
+
+         th,
+         td {
+           border: 1px solid;
+           padding: 0.25em 0.5em;
+           text-align: left;
+         }
+
+       JAVASCRIPT
+
+         const constraints = [
+           "aspectRatio",
+           "autoGainControl",
+           "channelCount",
+           "deviceId",
+           "displaySurface",
+           "echoCancellation",
+           "facingMode",
+           "frameRate",
+           "groupId",
+           "height",
+           "latency",
+           "logicalSurface",
+           "noiseSuppression",
+           "resizeMode",
+           "restrictOwnAudio",
+           "sampleRate",
+           "sampleSize",
+           "suppressLocalAudioPlayback",
+           "volume",
+           "width",
+         ];
+         const supportedConstraints = navigator.mediaDevices.getSupportedConstraints();
+         const tableBody = document.querySelector("#constraintSupport");
+
+         for (const constraint of constraints) {
+           const row = document.createElement("tr");
+           const name = document.createElement("th");
+           name.scope = "row";
+           const code = document.createElement("code");
+           code.textContent = constraint;
+           name.appendChild(code);
+
+           const support = document.createElement("td");
+           support.textContent = supportedConstraints[constraint] ? "Yes" : "No";
+
+           row.append(name, support);
+           tableBody.appendChild(row);
+         }
+
+       RESULT
+
+       CHECKING CONSTRAINTS BEFORE REQUESTING SCREEN CAPTURE
+
+       The function below sets up the options object for the call to getDisplayMedia(). It adds each of the following constraints only if it is known to be supported by the browser:
+
+        * displaySurface, requesting a preference for sharing an entire monitor.
+        * logicalSurface, requesting logical display surfaces, which may not be entirely visible onscreen.
+        * suppressLocalAudioPlayback, requesting that captured audio is not played out of the user's local speakers.
+       These constraints do not limit the display surfaces the user can choose to share. Capturing is then started by calling getDisplayMedia() and attaching the returned stream to the element represented by videoElem.
+
+         async function capture(videoElem) {
+           const supportedConstraints = navigator.mediaDevices.getSupportedConstraints();
+           const displayMediaOptions = {
+             video: {},
+             audio: {},
+           };
+
+           if (supportedConstraints.displaySurface) {
+             displayMediaOptions.video.displaySurface = "monitor";
+           }
+
+           if (supportedConstraints.logicalSurface) {
+             displayMediaOptions.video.logicalSurface = true;
+           }
+
+           if (supportedConstraints.suppressLocalAudioPlayback) {
+             displayMediaOptions.audio.suppressLocalAudioPlayback = true;
+           }
+
+           try {
+             videoElem.srcObject =
+               await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+           } catch (err) {
+             /* handle the error */
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

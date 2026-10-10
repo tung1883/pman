@@ -1,0 +1,49 @@
+WEBAPI.AUDIOTRACK-LABEL(1)       Sandbox manual       WEBAPI.AUDIOTRACK-LABEL(1)
+
+       NAME
+
+       AudioTrack: label property - The read-only AudioTrack
+
+       AUDIOTRACK: LABEL PROPERTY
+
+       The read-only AudioTrack property label returns a string specifying the audio track's human-readable label, if one is available; otherwise, it returns an empty string.
+
+       VALUE
+
+       A string specifying the track's human-readable label, if one is available in the track metadata. Otherwise, an empty string ("") is returned.
+
+       For example, a track whose kind is "commentary" might have a label such as "Commentary with director Mark Markmarkimark and star Donna Donnalidon".
+
+       EXAMPLES
+
+       This example returns an array of track kinds and labels for potential use in a user interface to select audio tracks for a specified media element. The list is filtered to only allow certain track kinds through.
+
+         function getTrackList(el) {
+           const trackList = [];
+           const wantedKinds = [
+             "main",
+             "alternative",
+             "main-desc",
+             "translation",
+             "commentary",
+           ];
+
+           el.audioTracks.forEach((track) => {
+             if (wantedKinds.includes(track.kind)) {
+               trackList.push({
+                 id: track.id,
+                 kind: track.kind,
+                 label: track.label,
+               });
+             }
+           });
+           return trackList;
+         }
+
+       The resulting trackList contains an array of audio tracks whose kind is one of those in the array wantedKinds, with each entry providing the track's id, kind, and label.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

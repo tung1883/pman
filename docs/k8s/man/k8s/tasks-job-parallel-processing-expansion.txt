@@ -1,0 +1,227 @@
+K8S.TASKS-JOB-PARALLEL-PROCESSING-EXPANSION(1) Sandbox manual K8S.TASKS-JOB-PARALLEL-PROCESSING-EXPANSION(1)
+
+       NAME
+
+       Use curl to download job-tmpl.yaml - This task demonstrates running multiple Jobs
+
+       USE CURL TO DOWNLOAD JOB-TMPL.YAML
+
+       This task demonstrates running multiple Jobs based on a common template. You can use this approach to process batches of work in parallel.
+
+       For this example there are only three items: _apple_, _banana_, and _cherry_. The sample Jobs process each item by printing a string then pausing.
+
+       See using Jobs in real workloads to learn about how this pattern fits more realistic use cases.
+
+       ## PREREQUISITES
+
+       You should be familiar with the basic, non-parallel, use of Job.
+
+       For basic templating you need the command-line utility sed.
+
+       To follow the advanced templating example, you need a working installation of Python, and the Jinja2 template library for Python.
+
+       Once you have Python set up, you can install Jinja2 by running:
+
+         pip install --user jinja2
+
+       CREATE JOBS BASED ON A TEMPLATE
+
+       First, download the following template of a Job to a file called job-tmpl.yaml. Here's what you'll download:
+
+         apiVersion: batch/v1
+         kind: Job
+         metadata:
+           name: process-item-$ITEM
+           labels:
+             jobgroup: jobexample
+         spec:
+           template:
+             metadata:
+               name: jobexample
+               labels:
+                 jobgroup: jobexample
+             spec:
+               containers:
+               - name: c
+                 image: busybox:1.28
+                 command: ["sh", "-c", "echo Processing item $ITEM && sleep 5"]
+               restartPolicy: Never
+
+         # Use curl to download job-tmpl.yaml
+         curl -L -s -O https://k8s.io/examples/application/job/job-tmpl.yaml
+
+       The file you downloaded is not yet a valid Kubernetes manifest. Instead that template is a YAML representation of a Job object with some placeholders that need to be filled in before it can be used. The $ITEM syntax is not meaningful to Kubernetes.
+
+       CREATE MANIFESTS FROM THE TEMPLATE
+
+       The following shell snippet uses sed to replace the string $ITEM with the loop variable, writing into a temporary directory named jobs. Run this now:
+
+         # Expand the template into multiple files, one for each item to be processed.
+         mkdir ./jobs
+         for i in apple banana cherry
+         do
+           cat job-tmpl.yaml | sed "s/\$ITEM/$i/" > ./jobs/job-$i.yaml
+         done
+
+       Check if it worked:
+
+         ls jobs/
+
+       The output is similar to this:
+
+         job-apple.yaml
+         job-banana.yaml
+         job-cherry.yaml
+
+       You could use any type of template language (for example: Jinja2; ERB), or write a program to generate the Job manifests.
+
+       CREATE JOBS FROM THE MANIFESTS
+
+       Next, create all the Jobs with one kubectl command:
+
+         kubectl create -f ./jobs
+
+       The output is similar to this:
+
+         job.batch/process-item-apple created
+         job.batch/process-item-banana created
+         job.batch/process-item-cherry created
+
+       Now, check on the jobs:
+
+         kubectl get jobs -l jobgroup=jobexample
+
+       The output is similar to this:
+
+         NAME                  COMPLETIONS   DURATION   AGE
+         process-item-apple    1/1           14s        22s
+         process-item-banana   1/1           12s        21s
+         process-item-cherry   1/1           12s        20s
+
+       Using the -l option to kubectl selects only the Jobs that are part of this group of jobs (there might be other unrelated jobs in the system).
+
+       You can check on the Pods as well using the same label selector:
+
+         kubectl get pods -l jobgroup=jobexample
+
+       The output is similar to:
+
+         NAME                        READY     STATUS      RESTARTS   AGE
+         process-item-apple-kixwv    0/1       Completed   0          4m
+         process-item-banana-wrsf7   0/1       Completed   0          4m
+         process-item-cherry-dnfu9   0/1       Completed   0          4m
+
+       We can use this single command to check on the output of all jobs at once:
+
+         kubectl logs -f -l jobgroup=jobexample
+
+       The output should be:
+
+         Processing item apple
+         Processing item banana
+         Processing item cherry
+
+       CLEAN UP #CLEANUP-1
+
+         # Remove the Jobs you created
+         # Your cluster automatically cleans up their Pods
+         kubectl delete job -l jobgroup=jobexample
+
+       USE ADVANCED TEMPLATE PARAMETERS
+
+       In the first example, each instance of the template had one parameter, and that parameter was also used in the Job's name. However, names are restricted to contain only certain characters.
+
+       This slightly more complex example uses the Jinja template language to generate manifests and then objects from those manifests, with a multiple parameters for each Job.
+
+       For this part of the task, you are going to use a one-line Python script to convert the template to a set of manifests.
+
+       First, copy and paste the following template of a Job object, into a file called job.yaml.jinja2:
+
+         {% set params = [{ "name": "apple", "url": "http://dbpedia.org/resource/Apple", },
+                           { "name": "banana", "url": "http://dbpedia.org/resource/Banana", },
+                           { "name": "cherry", "url": "http://dbpedia.org/resource/Cherry" }]
+         %}
+         {% for p in params %}
+         {% set name = p["name"] %}
+         {% set url = p["url"] %}
+         ---
+         apiVersion: batch/v1
+         kind: Job
+         metadata:
+           name: jobexample-{{ name }}
+           labels:
+             jobgroup: jobexample
+         spec:
+           template:
+             metadata:
+               name: jobexample
+               labels:
+                 jobgroup: jobexample
+             spec:
+               containers:
+               - name: c
+                 image: busybox:1.28
+                 command: ["sh", "-c", "echo Processing URL {{ url }} && sleep 5"]
+               restartPolicy: Never
+         {% endfor %}
+
+       The above template defines two parameters for each Job object using a list of python dicts (lines 1-4). A for loop emits one Job manifest for each set of parameters (remaining lines).
+
+       This example relies on a feature of YAML. One YAML file can contain multiple documents (Kubernetes manifests, in this case), separated by --- on a line by itself. You can pipe the output directly to kubectl to create the Jobs.
+
+       Next, use this one-line Python program to expand the template:
+
+         alias render_template='python -c "from jinja2 import Template; import sys; print(Template(sys.stdin.read()).render());"'
+
+       Use render_template to convert the parameters and template into a single YAML file containing Kubernetes manifests:
+
+         # This requires the alias you defined earlier
+         cat job.yaml.jinja2 | render_template > jobs.yaml
+
+       You can view jobs.yaml to verify that the render_template script worked correctly.
+
+       Once you are happy that render_template is working how you intend, you can pipe its output into kubectl:
+
+         cat job.yaml.jinja2 | render_template | kubectl apply -f -
+
+       Kubernetes accepts and runs the Jobs you created.
+
+       CLEAN UP #CLEANUP-2
+
+         # Remove the Jobs you created
+         # Your cluster automatically cleans up their Pods
+         kubectl delete job -l jobgroup=jobexample
+
+       USING JOBS IN REAL WORKLOADS
+
+       In a real use case, each Job performs some substantial computation, such as rendering a frame of a movie, or processing a range of rows in a database. If you were rendering a movie you would set $ITEM to the frame number. If you were processing rows from a database table, you would set $ITEM to represent the range of database rows to process.
+
+       In the task, you ran a command to collect the output from Pods by fetching their logs. In a real use case, each Pod for a Job writes its output to durable storage before completing. You can use a PersistentVolume for each Job, or an external storage service. For example, if you are rendering frames for a movie, use HTTP to PUT the rendered frame data to a URL, using a different URL for each frame.
+
+       LABELS ON JOBS AND PODS
+
+       After you create a Job, Kubernetes automatically adds additional labels that distinguish one Job's pods from another Job's pods.
+
+       In this example, each Job and its Pod template have a label: jobgroup=jobexample.
+
+       Kubernetes itself pays no attention to labels named jobgroup. Setting a label for all the Jobs you create from a template makes it convenient to operate on all those Jobs at once. In the first example you used a template to create several Jobs. The template ensures that each Pod also gets the same label, so you can check on all Pods for these templated Jobs with a single command.
+
+       > Note:
+       The label key jobgroup is not special or reserved. You can pick your own labelling scheme. There are recommended labels that you can use if you wish.
+
+       ALTERNATIVES
+
+       If you plan to create a large number of Job objects, you may find that:
+
+        * Even using labels, managing so many Jobs is cumbersome.
+        * If you create many Jobs in a batch, you might place high load
+       on the Kubernetes control plane. Alternatively, the Kubernetes API server could rate limit you, temporarily rejecting your requests with a 429 status.
+
+        * You are limited by a resource quota
+       on Jobs: the API server permanently rejects some of your requests when you create a great deal of work in one batch.
+
+       There are other job patterns that you can use to process large amounts of work without creating very many Job objects.
+
+       You could also consider writing your own controller to manage Job objects automatically.
+
+Kubernetes manual                       from the official documentation

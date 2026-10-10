@@ -1,0 +1,150 @@
+APACHE.MOD_IMAGEMAP(1)           Sandbox manual           APACHE.MOD_IMAGEMAP(1)
+
+       NEW FEATURES
+
+       The imagemap module adds some new features that were not possible with previously distributed imagemap programs.
+
+        * URL references relative to the Referer: information.
+        * Default <base> assignment through a new map directive base.
+        * No need for imagemap.conf file.
+        * Point references.
+        * Configurable generation of imagemap menus.
+
+       IMAGEMAP FILE
+
+       The lines in the imagemap files can have one of several formats:
+
+       directive value [x,y ...]  directive value "Menu text" [x,y ...]  directive value x,y ... "Menu text"
+
+       The directive is one of base, default, poly, circle, rect, or point. The value is an absolute or relative URL, or one of the special values listed below. The coordinates are x,y pairs separated by whitespace. The quoted text is used as the text of the link if a imagemap menu is generated. Lines beginning with '#' are comments.
+
+       IMAGEMAP FILE DIRECTIVES
+
+       There are six directives allowed in the imagemap file. The directives can come in any order, but are processed in the order they are found in the imagemap file.
+
+         base Directive
+       Has the effect of <base href="value"> . The non-absolute URLs of the map-file are taken relative to this value. The base directive overrides ImapBase as set in a .htaccess file or in the server configuration files. In the absence of an ImapBase configuration directive, base defaults to http://server_name/.
+
+       base_uri is synonymous with base. Note that a trailing slash on the URL is significant.
+
+         default Directive
+       The action taken if the coordinates given do not fit any of the poly, circle or rect directives, and there are no point directives. Defaults to nocontent in the absence of an ImapDefault configuration setting, causing a status code of 204 No Content to be returned. The client should keep the same page displayed.
+
+         poly Directive
+       Takes three to one-hundred points, and is obeyed if the user selected coordinates fall within the polygon defined by these points.
+
+         circle
+       Takes the center coordinates of a circle and a point on the circle. Is obeyed if the user selected point is with the circle.
+
+         rect Directive
+       Takes the coordinates of two opposing corners of a rectangle. Obeyed if the point selected is within this rectangle.
+
+         point Directive
+       Takes a single point. The point directive closest to the user selected point is obeyed if no other directives are satisfied. Note that default will not be followed if a point directive is present and valid coordinates are given.
+
+       VALUES
+
+       The values for each of the directives can be any of the following:
+
+         a URL
+       The URL can be relative or absolute URL. Relative URLs can contain '..' syntax and will be resolved relative to the base value.
+
+       base itself will not be resolved according to the current value. A statement base mailto: will work properly, though.
+
+         map
+       Equivalent to the URL of the imagemap file itself. No coordinates are sent with this, so a menu will be generated unless ImapMenu is set to none.
+
+         menu
+       Synonymous with map.
+
+         referer
+       Equivalent to the URL of the referring document. Defaults to http://servername/ if no Referer: header was present.
+
+         nocontent
+       Sends a status code of 204 No Content, telling the client to keep the same page displayed. Valid for all but base.
+
+         error
+       Fails with a 500 Server Error. Valid for all but base, but sort of silly for anything but default.
+
+       COORDINATES
+
+         0,0 200,200
+       A coordinate consists of an x and a y value separated by a comma. The coordinates are separated from each other by whitespace. To accommodate the way Lynx handles imagemaps, should a user select the coordinate 0,0, it is as if no coordinate had been selected.
+
+       QUOTED TEXT
+
+         "Menu Text"
+       After the value or after the coordinates, the line optionally may contain text within double quotes. This string is used as the text for the link if a menu is generated:
+
+       <a href="http://example.com/">Menu text</a>
+
+       If no quoted text is present, the name of the link will be used as the text:
+
+       <a href="http://example.com/">http://example.com</a>
+
+       If you want to use double quotes within this text, you have to write them as &quot;.
+
+       EXAMPLE MAPFILE
+
+       #Comments are printed in a 'formatted' or 'semiformatted' menu.  #And can contain html tags. <hr>  base referer  poly map "Could I have a menu, please?" 0,0 0,10 10,10 10,0  rect .. 0,0 77,27 "the directory of the referer"  circle http://www.inetnebr.example.com/lincoln/feedback/ 195,0 305,27  rect another_file "in same directory as referer" 306,0 419,27  point http://www.zyzzyva.example.com/ 100,100  point http://www.tripod.example.com/ 200,200  rect mailto:nate@tripod.example.com 100,150 200,0 "Bugs?"
+
+       REFERENCING YOUR MAPFILE
+
+       HTML EXAMPLE
+
+       <a href="/maps/imagemap1.map">   <img ismap src="/images/imagemap1.gif">   </a>
+
+       XHTML EXAMPLE
+
+       <a href="/maps/imagemap1.map">   <img ismap="ismap" src="/images/imagemap1.gif" />   </a>
+
+       IMAPBASE DIRECTIVE
+
+         Description: | Default base for imagemap files
+         Syntax: | ImapBase map|referer|URL
+         Default: | ImapBase http://servername/
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | Indexes
+         Status: | Deprecated
+         Module: | mod_imagemap
+       The ImapBase directive sets the default base used in the imagemap files. Its value is overridden by a base directive within the imagemap file. If not present, the base defaults to http://servername/.
+
+       SEE ALSO
+
+        * UseCanonicalName
+
+       IMAPDEFAULT DIRECTIVE
+
+         Description: | Default action when an imagemap is called with coordinates that are not explicitly mapped
+         Syntax: | ImapDefault error|nocontent|map|referer|URL
+         Default: | ImapDefault nocontent
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | Indexes
+         Status: | Deprecated
+         Module: | mod_imagemap
+       The ImapDefault directive sets the default default used in the imagemap files. Its value is overridden by a default directive within the imagemap file. If not present, the default action is nocontent, which means that a 204 No Content is sent to the client. In this case, the client should continue to display the original page.
+
+       IMAPMENU DIRECTIVE
+
+         Description: | Action if no coordinates are given when calling an imagemap
+         Syntax: | ImapMenu none|formatted|semiformatted|unformatted
+         Default: | ImapMenu formatted
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | Indexes
+         Status: | Deprecated
+         Module: | mod_imagemap
+       The ImapMenu directive determines the action taken if an imagemap file is called without valid coordinates.
+
+         none
+       If ImapMenu is none, no menu is generated, and the default action is performed.
+
+         formatted
+       A formatted menu is the simplest menu. Comments in the imagemap file are ignored. A level one header is printed, then an hrule, then the links each on a separate line. The menu has a consistent, plain look close to that of a directory listing.
+
+         semiformatted
+       In the semiformatted menu, comments are printed where they occur in the imagemap file. Blank lines are turned into HTML breaks. No header or hrule is printed, but otherwise the menu is the same as a formatted menu.
+
+         unformatted
+       Comments are printed, blank lines are ignored. Nothing is printed that does not appear in the imagemap file. All breaks and headers must be included as comments in the imagemap file. This gives you the most flexibility over the appearance of your menus, but requires you to treat your map files as HTML instead of plaintext.
+
+Apache HTTP Server manual               bundled documentation

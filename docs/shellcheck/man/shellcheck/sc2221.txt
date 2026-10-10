@@ -1,0 +1,49 @@
+SHELLCHECK.SC2221(1)             Sandbox manual             SHELLCHECK.SC2221(1)
+
+       NAME
+
+       This pattern always overrides a later one. - case "$1" in
+
+       THIS PATTERN ALWAYS OVERRIDES A LATER ONE
+
+       THIS PATTERN ALWAYS OVERRIDES A LATER ONE
+
+       PROBLEMATIC CODE
+
+         case "$1" in
+           -?) echo "Usage: $0 [-n]";;
+           -n) echo "Hello World";;
+            *) exit 1;;
+         esac
+
+       CORRECT CODE
+
+         case "$1" in
+           -\?) echo "Usage: $0 [-n]";;
+           -n) echo "Hello World";;
+            *) exit 1;;
+         esac
+
+       RATIONALE
+
+       You have specified multiple patterns in a case statement, where one will always override the other. The pattern being overridden is indicated with a [[SC2222]] warning.
+
+       In the example, -? actually matches a dash followed by any character, such as -n. This means that the later -n branch will never trigger. In this case, the correct solution is to escape the -\? so that it doesn't match -n.
+
+       Another common reason for this is accidentally duplicating a branch. In this case, fix or delete the duplicate branch.
+
+       EXCEPTIONS
+
+       None. One could argue that having -|--) echo "Invalid flag"; is a readability issue, even though the second pattern follows from the first. In this case, you can either rearrange the pattern from most to least specific, i.e. --|-) or ignore the error.
+
+       When ignoring this error, remember that ShellCheck directives have to go in front of the case statement, and not in front of the branch:
+
+       SHELLCHECK DISABLE SC2221,SC2222
+
+       case "$1" in -n) ...;;
+
+       NO DIRECTIVE HERE
+
+       -|--) echo "Unknown flag" ;; esac
+
+ShellCheck manual                       from the official documentation

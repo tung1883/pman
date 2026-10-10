@@ -1,0 +1,33 @@
+SHELLCHECK.SC2115(1)             Sandbox manual             SHELLCHECK.SC2115(1)
+
+       NAME
+
+       Use "${var:?}" to ensure this never expands to / . - rm -rf "$STEAMROOT/"
+
+       USE VAR: TO ENSURE THIS NEVER EXPANDS TO
+
+       USE VAR: TO ENSURE THIS NEVER EXPANDS TO
+
+       PROBLEMATIC CODE
+
+         rm -rf "$STEAMROOT/"*
+
+       CORRECT CODE
+
+         rm -rf "${STEAMROOT:?}/"*
+
+       RATIONALE
+
+       If STEAMROOT is empty, this will end up deleting everything in the system's root directory.
+
+       Using :? will cause the command to fail if the variable is null or unset. Similarly, you can use :- to set a default value if applicable.
+
+       In the case of command substitution, assign to a variable first and then use :?. This is relevant even if the command seems simple and obviously correct, since forks and execs can fail due to external system limits and conditions, resulting in a blank substitution.
+
+       For more details about :? see the "Parameter Expansion" section of the Bash man page.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

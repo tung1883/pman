@@ -1,0 +1,31 @@
+APACHE.MOD_REFLECTOR(1)          Sandbox manual          APACHE.MOD_REFLECTOR(1)
+
+       EXAMPLES
+
+         Compression service
+       Pass the request body through the DEFLATE filter to compress the body. This request requires a Content-Encoding request header containing "gzip" for the filter to return compressed data.
+
+         <Location "/compress">
+             SetHandler reflector
+             SetOutputFilter DEFLATE
+         </Location>
+
+         Image downsampling service
+       Pass the request body through an image downsampling filter, and reflect the results to the caller.
+
+         <Location "/downsample">
+             SetHandler reflector
+             SetOutputFilter DOWNSAMPLE
+         </Location>
+
+       REFLECTORHEADER DIRECTIVE
+
+         Description: | Reflect an input header to the output headers
+         Syntax: | ReflectorHeader inputheader [outputheader]
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | Options
+         Status: | Base
+         Module: | mod_reflector
+       This directive controls the reflection of request headers to the response. The first argument is the name of the request header to copy. If the optional second argument is specified, it will be used as the name of the response header, otherwise the original request header name will be used.
+
+Apache HTTP Server manual               bundled documentation

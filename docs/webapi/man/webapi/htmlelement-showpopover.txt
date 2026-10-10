@@ -1,0 +1,77 @@
+WEBAPI.HTMLELEMENT-SHOWPOPOVER(1) Sandbox manual WEBAPI.HTMLELEMENT-SHOWPOPOVER(1)
+
+       NAME
+
+       HTMLElement: showPopover() method - The showPopover() method of the HTMLElement interface shows a popover element (i.e., one that has a valid popover attribute) by adding it to
+
+       HTMLELEMENT: SHOWPOPOVER() METHOD
+
+       The showPopover() method of the HTMLElement interface shows a popover element (i.e., one that has a valid popover attribute) by adding it to the top layer.
+
+       When showPopover() is called on an element with the popover attribute that is currently hidden, a beforetoggle event will be fired, followed by the popover showing, and then the toggle event firing.
+
+       SYNTAX
+
+         showPopover()
+         showPopover(options)
+
+       PARAMETERS
+
+        * options (optional)
+          * : An object that can contain the following properties:
+            * source (optional)
+              * : An HTMLElement reference; programmatically defines the invoker of the popover associated with the show action, that is, its control element. Establishing a relationship between a popover and its invoker using the source option has two useful effects:
+                * The browser places the popover in a logical position in the keyboard focus navigation order when shown. This makes the popover more accessible to keyboard users (see also Popover accessibility features).
+                * The browser creates an implicit anchor reference between the two, making it very convenient to position popovers relative to their controls using CSS anchor positioning. See Popover anchor positioning for more details.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if this method is called while another popover is already in the process of being shown or hidden (e.g., within a beforetoggle event listener).
+
+       EXAMPLES
+
+       The following example provides functionality to show a popover by pressing a particular key on the keyboard.
+
+       First, some HTML:
+
+         <div id="mypopover" popover>
+           <h2>Help!</h2>
+
+           <p>You can use the following commands to control the app</p>
+
+           <ul>
+             <li>Press <ins>C</ins> to order cheese</li>
+             <li>Press <ins>T</ins> to order tofu</li>
+             <li>Press <ins>B</ins> to order bacon</li>
+           </ul>
+           <hr />
+           <ul>
+             <li>Say "Service" to summon the robot waiter to take your order</li>
+             <li>Say "Escape" to engage the ejector seat</li>
+           </ul>
+         </div>
+
+       And now the JavaScript to wire up the functionality:
+
+         const popover = document.getElementById("mypopover");
+
+         document.addEventListener("keydown", (event) => {
+           if (event.key === "h") {
+             popover.showPopover();
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Popover API
+
+Web APIs manual                         from the official documentation

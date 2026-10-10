@@ -1,0 +1,66 @@
+WEBAPI.FILESYSTEMDIRECTORYHANDLE-GETFILEHANDLE(1) Sandbox manual WEBAPI.FILESYSTEMDIRECTORYHANDLE-GETFILEHANDLE(1)
+
+       NAME
+
+       FileSystemDirectoryHandle: getFileHandle() method - The getFileHandle() method of the
+
+       FILESYSTEMDIRECTORYHANDLE: GETFILEHANDLE() METHOD
+
+       The getFileHandle() method of the FileSystemDirectoryHandle interface returns a FileSystemFileHandle for a file with the specified name, within the directory the method is called.
+
+       SYNTAX
+
+         getFileHandle(name)
+         getFileHandle(name, options)
+
+       PARAMETERS
+
+        * name
+          * : A string representing the FileSystemHandle.name of
+       the file you wish to retrieve.
+
+        * options (optional)
+          * : An object with the following properties:
+            * create (optional)
+              * : A Boolean. Default false. When
+       set to true if the file is not found, one with the specified name will be created and returned.
+
+       RETURN VALUE
+
+       A Promise which resolves with a FileSystemFileHandle.
+
+       EXCEPTIONS
+
+        * NotAllowedError DOMException
+          * : Thrown if the PermissionStatus.state for the handle is not 'granted' in readwrite mode if the create option is set to true or in read mode if the create option is set to false.
+        * TypeError
+          * : Thrown if the name specified is not a valid string or contains characters that would
+       interfere with the native file system.
+
+        * TypeMismatchError DOMException
+          * : Thrown if the named entry is a directory and not a file.
+        * NotFoundError DOMException
+          * : Thrown if the current entry is not found or if the file doesn't exist and the create option is set to
+       false.
+
+       EXAMPLES
+
+       The following example returns a file handle with the specified name, if the file does not exist it is created.
+
+         const fileName = "fileToGetName";
+
+         // assuming we have a directory handle: 'currentDirHandle'
+         const fileHandle = await currentDirHandle.getFileHandle(fileName, {
+           create: true,
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File System API
+        * The File System Access API: simplifying access to local files
+
+Web APIs manual                         from the official documentation

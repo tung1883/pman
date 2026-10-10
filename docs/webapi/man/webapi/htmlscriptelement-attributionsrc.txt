@@ -1,0 +1,61 @@
+WEBAPI.HTMLSCRIPTELEMENT-ATTRIBUTIONSRC(1) Sandbox manual WEBAPI.HTMLSCRIPTELEMENT-ATTRIBUTIONSRC(1)
+
+       NAME
+
+       HTMLScriptElement: attributionSrc property - The attributionSrc property of the HTMLScriptElement interface gets and sets the attributionsrc attribute on a <script> element programmatic
+
+       HTMLSCRIPTELEMENT: ATTRIBUTIONSRC PROPERTY
+
+       {{non-standard_header}}
+
+       The attributionSrc property of the HTMLScriptElement interface gets and sets the attributionsrc attribute on a element programmatically, reflecting the value of that attribute. attributionsrc specifies that you want the browser to send an Attribution-Reporting-Eligible header along with the script resource request.
+
+       On the server-side this is used to trigger sending an Attribution-Reporting-Register-Source or Attribution-Reporting-Register-Trigger header in the response, to register a JavaScript-based attribution source or attribution trigger, respectively. Which response header should be sent back depends on the value of the Attribution-Reporting-Eligible header that triggered the registration.
+
+       > Alternatively, JavaScript-based attribution sources or triggers can be registered by sending a fetch() request containing the attributionReporting option (either set directly on the fetch() call or on a Request object passed into the fetch() call), or by sending an XMLHttpRequest with setAttributionReporting() invoked on the request object.
+       See the Attribution Reporting API for more details.
+
+       VALUE
+
+       A string. There are two versions of this property that you can get and set:
+
+        * Empty string, i.e., scriptElem.attributionSrc="". This specifies that you want the Attribution-Reporting-Eligible header sent to the same server as the src attribute points to. This is fine when you are handling the attribution source or trigger registration on the same server. When registering an attribution trigger this property is optional, and an empty string value will be used if it is omitted.
+        * Value containing one or more URLs, for example:
+
+           scriptElem.attributionSrc =
+             "https://a.example/register-source https://b.example/register-source";
+
+       This is useful in cases where the requested resource is not on a server you control, or you just want to handle registering the attribution source on a different server. In this case, you can specify one or more URLs as the value of attributionSrc. When the resource request occurs the Attribution-Reporting-Eligible header will be sent to the URL(s) specified in attributionSrc in addition to the resource origin. These URLs can then respond with an Attribution-Reporting-Register-Source or Attribution-Reporting-Register-Trigger header as appropriate to complete registration.
+
+       > Specifying multiple URLs means that multiple attribution sources can be registered on the same feature. You might for example have different campaigns that you are trying to measure the success of, which involve generating different reports on different data.
+
+       EXAMPLES
+
+       SETTING AN EMPTY ATTRIBUTIONSRC
+
+         <script src="advertising-script.js"></script>
+
+         const scriptElem = document.querySelector("script");
+         scriptElem.attributionSrc = "";
+
+       SETTING AN ATTRIBUTIONSRC CONTAINING URLS
+
+         <script src="advertising-script.js"></script>
+
+         // encode the URLs in case they contain special characters
+         // such as '=' that would be improperly parsed.
+         const encodedUrlA = encodeURIComponent("https://a.example/register-source");
+         const encodedUrlB = encodeURIComponent("https://b.example/register-source");
+
+         const scriptElem = document.querySelector("script");
+         scriptElem.attributionSrc = `${encodedUrlA} ${encodedUrlB}`;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Attribution Reporting API.
+
+Web APIs manual                         from the official documentation

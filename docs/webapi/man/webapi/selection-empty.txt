@@ -1,0 +1,71 @@
+WEBAPI.SELECTION-EMPTY(1)        Sandbox manual        WEBAPI.SELECTION-EMPTY(1)
+
+       NAME
+
+       Selection: empty() method - The Selection.empty() method removes all ranges from the selection, leaving the anchorNode and focusNode properties equal to null and nothin
+
+       SELECTION: EMPTY() METHOD
+
+       The Selection.empty() method removes all ranges from the selection, leaving the anchorNode and focusNode properties equal to null and nothing selected. When this method is called, a selectionchange event is fired at the document.
+
+       > This method is an alias for the Selection.removeAllRanges() method.
+
+       SYNTAX
+
+         empty()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       This example displays a message when something is selected on the page or not. It does this by listening to the selectionchange event on the document. There also is a button that clears any selection by calling Selection.empty(). When this happens, the selection is changed and the message is updated.
+
+         <p>
+           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse laoreet
+           urna eget sapien venenatis, eget facilisis diam mattis.
+         </p>
+         <button>Clear selection</button>
+         <pre id="log"></pre>
+
+         const log = document.getElementById("log");
+
+         // The selection object is a singleton associated with the document
+         const selection = document.getSelection();
+
+         // Logs if there is a selection or not
+         function newSelectionHandler() {
+           if (selection.rangeCount !== 0) {
+             log.textContent = "Some text is selected.";
+           } else {
+             log.textContent = "No selection on this document.";
+           }
+         }
+
+         document.addEventListener("selectionchange", () => {
+           newSelectionHandler();
+         });
+
+         newSelectionHandler();
+
+         // The button cancel all selection ranges
+         const button = document.querySelector("button");
+         button.addEventListener("click", () => {
+           selection.empty();
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Selection.removeAllRanges()
+        * selectionchange
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,58 @@
+WEBAPI.ABORTSIGNAL-THROWIFABORTED(1) Sandbox manual WEBAPI.ABORTSIGNAL-THROWIFABORTED(1)
+
+       NAME
+
+       AbortSignal: throwIfAborted() method - The throwIfAborted() method throws the signal's abort reason if the signal has been aborted; otherwise it does nothing.
+
+       ABORTSIGNAL: THROWIFABORTED() METHOD
+
+       The throwIfAborted() method throws the signal's abort reason if the signal has been aborted; otherwise it does nothing.
+
+       An API that needs to support aborting can accept an AbortSignal object and use throwIfAborted() to test and throw when the abort event is signaled.
+
+       This method can also be used to abort operations at particular points in code, rather than passing to functions that take a signal.
+
+       SYNTAX
+
+         throwIfAborted()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       The examples below come from the specification.
+
+       ABORTING A POLLING OPERATION
+
+       This example demonstrates how you can use throwIfAborted() to abort a polling operation.
+
+       Consider an asynchronous waitForCondition() function that is called with another asynchronous function func, a target value targetValue, and an AbortSignal. The method compares the result of func with targetValue in a loop, returning when they match.
+
+         async function waitForCondition(func, targetValue, { signal } = {}) {
+           while (true) {
+             signal?.throwIfAborted();
+
+             const result = await func();
+             if (result === targetValue) {
+               return;
+             }
+           }
+         }
+
+       On each iteration of the loop, we use throwIfAborted() to throw the signal's reason if the operation has been aborted (and otherwise do nothing). If the signal is aborted, this will cause the waitForCondition() promise to be rejected.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Fetch API
+
+Web APIs manual                         from the official documentation

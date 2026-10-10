@@ -1,0 +1,60 @@
+ARCH.DBUS(1)                     Sandbox manual                     ARCH.DBUS(1)
+
+       D-Bus is a message bus system that provides an easy way for inter-process communication. It consists of a daemon, which can be run both system-wide and for each user session, and a set of libraries to allow applications to use D-Bus.
+
+       dbus is pulled and installed as a dependency of systemd and user session bus is started automatically for each user.
+
+       IMPLEMENTATIONS
+
+       Arch provides two D-Bus message broker implementations. Initially, the user will be asked to choose a desired dbus-units provider during installation of systemd package. Only one implementation can be installed at a time.
+
+       DBUS-BROKER
+
+       dbus-broker is currently the default implementation for Arch [1] [2]. It is a drop-in replacement for the reference implementation, which aims "to provide high performance and reliability, while keeping compatibility to the D-Bus reference implementation".
+
+       Select dbus-broker-units when asked for dbus-units provider, or install it explicitly.
+
+       Note dbus-broker currently does not have support for AppArmor. However, officially supported kernels do not support AppArmor mediation for D-Bus, either.
+
+       REFERENCE IMPLEMENTATION
+
+       The reference implementation is still officially supported by Arch.
+
+       Select dbus-daemon-units when asked for dbus-units provider, or install it explicitly.
+
+       TIPS AND TRICKS
+
+       OVERRIDE DBUS SERVICE
+
+       This is useful when specifying a particular service among other services providing the same well-known bus name. See KeePass#Autostart and KDE Wallet#Automatic D-Bus activation for example.
+
+       D-Bus services can be masked by setting Exec=/bin/false in service files of $XDG_DATA_HOME/dbus-1/services. For example, to mask gvfsd,
+
+         $ cp /usr/share/dbus-1/services/org.gtk.vfs.Daemon.service ~/.local/share/dbus-1/services
+         $ sed -i 's|^Exec=.*|Exec=/bin/false|' ~/.local/share/dbus-1/services/org.gtk.vfs.Daemon.service
+
+       If the service is already launched, the override will not work. The existing service's process must be killed, or launched earlier.
+
+       DEBUGGING
+
+        * Bustle — Draws sequence diagrams of D-Bus activity. It shows signal emissions, method calls and their corresponding returns, with time stamps for each individual event and the duration of each method call.
+       https://apps.gnome.org/Bustle/ || bustle
+
+        * D-Feet — Easy to use D-Bus debugger GUI tool. Discontinued.
+       https://wiki.gnome.org/Apps/DFeet || d-feetAUR
+
+        * D-Spy — Easy to use D-Bus debugger GUI tool. D-Spy can be used to inspect D-Bus interfaces of running programs and invoke methods on those interfaces.
+       https://apps.gnome.org/Dspy/ || d-spy
+
+        * Qt D-Bus Viewer — GUI D-Bus debugger. Can be used to inspect D-Bus services and invoke methods on them.
+       https://doc.qt.io/qt-6/qdbusviewer.html || qt6-tools
+
+       You can also use busctl(1) from systemd.
+
+       SEE ALSO
+
+        * https://freedesktop.org/wiki/Software/dbus/
+        * https://freedesktop.org/wiki/IntroductionToDBus/
+        * https://uyha.github.io/technical/dbus-systemd.html systemd uses DBus as the mechanism to interact with it. This article introduces just enough DBus concepts and the usage of busctl to communicate with systemd.
+
+ArchWiki manual                         bundled documentation

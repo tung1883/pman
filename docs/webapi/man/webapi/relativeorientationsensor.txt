@@ -1,0 +1,73 @@
+WEBAPI.RELATIVEORIENTATIONSENSOR(1) Sandbox manual WEBAPI.RELATIVEORIENTATIONSENSOR(1)
+
+       NAME
+
+       RelativeOrientationSensor - The RelativeOrientationSensor interface of the Sensor APIs describes the device's physical orientation without regard to the Earth's referen
+
+       RELATIVEORIENTATIONSENSOR
+
+       The RelativeOrientationSensor interface of the Sensor APIs describes the device's physical orientation without regard to the Earth's reference coordinate system.
+
+       To use this sensor, the user must grant permission to the 'accelerometer', and 'gyroscope' device sensors through the Permissions API. In addition, this feature may be blocked by a Permissions Policy set on your server.
+
+       CONSTRUCTOR
+
+        * RelativeOrientationSensor()
+          * : Creates a new RelativeOrientationSensor object.
+
+       INSTANCE PROPERTIES
+
+       _No specific properties; inherits properties from its ancestors OrientationSensor and Sensor._
+
+       INSTANCE METHODS
+
+       _No specific methods; inherits methods from its ancestors OrientationSensor and Sensor._
+
+       EVENTS
+
+       _No specific events; inherits events from its ancestor, Sensor._
+
+       EXAMPLES
+
+       BASIC EXAMPLE
+
+       The following example, which is loosely based on Intel's Orientation Phone demo, instantiates a RelativeOrientationSensor with a frequency of 60 times a second.
+
+       > The Intel demo this is based on uses the AbsoluteOrientationSensor. On each reading it uses OrientationSensor.quaternion to rotate a visual model of a phone.
+
+         const options = { frequency: 60, referenceFrame: "device" };
+         const sensor = new RelativeOrientationSensor(options);
+
+         sensor.addEventListener("reading", () => {
+           // model is a Three.js object instantiated elsewhere.
+           model.quaternion.fromArray(sensor.quaternion).inverse();
+         });
+         sensor.addEventListener("error", (error) => {
+           if (event.error.name === "NotReadableError") {
+             console.log("Sensor is not available.");
+           }
+         });
+         sensor.start();
+
+       PERMISSIONS EXAMPLE
+
+       Using orientation sensors requires requesting permissions for multiple device sensors. Because the Permissions interface uses promises, a good way to request permissions is to use Promise.all.
+
+         const sensor = new RelativeOrientationSensor();
+         Promise.all([
+           navigator.permissions.query({ name: "accelerometer" }),
+           navigator.permissions.query({ name: "gyroscope" }),
+         ]).then((results) => {
+           if (results.every((result) => result.state === "granted")) {
+             sensor.start();
+             // …
+           } else {
+             console.log("No permissions to use RelativeOrientationSensor.");
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

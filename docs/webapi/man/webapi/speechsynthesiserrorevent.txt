@@ -1,0 +1,70 @@
+WEBAPI.SPEECHSYNTHESISERROREVENT(1) Sandbox manual WEBAPI.SPEECHSYNTHESISERROREVENT(1)
+
+       NAME
+
+       SpeechSynthesisErrorEvent - The SpeechSynthesisErrorEvent interface of the Web Speech API contains information about any errors that occur while processing SpeechSynthe
+
+       SPEECHSYNTHESISERROREVENT
+
+       The SpeechSynthesisErrorEvent interface of the Web Speech API contains information about any errors that occur while processing SpeechSynthesisUtterance objects in the speech service.
+
+       CONSTRUCTOR
+
+        * SpeechSynthesisErrorEvent()
+          * : Creates a new SpeechSynthesisErrorEvent.
+
+       INSTANCE PROPERTIES
+
+       _SpeechSynthesisErrorEvent extends the SpeechSynthesisEvent interface, which inherits properties from its parent interface, Event._
+
+        * SpeechSynthesisErrorEvent.error (read-only)
+          * : Returns an error code indicating what has gone wrong with a speech synthesis attempt.
+
+       INSTANCE METHODS
+
+       _SpeechSynthesisErrorEvent extends the SpeechSynthesisEvent interface, which inherits methods from its parent interface, Event._
+
+       EXAMPLES
+
+         const synth = window.speechSynthesis;
+
+         const inputForm = document.querySelector("form");
+         const inputTxt = document.querySelector("input");
+         const voiceSelect = document.querySelector("select");
+
+         const voices = synth.getVoices();
+
+         // …
+
+         inputForm.onsubmit = (event) => {
+           event.preventDefault();
+
+           const utterThis = new SpeechSynthesisUtterance(inputTxt.value);
+           const selectedOption =
+             voiceSelect.selectedOptions[0].getAttribute("data-name");
+           for (const voice of voices) {
+             if (voice.name === selectedOption) {
+               utterThis.voice = voice;
+             }
+           }
+
+           synth.speak(utterThis);
+
+           utterThis.onerror = (event) => {
+             console.log(
+               `An error has occurred with the speech synthesis: ${event.error}`,
+             );
+           };
+
+           inputTxt.blur();
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Speech API
+
+Web APIs manual                         from the official documentation

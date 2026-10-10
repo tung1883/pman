@@ -1,0 +1,83 @@
+WEBAPI.HTMLBUTTONELEMENT-COMMAND(1) Sandbox manual WEBAPI.HTMLBUTTONELEMENT-COMMAND(1)
+
+       NAME
+
+       HTMLButtonElement: command property - The command property of the HTMLButtonElement interface gets and sets the action to be performed on an element being controlled by this butt
+
+       HTMLBUTTONELEMENT: COMMAND PROPERTY
+
+       The command property of the HTMLButtonElement interface gets and sets the action to be performed on an element being controlled by this button. For this to have an effect, commandfor must be set.
+
+       It reflects the command HTML attribute.
+
+       VALUE
+
+       A string. See the command attribute for valid values.
+
+       EXAMPLES
+
+       BASIC EXAMPLE
+
+         <button id="toggleBtn" commandfor="mypopover" command="toggle-popover">
+           Toggle popover
+         </button>
+
+         <div popover id="mypopover">
+           <button commandfor="mypopover" command="hide-popover">Hide popover</button>
+         </div>
+
+         const popover = document.getElementById("mypopover");
+         const toggleBtn = document.getElementById("toggleBtn");
+
+         toggleBtn.command = "show-popover";
+
+       USING CUSTOM VALUES FOR COMMANDS
+
+       In this example, three buttons have been created using custom values for command. Each button targets the same image using the commandfor attribute.
+
+         <div class="controls">
+           <button commandfor="the-image" command="--rotate-left">Rotate Left</button>
+           <button commandfor="the-image" command="--reset">Reset</button>
+           <button commandfor="the-image" command="--rotate-right">Rotate Right</button>
+         </div>
+
+         <img
+           id="the-image"
+           src="/shared-assets/images/examples/dino.svg"
+           alt="dinosaur head rotated 0 degrees" />
+
+         .controls {
+           margin-block-end: 20px;
+         }
+
+       An event listener is attached to the image using the command event. When one of the buttons is clicked, the listener runs code based on the custom command value assigned to the button, rotating the image and also updating its alt text to indicate the new angle of the image.
+
+         const image = document.getElementById("the-image");
+
+         image.addEventListener("command", (event) => {
+           let rotate = parseInt(event.target.style.rotate || "0", 10);
+           if (event.command === "--reset") {
+             rotate = 0;
+             event.target.style.rotate = `${rotate}deg`;
+           } else if (event.command === "--rotate-left") {
+             rotate = rotate === -270 ? 0 : rotate - 90;
+             event.target.style.rotate = `${rotate}deg`;
+           } else if (event.command === "--rotate-right") {
+             rotate = rotate === 270 ? 0 : rotate + 90;
+             event.target.style.rotate = `${rotate}deg`;
+           }
+           event.target.alt = `dinosaur head rotated ${rotate} degrees`;
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Invoker Commands API
+        * HTMLButtonElement.commandForElement
+        * CommandEvent
+        * command attribute
+
+Web APIs manual                         from the official documentation

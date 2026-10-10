@@ -1,0 +1,90 @@
+WEBAPI.XPATHEVALUATOR-EVALUATE(1) Sandbox manual WEBAPI.XPATHEVALUATOR-EVALUATE(1)
+
+       NAME
+
+       XPathEvaluator: evaluate() method - The evaluate() method of the XPathEvaluator interface
+
+       XPATHEVALUATOR: EVALUATE() METHOD
+
+       The evaluate() method of the XPathEvaluator interface executes an XPath expression on the given node or document and returns an XPathResult.
+
+       SYNTAX
+
+         evaluate(expression, contextNode)
+         evaluate(expression, contextNode, resolver)
+         evaluate(expression, contextNode, resolver, type)
+         evaluate(expression, contextNode, resolver, type, result)
+
+       PARAMETERS
+
+        * expression
+          * : A string representing the XPath expression to be parsed and
+       evaluated.
+
+        * contextNode
+          * : A Node representing the context to use for evaluating the expression.
+        * resolver (optional)
+          * : A Node, null, or any object implementing the lookupNamespaceURI method. Permits translation of all prefixes, including the xml namespace
+       prefix, within the XPath expression into appropriate namespace URIs.
+
+        * type (optional)
+          * : Specifies the type of result to be returned by evaluating the expression. This must
+       be one of the XPathResult.
+
+        * result (optional)
+          * : Allows you to specify a result object which may be reused and returned by this method.
+       If this is specified as null or the implementation does not reuse the specified result, a new result object will be returned.
+
+       RETURN VALUE
+
+       An XPathResult object representing the result of evaluating the XPath expression.
+
+       EXCEPTIONS
+
+       INVALID_EXPRESSION_ERR
+
+       If the expression is not legal according to the rules of the XPathEvaluator, a DOMException of type INVALID_EXPRESSION_ERR is raised.
+
+       TYPE_ERR
+
+       In case result cannot be converted to the specified type, a DOMException of type TYPE_ERR is raised.
+
+       NAMESPACE_ERR
+
+       If the expression contains namespace prefixes which cannot be resolved by the specified XPathNSResolver, a DOMException of type NAMESPACE_ERROR is raised.
+
+       WRONG_DOCUMENT_ERR
+
+       If the provided context node is from a document that is not supported by the XPathEvaluator, a DOMException of type WRONG_DOCUMENT_ERR is raised.
+
+       NOT_SUPPORTED_ERR
+
+       If the provided context node is not a type permitted as an XPath context node or the request type is not permitted by the XPathEvaluator, a DOMException of type NOT_SUPPORTED_ERR is raised.
+
+       EXAMPLES
+
+       The following example shows the use of the evaluate() method.
+
+       HTML
+
+         <div>XPath example</div>
+         <div>Number of &lt;div&gt;s: <output></output></div>
+
+       JAVASCRIPT
+
+         const evaluator = new XPathEvaluator();
+         const result = evaluator.evaluate(
+           "//div",
+           document,
+           null,
+           XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+         );
+         document.querySelector("output").textContent = result.snapshotLength;
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

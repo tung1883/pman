@@ -1,0 +1,62 @@
+HTTP.HEADER-SERVICE-WORKER-ALLOWED(1) Sandbox manual HTTP.HEADER-SERVICE-WORKER-ALLOWED(1)
+
+       NAME
+
+       Service-Worker-Allowed header - The HTTP Service-Worker-Allowed response header is used to broaden the path restriction for a service worker's default scope.
+
+       SERVICE-WORKER-ALLOWED HEADER
+
+       The HTTP Service-Worker-Allowed response header is used to broaden the path restriction for a service worker's default scope.
+
+       By default, the scope for a service worker registration is the directory where the service worker script is located. For example, if the script sw.js is located in /js/sw.js, it can only control URLs under /js/ by default. Servers can use the Service-Worker-Allowed header to allow a service worker to control URLs outside of its own directory.
+
+       A service worker intercepts all network requests within its scope, so you should avoid using overly-broad scopes unless necessary.
+
+       Header type Response header
+
+       SYNTAX
+
+         Service-Worker-Allowed: <scope>
+
+       DIRECTIVES
+
+        * 
+          * : A string representing a URL that defines a service worker's registration scope; that is, what range of URLs a service worker can control.
+
+       EXAMPLES
+
+       USING SERVICE-WORKER-ALLOWED TO BROADEN SERVICE WORKER SCOPE
+
+       The JavaScript example below is included in example.com/product/index.html, and attempts to register a service worker with a scope that applies to all resources under example.com/.
+
+         navigator.serviceWorker.register("./sw.js", { scope: "/" }).then(
+           (registration) => {
+             console.log("Install succeeded, scoped to '/'", registration);
+           },
+           (error) => {
+             console.error(`Service worker registration failed: ${error}`);
+           },
+         );
+
+       The HTTP response to the service worker's script resource request (./sw.js) includes the Service-Worker-Allowed header set to /:
+
+         HTTP/1.1 200 OK
+         Date: Mon, 16 Dec 2024 14:37:20 GMT
+         Service-Worker-Allowed: /
+
+         // sw.js contents…
+
+       If the server doesn't set the header, the service worker registration will fail, as the scope option ({ scope: "/" }) requests a scope broader than the directory where the service worker script is located (/product/sw.js).
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Service-Worker header
+        * Service worker API
+        * ServiceWorkerRegistration
+        * Why is my service worker failing to register in _Using Service Workers_.
+
+HTTP manual                             from the official documentation

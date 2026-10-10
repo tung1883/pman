@@ -1,0 +1,35 @@
+SHELLCHECK.SC2139(1)             Sandbox manual             SHELLCHECK.SC2139(1)
+
+       NAME
+
+       This expands when defined, not when used. Consider escaping. - alias whereami="echo $PWD"
+
+       THIS EXPANDS WHEN DEFINED, NOT WHEN USED. CONSIDER ESCAPING
+
+       THIS EXPANDS WHEN DEFINED, NOT WHEN USED. CONSIDER ESCAPING
+
+       PROBLEMATIC CODE
+
+         alias whereami="echo $PWD"
+
+       CORRECT CODE
+
+         alias whereami='echo $PWD'
+
+       RATIONALE
+
+       With double quotes, this particular alias will be defined as echo /home/me, so it will always print the same path. This is rarely intended.
+
+       By using single quotes or escaping any expansions, we define the alias as echo $PWD, which will be expanded when we use the alias. This is the far more common use case.
+
+       Note that even if you expect that the variable will never change, it may still be better to quote it. This prevents a second round of evaluation later:
+
+       default="Can't handle failure, aborting" trap "echo $default; exit 1" err false
+
+       The trap now has a syntax error, because instead of running echo $default, it runs echo Can't handle .. which has an unmatched single quote. Avoid early expansion unless you're equally comfortable putting eval in there.
+
+       EXCEPTIONS
+
+       If you don't mind that your alias definition is expanded at define time (and its result expanded again at evaluation time), you can ignore this warning.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,68 @@
+WEBAPI.RTCRTPSENDER-DTMF(1)      Sandbox manual      WEBAPI.RTCRTPSENDER-DTMF(1)
+
+       NAME
+
+       RTCRtpSender: dtmf property - The read-only dtmf property on the RTCRtpSender interface returns an RTCDTMFSender you can use to send DTMF tones on this sender's audio tra
+
+       RTCRTPSENDER: DTMF PROPERTY
+
+       The read-only dtmf property on the RTCRtpSender interface returns an RTCDTMFSender you can use to send DTMF tones on this sender's audio track.
+
+       VALUE
+
+       An RTCDTMFSender if this is an audio sender, or null if it isn't.
+
+       Each audio sender gets its own RTCDTMFSender when it's created, so a connection sending two audio tracks has two of them. Senders for video tracks return null.
+
+       A non-null dtmf doesn't mean you can send tones yet. Tones travel in the RTP stream alongside the audio, so the sender must be connected and sending, and the two peers must have negotiated the audio/telephone-event codec. Check canInsertDTMF for that, or handle the InvalidStateError that insertDTMF() throws.
+
+       EXAMPLES
+
+       SENDING TONES ON AN AUDIO TRACK
+
+       This example adds a microphone track to a connection, then sends a dial string once the connection is up. addTrack() returns the RTCRtpSender for the track, so there's no need to search for it.
+
+         const pc = new RTCPeerConnection(configuration);
+
+         async function dial(tones) {
+           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+           const [track] = stream.getAudioTracks();
+           const sender = pc.addTrack(track, stream);
+
+           // The track is an audio track, so the sender has a DTMF sender
+           const dtmfSender = sender.dtmf;
+
+           dtmfSender.addEventListener("tonechange", (event) => {
+             if (event.tone === "") {
+               console.log("Finished sending tones.");
+             } else {
+               console.log(`Sent tone: ${event.tone}`);
+             }
+           });
+
+           pc.addEventListener("connectionstatechange", () => {
+             if (pc.connectionState === "connected" && dtmfSender.canInsertDTMF) {
+               dtmfSender.insertDTMF(tones);
+             }
+           });
+         }
+
+       FINDING THE AUDIO SENDERS ON A CONNECTION
+
+       Because only audio senders have a dtmf object, you can use the property to pick them out of RTCPeerConnection.getSenders():
+
+         const audioSenders = pc.getSenders().filter((sender) => sender.dtmf);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * RTCDTMFSender
+        * RTCRtpSender
+        * RTCPeerConnection
+        * WebRTC API
+        * Using DTMF with WebRTC
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,77 @@
+WEBAPI.URLSEARCHPARAMS-HAS(1)    Sandbox manual    WEBAPI.URLSEARCHPARAMS-HAS(1)
+
+       NAME
+
+       URLSearchParams: has() method - The has() method of the URLSearchParams interface returns a boolean value that indicates whether the specified parameter is in the search pa
+
+       URLSEARCHPARAMS: HAS() METHOD
+
+       The has() method of the URLSearchParams interface returns a boolean value that indicates whether the specified parameter is in the search parameters.
+
+       A parameter name and optional value are used to match parameters. If only a parameter name is specified, then the method will return true if any parameters in the query string match the name, and false otherwise. If both a parameter name and value are specified, then the method will return true if a parameter matches both the name and value.
+
+       SYNTAX
+
+         has(name)
+         has(name, value)
+
+       PARAMETERS
+
+        * name
+          * : The name of the parameter to match.
+        * value
+          * : The value of the parameter, along with the given name, to match.
+
+       RETURN VALUE
+
+       A boolean value.
+
+       EXAMPLES
+
+       CHECK FOR PARAMETER WITH SPECIFIED NAME
+
+       This example shows how to check if the query string has any parameters with a particular name.
+
+         const url = new URL("https://example.com?foo=1&bar=2&foo=3");
+         const params = new URLSearchParams(url.search);
+
+         // has() returns true if the parameter is in the query string
+         console.log(`bar?:\t${params.has("bar")}`);
+         console.log(`bark?:\t${params.has("bark")}`);
+         console.log(`foo?:\t${params.has("foo")}`);
+
+       The log below shows whether the parameters bar, bark, and foo, are present in the query string.
+
+         bar?:  true
+         bark?: false
+         foo?:  true
+
+       CHECK FOR PARAMETER WITH SPECIFIED NAME AND VALUE
+
+       This example shows how to check whether the query string has a parameter that matches both a particular name and value.
+
+         const url = new URL("https://example.com?foo=1&bar=2&foo=3");
+         const params = new URLSearchParams(url.search);
+
+         // has() returns true if a parameter with the matching name and value is in the query string
+         console.log(`bar=1?:\t${params.has("bar", "1")}`);
+         console.log(`bar=2?:\t${params.has("bar", "2")}`);
+         console.log(`foo=4?:\t${params.has("foo", "4")}`);
+
+       Only the second value above should be true, as only the parameter name bar with value 2 is matched.
+
+         bar=1?: false
+         bar=2?: true
+         foo=4?: false
+
+       If your browser does not support the value option the method will match on the name, and all the results should be true.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Polyfill of URLSearchParams in core-js
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,64 @@
+WEBAPI.HTMLELEMENT-POPOVER(1)    Sandbox manual    WEBAPI.HTMLELEMENT-POPOVER(1)
+
+       NAME
+
+       HTMLElement: popover property - The popover property of the HTMLElement interface gets and sets an element's popover state via JavaScript ("auto", "hint", or "manual"), and
+
+       HTMLELEMENT: POPOVER PROPERTY
+
+       The popover property of the HTMLElement interface gets and sets an element's popover state via JavaScript ("auto", "hint", or "manual"), and can be used for feature detection.
+
+       It reflects the value of the popover global HTML attribute.
+
+       VALUE
+
+       An enumerated value; possible values are:
+
+        * "auto"
+          * : auto popovers can be "light dismissed" — this means that you can hide the popover by clicking outside it or pressing the Esc key.
+       Usually, only one auto popover can be shown at a time — showing a second popover when one is already shown will hide the first one. The exception to this rule is when you have nested auto popovers. See Nested popovers for more details.
+
+        * "hint"
+          * : hint popovers do not close auto popovers when they are displayed, but will close other hint popovers.
+       They can be light dismissed and will respond to close requests.
+
+       Usually they are shown and hidden in response to non-click JavaScript events such as mouseover/mouseout and focus/blur. Clicking a button to open a hint popover would cause an open auto popover to light-dismiss.
+
+        * "manual"
+          * : manual popovers cannot be "light dismissed" and are not automatically closed. Popovers must explicitly be displayed and closed using declarative show/hide/toggle buttons or JavaScript. Multiple independent manual popovers can be shown simultaneously.
+
+       EXAMPLES
+
+       FEATURE DETECTION
+
+       You can use the popover attribute to feature detect the Popover API:
+
+         function supportsPopover() {
+           return Object.hasOwn(HTMLElement.prototype, "popover");
+         }
+
+       SETTING UP A POPOVER PROGRAMMATICALLY
+
+         const popover = document.getElementById("mypopover");
+         const toggleBtn = document.getElementById("toggleBtn");
+
+         const popoverSupported = supportsPopover();
+
+         if (popoverSupported) {
+           popover.popover = "auto";
+           toggleBtn.popoverTargetElement = popover;
+           toggleBtn.popoverTargetAction = "toggle";
+         } else {
+           console.log("Popover API not supported.");
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * popover HTML global attribute
+        * Popover API
+
+Web APIs manual                         from the official documentation

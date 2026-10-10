@@ -1,0 +1,104 @@
+WEBAPI.FILESYSTEMHANDLE(1)       Sandbox manual       WEBAPI.FILESYSTEMHANDLE(1)
+
+       NAME
+
+       FileSystemHandle - The FileSystemHandle interface of the File System API is an object which represents a file or directory entry. Multiple handles can represen
+
+       FILESYSTEMHANDLE
+
+       The FileSystemHandle interface of the File System API is an object which represents a file or directory entry. Multiple handles can represent the same entry. For the most part you do not work with FileSystemHandle directly but rather its child interfaces FileSystemFileHandle and FileSystemDirectoryHandle.
+
+       INTERFACES BASED ON FILESYSTEMHANDLE
+
+       Below is a list of interfaces based on the FileSystemHandle interface.
+
+        * FileSystemFileHandle
+          * : Represents a handle to a file entry.
+        * FileSystemDirectoryHandle
+          * : Provides a handle to a directory entry.
+
+       INSTANCE PROPERTIES
+
+        * kind (read-only)
+          * : Returns the type of entry. This is 'file' if the associated entry is a file or 'directory'.
+        * name (read-only)
+          * : Returns the name of the associated entry.
+
+       INSTANCE METHODS
+
+        * isSameEntry()
+          * : Compares two handles to see if the associated entries (either a file or directory) match.
+        * queryPermission() (experimental)
+          * : Queries the current permission state of the current handle.
+        * remove() (experimental) {{Non-standard_Inline}}
+          * : Requests removal of the entry represented by the handle from the underlying file system.
+        * requestPermission() (experimental)
+          * : Requests read or readwrite permissions for the file handle.
+
+       EXAMPLES
+
+       CHECKING TYPE
+
+       The below code allows the user to choose a file from the file picker and then tests to see whether the handle returned is a file or directory
+
+         // store a reference to our file handle
+         let fileHandle;
+
+         async function getFile() {
+           // open file picker
+           [fileHandle] = await window.showOpenFilePicker();
+
+           if (fileHandle.kind === "file") {
+             // run file code
+           } else if (fileHandle.kind === "directory") {
+             // run directory code
+           }
+         }
+
+       QUERY/REQUEST PERMISSIONS
+
+       The following asynchronous function returns true if user has granted read or readwrite permissions to the file handle. Permission is requested if not.
+
+         // fileHandle is a FileSystemFileHandle
+         // withWrite is a boolean set to true if write
+
+         async function verifyPermission(fileHandle, withWrite) {
+           const opts = {};
+           if (withWrite) {
+             opts.mode = "readwrite";
+           }
+
+           // Check if we already have permission, if so, return true.
+           if ((await fileHandle.queryPermission(opts)) === "granted") {
+             return true;
+           }
+
+           // Request permission to the file, if the user grants permission, return true.
+           if ((await fileHandle.requestPermission(opts)) === "granted") {
+             return true;
+           }
+
+           // The user did not grant permission, return false.
+           return false;
+         }
+
+       COMPARING ENTRIES
+
+       The following function compares a single entry with an array of entries, and returns a new array with any matching entries removed.
+
+         function removeMatches(fileEntry, entriesArr) {
+           const newArr = entriesArr.filter((entry) => !fileEntry.isSameEntry(entry));
+
+           return newArr;
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File System API
+        * The File System Access API: simplifying access to local files
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,40 @@
+APACHE.MOD_HEARTMONITOR(1)       Sandbox manual       APACHE.MOD_HEARTMONITOR(1)
+
+       HEARTBEATLISTEN DIRECTIVE
+
+         Description: | multicast address to listen for incoming heartbeat requests
+         Syntax: | HeartbeatListen addr:port
+         Default: | disabled
+         Context: | server config
+         Status: | Experimental
+         Module: | mod_heartmonitor
+       The HeartbeatListen directive specifies the multicast address on which the server will listen for status information from mod_heartbeat-enabled servers. This address will usually correspond to a configured HeartbeatAddress on an origin server.
+
+         HeartbeatListen 239.0.0.1:27999
+
+       This module is inactive until this directive is used.
+
+       HEARTBEATMAXSERVERS DIRECTIVE
+
+         Description: | Specifies the maximum number of servers that will be sending heartbeat requests to this server
+         Syntax: | HeartbeatMaxServers number-of-servers
+         Default: | HeartbeatMaxServers 10
+         Context: | server config
+         Status: | Experimental
+         Module: | mod_heartmonitor
+         Compatibility: | The value of 0 is accepted only in 2.4.55 and above
+       The HeartbeatMaxServers directive specifies the maximum number of servers that will be sending requests to this monitor server. It is used to control the size of the shared memory allocated to store the heartbeat info when mod_slotmem_shm is in use.
+
+       Set this to 0 to use flat-file storage instead of shared memory (i.e., without loading mod_slotmem_shm). When using shared memory, the value must be 10 or greater.
+
+       HEARTBEATSTORAGE DIRECTIVE
+
+         Description: | Path to store heartbeat data when using flat-file storage
+         Syntax: | HeartbeatStorage file-path
+         Default: | HeartbeatStorage logs/hb.dat
+         Context: | server config
+         Status: | Experimental
+         Module: | mod_heartmonitor
+       The HeartbeatStorage directive specifies the path to store heartbeat data. This flat-file is used only when mod_slotmem_shm is not loaded and HeartbeatMaxServers is set to 0.
+
+Apache HTTP Server manual               bundled documentation

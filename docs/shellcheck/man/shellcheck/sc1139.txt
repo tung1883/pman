@@ -1,0 +1,43 @@
+SHELLCHECK.SC1139(1)             Sandbox manual             SHELLCHECK.SC1139(1)
+
+       NAME
+
+       Use || instead of -o between test commands. - And variations, like "Use && instead of and".
+
+       USE INSTEAD OF -O BETWEEN TEST COMMANDS
+
+       USE INSTEAD OF -O BETWEEN TEST COMMANDS
+
+       And variations, like "Use && instead of and".
+
+       PROBLEMATIC CODE
+
+         if [ "$1" = "-v" ] -o [ -n "$VERBOSE" ]
+         then
+           echo "Verbose log"
+         fi
+
+       CORRECT CODE
+
+         if [ "$1" = "-v" ] || [ -n "$VERBOSE" ]
+         then
+           echo "Verbose log"
+         fi
+
+       RATIONALE
+
+       You have a [ .. ] or [[ .. ]] test expression followed by -o/-a (or by Python-style or/and).
+
+       -o and -a work inside [ .. ], but they do not work between them. The Python operators or and and are never recognized in Bash.
+
+       To join two separate test expressions, instead use || for "logical OR", or && for "logical AND".
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

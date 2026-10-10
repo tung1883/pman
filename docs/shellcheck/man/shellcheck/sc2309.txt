@@ -1,0 +1,41 @@
+SHELLCHECK.SC2309(1)             Sandbox manual             SHELLCHECK.SC2309(1)
+
+       NAME
+
+       -eq treats this as a variable. Use = to compare as string (or expand explicitly with $var) - read -p "Continue? [y/n] " var
+
+       EQ TREATS THIS AS A VARIABLE. USE TO COMPARE AS STRING (OR EXPAND EXPL
+
+       EQ TREATS THIS AS A VARIABLE. USE TO COMPARE AS STRING (OR EXPAND EXPL
+
+       PROBLEMATIC CODE
+
+         read -p "Continue? [y/n] " var
+         [ "$var" -eq "n" ​] && exit 1
+
+       CORRECT CODE
+
+         #read -p "Continue? [y/n] " var
+         [ "$var" = "n" ​] && exit 1
+
+       RATIONALE
+
+       ShellCheck found a string used as an argument to a numerical operator like -eq, -ne, -lt, -ge. Such strings will be treated as arithmetic expressions, meaning n will refer to a variable $n, and 24/12 will be evaluated into 2.
+
+       In the problematic example, the intention was instead to compare "n" as a string, so it should use the equivalent string operator instead, in this case =.
+
+       EXCEPTIONS
+
+       It is perfectly valid to use variables as operands. ShellCheck will not flag any value that is an unquoted variable name assigned in the script:
+
+       a=42; [[ "a" -eq 0 ]] # Flagged due to quotes [[ b -eq 0 ]] # Flagged due to not being assigned c=42; [[ c -eq 0 ]] # Not flagged
+
+       However, ShellCheck does not know whether you intended foo/bar to be division or a file path.
+
+       If you intended to divide $foo and $bar, you can either make it explicit with [[ $((foo/bar)) -ge 0 ]], or simply [[ignore]] the warning.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc
+
+ShellCheck manual                       from the official documentation

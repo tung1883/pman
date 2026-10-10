@@ -1,0 +1,44 @@
+SHELLCHECK.SC2258(1)             Sandbox manual             SHELLCHECK.SC2258(1)
+
+       NAME
+
+       The trailing comma is part of the value, not a separator. Delete or quote it. - for f in foo, bar, baz
+
+       THE TRAILING COMMA IS PART OF THE VALUE, NOT A SEPARATOR. DELETE OR QU
+
+       THE TRAILING COMMA IS PART OF THE VALUE, NOT A SEPARATOR. DELETE OR QU
+
+       PROBLEMATIC CODE
+
+         for f in foo, bar, baz
+         do
+           echo "$f"
+         done
+
+       CORRECT CODE
+
+         for f in foo bar baz
+         do
+           echo "$f"
+         done
+
+       or
+
+         for f in "foo," "bar," "baz,"
+         do
+           echo "$f"
+         done
+
+       RATIONALE
+
+       ShellCheck found a for loop where the items appear to be separated by commas. These will be treated as literal commas. If the commas are part of the value, enclose them in quotes, or remove them.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,58 @@
+WEBAPI.NAMEDNODEMAP-SETNAMEDITEM(1) Sandbox manual WEBAPI.NAMEDNODEMAP-SETNAMEDITEM(1)
+
+       NAME
+
+       NamedNodeMap: setNamedItem() method - The setNamedItem() method of the NamedNodeMap interface
+
+       NAMEDNODEMAP: SETNAMEDITEM() METHOD
+
+       The setNamedItem() method of the NamedNodeMap interface puts the Attr identified by its name in the map. If there is already an Attr with the same name in the map, it is _replaced_.
+
+       SYNTAX
+
+         setNamedItem(attr)
+
+       PARAMETERS
+
+        * attr
+          * : the attribute to insert in the map.
+
+       RETURN VALUE
+
+       Returns the old attribute if replaced, or null if the attribute is new.
+
+       EXCEPTIONS
+
+        * InUseAttributeError DOMException
+          * : Thrown if the attribute is still part of another map.
+
+       EXAMPLE
+
+         <span class="foo" id="bar"></span>
+         <pre contenteditable></pre>
+
+         const span = document.querySelector("span");
+         const pre = document.querySelector("pre");
+
+         let result = `The \`<pre>\` element initially contains ${pre.attributes.length} attributes.\n\n`;
+
+         result += "We remove `class` from `<span>` and add it to `<pre>`.\n";
+         const classAttribute = span.attributes.removeNamedItem("class");
+         pre.attributes.setNamedItem(classAttribute);
+         result += `The \`<pre>\` element now contains ${pre.attributes.length} attributes.\n\n`;
+
+         result += "We get `id` from `<span>` and try to add it to `<pre>`.\n";
+         const id = span.attributes.getNamedItem("id");
+         try {
+           pre.attributes.setNamedItem(id);
+         } catch (error) {
+           result += `An exception has been raised: ${error.name}: ${error.message}.\n`;
+         }
+
+         pre.textContent = result;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

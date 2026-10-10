@@ -1,0 +1,53 @@
+DOCKER.NODE-UPDATE(1)            Sandbox manual            DOCKER.NODE-UPDATE(1)
+
+       NAME
+
+       docker node update - Update a node
+
+       DOCKER NODE UPDATE
+
+       Update a node
+
+       USAGE
+
+         docker node update [OPTIONS] NODE
+
+       DESCRIPTION
+
+       Update metadata about a node, such as its availability, labels, or roles.
+
+       > This is a cluster management command, and must be executed on a swarm
+       > manager node. To learn about managers and workers, refer to the
+       > Swarm mode section in the
+       > documentation.
+
+       OPTIONS
+
+        * --availability (string): Availability of the node (active, pause, drain)
+        * --label-add (list): Add or update a node label (key=value)
+        * --label-rm (list): Remove a node label if exists
+        * --role (string): Role of the node (worker, manager)
+
+       EXAMPLES
+
+       ADD LABEL METADATA TO A NODE (--LABEL-ADD) #LABEL-ADD
+
+       Add metadata to a swarm node using node labels. You can specify a node label as a key with an empty value:
+
+         $ docker node update --label-add foo worker1
+
+       To add multiple labels to a node, pass the --label-add flag for each label:
+
+         $ docker node update --label-add foo --label-add bar worker1
+
+       When you create a service, you can use node labels as a constraint. A constraint limits the nodes where the scheduler deploys tasks for a service.
+
+       For example, to add a type label to identify nodes where the scheduler should deploy message queue service tasks:
+
+         $ docker node update --label-add type=queue worker1
+
+       The labels you set for nodes using docker node update apply only to the node entity within the swarm. Do not confuse them with the docker daemon labels for dockerd.
+
+       For more information about labels, refer to apply custom metadata.
+
+Docker manual                           from the official documentation

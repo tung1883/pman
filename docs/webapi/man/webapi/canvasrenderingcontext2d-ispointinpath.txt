@@ -1,0 +1,114 @@
+WEBAPI.CANVASRENDERINGCONTEXT2D-ISPOINTINPATH(1) Sandbox manual WEBAPI.CANVASRENDERINGCONTEXT2D-ISPOINTINPATH(1)
+
+       NAME
+
+       CanvasRenderingContext2D: isPointInPath() method - The
+
+       CANVASRENDERINGCONTEXT2D: ISPOINTINPATH() METHOD
+
+       The CanvasRenderingContext2D.isPointInPath() method of the Canvas 2D API reports whether or not the specified point is contained in the current path.
+
+       SYNTAX
+
+         isPointInPath(x, y)
+         isPointInPath(x, y, fillRule)
+         isPointInPath(path, x, y)
+         isPointInPath(path, x, y, fillRule)
+
+       PARAMETERS
+
+        * x
+          * : The x-axis coordinate of the point to check, unaffected by the current
+       transformation of the context.
+
+        * y
+          * : The y-axis coordinate of the point to check, unaffected by the current
+       transformation of the context.
+
+        * fillRule
+          * : The algorithm by which to determine if a point is inside or outside the path.
+       Possible values:
+
+            * nonzero
+              * : The non-zero winding rule.
+       Default rule.
+
+            * evenodd
+              * : The even-odd winding rule.
+        * path
+          * : A Path2D path to check against. If unspecified, the current path is
+       used.
+
+       RETURN VALUE
+
+       A boolean value, which is true if the specified point is contained in the current or specified path, otherwise false.
+
+       EXAMPLES
+
+       CHECKING A POINT IN THE CURRENT PATH
+
+       This example uses the isPointInPath() method to check if a point is within the current path.
+
+       HTML
+
+         <canvas id="canvas"></canvas>
+         <p>In path: <code id="result">false</code></p>
+
+       JAVASCRIPT
+
+         const canvas = document.getElementById("canvas");
+         const ctx = canvas.getContext("2d");
+         const result = document.getElementById("result");
+
+         ctx.rect(10, 10, 100, 100);
+         ctx.fill();
+         result.innerText = ctx.isPointInPath(30, 70);
+
+       RESULT
+
+       CHECKING A POINT IN THE SPECIFIED PATH
+
+       Whenever you move the mouse, this example checks whether the cursor is in a circular Path2D path. If yes, the circle becomes green, otherwise it is red.
+
+       HTML
+
+         <canvas id="canvas"></canvas>
+
+       JAVASCRIPT
+
+         const canvas = document.getElementById("canvas");
+         const ctx = canvas.getContext("2d");
+
+         // Create circle
+         const circle = new Path2D();
+         circle.arc(150, 75, 50, 0, 2 * Math.PI);
+         ctx.fillStyle = "red";
+         ctx.fill(circle);
+
+         // Listen for mouse moves
+         canvas.addEventListener("mousemove", (event) => {
+           // Check whether point is inside circle
+           const isPointInPath = ctx.isPointInPath(circle, event.offsetX, event.offsetY);
+           ctx.fillStyle = isPointInPath ? "green" : "red";
+
+           // Draw circle
+           ctx.clearRect(0, 0, canvas.width, canvas.height);
+           ctx.fill(circle);
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       GECKO-SPECIFIC NOTE
+
+        * Prior to Gecko 7.0 (Firefox 7.0 / Thunderbird 7.0 / SeaMonkey 2.4), this method
+       incorrectly failed to multiply the specified point's coordinates by the current transformation matrix before comparing it to the path. Now this method works correctly even if the context is rotated, scaled, or otherwise transformed.
+
+       SEE ALSO
+
+        * The interface defining this method: CanvasRenderingContext2D
+
+Web APIs manual                         from the official documentation

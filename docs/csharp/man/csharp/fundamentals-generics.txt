@@ -1,0 +1,897 @@
+CSHARP.FUNDAMENTALS-GENERICS(1)  Sandbox manual  CSHARP.FUNDAMENTALS-GENERICS(1)
+
+       NAME
+
+       Generic types and methods - Learn how to use generic types and methods in C#, including consuming common generic collections, type inference, constraints, collection ex
+
+       GENERIC TYPES AND METHODS
+
+       > New to developing software? Start with the Get started tutorials first. You'll encounter generics as soon as you use collections like List.
+       > Experienced in another language? C# generics are similar to generics in Java or templates in C++, but with full runtime type information and no type erasure. Skim the collection expressions and covariance and contravariance sections for C#-specific patterns.
+       Generics let you write code that works with any type while keeping full type safety. Instead of writing separate classes or methods for int, string, and every other type you need, write one version with one or more type parameters (such as T, or TKey and TValue) and specify the actual types when you use it. The compiler checks types at compile time, so you don't need runtime casts or risk InvalidCastException.
+
+       You encounter generics constantly in everyday C#. Collections, async return types, delegates, and LINQ all rely on generic types:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+       In each case, the type argument in angle brackets (, , ) tells the generic type what kind of data it holds or operates on. The compiler enforces type safety. You can't accidentally add a string to a List.
+
+       CONSUMING GENERIC TYPES
+
+       More often, you consume generic types from the .NET class library rather than creating your own. The following sections show the most common generic types you'll use.
+
+       GENERIC COLLECTIONS
+
+       The Generic namespace provides type-safe collection classes. Always use these collections instead of nongeneric collections like ArrayList:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+       Generic collections prevent type errors at runtime because the errors surface at compile time instead. These collections also avoid boxing for value types, which improves performance.
+
+       GENERIC METHODS
+
+       A generic method declares its own type parameter. The compiler often infers the type argument from the values you pass, so you don't need to specify it explicitly:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+       In the call Print(42), the compiler infers T as int from the argument. You can write Print(42) explicitly, but type inference keeps the code cleaner.
+
+       COLLECTION EXPRESSIONS
+
+       Collection expressions (C# 12) provide a concise syntax for creating collections. Use square brackets instead of constructor calls or initializer syntax:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+       The spread operator (..) inlines the elements of one collection into another, which is useful for combining sequences:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+       Collection expressions work with arrays, List, Span, ImmutableArray, and any type that supports the collection builder pattern. For the complete syntax reference, see Collection expressions.
+
+       DICTIONARY INITIALIZATION
+
+       You can initialize dictionaries concisely with indexer initializers. This syntax uses square brackets to set key-value pairs:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+       You can merge dictionaries by copying one and applying overrides:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+       TYPE CONSTRAINTS
+
+       Constraints restrict which type arguments a generic type or method accepts. Constraints let you call methods or access properties on the type parameter that wouldn't be available on object alone:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+       The most common constraints are:
+
+         Constraint  |  Meaning
+         where T : class  |  T must be a reference type
+         where T : struct  |  T must be a non-nullable value type
+         where T : new()  |  T must have a public parameterless constructor
+         where T : BaseClass  |  T must derive from BaseClass
+         where T : IInterface  |  T must implement IInterface
+       You can combine constraints: where T : class, IComparable, new(). Less common constraints include where T : System.Enum, where T : System.Delegate, and where T : unmanaged for specialized scenarios. For the complete list, see Constraints on type parameters.
+
+       COVARIANCE AND CONTRAVARIANCE
+
+       Covariance and contravariance describe how generic types behave with inheritance. They determine whether you can use a more derived or less derived type argument than originally specified:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+        * Covariance (out T): An IEnumerable can be used where IEnumerable is expected because Dog derives from Animal. The out keyword on the type parameter enables this. Covariant type parameters can only appear in output positions (return types).
+        * Contravariance (in T): An Action can be used where Action is expected because any action that handles Animal can also handle Dog. The in keyword enables this. Contravariant type parameters can only appear in input positions (parameters).
+       Many built-in interfaces and delegates are already variant: IEnumerable, IReadOnlyList, Func, and Action. You benefit from variance automatically when working with these types. For an in-depth treatment of designing variant interfaces and delegates, see Covariance and contravariance.
+
+       CREATE YOUR OWN GENERIC TYPES
+
+       You can define your own generic classes, structs, interfaces, and methods. The following example shows a simple generic linked list for illustration. In practice, use List1 or another built-in collection:
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+         List<int> scores = [95, 87, 72, 91];
+         Dictionary<string, decimal> prices = new()
+         {
+             ["Widget"] = 19.99m,
+             ["Gadget"] = 29.99m
+         };
+         Task<string> greeting = Task.FromResult("Hello, generics!");
+         Func<int, bool> isPositive = n => n > 0;
+
+         Console.WriteLine($"First score: {scores[0]}");
+         Console.WriteLine($"Widget price: {prices["Widget"]:C}");
+         Console.WriteLine($"Greeting: {await greeting}");
+         Console.WriteLine($"Is 5 positive? {isPositive(5)}");
+
+         GenericCollectionsExample();
+         GenericMethodsExample();
+         CollectionExpressionsExample();
+         SpreadOperatorExample();
+         DictionaryExpressionsExample();
+         DictionarySpreadExample();
+         ConstraintsExample();
+         VarianceExample();
+         CustomGenericExample();
+
+         static void GenericCollectionsExample()
+         {
+             // A strongly typed list of strings
+             List<string> names = ["Alice", "Bob", "Carol"];
+             names.Add("Dave");
+             // names.Add(42); // Compile-time error: can't add an int to List<string>
+
+             // A dictionary mapping string keys to int values
+             var inventory = new Dictionary<string, int>
+             {
+                 ["Apples"] = 50,
+                 ["Oranges"] = 30
+             };
+             inventory["Bananas"] = 25;
+
+             // A set that prevents duplicates
+             HashSet<int> uniqueIds = [1, 2, 3, 1, 2];
+             Console.WriteLine($"Unique count: {uniqueIds.Count}"); // 3
+
+             // A FIFO queue
+             Queue<string> tasks = new();
+             tasks.Enqueue("Build");
+             tasks.Enqueue("Test");
+             Console.WriteLine($"Next task: {tasks.Dequeue()}"); // Build
+         }
+
+         static void GenericMethodsExample()
+         {
+             static void Print<T>(T value) =>
+                 Console.WriteLine($"Value: {value}");
+
+             Print(42);        // Compiler infers T as int
+             Print("hello");   // Compiler infers T as string
+             Print(3.14);      // Compiler infers T as double
+         }
+
+         static void CollectionExpressionsExample()
+         {
+             // Create a list with a collection expression
+             List<string> fruits = ["Apple", "Banana", "Cherry"];
+
+             // Create an array
+             int[] numbers = [1, 2, 3, 4, 5];
+
+             // Works with any supported collection type
+             IReadOnlyList<double> temperatures = [72.0, 68.5, 75.3];
+
+             Console.WriteLine($"Fruits: {string.Join(", ", fruits)}");
+             Console.WriteLine($"Numbers: {string.Join(", ", numbers)}");
+
+       Generic types aren't limited to classes. You can define generic interface, struct, and record types. For more information about designing generic algorithms and complex constraint combinations, see Generics in .NET.
+
+       SEE ALSO
+
+        * Generics in .NET
+        * Collection expressions
+        * Constraints on type parameters
+        * Covariance and contravariance
+        * Generic
+
+C# manual                               from the official documentation

@@ -1,0 +1,49 @@
+WEBAPI.WINDOW-CUSTOMELEMENTS(1)  Sandbox manual  WEBAPI.WINDOW-CUSTOMELEMENTS(1)
+
+       NAME
+
+       Window: customElements property - The customElements read-only property of the Window interface returns a reference to the global CustomElementRegistry object, which can be u
+
+       WINDOW: CUSTOMELEMENTS PROPERTY
+
+       The customElements read-only property of the Window interface returns a reference to the global CustomElementRegistry object, which can be used to register new custom elements and get information about previously registered custom elements.
+
+       The global registry is used for registering custom elements by default, but a shadow root can choose to use a scoped custom element registry in order to avoid potential clashes in defined element names.
+
+       VALUE
+
+       A CustomElementRegistry.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The most common example you'll see of this property being used is to get access to the CustomElementRegistry.define() method to define and register a new custom element.
+
+       For example:
+
+         let customElementRegistry = window.customElements;
+         customElementRegistry.define("my-custom-element", MyCustomElement);
+
+       Note that the custom element class is commonly defined directly inside the define() call, as shown:
+
+         customElements.define(
+           "element-details",
+           class extends HTMLElement {
+             constructor() {
+               super();
+               const template = document.getElementById("element-details-template");
+               const shadowRoot = this.attachShadow({ mode: "open" }).appendChild(
+                 document.importNode(template.content, true),
+               );
+             }
+           },
+         );
+
+       See our web-components-examples repo for more usage examples.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

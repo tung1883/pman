@@ -1,0 +1,69 @@
+CSHARP.GUIDE-ANONYMOUS-TYPES(1)  Sandbox manual  CSHARP.GUIDE-ANONYMOUS-TYPES(1)
+
+       NAME
+
+       Anonymous types (C# Programming Guide) - Learn about C# anonymous types, which provide a way to create objects with read-only properties without defining a named type first.
+
+       ANONYMOUS TYPES (C# PROGRAMMING GUIDE)
+
+       Anonymous types provide a convenient way to encapsulate a set of read-only properties into a single object without defining a named type first. The compiler generates a type name at compile time that you can't access in your source code. The compiler infers the type of each property.
+
+       Create anonymous types by using the new operator together with an object initializer. The following example shows an anonymous type that's initialized with two properties, Name and Age:
+
+       INFERRED PROPERTY NAMES
+
+       You can specify property names explicitly by using the Name = value syntax. When you initialize an anonymous type with a variable or member access expression, the compiler infers the property name from that expression:
+
+       In the preceding example, the compiler infers productName and price as the property names from the variable names used in the initializer.
+
+       DECLARE ANONYMOUS TYPES WITH VAR
+
+       Because the compiler generates the type name and you can't access it in source code, you must use var to declare the local variable. You can't specify the type name explicitly:
+
+         // You must use var — you can't write a named type here.
+         var person = new { Name = "Alice", Age = 30 };
+
+       USE ANONYMOUS TYPES IN LINQ QUERIES
+
+       Anonymous types appear most often in the select clause of a query expression, where they project a subset of properties from each source element:
+
+       EQUALITY
+
+       Two anonymous type instances that have the same property names and types in the same order share the same compiler-generated type. The compiler overrides Equals* and GetHashCode* so that equality compares property values rather than reference identity:
+
+       NESTED ANONYMOUS TYPES
+
+       Anonymous types can contain other anonymous types as property values:
+
+       CHARACTERISTICS
+
+       Anonymous types have the following characteristics:
+
+        * The compiler generates them as internal sealed class types that derive from Object.
+        * All properties are public and read-only.
+        * Anonymous types support with expressions for nondestructive mutation.
+        * The compiler generates value-based Equals*, GetHashCode*, and ToString* overrides.
+        * Anonymous types support expression trees, while tuples don't.
+
+       LIMITATIONS
+
+       Anonymous types have several limitations:
+
+        * You can't use them as method return types, method parameters, or field types because you can't name the type.
+        * They're scoped to the method where you declare them.
+        * You can't add methods, events, or custom operators.
+        * Properties are always read-only; anonymous types don't support mutable properties.
+
+       WHEN TO USE TUPLES INSTEAD
+
+       For most new code, consider using tuples instead of anonymous types. As value types, tuples provide better performance. They also provide deconstruction support and more flexible syntax. Anonymous types remain the better choice when you need expression tree support or reference-type semantics. For a detailed comparison, see Choosing between anonymous and tuple types.
+
+       SEE ALSO
+
+        * Object and collection initializers
+        * Implicitly typed local variables
+        * Tuples and deconstruction
+        * LINQ in C#
+        * Choosing between anonymous and tuple types
+
+C# manual                               from the official documentation

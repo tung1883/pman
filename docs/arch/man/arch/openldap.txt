@@ -1,0 +1,340 @@
+ARCH.OPENLDAP(1)                 Sandbox manual                 ARCH.OPENLDAP(1)
+
+       OpenLDAP is an open-source implementation of the LDAP protocol. An LDAP server basically is a non-relational database which is optimised for accessing, but not writing, data. It is mainly used as an address book (for example email clients) or authentication backend to various services (such as Samba, where it is used to emulate a domain controller, or Linux system authentication, where it replaces /etc/passwd) and basically holds the user data.
+
+       Note Commands related to OpenLDAP that begin with ldap (like ldapsearch) are client-side utilities, while commands that begin with slap (like slapcat) are server-side.
+
+       This page is a starting point for a basic OpenLDAP installation and a sanity check.
+
+       Tip Directory services are an enormous topic. Configuration can therefore be complex. If you are totally new to those concepts, this is a good introduction that is easy to understand and that will get you started, even if you are new to LDAP.
+
+       INSTALLATION
+
+       OpenLDAP contains both a LDAP server and client. Install it with the package openldap.
+
+       CONFIGURATION
+
+       THE SERVER
+
+       Note
+
+        * If you have an obsolete slapd.conf configuration, you can simply convert it into the new cn=config database using
+
+         $ slaptest -f /etc/openldap/slapd.conf -F /etc/openldap/slapd.d/
+
+        * If you already have an OpenLDAP database on your machine and would like to remove it, then it can be removed by deleting everything inside of /var/lib/openldap/openldap-data/. So, backup your DB_CONFIG.
+       Slapd, the server, stores its configuration directly inside its database. Thus, we need to write our configuration as an LDIF file and import it.
+
+       First, create the directory /var/lib/openldap/openldap-data/, where your LDAP database contents ("database 1", as OpenLDAP calls it):
+
+         # install -m 0700 -o ldap -g ldap -d /var/lib/openldap/openldap-data/
+
+       Now we need to create a place for the LDAP configuration database ("database 0"):
+
+         # install -m 0760 -o root -g ldap -d /etc/openldap/slapd.d
+
+       Create a file /etc/openldap/config.ldif containing the following minimal useful configuration:
+
+         /etc/openldap/config.ldif
+
+         # The root config entry
+         dn: cn=config
+         objectClass: olcGlobal
+         cn: config
+         olcArgsFile: /run/openldap/slapd.args
+         olcPidFile: /run/openldap/slapd.pid
+
+         # Schemas
+         dn: cn=schema,cn=config
+         objectClass: olcSchemaConfig
+         cn: schema
+
+         # TODO: Include further schemas as necessary
+         include: file:///etc/openldap/schema/core.ldif
+
+         # The config database
+         dn: olcDatabase=config,cn=config
+         objectClass: olcDatabaseConfig
+         olcDatabase: config
+         olcRootDN: cn=Manager,$BASEDN
+
+         # The database for our entries
+         dn: olcDatabase=mdb,cn=config
+         objectClass: olcDatabaseConfig
+         objectClass: olcMdbConfig
+         olcDatabase: mdb
+         olcSuffix: $BASEDN
+         olcRootDN: cn=Manager,$BASEDN
+         olcRootPW: $PASSWD
+         olcDbDirectory: /var/lib/openldap/openldap-data
+         # TODO: Create further indexes
+         olcDbIndex: objectClass eq
+
+       There are a few options you will need to change:
+
+        * Every occurence of $BASEDN must be replaced with a valid DN. If you own a domain example.com you will most likely want to choose dc=example,dc=com.
+        * $PASSWD must be replaced by a salted and hashed password, which you may generate by running slappasswd.
+       Additionally, you might consider to add further schemas and create additional indexes to tune the performance of your database. The specifics will depend on your use case, but here are a few recommendations. For LDAP authentication, you should include the three schemas below to be able to use the posixAccount object class used for storing users.
+
+       Note Additional indexes must be part of the preceeding block. Newlines will result in a corrupted configuration file
+
+         # TODO: Create further indexes
+         olcDbIndex: objectClass eq
+         olcDbIndex: uid pres,eq
+         olcDbIndex: mail pres,sub,eq
+         olcDbIndex: cn,sn pres,sub,eq
+         olcDbIndex: dc eq
+
+         # Additional schemas
+         # RFC1274: Cosine and Internet X.500 schema
+         include: file:///etc/openldap/schema/cosine.ldif
+         # RFC2307: An Approach for Using LDAP as a Network Information Service
+         # Check RFC2307bis for nested groups and an auxiliary posixGroup objectClass (way easier)
+         include: file:///etc/openldap/schema/nis.ldif
+         # RFC2798: Internet Organizational Person
+         include: file:///etc/openldap/schema/inetorgperson.ldif
+
+       Allow logins to the ldap user account with chsh, typically selecting the shell /bin/bash. Then import these settings as the ldap user:
+
+         [ldap]$ slapadd -n 0 -F /etc/openldap/slapd.d/ -l /etc/openldap/config.ldif
+
+       Alternatively, you may also run this directly as root. However, if you do, make sure /etc/openldap/slapd.d/ remains accessible by ldap:
+
+         # slapadd -n 0 -F /etc/openldap/slapd.d/ -l /etc/openldap/config.ldif
+         # chown -R ldap:ldap /etc/openldap/*
+
+       If everything worked, you will now have directories underneath /etc/openldap/slapd.d with names such as cn=config.
+
+       By default, OpenLDAP will listen unencrypted on all interfaces. To make it only listen on local IP interfaces, you may edit the environment file read by slapd.service:
+
+         /etc/conf.d/slapd
+
+         SLAPD_URLS="ldap://127.0.0.1/ ldap://[::1]"
+         SLAPD_OPTIONS=
+
+       Finally, start the slapd daemon by starting slapd.service.
+
+       Note
+
+        * If you want to have your directory accept requests from the network, you should consider using TLS. See #OpenLDAP over TLS for details.
+        * If you plan to use your LDAP server for authentication, you might want to check access control configuration in LDAP authentication#LDAP server setup.
+        * Berkeley DB (BDB) should no longer be used. The mdb backend to slapd(8) is the recommended primary backend for a normal slapd database. It uses OpenLDAP's own Lightning Memory-Mapped Database (LMDB) library to store data and is intended to replace the Berkeley DB backend. The OpenLDAP package in the official repositories defaults to mdb.
+
+       THE CLIENT
+
+       The client configuration file is located at /etc/openldap/ldap.conf.
+
+       It is quite simple: you will only have to alter BASE to reflect the suffix of the server, and URI to reflect the address of the server, like:
+
+         /etc/openldap/ldap.conf
+
+         BASE            dc=example,dc=com
+         URI             ldap://localhost
+
+       If you decide to use SSL:
+
+        * The protocol (ldap or ldaps) in the URI entry has to conform with the slapd configuration
+        * If you decide to use TLS, add a TLS_REQCERT allow line to ldap.conf
+        * If you use a signed certificate from a CA, add the line TLS_CACERTDIR /usr/share/ca-certificates/trust-source in ldap.conf.
+
+       CREATE INITIAL ENTRY
+
+       Note If you plan to use your LDAP server for authentication, you should import the base.ldif in the LDAP authentication article instead of following the instructions here.
+
+       Once your client is configured, you probably want to create the root entry, and an entry for the Manager role:
+
+         $ ldapadd -x -D 'cn=Manager,dc=example,dc=com' -W
+         dn: dc=example,dc=com
+         objectClass: dcObject
+         objectClass: organization
+         dc: example
+         o: Example
+         description: Example directory
+
+         dn: cn=Manager,dc=example,dc=com
+         objectClass: organizationalRole
+         cn: Manager
+         description: Directory Manager
+         ^D
+
+       The text after the first line is entered on stdin, or could be read from a file either with the -f option or a file redirect.
+
+       TEST YOUR NEW OPENLDAP INSTALLATION
+
+       This is easy, just run the command below:
+
+         $ ldapsearch -x '(objectclass=*)' -b 'dc=example,dc=com'
+
+       Or authenticating as the rootdn (replacing -x by -D user -W), using the example configuration we had above:
+
+         $ ldapsearch -D "cn=Manager,dc=example,dc=com" -W '(objectclass=*)' -b 'dc=example,dc=com'
+
+       Now you should see some information about your database.
+
+       OPENLDAP OVER TLS
+
+       Note upstream documentation is much more useful/complete than this section
+
+       If you access the OpenLDAP server over the network and especially if you have sensitive data stored on the server you run the risk of someone sniffing your data which is sent clear-text. The next part will guide you on how to setup an SSL connection between the LDAP server and the client so the data will be sent encrypted.
+
+       In order to use TLS, you must have a certificate. For testing purposes, a self-signed certificate will suffice. To learn more about certificates, see OpenSSL.
+
+       Warning OpenLDAP cannot use a certificate that has a password associated to it.
+
+       CREATE A SELF-SIGNED CERTIFICATE
+
+       To create a self-signed certificate, type the following:
+
+         $ openssl req -new -x509 -nodes -out slapdcert.pem -keyout slapdkey.pem -days 365
+
+       You will be prompted for information about your LDAP server. Much of the information can be left blank. The most important information is the common name. This must be set to the DNS name of your LDAP server. If your LDAP server's IP address resolves to example.org but its server certificate shows a CN of bad.example.org, LDAP clients will reject the certificate and will be unable to negotiate TLS connections (apparently the results are wholly unpredictable).
+
+       Now that the certificate files have been created copy them to /etc/openldap/ssl/ (create this directory if it does not exist) and secure them. slapdcert.pem must be world readable because it contains the public key. slapdkey.pem on the other hand should only be readable for the ldap user for security reasons:
+
+         # mv slapdcert.pem slapdkey.pem /etc/openldap/ssl/
+         # chmod -R 755 /etc/openldap/ssl/
+         # chmod 400 /etc/openldap/ssl/slapdkey.pem
+         # chmod 444 /etc/openldap/ssl/slapdcert.pem
+         # chown ldap /etc/openldap/ssl/slapdkey.pem
+
+       CONFIGURE SLAPD FOR SSL
+
+       Edit the configuration to tell LDAP where the certificate files reside by executing the following command:
+
+       Note The latest version of OpenLDAP (2.4.45) uses OpenSSL and not GnuTLS. This means that current versions of OpenLDAP do in fact know how to handle the DEFAULT TLSCipherSuite. To prove this one could run ldd /usr/bin/slapd.
+
+         ldapmodify -D 'cn=Manager,dc=example,dc=com' -W
+
+         dn: cn=config
+         add: olcTLSCertificateFile
+         olcTLSCertificateFile: /etc/openldap/ssl/slapdcert.pem
+         -
+         add: olcTLSCertificateKeyFile
+         olcTLSCertificateKeyFile: /etc/openldap/ssl/slapdkey.pem
+
+       If you are using a signed SSL Certificate from a certification authority such as Let’s Encrypt, you will also need to specify the path to the root certificates database and your intermediary certificate. You will also need to change ownership of the .pem files and intermediary directories to make them readable to the user ldap:
+
+         ldapmodify -D 'cn=Manager,dc=example,dc=com' -W
+
+         dn: cn=config
+         add: olcTLSCACertificateFile
+         olcTLSCACertificateFile: /etc/letsencrypt/live/ldap.my-domain.com/chain.pem
+         -
+         add: olcTLSCertificateFile
+         olcTLSCertificateFile: /etc/letsencrypt/live/ldap.my-domain.com/cert.pem
+         -
+         add: olcTLSCertificateKeyFile
+         olcTLSCertificateKeyFile: /etc/letsencrypt/live/ldap.my-domain.com/privkey.pem
+         -
+         add: olcTLSCACertificatePath
+         olcTLSCACertificatePath: /usr/share/ca-certificates/trust-source
+
+       SSLv2/v3
+
+       Disable SSLv2/v3 and use strong ciphers.
+
+         ldapmodify -D 'cn=Manager,dc=example,dc=com' -W
+
+         dn: cn=config
+         add: olcTLSProtocolMin
+         olcTLSProtocolMin: 3.3
+         -
+         add: olcTLSCipherSuite
+         olcTLSCipherSuite: DEFAULT:!kRSA:!kDHE
+         -
+
+       TLSProtocolMin specifies the minimum version in wire format, so "3.3" actually means TLSv1.2.
+
+       The TLSCipherSuite specifies a list of OpenSSL ciphers from which slapd will choose when negotiating TLS connections, in decreasing order of preference. In addition to those specific ciphers, you can use any of the wildcards supported by OpenSSL. Note: DEFAULT is a wildcard. See ciphers(1ssl) for description of ciphers, wildcards and options supported.
+
+       Note To see which ciphers are supported by your local OpenSSL installation, type the following: openssl ciphers -v ALL:COMPLEMENTOFALL. Always test which ciphers will actually be enabled by TLSCipherSuite by providing it to OpenSSL command, like this: openssl ciphers -v 'DEFAULT'.
+
+       START SLAPD WITH SSL
+
+       Note This is not needed for StartTLS which listens on the same port as unencrypted LDAP.
+
+       You will have to edit the environment file read by slapd.service to change the protocol slapd listens on:
+
+         /etc/conf.d/slapd
+
+         SLAPD_URLS="ldaps:///"
+         SLAPD_OPTIONS=
+
+       Localhost connections do not need to use SSL. So, if you want to access the server locally you should change the SLAPD_URLS line to:
+
+         SLAPD_URLS="ldap://127.0.0.1 ldaps:///"
+
+       Then restart slapd.service. If it was enabled before, reenable it now.
+
+       Note If you created a self-signed certificate above, be sure to add TLS_REQCERT allow to /etc/openldap/ldap.conf on the client, or it will not be able connect to the server.
+
+       NEXT STEPS
+
+       You now have a basic LDAP installation. The next step is to design your directory. The design is heavily dependent on what you are using it for. If you are new to LDAP, consider starting with a directory design recommended by the specific client services that will use the directory (PAM, Postfix, etc).
+
+       A directory for system authentication is the LDAP authentication article.
+
+       A nice web frontend is phpLDAPadmin.
+
+       BACKUP LDAP
+
+       It is imperative that we have a backup of our LDAP database and configuration in case we ever need to restore for any number of reasons.
+
+       EXPORT CONFIGURATION
+
+         [ldap]$ slapcat -vF /etc/openldap/slapd.d -n 0 -l "$(hostname)-ldap-mdb-config-$(date '+%F').ldif"
+
+       EXPORT DATABASE
+
+         [ldap]$ slapcat -v -n 1 -l "$(hostname)-ldap-database-$(date '+%F').ldif"
+
+       RESTORE LDAP
+
+       IMPORT CONFIGURATION
+
+         [ldap]$ slapadd -v -n 0 -F /etc/openldap/slapd.d -l <filename from config export>
+
+       IMPORT DATABASE
+
+         [ldap]$ slapadd -v -n 1 -F /etc/openldap/slapd.d -l <filename from database export>
+
+       TROUBLESHOOTING
+
+       SLAPD CONFIGURATION CHECKING
+
+       You can check configuration settings with
+
+         $ slaptest -F /etc/openldap/slapd.d/ -v
+
+       CLIENT AUTHENTICATION CHECKING
+
+       If you cannot connect to your server for non-secure authentication:
+
+         $ ldapsearch -x -H ldap://ldaservername:389 -D cn=Manager,dc=example,dc=exampledomain
+
+       and for TLS secured authentication with:
+
+         $ ldapsearch -x -H ldaps://ldaservername:636 -D cn=Manager,dc=example,dc=exampledomain
+
+       LDAP SERVER STOPS SUDDENLY
+
+       If you notice that slapd seems to start but then stops, try running:
+
+         # chown -R ldap:ldap /var/lib/openldap
+
+       to allow slapd write access to its data directory as the user "ldap".
+
+       LDAP SERVER DOES NOT START
+
+       Try starting the server from the command line with debugging output enabled:
+
+         # slapd -u ldap -g ldap -h ldaps://ldaservername:636 -d Config,Stats
+
+       SEE ALSO
+
+        * Official OpenLDAP Software Administrator's Guide
+        * phpLDAPadmin is a web interface tool in the style of phpMyAdmin.
+        * LDAP authentication
+        * apachedirectorystudioAUR from the Arch User Repository is an Eclipse-based LDAP viewer. Works perfect with OpenLDAP installations.
+
+ArchWiki manual                         bundled documentation

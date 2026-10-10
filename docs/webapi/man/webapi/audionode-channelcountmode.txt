@@ -1,0 +1,51 @@
+WEBAPI.AUDIONODE-CHANNELCOUNTMODE(1) Sandbox manual WEBAPI.AUDIONODE-CHANNELCOUNTMODE(1)
+
+       NAME
+
+       AudioNode: channelCountMode property - The channelCountMode property of the AudioNode interface represents an enumerated value describing the way channels must be matched between 
+
+       AUDIONODE: CHANNELCOUNTMODE PROPERTY
+
+       The channelCountMode property of the AudioNode interface represents an enumerated value describing the way channels must be matched between the node's inputs and outputs.
+
+       VALUE
+
+       The possible values of the channelCountMode enumerated value, and their meanings are:
+
+        * max
+          * : The number of channels is equal to the maximum number of channels of all connections.
+       In this case, channelCount is ignored and only up-mixing happens.
+
+       The following AudioNode children default to this value: GainNode, DelayNode, ScriptProcessorNode, BiquadFilterNode, WaveShaperNode.
+
+        * clamped-max
+          * : The number of channels is equal to the maximum number of channels of all connections, clamped to the value of channelCount.
+       The following AudioNode children default to this value: PannerNode, ConvolverNode, DynamicsCompressorNode
+
+        * explicit
+          * : The number of channels is defined by the value of channelCount.
+       The following AudioNode children default to this value: AudioDestinationNode, AnalyserNode, ChannelSplitterNode, ChannelMergerNode
+
+       > In older versions of the spec, the default for a ChannelSplitterNode was max.
+
+       EXAMPLES
+
+         const audioCtx = new AudioContext();
+
+         const oscillator = audioCtx.createOscillator();
+         const gainNode = audioCtx.createGain();
+
+         oscillator.connect(gainNode);
+         gainNode.connect(audioCtx.destination);
+
+         oscillator.channelCountMode = "explicit";
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,64 @@
+WEBAPI.XMLHTTPREQUEST-RESPONSEXML(1) Sandbox manual WEBAPI.XMLHTTPREQUEST-RESPONSEXML(1)
+
+       NAME
+
+       XMLHttpRequest: responseXML property - windowandworkerexceptservice
+
+       XMLHTTPREQUEST: RESPONSEXML PROPERTY
+
+       window_and_worker_except_service
+
+       The XMLHttpRequest.responseXML read-only property returns a Document containing the HTML or XML retrieved by the request; or null if the request was unsuccessful, has not yet been sent, or if the data can't be parsed as XML or HTML.
+
+       > The name responseXML is an artifact of this
+       > property's history; it works for both HTML and XML.
+       Usually, the response is parsed as "text/xml". If the responseType is set to "document" and the request was made asynchronously, instead the response is parsed as "text/html". responseXML is null for any other types of data, as well as for data: URLs.
+
+       If the server doesn't specify the Content-Type as "text/xml" or "application/xml", you can use XMLHttpRequest.overrideMimeType() to parse it as XML anyway.
+
+       This property isn't available to workers.
+
+       VALUE
+
+       A Document from parsing the XML or HTML received using XMLHttpRequest, or null if no data was received or if the data is not XML/HTML.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the responseType isn't either
+       document or an empty string.
+
+       EXAMPLES
+
+         const xhr = new XMLHttpRequest();
+         xhr.open("GET", "/server");
+
+         // If specified, responseType must be empty string or "document"
+         xhr.responseType = "document";
+
+         // Force the response to be parsed as XML
+         xhr.overrideMimeType("text/xml");
+
+         xhr.onload = () => {
+           if (xhr.readyState === xhr.DONE && xhr.status === 200) {
+             console.log(xhr.response, xhr.responseXML);
+           }
+         };
+
+         xhr.send();
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * XMLHttpRequest
+        * XMLHttpRequest.response
+        * XMLHttpRequest.responseType
+        * Parsing and serializing XML
+        * Parsing XML into a DOM tree: DOMParser
+        * Serializing a DOM tree into XML: XMLSerializer (specifically, the
+       serializeToString() method)
+
+Web APIs manual                         from the official documentation

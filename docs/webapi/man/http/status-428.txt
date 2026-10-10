@@ -1,0 +1,51 @@
+HTTP.STATUS-428(1)               Sandbox manual               HTTP.STATUS-428(1)
+
+       NAME
+
+       428 Precondition Required - The HTTP 428 Precondition Required client error response status code indicates that the server requires the request to be conditional.
+
+       428 PRECONDITION REQUIRED
+
+       The HTTP 428 Precondition Required client error response status code indicates that the server requires the request to be conditional.
+
+       Typically, a 428 response means that a required precondition header such as If-Match is missing. When a precondition header does not match the server-side state, the response should be 412 Precondition Failed.
+
+       STATUS
+
+         428 Precondition Required
+
+       EXAMPLES
+
+       MISSING PRECONDITION IN REQUEST
+
+       A client has fetched a resource my-document from the server, updated it locally, and then tries to send the updated document back to the server:
+
+         PUT /docs/my-document HTTP/1.1
+         Host: example.com
+         Content-Type: application/json
+
+         {
+           […]
+
+       The server implementation requires that all PUT requests for the specific path or type of documents must be conditional and sends a 428 response:
+
+         HTTP/1.1 428 Precondition Required
+         Date: Wed, 26 Jun 2024 12:00:00 GMT
+         Server: Apache/2.4.1 (Unix)
+         Content-Type: application/json
+
+         {
+           "code": "MissingPrecondition",
+           "message": "Updating documents requires a precondition header.",
+         }
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * HTTP response status codes
+        * HTTP conditional requests
+        * Conditional headers: If-Match, If-None-Match, If-Modified-Since, If-Unmodified-Since, If-Range
+       -
+
+HTTP manual                             from the official documentation

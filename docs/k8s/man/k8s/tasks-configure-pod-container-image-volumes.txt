@@ -1,0 +1,106 @@
+K8S.TASKS-CONFIGURE-POD-CONTAINER-IMAGE-VOLUMES(1) Sandbox manual K8S.TASKS-CONFIGURE-POD-CONTAINER-IMAGE-VOLUMES(1)
+
+       NAME
+
+       Use an Image Volume With a Pod - This page shows how to configure a pod using image volumes. This allows you to
+
+       USE AN IMAGE VOLUME WITH A POD
+
+       This page shows how to configure a pod using image volumes. This allows you to mount content from OCI registries inside containers.
+
+       ## PREREQUISITES
+
+        * The container runtime needs to support the image volumes feature
+        * You need to exec commands in the host
+        * You need to be able to exec into pods
+
+       RUN A POD THAT USES AN IMAGE VOLUME #CREATE-POD
+
+       An image volume for a pod is enabled by setting the volumes[*].image field of .spec to a valid reference and consuming it in the volumeMounts of the container. For example:
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: image-volume
+         spec:
+           containers:
+           - name: shell
+             command: ["sleep", "infinity"]
+             image: debian
+             volumeMounts:
+             - name: volume
+               mountPath: /volume
+           volumes:
+           - name: volume
+             image:
+               reference: quay.io/crio/artifact:v2
+               pullPolicy: IfNotPresent
+
+        1. Create the pod on your cluster:
+
+            kubectl apply -f https://k8s.io/examples/pods/image-volumes.yaml
+
+        1. Attach to the container:
+
+            kubectl exec image-volume -it -- bash
+
+        1. Check the content of a file in the volume:
+
+            cat /volume/dir/file
+
+       The output is similar to:
+
+            1
+
+       You can also check another file in a different path:
+
+            cat /volume/file
+
+       The output is similar to:
+
+            2
+
+       USE SUBPATH (OR SUBPATHEXPR)
+
+       It is possible to utilize subPath or subPathExpr from Kubernetes v1.33 when using the image volume feature.
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: image-volume
+         spec:
+           containers:
+           - name: shell
+             command: ["sleep", "infinity"]
+             image: debian
+             volumeMounts:
+             - name: volume
+               mountPath: /volume
+               subPath: dir
+           volumes:
+           - name: volume
+             image:
+               reference: quay.io/crio/artifact:v2
+               pullPolicy: IfNotPresent
+
+        1. Create the pod on your cluster:
+
+            kubectl apply -f https://k8s.io/examples/pods/image-volumes-subpath.yaml
+
+        1. Attach to the container:
+
+            kubectl exec image-volume -it -- bash
+
+        1. Check the content of the file from the dir sub path in the volume:
+
+            cat /volume/file
+
+       The output is similar to:
+
+            1
+
+       FURTHER READING
+
+        * image volumes
+
+Kubernetes manual                       from the official documentation

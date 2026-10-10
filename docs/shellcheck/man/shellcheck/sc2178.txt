@@ -1,0 +1,63 @@
+SHELLCHECK.SC2178(1)             Sandbox manual             SHELLCHECK.SC2178(1)
+
+       NAME
+
+       Variable was used as an array but is now assigned a string. - flags[0]="-r"
+
+       VARIABLE WAS USED AS AN ARRAY BUT IS NOW ASSIGNED A STRING
+
+       VARIABLE WAS USED AS AN ARRAY BUT IS NOW ASSIGNED A STRING
+
+       PROBLEMATIC CODE
+
+         flags[0]="-r"
+         flags[1]="--delete-after"
+
+         if [ "$dryrun" ]
+         then
+            flags="--dry-run"
+         fi
+
+       CORRECT CODE
+
+         flags[0]="-r"
+         flags[1]="--delete-after"
+
+         if [ "$dryrun" ]
+         then
+            flags=( "--dry-run" )
+         fi
+
+       RATIONALE
+
+       ShellCheck noticed that you have used a variable as an array, but then assign it a string. array=foo is equivalent to array[0]=foo, and leaves the rest of the elements unaffected.
+
+       In the incorrect code, "${flags[@]}" would contain --dry-run --delete-after.
+
+       To set an array to only a single, given element, you should use array=( foo ).
+
+       In the correct code, "${flags[@]}" will contain --dry-run only.
+
+       Another possible cause is accidentally missing the $ on a previous assignment: var=(my command); var=bar instead of var=$(my command); var=bar. If the variable is not intended to be an array, ensure that it's never assigned as one.
+
+       BUGS
+
+       There is a known issue with this check's handling of local variables, causing ShellCheck to flag variables that were previously declared as arrays, even if they are in different scopes.
+
+       The easiest workaround is to simply use different variable names. Alternatively, you can [[ignore]] the check.
+
+       It is also possible to satisfy ShellCheck by declaring the local variable separately from assigning to it, e.g.:
+
+         foo () {
+            local -a baz
+            baz+=("foo" "bar")
+            echo "${baz[@]}"
+         }
+
+         bar () {
+            local baz # ShellCheck gets confused if these lines are merged as local baz="qux"
+            baz="qux"
+            echo "$baz"
+         }
+
+ShellCheck manual                       from the official documentation

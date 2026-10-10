@@ -1,0 +1,50 @@
+APACHE.MOD_LOG_FORENSIC(1)       Sandbox manual       APACHE.MOD_LOG_FORENSIC(1)
+
+       FORENSIC LOG FORMAT
+
+       Each request is logged two times. The first time is before it's processed further (that is, after receiving the headers). The second log entry is written after the request processing at the same time where normal logging occurs.
+
+       In order to identify each request, a unique request ID is assigned. This forensic ID can be cross logged in the normal transfer log using the %{forensic-id}n format string. If you're using mod_unique_id, its generated ID will be used.
+
+       The first line logs the forensic ID, the request line and all received headers, separated by pipe characters (|). A sample line looks like the following (all on one line):
+
+       +yQtJf8CoAB4AAFNXBIEAAAAA|GET /manual/de/images/down.gif HTTP/1.1|Host:localhost%3a8080|User-Agent:Mozilla/5.0 (X11; U; Linux i686; en-US; rv%3a1.6) Gecko/20040216 Firefox/0.8|Accept:image/png, etc...
+
+       The plus character at the beginning indicates that this is the first log line of this request. The second line just contains a minus character and the ID again:
+
+       -yQtJf8CoAB4AAFNXBIEAAAAA
+
+       The check_forensic script takes as its argument the name of the logfile. It looks for those +/- ID pairs and complains if a request was not completed.
+
+       SECURITY CONSIDERATIONS
+
+       See the security tips document for details on why your security could be compromised if the directory where logfiles are stored is writable by anyone other than the user that starts the server.
+
+       The log files may contain sensitive data such as the contents of Authorization: headers (which can contain passwords), so they should not be readable by anyone except the user that starts the server.
+
+       FORENSICLOG DIRECTIVE
+
+         Description: | Sets filename of the forensic log
+         Syntax: | ForensicLog filename|pipe
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_log_forensic
+       The ForensicLog directive is used to log requests to the server for forensic analysis. Each log entry is assigned a unique ID which can be associated with the request using the normal CustomLog directive. mod_log_forensic creates a token called forensic-id, which can be added to the transfer log using the %{forensic-id}n format string.
+
+       The argument, which specifies the location to which the logs will be written, can take one of the following two types of values:
+
+         filename
+       A filename, relative to the ServerRoot.
+
+         pipe
+       The pipe character "|", followed by the path to a program to receive the log information on its standard input. The program name can be specified relative to the ServerRoot directive.
+
+       SECURITY
+
+       If a program is used, then it will be run as the user who started httpd. This will be root if the server was started by root; be sure that the program is secure or switches to a less privileged user.
+
+       NOTE
+
+       When entering a file path on non-Unix platforms, care should be taken to make sure that only forward slashes are used even though the platform may allow the use of back slashes. In general it is a good idea to always use forward slashes throughout the configuration files.
+
+Apache HTTP Server manual               bundled documentation

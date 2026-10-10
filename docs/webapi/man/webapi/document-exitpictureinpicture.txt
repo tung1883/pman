@@ -1,0 +1,62 @@
+WEBAPI.DOCUMENT-EXITPICTUREINPICTURE(1) Sandbox manual WEBAPI.DOCUMENT-EXITPICTUREINPICTURE(1)
+
+       NAME
+
+       Document: exitPictureInPicture() method - The exitPictureInPicture() method of the Document interface requests that a video contained in this document, which is currently floating, b
+
+       DOCUMENT: EXITPICTUREINPICTURE() METHOD
+
+       The exitPictureInPicture() method of the Document interface requests that a video contained in this document, which is currently floating, be taken out of picture-in-picture mode.
+
+       This attempts to reverse the effects of a previous call to HTMLVideoElement.requestPictureInPicture(), restoring the video back into the website flow.
+
+       SYNTAX
+
+         exitPictureInPicture()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise, which is resolved once the user agent has finished exiting picture-in-picture mode. If an error occurs while attempting to exit picture-in-picture mode, the catch() handler for the promise is called.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if document.pictureInPictureElement is null.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       This example causes the current document to exit picture-in-picture mode whenever the mouse button is clicked within it.
+
+         document.onclick = (event) => {
+           if (document.pictureInPictureElement) {
+             document
+               .exitPictureInPicture()
+               .then(() => console.log("Document Exited from Picture-in-Picture mode"))
+               .catch((err) => console.error(err));
+           } else {
+             video.requestPictureInPicture();
+           }
+         };
+
+       Note that if you want to track which video on your page is currently playing in picture-in-picture mode, you should listen to the enterpictureinpicture and leavepictureinpicture events on the HTMLVideoElement element(s) in question. Alternatively, you can check whether Document.pictureInPictureElement refers to the current HTMLVideoElement element.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTMLVideoElement.requestPictureInPicture()
+        * HTMLVideoElement.disablePictureInPicture
+        * Document.pictureInPictureEnabled
+        * Document.pictureInPictureElement
+        * :picture-in-picture
+        * Picture-in-Picture events
+
+Web APIs manual                         from the official documentation

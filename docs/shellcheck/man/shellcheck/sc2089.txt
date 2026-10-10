@@ -1,0 +1,83 @@
+SHELLCHECK.SC2089(1)             Sandbox manual             SHELLCHECK.SC2089(1)
+
+       NAME
+
+       Quotes/backslashes will be treated literally. Use an array. - args='-lh "My File.txt"'
+
+       QUOTES/BACKSLASHES WILL BE TREATED LITERALLY. USE AN ARRAY
+
+       PROBLEMATIC CODE
+
+         args='-lh "My File.txt"'
+         ls $args
+
+       CORRECT CODE
+
+       In Bash/Ksh with arrays:
+
+         args=(-lh "My File.txt")
+         ls "${args[@]}"
+
+       or in POSIX overwriting "$@":
+
+         set -- -lh "My File.txt"
+         ls "$@"
+
+       or in POSIX via functions:
+
+         myls() { ls "-lh" "My File.txt"; }
+         myls
+
+       RATIONALE
+
+       Bash does not interpret data as code. Consider almost any other languages, such as Python:
+
+         #!/usr/bin/env python3
+         print(1 + 1)   # prints 2
+         a = "1 + 1"
+         print(a)     # prints 1 + 1, not 2
+
+       Here, 1 + 1 is Python syntax for adding numbers. However, passing a literal string containing this expression does not cause Python to interpret it, see the +, and produce the calculated result.
+
+       Similarly, "My File.txt" is Bash syntax for a single word with a space in it. However, passing a literal string containing this expression does not cause Bash to interpret it, see the quotes, and produce the tokenized result.
+
+       The solution is to use an array instead, whenever possible.
+
+       If due to sh compatibility you can't use arrays, you can sometimes use functions instead. Instead of trying to create a set of arguments that has to be passed to a command, create a function that calls the function with arguments plus some more:
+
+         ffmpeg_with_args() {
+           ffmpeg -filter_complex '[#0x2ef] setpts=PTS+1/TB [sub] ; [#0x2d0] [sub] overlay' "$@"
+         }
+         ffmpeg_with_args -i "My File.avi" "Output.avi"
+
+       In other cases, you may have to use eval instead, though this is often fragile and insecure. If you get it wrong, it'll appear to work great in all test cases, and may still lead to various forms of security vulnerabilities and breakage:
+
+         quote() { local q=${1//\'/\'\\\'\'}; echo "'$q'"; }
+         args="-lh $(quote "My File.txt")"
+         eval ls "$args" # Do not use unless you understand implications
+
+       If you ever accidentally forget to use proper quotes, such as with:
+
+         for f in *.txt; do
+           args="-lh '$1'" # Example security exploit
+           eval ls "$args" # Do not copy and use
+         done
+
+       Then you can use touch "'; rm -rf \$'\x2F'; '.txt" (or someone can trick you into downloading a file with this name, or create a zip file or git repo containing it, or changing their nick and have your chat client create the file for a chat log, or...), and running the script to list your files will run the command rm -rf /.
+
+       EXCEPTIONS
+
+       Few and far between, such as, prompt variables. This from man bash "PROMPTING":
+
+       > After the string is decoded, it is expanded via parameter expansion, command
+       > substitution, arithmetic expansion, and quote removal, subject to the value of the promptvars shell
+       > option (see the description of the shopt command under SHELL BUILTIN COMMANDS below). This can have
+       > unwanted side effects if escaped portions of the string appear within command substitution or contain
+       > characters special to word expansion.
+
+       ADDITIONAL RESOURCES
+
+        * Wooledge BashFAQ #50: I'm trying to put a command in a variable, but the complex cases always fail!
+        * StackOverflow: In bash, why do shell commands ignore quotes in arguments when the arguments are passed to them as a variable?
+
+ShellCheck manual                       from the official documentation

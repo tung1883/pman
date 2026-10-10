@@ -1,0 +1,29 @@
+SHELLCHECK.SC2248(1)             Sandbox manual             SHELLCHECK.SC2248(1)
+
+       NAME
+
+       Prefer double quoting even when variables don't contain special characters. - This is an [[optional]] suggestion. It must be explicitly enabled with a [[directive]] enable=quote-safe-variables in a # shellcheck comment
+
+       PREFER DOUBLE QUOTING EVEN WHEN VARIABLES DON'T CONTAIN SPECIAL CHARAC
+
+       This is an [[optional]] suggestion. It must be explicitly enabled with a [[directive]] enable=quote-safe-variables in a # shellcheck comment or .shellcheckrc
+
+       PROBLEMATIC CODE
+
+         subdir='example'
+
+         cd ${subdir}
+
+       CORRECT CODE
+
+         subdir='example'
+
+         cd "${subdir}"
+
+       RATIONALE
+
+       ShellCheck normally warns about unquoted variable use due to potential globbing or word splitting issues. See [[SC2086]] for details. However if it is determined that a variable does not have have spaces or special characters it will omit that warning. This optional warning exists to suggest that quotes be used even in this scenario. If the code is later changed such that special characters can appear in the variable, having its use already quoted will prevent issues.
+
+       This optional warning is also helpful if ShellCheck's analysis of the variable contents is wrong because of indirect modification of the variable or because unknown commands implemented as shell functions have modified the variable.
+
+ShellCheck manual                       from the official documentation

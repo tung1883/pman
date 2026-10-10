@@ -1,0 +1,53 @@
+WEBAPI.SERVICEWORKERREGISTRATION-UPDATE(1) Sandbox manual WEBAPI.SERVICEWORKERREGISTRATION-UPDATE(1)
+
+       NAME
+
+       ServiceWorkerRegistration: update() method - The update() method of the
+
+       SERVICEWORKERREGISTRATION: UPDATE() METHOD
+
+       The update() method of the ServiceWorkerRegistration interface attempts to update the service worker. It fetches the worker's script URL, and if the new worker is not byte-by-byte identical to the current worker, it installs the new worker. The fetch of the worker bypasses any browser caches if the previous fetch occurred over 24 hours ago.
+
+       SYNTAX
+
+         update()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that resolves with a ServiceWorkerRegistration object.
+
+       EXAMPLES
+
+       The following simple example registers a service worker example then adds an event handler to a button so you can explicitly update the service worker whenever desired:
+
+         if ("serviceWorker" in navigator) {
+           navigator.serviceWorker
+             .register("/sw.js", { scope: "/" })
+             .then((registration) => {
+               // registration worked
+               console.log("Registration succeeded.");
+               button.onclick = () => {
+                 registration.update();
+               };
+             })
+             .catch((error) => {
+               // registration failed
+               console.error(`Registration failed with ${error}`);
+             });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Service workers basic code example
+        * Using web workers
+
+Web APIs manual                         from the official documentation

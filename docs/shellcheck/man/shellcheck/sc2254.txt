@@ -1,0 +1,42 @@
+SHELLCHECK.SC2254(1)             Sandbox manual             SHELLCHECK.SC2254(1)
+
+       NAME
+
+       Quote expansions in case patterns to match literally rather than as a glob. - case $input in
+
+       QUOTE EXPANSIONS IN CASE PATTERNS TO MATCH LITERALLY RATHER THAN AS A
+
+       QUOTE EXPANSIONS IN CASE PATTERNS TO MATCH LITERALLY RATHER THAN AS A
+
+       PROBLEMATIC CODE
+
+         case $input in
+           -       ) echo "Reading from stdin..." ;;
+           $output ) echo "Input should be different from output" ;;
+         esac
+
+       CORRECT CODE
+
+         case $input in
+           -         ) echo "Reading from stdin..." ;;
+           "$output" ) echo "Input should be different from output" ;;
+         esac
+
+       RATIONALE
+
+       When unquoted variables and command expansions are used in case branch patterns, they will be interpreted as globs.
+
+       This can lead to some surprising behavior, such as case $x in $x) trigger;; esac not triggering in some cases, such as when x='Pride and Prejudice [1813].epub'.
+
+       To match the literal content of the variable or expansion, make sure to double quote the expansion.
+
+       EXCEPTIONS
+
+       If you intended to match a dynamically generated pattern, you can ignore this suggestion with a directive.
+
+       RELATED RESOURCES
+
+        * [[SC2053]], where the same effect can be seen with [[ $x = $x ]].
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,62 @@
+WEBAPI.RTCSTATSREPORT-FOREACH(1) Sandbox manual WEBAPI.RTCSTATSREPORT-FOREACH(1)
+
+       NAME
+
+       RTCStatsReport: forEach() method - The forEach() method of the RTCStatsReport interface executes a provided function once for each key/value pair in the RTCStatsReport object,
+
+       RTCSTATSREPORT: FOREACH() METHOD
+
+       The forEach() method of the RTCStatsReport interface executes a provided function once for each key/value pair in the RTCStatsReport object, in insertion order.
+
+       The keys are unique id values for the monitored statistics objects from which the statistics are derived, and the associated values are statistics dictionary objects.
+
+       The method is otherwise the same as Map.prototype.forEach().
+
+       SYNTAX
+
+         forEach(callbackFn)
+         forEach(callbackFn, thisArg)
+
+       PARAMETERS
+
+        * callbackFn
+          * : A function to execute for each entry in the report.
+       The function is called with the following arguments:
+
+            * report
+              * : Statistics report for each iteration.
+       This can be any of the statistics dictionary types.
+
+            * id
+              * : A unique string identifying the monitored object from which the statistics are derived.
+            * map
+              * : The report being iterated.
+        * thisArg (optional)
+          * : A value to use as this when executing callbackFn.
+
+       RETURN VALUE
+
+       undefined.
+
+       EXAMPLES
+
+       Given a variable myPeerConnection, which is an instance of RTCPeerConnection, the code calls getStats() with await to wait for the statistics report. It then iterates the report using RTCStatsReport.forEach(), and filters the dictionaries for just those reports that have the type of inbound-rtp and kind of video. For matching dictionaries it logs the framesPerSecond property of the inbound video.
+
+         const stats = await myPeerConnection.getStats();
+
+         stats.forEach((report) => {
+           if (report.type === "inbound-rtp" && report.kind === "video") {
+             // Log the frame rate
+             console.log(report.framesPerSecond);
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Map.prototype.forEach()
+
+Web APIs manual                         from the official documentation

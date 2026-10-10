@@ -1,0 +1,51 @@
+HTTP.HEADER-SEC-PRIVATE-STATE-TOKEN(1) Sandbox manual HTTP.HEADER-SEC-PRIVATE-STATE-TOKEN(1)
+
+       NAME
+
+       Sec-Private-State-Token header - The HTTP Sec-Private-State-Token header exists both as a request and a response header. It is used by the Private State Token API during iss
+
+       SEC-PRIVATE-STATE-TOKEN HEADER
+
+       The HTTP Sec-Private-State-Token header exists both as a request and a response header. It is used by the Private State Token API during issuance and redemption requests to transmit request data and response data.
+
+       During token issuance, the Sec-Private-State-Token request header contains a collection of unsigned, blinded nonces required to generate a private state token to the issuer server. A successful response should include a Sec-Private-State-Token response header containing blind signatures, which the browser then unblinds and stores along with the original unblinded nonces in a secure token store.
+
+       During token redemption, the Sec-Private-State-Token request header contains a single signed, unblinded token along with associated redemption metadata. A successful response should include a Sec-Private-State-Token response header containing a signed redemption record, which is again stored securely by the browser.
+
+       Note that a developer wouldn't be expected to generate Sec-Private-State-Token request headers — these are created automatically by the browser when invoking private state token token-request and token-redemption fetch requests.
+
+       Header type Fetch Metadata Request Header, Response header Forbidden request header Yes (Sec- prefix) CORS-safelisted request header No
+
+       SYNTAX
+
+         Sec-Private-State-Token: <string>
+
+       Servers should ignore this header if it contains any other value.
+
+       DIRECTIVES
+
+        * 
+          * : A string containing the required data for private state token issuance and redemption operation requests and responses.
+
+       EXAMPLES
+
+       Sample request header sent during token issuance:
+
+         Sec-Private-State-Token: AEB9WGWUx398Pdr0SFE7NDo…
+
+       Sample response header:
+
+         Sec-Private-State-Token: AEB9WGWUxj1085Cuk2qmt3y…
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Sec-Private-State-Token-Crypto-Version
+        * Sec-Private-State-Token-Lifetime
+        * Sec-Redemption-Record
+        * Private State Token API
+
+HTTP manual                             from the official documentation

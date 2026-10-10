@@ -1,0 +1,92 @@
+APACHE.MOD_PROXY_HCHECK(1)       Sandbox manual       APACHE.MOD_PROXY_HCHECK(1)
+
+       USAGE EXAMPLES
+
+       The following example shows how one might configured health checking for various backend servers:
+
+         ProxyHCExpr ok234 {%{REQUEST_STATUS} =~ /^[234]/}
+         ProxyHCExpr gdown {%{REQUEST_STATUS} =~ /^[5]/}
+         ProxyHCExpr in_maint {hc('body') !~ /Under maintenance/}
+
+         <Proxy balancer://foo>
+           BalancerMember http://www.example.com/  hcmethod=GET hcexpr=in_maint hcuri=/status.php
+           BalancerMember http://www2.example.com/ hcmethod=HEAD hcexpr=ok234 hcinterval=10
+           BalancerMember http://www3.example.com/ hcmethod=TCP hcinterval=5 hcpasses=2 hcfails=3
+           BalancerMember http://www4.example.com/
+         </Proxy>
+
+         ProxyPass "/" "balancer://foo"
+         ProxyPassReverse "/" "balancer://foo"
+
+       In this scenario, http://www.example.com/ is health checked by sending a GET /status.php request to that server and seeing that the returned page does not include the string Under maintenance. If it does, that server is put in health-check fail mode, and disabled. This dynamic check is performed every 30 seconds, which is the default.
+
+       http://www2.example.com/ is checked by sending a simple HEAD request every 10 seconds and making sure that the response status is 2xx, 3xx or 4xx. http://www3.example.com/ is checked every 5 seconds by simply ensuring that the socket to that server is up. If the backend is marked as "down" and it passes 2 health check, it will be re-enabled and added back into the load balancer. It takes 3 back-to-back health check failures to disable the server and move it out of rotation. Finally, http://www4.example.com/ is not dynamically checked at all.
+
+       PROXYHCEXPR DIRECTIVE
+
+         Description: | Creates a named condition expression to use to determine health of the backend based on its response
+         Syntax: | ProxyHCExpr name {ap_expr expression}
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_proxy_hcheck
+       The ProxyHCExpr directive allows for creating a named condition expression that checks the response headers of the backend server to determine its health. This named condition can then be assigned to balancer members via the hcexpr parameter.
+
+       PROXYHCEXPR: ALLOW FOR 2XX/3XX/4XX AS PASSING
+
+         ProxyHCExpr ok234 {%{REQUEST_STATUS} =~ /^[234]/}
+         ProxyPass "/apps"     "balancer://foo"
+
+         <Proxy balancer://foo>
+           BalancerMember http://www2.example.com/  hcmethod=HEAD hcexpr=ok234 hcinterval=10
+         </Proxy>
+
+       The expression can use curly-parens ("{}") as quoting deliminators in addition to normal quotes.
+
+       If using a health check method (eg: GET) which results in a response body, that body itself can be checked via ap_expr using the hc() expression function, which is unique to this module.
+
+       In the following example, we send the backend a GET request and if the response body contains the phrase Under maintenance, we want to disable the backend.
+
+       PROXYHCEXPR: CHECKING RESPONSE BODY
+
+         ProxyHCExpr in_maint {hc('body') !~ /Under maintenance/}
+         ProxyPass "/apps"     "balancer://foo"
+
+         <Proxy balancer://foo>
+           BalancerMember http://www.example.com/ hcexpr=in_maint hcmethod=get hcuri=/status.php
+         </Proxy>
+
+       NOTE: Since response body can quite large, it is best if used against specific status pages.
+
+       PROXYHCTEMPLATE DIRECTIVE
+
+         Description: | Creates a named template for setting various health check parameters
+         Syntax: | ProxyHCTemplate name parameter=setting [...]
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_proxy_hcheck
+       The ProxyHCTemplate directive allows for creating a named set (template) of health check parameters that can then be assigned to balancer members via the hctemplate parameter.
+
+       PROXYHCTEMPLATE
+
+         ProxyHCTemplate tcp5 hcmethod=tcp hcinterval=5
+         ProxyPass "/apps"     "balancer://foo"
+
+         <Proxy balancer://foo>
+           BalancerMember http://www2.example.com/ hctemplate=tcp5
+         </Proxy>
+
+       PROXYHCTPSIZE DIRECTIVE
+
+         Description: | Sets the total server-wide size of the threadpool used for the health check workers
+         Syntax: | ProxyHCTPsize size
+         Default: | ProxyHCTPsize 16
+         Context: | server config
+         Status: | Extension
+         Module: | mod_proxy_hcheck
+       If Apache httpd and APR are built with thread support, the health check module will offload the work of the actual checking to a threadpool associated with the Watchdog process, allowing for parallel checks. The ProxyHCTPsize directive determines the size of this threadpool. If set to 0, no threadpool is used at all, resulting in serialized health checks.
+
+       PROXYHCTPSIZE
+
+         ProxyHCTPsize 32
+
+Apache HTTP Server manual               bundled documentation

@@ -1,0 +1,55 @@
+SHELLCHECK.SC2270(1)             Sandbox manual             SHELLCHECK.SC2270(1)
+
+       NAME
+
+       To assign positional parameters, use set -- first second .. (or use [ ] to compare). - if [ -z "$1" ]
+
+       TO ASSIGN POSITIONAL PARAMETERS, USE SET -- FIRST SECOND .. (OR USE TO
+
+       TO ASSIGN POSITIONAL PARAMETERS, USE SET -- FIRST SECOND .. (OR USE TO
+
+       PROBLEMATIC CODE
+
+         if [ -z "$1" ]
+         then
+           $1="help"
+         fi
+
+       or
+
+         if $1="help"
+         then
+           echo "Usage: $0 filename"
+         fi
+
+       CORRECT CODE
+
+         if [ -z "$1" ]
+         then
+           set -- "help"
+         fi
+
+       or
+
+         if [ $1 = "help" ]
+         then
+           echo "Usage: $0 filename"
+         fi
+
+       RATIONALE
+
+       You have a command on the form $2=value.
+
+       If the goal is to assign a new value to the positional parameters, use the set builtin: set -- one two .. will cause $1 to be "one" and $2 to be "two".
+
+       If you instead want to compare the value, use [ ] and add spaces: [ "$1" = "foo" ]
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

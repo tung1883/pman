@@ -1,0 +1,116 @@
+WEBAPI.SERVICEWORKERGLOBALSCOPE-NOTIFICATIONCLICK-EVENT(1) Sandbox manual WEBAPI.SERVICEWORKERGLOBALSCOPE-NOTIFICATIONCLICK-EVENT(1)
+
+       NAME
+
+       ServiceWorkerGlobalScope: notificationclick event - service
+
+       SERVICEWORKERGLOBALSCOPE: NOTIFICATIONCLICK EVENT
+
+       service
+
+       The notificationclick event of the ServiceWorkerGlobalScope interface is fired to indicate that a system notification spawned by ServiceWorkerRegistration.showNotification() has been clicked.
+
+       Notifications created on the main thread or in workers which aren't service workers using the Notification() constructor will instead receive a click event on the Notification object itself.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("notificationclick", (event) => { })
+
+         onnotificationclick = (event) => { }
+
+       EVENT TYPE
+
+       A NotificationEvent. Inherits from ExtendableEvent and Event.
+
+       NotificationEvent
+
+       EXAMPLES
+
+       You can use the notificationclick event in an addEventListener method:
+
+         self.addEventListener("notificationclick", (event) => {
+           console.log("On notification click: ", event.notification.tag);
+           event.notification.close();
+
+           // This looks to see if the current is already open and
+           // focuses if it is
+           event.waitUntil(
+             clients
+               .matchAll({
+                 type: "window",
+               })
+               .then((clientList) => {
+                 for (const client of clientList) {
+                   if (client.url === "/" && "focus" in client) return client.focus();
+                 }
+                 if (clients.openWindow) return clients.openWindow("/");
+               }),
+           );
+         });
+
+       Or use the onnotificationclick event handler property:
+
+         self.onnotificationclick = (event) => {
+           console.log("On notification click: ", event.notification.tag);
+           event.notification.close();
+
+           // This looks to see if the current is already open and
+           // focuses if it is
+           event.waitUntil(
+             clients
+               .matchAll({
+                 type: "window",
+               })
+               .then((clientList) => {
+                 for (const client of clientList) {
+                   if (client.url === "/" && "focus" in client) return client.focus();
+                 }
+                 if (clients.openWindow) return clients.openWindow("/");
+               }),
+           );
+         };
+
+       You can handle event actions using event.action within a notificationclick event handler:
+
+         navigator.serviceWorker.register("sw.js");
+         Notification.requestPermission().then((result) => {
+           if (result === "granted") {
+             navigator.serviceWorker.ready.then((registration) => {
+               // Show a notification that includes an action titled Archive.
+               registration.showNotification("New mail from Alice", {
+                 actions: [
+                   {
+                     action: "archive",
+                     title: "Archive",
+                   },
+                 ],
+               });
+             });
+           }
+         });
+
+         self.addEventListener("notificationclick", (event) => {
+           event.notification.close();
+           if (event.action === "archive") {
+             // User selected the Archive action.
+             archiveEmail();
+           } else {
+             // User selected (e.g., clicked in) the main body of notification.
+             clients.openWindow("/inbox");
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Service Worker API
+        * Notifications API
+
+Web APIs manual                         from the official documentation

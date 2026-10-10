@@ -1,0 +1,78 @@
+WEBAPI.ELEMENT-GETATTRIBUTE(1)   Sandbox manual   WEBAPI.ELEMENT-GETATTRIBUTE(1)
+
+       NAME
+
+       Element: getAttribute() method - The getAttribute() method of the Element interface returns the string value of the specified attribute of the specified element. It returns 
+
+       ELEMENT: GETATTRIBUTE() METHOD
+
+       The getAttribute() method of the Element interface returns the string value of the specified attribute of the specified element. It returns null if the element doesn't have an attribute with the given name.
+
+       If you need to inspect the Attr node's properties, you can use the getAttributeNode() method instead.
+
+       SYNTAX
+
+         getAttribute(attrName)
+
+       PARAMETERS
+
+        * attrName
+          * : A string specifying the name of the attribute. When called on an HTML element in a DOM flagged as an HTML document, the name is normalized to lowercase.
+
+       RETURN VALUE
+
+       A string containing the attribute's value, or null if the element doesn't have an attribute with the given name.
+
+       USAGE NOTES
+
+       DECODED CHARACTER REFERENCES IN ATTRIBUTE VALUES
+
+       HTML character references in an attribute's source markup (for example, <, &, or &#x3C;) are decoded by the HTML parser when the document is parsed, so getAttribute() returns the decoded value, not the original source.
+
+       Given:
+
+         <div id="example" data-payload="&lt;b&gt;hi&lt;/b&gt;"></div>
+
+       calling document.getElementById("example").getAttribute("data-payload") returns the string "hi".
+
+       Treating the return value from getAttribute() as already-escaped HTML is unsafe. If you read an attribute that holds untrusted data and then assign it to innerHTML or insert it into the document as markup, any HTML references used to escape special characters will already be decoded, and the result can be exploited for cross-site scripting (XSS).
+
+       Use textContent (or another text-safe API) for untrusted data instead of innerHTML.
+
+       RETRIEVING NONCE VALUES
+
+       For security reasons, CSP nonces from non-script sources, such as CSS selectors and .getAttribute("nonce") calls, are hidden.
+
+         const nonce = script.getAttribute("nonce");
+         // returns empty string
+
+       Instead of retrieving the nonce from the content attribute, use the nonce property:
+
+         const nonce = script.nonce;
+
+       EXAMPLES
+
+         <!-- example div in an HTML DOC -->
+         <div id="div1">Hi Champ!</div>
+
+         const div1 = document.getElementById("div1");
+         // <div id="div1">Hi Champ!</div>
+
+         const exampleAttr = div1.getAttribute("id");
+         // "div1"
+
+         const lang = div1.getAttribute("lang");
+         // null
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Element.hasAttribute()
+        * Element.setAttribute()
+        * Element.removeAttribute()
+        * Element.toggleAttribute()
+
+Web APIs manual                         from the official documentation

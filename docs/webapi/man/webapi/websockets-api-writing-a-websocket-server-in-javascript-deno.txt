@@ -1,0 +1,112 @@
+WEBAPI.WEBSOCKETS-API-WRITING-A-WEBSOCKET-SERVER-IN-JAVASCRIPT-DENO(1) Sandbox manual WEBAPI.WEBSOCKETS-API-WRITING-A-WEBSOCKET-SERVER-IN-JAVASCRIPT-DENO(1)
+
+       NAME
+
+       Writing a WebSocket server in JavaScript (Deno) - This example shows you how to create a WebSocket API server using Deno, with an accompanying web page.
+
+       WRITING A WEBSOCKET SERVER IN JAVASCRIPT (DENO)
+
+       This example shows you how to create a WebSocket API server using Deno, with an accompanying web page.
+
+       Deno is a JavaScript runtime which supports TypeScript compiling and caching on the fly. Deno has built-in formatter, linter, test runner and more, and also implements many web APIs. By being compliant with the web standards, all Deno-specific APIs are implemented under the Deno namespace.
+
+       The Deno website provides instructions for installing Deno.
+
+       Deno version at the time of writing: 2.6.
+
+       CODE
+
+       The code will be contained in two files, one for the server, and one for the client.
+
+       SERVER
+
+       Create a main.js file. This file will contain the code for a simple HTTP server which will also serve the client HTML.
+
+         Deno.serve({
+           port: 8080,
+           async handler(request) {
+             if (request.headers.get("upgrade") !== "websocket") {
+               // If the request is a normal HTTP request,
+               // we serve the client HTML file.
+               const file = await Deno.open("./index.html", { read: true });
+               return new Response(file.readable);
+             }
+             // If the request is a websocket upgrade,
+             // we need to use the Deno.upgradeWebSocket helper
+             const { socket, response } = Deno.upgradeWebSocket(request);
+
+             socket.onopen = () => {
+               console.log("CONNECTED");
+             };
+             socket.onmessage = (event) => {
+               console.log(`RECEIVED: ${event.data}`);
+               socket.send("pong");
+             };
+             socket.onclose = () => console.log("DISCONNECTED");
+             socket.onerror = (error) => console.error("ERROR:", error);
+
+             return response;
+           },
+         });
+
+       Deno.upgradeWebSocket() upgrades the connection to a WebSocket connection, which is explained further in Protocol upgrade mechanism.
+
+       CLIENT
+
+       Create an index.html file. This file will invoke a script that will ping the server every five seconds after a connection has been made. It should also contain the following markup:
+
+         <h2>WebSocket Test</h2>
+         <p>Sends a ping every five seconds</p>
+         <div id="output"></div>
+
+         const wsUri = "ws://127.0.0.1:8080/";
+         const output = document.querySelector("#output");
+         const websocket = new WebSocket(wsUri);
+         let pingInterval;
+
+         function writeToScreen(message) {
+           output.insertAdjacentHTML("afterbegin", `<p>${message}</p>`);
+         }
+
+         function sendMessage(message) {
+           writeToScreen(`SENT: ${message}`);
+           websocket.send(message);
+         }
+
+         websocket.onopen = (e) => {
+           writeToScreen("CONNECTED");
+           sendMessage("ping");
+           pingInterval = setInterval(() => {
+             sendMessage("ping");
+           }, 5000);
+         };
+
+         websocket.onclose = (e) => {
+           writeToScreen("DISCONNECTED");
+           clearInterval(pingInterval);
+         };
+
+         websocket.onmessage = (e) => {
+           writeToScreen(`RECEIVED: ${e.data}`);
+         };
+
+         websocket.onerror = (e) => {
+           writeToScreen(`ERROR: ${e.data}`);
+         };
+
+       RUNNING THE CODE
+
+       With the two files, run the app using Deno.
+
+         deno run --allow-net=0.0.0.0:8080 --allow-read=./index.html main.js
+
+       Deno requires us to give explicit permissions for what we can access on the host machine.
+
+        * --allow-net=0.0.0.0:8080 allows the app to attach to localhost on port 8080
+        * --allow-read=./index.html allows access to the HTML file for the client
+
+       SEE ALSO
+
+        * Writing WebSocket servers
+
+Web APIs manual                         from the official documentation

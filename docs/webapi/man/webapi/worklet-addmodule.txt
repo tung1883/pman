@@ -1,0 +1,69 @@
+WEBAPI.WORKLET-ADDMODULE(1)      Sandbox manual      WEBAPI.WORKLET-ADDMODULE(1)
+
+       NAME
+
+       Worklet: addModule() method - The addModule() method of the
+
+       WORKLET: ADDMODULE() METHOD
+
+       The addModule() method of the Worklet interface loads the module in the given JavaScript file and adds it to the current Worklet.
+
+       SYNTAX
+
+         addModule(moduleURL)
+         addModule(moduleURL, options)
+
+       PARAMETERS
+
+        * moduleURL
+          * : A String containing the URL of a JavaScript file with the module to
+       add.
+
+        * options (optional)
+          * : An object with any of the following options:
+            * credentials
+              * : A Request.credentials value that
+       indicates whether to send credentials (e.g., cookies and HTTP authentication) when loading the module. Can be one of "omit", "same-origin", or "include". Defaults to "same-origin". See also Request.credentials.
+
+       RETURN VALUE
+
+       A Promise that resolves once the module from the given URL has been added. The promise doesn't return any value.
+
+       EXCEPTIONS
+
+       If addModule() fails, it rejects the promise, delivering one of the following errors to the rejection handler.
+
+        * AbortError DOMException
+          * : The specified script is invalid or could not be loaded.
+        * SyntaxError DOMException
+          * : The specified moduleURL is invalid.
+
+       EXAMPLES
+
+       AUDIOWORKLET EXAMPLE
+
+         const audioCtx = new AudioContext();
+         const audioWorklet = audioCtx.audioWorklet;
+         audioWorklet.addModule("modules/bypassFilter.js", {
+           credentials: "omit",
+         });
+
+       PAINTWORKLET EXAMPLE
+
+         CSS.paintWorklet.addModule(
+           "https://mdn.github.io/houdini-examples/cssPaint/intro/worklets/hilite.js",
+         );
+
+       Once the script has been added to the paint worklet, the CSS paint() function can be used to include the image created by the worklet:
+
+         @supports (background-image: paint(id)) {
+           h1 {
+             background-image: paint(hollow-highlights, filled, 3px);
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

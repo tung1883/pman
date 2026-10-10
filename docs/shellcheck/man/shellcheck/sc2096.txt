@@ -1,0 +1,30 @@
+SHELLCHECK.SC2096(1)             Sandbox manual             SHELLCHECK.SC2096(1)
+
+       NAME
+
+       On most OS, shebangs can only specify a single parameter. - set -x
+
+       ON MOST OS, SHEBANGS CAN ONLY SPECIFY A SINGLE PARAMETER
+
+       ON MOST OS, SHEBANGS CAN ONLY SPECIFY A SINGLE PARAMETER
+
+       PROBLEMATIC CODE
+
+         #!/usr/bin/env bash -x
+
+       CORRECT CODE
+
+         #!/usr/bin/env bash
+         set -x
+
+       RATIONALE
+
+       Most operating systems, including POSIX, Linux and FreeBSD, allow only a single parameter in the shebang. The example is equivalent to calling env 'bash -x' instead of env 'bash' '-x', and it will therefore fail.
+
+       The shebang should be rewritten to use at most one parameter. Shell options can instead be set in the body of the script.
+
+       EXCEPTIONS
+
+       macOS X currently allows multiple words in the shebang. Scripts running on OSX exclusively can ignore this warning.
+
+ShellCheck manual                       from the official documentation

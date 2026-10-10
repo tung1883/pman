@@ -1,0 +1,345 @@
+UBUNTU.HOW-TO-OBSERVABILITY-INSTALL-NAGIOS(1) Sandbox manual UBUNTU.HOW-TO-OBSERVABILITY-INSTALL-NAGIOS(1)
+
+       NAME
+
+       How to install and configure Nagios Core 4 - The monitoring of essential servers and services is an important part of system administration. This guide walks through how to install and
+
+       HOW TO INSTALL AND CONFIGURE NAGIOS CORE 4
+
+       The monitoring of essential servers and services is an important part of system administration. This guide walks through how to install and configure Nagios Core 4 for availability monitoring.
+
+       INSTALLATION
+
+       The example in this guide uses two servers, with hostnames server01 and server02:
+
+        * Server01 will be configured with Nagios to monitor services on itself and on server02
+        * server02 will be configured to send data to server01
+
+       INSTALL NAGIOS CORE 4 ON SERVER01
+
+       On server01, install the nagios4 package and NRPE plugin:
+
+         sudo apt install nagios4 nagios-nrpe-plugin
+
+       You will be asked to enter a password for the nagiosadmin user. The user's credentials are stored in /etc/nagios3/htpasswd.users. To change the nagiosadmin password, or add more users to the Nagios CGI scripts, use the htpasswd that is part of the apache2-utils package.
+
+       The package installs Postfix by default. See install-postfix for details on setting this up.
+
+       It is also recommended that server01 is set up with a Fully Qualified Domain Name (FQDN). If you don't have a FQDN mail server, or want to do the configuration at a later time, choose the "No configuration" option from the Postfix Configuration dialog. Refer to the install-dns documentation -- the NRPE plugin package will be used to collect data from server02.
+
+       CREATE A USER FOR ACCESSING THE NAGIOS WEB INTERFACE
+
+       After installing Nagios 4 on server01, create the nagiosadmin user:
+
+         sudo htdigest -c /etc/nagios4/htdigest.users "Nagios4" nagiosadmin
+
+       Use the -c argument only when creating the user for the first time.
+
+       The htdigest tool is installed by default by Nagios Core 4 package. "Nagios4" here is the realm argument provided in directive AuthName in the /etc/nagios4/apache2.conf file. More information on this will be provided later when we configure the Nagios server on server01. For more information on the htdigest tool see Nagios CGI security documentation.
+
+       Moving on to server02...
+
+       INSTALL NAGIOS-NRPE-SERVER ON SERVER02
+
+       Next, on server02, install the nagios-nrpe-server package:
+
+         sudo apt install nagios-nrpe-server
+
+       > Note: NRPE allows you to execute local checks on remote hosts. There are other ways of accomplishing this through other Nagios plugins, as well as other checks.
+
+       CONFIGURING THE NAGIOS SERVER
+
+       Back on server01...
+
+       Before configuring the Nagios server it is important to understand the location of directories containing Nagios configuration and check files.
+
+       /etc/nagios4 : Contains configuration files for the operation of the Nagios daemon. Most of the maintenance of the Nagios server will be performed at this location. This directory contains user authentication file htdigest.users, custom configuration directory conf.d and objects directory.
+
+       /etc/nagios-plugins/config : Contains configuration files for the service checks.
+
+       /etc/nagios : On the remote host, contains the nagios-nrpe-server configuration files.
+
+       Apache files are located in the /etc/apache2 directory.
+
+       ENABLE AUTHENTICATION
+
+       As a first step in the configuration, on server01, to use digest authentication, the use_authentication default setting must be changed. Edit the /etc/nagios4/cgi.cfg file and change the directive use_authentication=0 to use_authentication=1.
+
+       Save the file and close.
+
+       APACHE CONFIGURATION FOR NAGIOS
+
+       The Apache configuration for Nagios involves editing the default configuration apache2.conf file provided in /etc/nagios4, and enabling the web interface in Apache2. It is a good idea to create a copy of this file before working on it, so you can have the original file saved for reference. You can achieve this on server01 by running:
+
+         sudo cp /etc/nagios4/apache2.conf /etc/nagios4/apache2.conf.orig
+
+       On the next step, edit /etc/nagios4/apache2.conf to complete the digest authentication configuration for the Nagios web interface. Edit the /etc/nagios4/apache2.conf file, and comment out the "Require IP" directive (add a # in front of it):
+
+         #Require ip ::1/128 fc00::/7 fe80::/10 10.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.168.0.0/16
+
+       This line was enabled by default, to only allow private IP addresses access. If that is what you need, then leave it un-commented.
+
+       Inside the block, change or add the "Require all granted" and "Require valid-user" directives. Comment out the "Require all granted" directive and un-comment "Require valid-user". This directive forces user authentication; which is necessary to issue commands, such as to silence notifications:
+
+         <Files "cmd.cgi">
+            Options  ExecCGI
+            AuthDigestDomain  "Nagios4"
+            AuthDigestProvider  file
+            AuthUserFile  "/etc/nagios4/htdigest.users"
+            AuthGroupFile "/etc/group"
+            AuthName  "Nagios4"
+            AuthType  Digest
+            #Require all  granted
+            Require  valid-user
+         </Files>
+
+       FORCE ALL USERS TO AUTHENTICATE
+
+       The next step forces ALL users to authenticate. Comment out the following line:
+
+         #<Files "cgi.cmd">
+
+       and its closing bracket:
+
+         #</Files>
+
+       This has the effect of moving all directives that were inside the block, to the block and therefore, enforcing all users to authenticate against the matched directories paths expressed in the regex pattern.
+
+       The Apache configuration file for Nagios is now configured, so save close it.
+
+       > Note: The Alias /nagios4 in directive Alias /nagios4 /usr/share/nagios4/htdocs can be changed to be anything you need. This is how you would reach the Nagios interface from the browser. In this setup, you would enter into the browser: server01/nagios4. For more information on the topic of authentication and authorization, see both Apache's documentation and Nagios's documentation. If you need granular access for users, use the /etc/nagios4/cgi.cfg file to define the access the user is authorized for.
+
+       NAGIOS WEB INTERFACE
+
+       At this point, the web interface is not yet working as intended.
+
+       Still working on server01, copy the /etc/nagios4/apache2.conf file to the /etc/apache2/sites-available directory by running:
+
+         sudo cp /etc/nagios4/apache2.conf /etc/apache2/sites-available/nagios4.conf
+
+       Then enable the configuration:
+
+         sudo a2ensite nagios4.conf
+
+       Nagios web interface Apache site is now enabled. It is time to reload both Apache2 and Nagios to apply configuration changes:
+
+         sudo systemctl reload apache2
+
+         sudo systemctl reload nagios4
+
+       Check the status of Nagios and Apache2. Examine the output for any errors:
+
+         sudo systemctl status apache2
+
+         sudo systemctl status nagios4
+
+       If both are active (running) and no errors are reported, then the web interface can be tested. For information on how to configure Apache2, refer to the how-to configure Apache2 page.
+
+       MODIFYING THE NAGIOS APACHE SITE
+
+       At this point, the Nagios site can be tested. From a browser, type server01/nagios4 and press Enter. Alternatively, if the hostname does not resolve to DNS, enter the IP address: 172.10.100.1/nagios4.
+
+       Replace the IP address with the IP address of your Nagios server. You will be asked to authenticate, so log in as the user nagiosadmin that was created earlier. You will notice that under "hosts", only the localhost is being monitored. More on working with objects later.
+
+       To illustrate making modifications to the Nagios site, landing server01/nagios4 is going to be changed to server01/nagios.
+
+       On server01, edit file /etc/nagios4/apache2.conf, changing the line:
+
+         Alias /nagios4 /usr/share/nagios4/htdocs
+
+       to:
+
+         Alias /nagios /usr/share/nagios4/htdocs
+
+       Save the file and quit.
+
+       To activate this change, disable the nagios4 site first:
+
+         sudo a2dissite nagios4
+
+       Then copy the /etc/nagios4/apache2.conf file to the /etc/apache2/sites-available directory:
+
+         sudo cp /etc/nagios4/apache2.conf /etc/apache2/sites-available/nagios4.conf
+
+       Enable the configuration:
+
+         sudo a2ensite nagios4.conf
+
+       And reload Apache2:
+
+         sudo systemctl reload apache2
+
+       To test the change, enter server01/nagios into a browser.
+
+       You can directly edit the /etc/apache2/sites-enabled/nagios4.conf file and then reload Apache2, without disabling the site first, but this makes it harder to keep track of changes and restore to a working state if something goes wrong. It is a good idea to always back up the file before making any changes, so you can quickly restore from it.
+
+       WORKING WITH NAGIOS USERS
+
+       So far, the only user with access to Nagios is nagiosadmin. In the next steps, a nagiosuser will be created and configured to have viewing access to Nagios. On server01, enter in the terminal:
+
+         sudo htdigest -c /etc/nagios4/htdigest.users "Nagios4" nagiosuser
+
+       At this point, nagiosuser is created but no access has been defined. To define access, edit file /etc/nagios4/cgi.cfg and change the following line:
+
+         authorized_for_system_information=nagiosadmin
+
+       to:
+
+         authorized_for_system_information=nagiosadmin, nagiosuser
+
+       To allow the user to view global hosts and services, define access by changing these lines:
+
+         authorized_for_all_services=nagiosadmin
+         authorized_for_hosts=nagiosadmin
+
+       to
+
+         authorized_for_all_services=nagiosadmin, nagiosuser
+         authorized_for_all_hosts=nagiosadmin, nagiosuser
+
+       Save the file and quit, then reload the Nagios configuration:
+
+         sudo systemctl reload nagios4
+
+       To test it, navigate in a browser to server01/nagios and login as nagiosuser. Click on Hosts, Services links. You should be able to view both. Then look for System, Configuration links. When trying to access the Configuration, a "no permission to view information" message should be displayed.
+
+       > Note: When using the htdigest utility, use the -c option only when first creating a user. Omit the -c to change password afterwards. The /etc/nagios4/cgi.cfg has many options. Review the file for usage.
+
+       WORKING WITH RESOURCE OBJECTS
+
+       Objects are definitions files for each one of the resources available in Nagios. Files are located in the /etc/nagios4/objects directory.
+
+       The Nagios 4 package installs the standard Nagios monitoring plugins. These are located in directory /usr/lib/nagios/plugins. So far, the checks defined for the localhost in file /etc/nagios4/objects/localhost.cfg make use of these plugins. By default, Nagios is configured to check HTTP, disk space, SSH, current users, processes, and load on the localhost; as well as ping check the gateway.
+
+       CREATING HOST CONFIG FILE FOR SERVER02
+
+       To create host config file for server02, on server01:
+
+         sudo cp /etc/nagios4/objects/localhost.cfg /etc/nagios4/conf.d/server02.cfg
+
+       Then, edit file /etc/nagios4/conf.d/server02.cfg. Change the host definition. Replace address with the IP address of server02. On existing definitions, replace host_name with server02:
+
+         define host {
+               use              generic-host     ;Name of host template to use
+               host_name        server02         ;This host definition will inherit all variables that are defined
+               alias            server 02        ;in (or inherited by) the linux-server host template definition.
+               address          172.10.100.2
+         }
+
+       Also, add a DNS check service definition by adding these lines:
+
+         # Define a DNS check service on server02
+         define service {
+               use                    local-service
+               host_name              server02
+               service_description    DNS
+               check_command          check_dns
+               notification_enabled   0
+         }
+
+       Save the file and exit.
+
+       When copying resource files to use as templates, be aware that this can create duplicate definitions. When you run a pre-flight check described in next section, errors and warnings will be reported. To avoid this, comment out the duplicate definitions.
+
+       Before restarting the Nagios server, test the configuration.
+
+       TESTING THE NAGIOS CONFIGURATION AND TROUBLESHOOTING
+
+       When you make changes to the Nagios configuration, you can test the configuration before it is enabled. In this way you can make the necessary changes, in case of errors, before restarting the Nagios server.
+
+       Still on server01, enter into the terminal:
+
+         sudo nagios4 -v /etc/nagios4/nagios.cfg
+
+       If no errors are found, restart the Nagios server:
+
+         sudo systemctl restart nagios4
+
+       HOSTGROUP DEFINITIONS
+
+       Now create a hostgroup definition, which is used to group one or more hosts together for easier configuration. In this step you will create a service definition for the MySQL check and a MySQL hostgroup definition. To install the MySQL server, run:
+
+         sudo apt install mysql-server
+
+       For the purpose of this guide, MySQL server has been installed on server02.
+
+       > Seealso: * install-mysql * MYSQL tutorial by tutorials24x7.com * MySQL official documentation
+       Next, add a service definition for the MySQL check and the hostgroup mysql-servers definition. The service definition is added to the file /etc/nagios4/conf.d/services_nagios2.cfg:
+
+         #check MySQL servers
+         define service {
+                      hostgroup_name            mysql-servers
+                      service_description       MySQL
+                      check_command             check_mysql_cmdlinecred!nagios!secret!$HOSTADRESS
+                      use                       generic-service
+                      notification_interval     0; set > 0 to be re-notified
+         }
+
+       Add the mysql-servers definition by editing /etc/nagios4/conf.d/hostgroups_nagios2.cfg:
+
+         #MySQL group definition
+         define hostgroup {
+                      hostgroup_name      mysql-servers
+                      alias               MySQL  servers
+                      members             localhost, server02
+         }
+
+       NAGIOS USER AUTHENTICATION TO MYSQL
+
+       The Nagios check needs to authenticate to MySQL. Add a Nagios user to MySQL on server02:
+
+         mysql -u root -p -e "create user nagios identified by 'secret';"
+
+       Alternatively, you can log into MySQL and create the Nagios user. Replace 'secret' with a password.
+
+         sudo mysql -u root -p
+         mysql> CREATE USER 'nagios' IDENTIFIED BY 'secret';
+         mysql> flush privileges;
+         mysql> exit
+
+       > Note: The Nagios user will need to be added to all hosts in the mysql-servers hostgroup.
+       Restart Nagios to start checking the MySQL servers. On server01 run:
+
+         sudo systemctl restart nagios4
+
+       NRPE CONFIGURATION
+
+       As a last step, configure NRPE to check disk space on server02.
+
+       On server01, add the service check to /etc/nagios4/conf.d/server02.cfg:
+
+         #NRPE disk check
+         define service {
+                      use                  generic-service
+                      host_name            server02
+                      server_description   nrpe-disk-check
+                      check_command        check_nrpe_1arg!check_all_disks!172.10.100.2
+         }
+
+       On server02, edit /etc/nagios/nrpe.cfg, changing:
+
+         allowed_hosts=172.10.100.1
+
+       Below, in the command definition area, add:
+
+         command[check_all_disks]=/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -e
+
+       While on server02, restart nagios-nrpe-server:
+
+         sudo systemctl restart nagios-nrpe-server.service
+
+       Finally, on server01 restart Nagios:
+
+         sudo systemctl restart nagios4
+
+       FURTHER READING
+
+       This guide is meant to serve as a stepping stone into Nagios Core 4.
+
+       There are many more Nagios features and uses not covered here. There are many resources and tutorials available online. Some are listed below. This guide made use of previous installation instructions for Nagios 3:
+
+        * For more information about Nagios and its features, visit the Nagios website.
+        * Also the Nagios Core Documentation and Nagios Core 4 Documentation.
+        * Nagios website also offers a list of books related to Nagios, its administration and monitoring.
+
+Ubuntu Server manual                    from the official documentation

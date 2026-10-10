@@ -1,0 +1,85 @@
+WEBAPI.PAGESWAPEVENT(1)          Sandbox manual          WEBAPI.PAGESWAPEVENT(1)
+
+       NAME
+
+       PageSwapEvent - The PageSwapEvent event object is made available inside handler functions for the pageswap event.
+
+       PAGESWAPEVENT
+
+       The PageSwapEvent event object is made available inside handler functions for the pageswap event.
+
+       The pageswap event is fired when you navigate across documents, when the previous document is about to unload. During a cross-document navigation, the PageSwapEvent event object allows you to manipulate the related view transition (providing access to the relevant ViewTransition object) from the document being navigated _from_, if a view transition was triggered by the navigation. It also provides access to information on the navigation type and current and destination documents.
+
+       CONSTRUCTOR
+
+        * PageSwapEvent()
+          * : Creates a new PageSwapEvent object instance.
+
+       INSTANCE PROPERTIES
+
+        * activation (read-only)
+          * : Contains a NavigationActivation object containing the navigation type and current and destination document history entries for a same-origin navigation. If the navigation has a cross-origin URL anywhere in the redirect chain, it returns null.
+        * viewTransition (read-only)
+          * : Contains a ViewTransition object representing the active view transition for the cross-document navigation.
+
+       EXAMPLES
+
+         window.addEventListener("pageswap", async (e) => {
+           // Only run this if an active view transition exists
+           if (e.viewTransition) {
+             const currentUrl = e.activation.from?.url
+               ? new URL(e.activation.from.url)
+               : null;
+             const targetUrl = new URL(e.activation.entry.url);
+
+             // Going from profile page to homepage
+             // ~> The big img and title are the ones!
+             if (isProfilePage(currentUrl) && isHomePage(targetUrl)) {
+               // Set view-transition-name values on the elements to animate
+               document.querySelector(`#detail main h1`).style.viewTransitionName =
+                 "name";
+               document.querySelector(`#detail main img`).style.viewTransitionName =
+                 "avatar";
+
+               // Remove view-transition-names after snapshots have been taken
+               // Stops naming conflicts resulting from the page state persisting in BFCache
+               await e.viewTransition.finished;
+               document.querySelector(`#detail main h1`).style.viewTransitionName =
+                 "none";
+               document.querySelector(`#detail main img`).style.viewTransitionName =
+                 "none";
+             }
+
+             // Going to profile page
+             // ~> The clicked items are the ones!
+             if (isProfilePage(targetUrl)) {
+               const profile = extractProfileNameFromUrl(targetUrl);
+
+               // Set view-transition-name values on the elements to animate
+               document.querySelector(`#${profile} span`).style.viewTransitionName =
+                 "name";
+               document.querySelector(`#${profile} img`).style.viewTransitionName =
+                 "avatar";
+
+               // Remove view-transition-names after snapshots have been taken
+               // Stops naming conflicts resulting from the page state persisting in BFCache
+               await e.viewTransition.finished;
+               document.querySelector(`#${profile} span`).style.viewTransitionName =
+                 "none";
+               document.querySelector(`#${profile} img`).style.viewTransitionName =
+                 "none";
+             }
+           }
+         });
+
+       > See List of Chrome DevRel team members for the live demo this code is taken from.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * View Transition API
+
+Web APIs manual                         from the official documentation

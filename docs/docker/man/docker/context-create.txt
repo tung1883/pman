@@ -1,0 +1,60 @@
+DOCKER.CONTEXT-CREATE(1)         Sandbox manual         DOCKER.CONTEXT-CREATE(1)
+
+       NAME
+
+       docker context create - Create a context
+
+       DOCKER CONTEXT CREATE
+
+       Create a context
+
+       USAGE
+
+         docker context create [OPTIONS] CONTEXT
+
+       DESCRIPTION
+
+       Creates a new context. This lets you switch the daemon your docker CLI connects to.
+
+       OPTIONS
+
+        * --description (string): Description of the context
+        * --docker (stringToString): set the docker endpoint
+        * --from (string): create context from a named context
+
+       EXAMPLES
+
+       CREATE A CONTEXT WITH A DOCKER ENDPOINT (--DOCKER) #DOCKER
+
+       Use the --docker flag to create a context with a custom endpoint. The following example creates a context named my-context with a docker endpoint of /var/run/docker.sock:
+
+         $ docker context create \
+             --docker host=unix:///var/run/docker.sock \
+             my-context
+
+       CREATE A CONTEXT BASED ON AN EXISTING CONTEXT (--FROM) #FROM
+
+       Use the --from= option to create a new context from an existing context. The example below creates a new context named my-context from the existing context existing-context:
+
+         $ docker context create --from existing-context my-context
+
+       If the --from option isn't set, the context is created from the current context:
+
+         $ docker context create my-context
+
+       This can be used to create a context out of an existing DOCKER_HOST based script:
+
+         $ source my-setup-script.sh
+         $ docker context create my-context
+
+       To source the docker endpoint configuration from an existing context use the --docker from= option. The example below creates a new context named my-context using the docker endpoint configuration from the existing context existing-context:
+
+         $ docker context create \
+             --docker from=existing-context \
+             my-context
+
+       Docker endpoints configurations, as well as the description can be modified with docker context update.
+
+       Refer to the docker context update reference for details.
+
+Docker manual                           from the official documentation

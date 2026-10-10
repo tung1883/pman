@@ -1,0 +1,44 @@
+SHELLCHECK.SC2045(1)             Sandbox manual             SHELLCHECK.SC2045(1)
+
+       NAME
+
+       Iterating over ls output is fragile. Use globs. - for f in $(ls .wav)
+
+       ITERATING OVER LS OUTPUT IS FRAGILE. USE GLOBS
+
+       ITERATING OVER LS OUTPUT IS FRAGILE. USE GLOBS
+
+       PROBLEMATIC CODE
+
+         for f in $(ls *.wav)
+         do
+           echo "$f"
+         done
+
+       CORRECT CODE
+
+         for f in *.wav
+         do
+           [[ -e "$f" ]] || break  # handle the case of no *.wav files
+           echo "$f"
+         done
+
+       Also note that in Bash, shopt -s nullglob will allow the loop to run 0 times instead of 1 if there are no matches. There are also several other conditions to be aware of.
+
+       RATIONALE
+
+       When looping over a set of files, it's always better to use globs when possible. Using command expansion causes word splitting and glob expansion, which will cause problems for certain filenames (typically first seen when trying to process a file with spaces in the name).
+
+       The following files can or will break the first loop:
+
+         touch 'filename with spaces.wav'
+         touch 'filename with * globs.wav'
+         touch 'More_Globs[2003].wav'
+         touch 'files_with_fønny_chæracters_in_certain_locales.wav'
+
+       RELATED RESOURCES
+
+        * Bash Pitfalls: for i in $(ls *.mp3)
+        * How to loop over directories in Linux?
+
+ShellCheck manual                       from the official documentation

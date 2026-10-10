@@ -1,0 +1,54 @@
+SHELLCHECK.SC3003(1)             Sandbox manual             SHELLCHECK.SC3003(1)
+
+       NAME
+
+       In POSIX sh, $'..' is undefined. - IFS=$' \t\n'
+
+       IN POSIX SH, '..' IS UNDEFINED
+
+       IN POSIX SH, '..' IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         IFS=$' \t\n'
+
+       CORRECT CODE
+
+         #!/bin/sh
+         IFS=$(printf ' \n\t')
+
+       or
+
+         #!/bin/sh
+         # Trailing linefeed added literally
+         IFS="$(printf ' \t')
+         "
+
+       or
+
+         #!/bin/bash
+         # Bash supports this
+         IFS=$' \t\n'
+
+       RATIONALE
+
+       ANSI-C quoting, $'..', is a bash extension, which is not supported by POSIX sh.
+
+       To ensure the script runs correctly on other systems, either switch to Bash, or rewrite it in a POSIX compatible way.
+
+       This can generally done via printf as in the example. Be careful about strings with trailing linefeeds, as a $(command substitution) will strip them.
+
+       EXCEPTIONS
+
+       None.
+
+       VERSIONS
+
+       POSIX.1-2024 introduced Dollar-Single-Quotes. This rule was last applicable to POSIX.1-2017.
+
+       RELATED RESOURCES
+
+        * StackOverflow: Why does my bash code fail when I run it with sh?
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,54 @@
+SHELLCHECK.SC2244(1)             Sandbox manual             SHELLCHECK.SC2244(1)
+
+       NAME
+
+       Prefer explicit -n to check non-empty string (or use =/-ne to check boolean/integer). - if [ "$1" ]
+
+       PREFER EXPLICIT -N TO CHECK NON-EMPTY STRING (OR USE /-NE TO CHECK BOO
+
+       PREFER EXPLICIT -N TO CHECK NON-EMPTY STRING (OR USE /-NE TO CHECK BOO
+
+       PROBLEMATIC CODE
+
+         if [ "$1" ]
+         then
+           echo "True"
+         fi
+
+       CORRECT CODE
+
+         if [ -n "$1" ]
+         then
+           echo "True, $1 is a non-empty value"
+         fi
+
+         # Check instead if $1 is true or false, as in Java
+         [ "$1" = "true" ]
+
+         # Check instead if $1 is non-zero or zero, as in C
+         [ "$1" -ne 0 ]
+
+         # Check instead if $1 is defined (even if just assigned the empty string) or undefined
+         [ "${1+x}" = "x" ]
+
+       RATIONALE
+
+       [ "$var" ] is equivalent to [ -n "$var" ] and checks that a string is non-empty.
+
+       Users more familiar with other languages are often surprised to learn that [ "$var" ] is true when:
+
+        * var=false
+        * var=0
+        * var=null
+        * var=" "
+       Adding the explicit -n helps clarify that this is a string comparison, and not related to any concept of boolean values or "truthiness" as it is in most languages.
+
+       EXCEPTIONS
+
+       If you are familiar with the semantics of [, you can [[ignore]] this stylistic suggestion with no ill effects.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

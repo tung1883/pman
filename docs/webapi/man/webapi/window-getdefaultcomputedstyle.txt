@@ -1,0 +1,78 @@
+WEBAPI.WINDOW-GETDEFAULTCOMPUTEDSTYLE(1) Sandbox manual WEBAPI.WINDOW-GETDEFAULTCOMPUTEDSTYLE(1)
+
+       NAME
+
+       Window: getDefaultComputedStyle() method - The getDefaultComputedStyle() method gives the default computed values of all the CSS
+
+       WINDOW: GETDEFAULTCOMPUTEDSTYLE() METHOD
+
+       {{Non-standard_Header}}
+
+       The getDefaultComputedStyle() method gives the default computed values of all the CSS properties of an element, ignoring author styling. That is, only user-agent and user styles are taken into account.
+
+       SYNTAX
+
+         getDefaultComputedStyle(element)
+         getDefaultComputedStyle(element, pseudoElt)
+
+       PARAMETERS
+
+        * element
+          * : The Element for which to get the computed style.
+        * pseudoElt (optional)
+          * : A string specifying the pseudo-element to match. Must be null (or not
+       specified) for regular elements.
+
+       RETURN VALUE
+
+       The returned style is a CSSStyleDeclaration object. The object is of the same type as the object returned by Window.getComputedStyle(), but only takes into account user-agent and user rules.
+
+       EXAMPLES
+
+       SIMPLE EXAMPLE
+
+         const elem = document.getElementById("elemId");
+         const style = getDefaultComputedStyle(elem);
+
+       LONGER EXAMPLE
+
+         <div id="elem-container">dummy</div>
+         <div id="output"></div>
+
+         #elem-container {
+           position: absolute;
+           left: 100px;
+           top: 200px;
+           height: 100px;
+         }
+
+         const elem = document.getElementById("elem-container");
+         const theCSSprop = getDefaultComputedStyle(elem).position;
+         document.getElementById("output").textContent = theCSSprop; // outputs "static"
+
+       USE WITH PSEUDO-ELEMENTS
+
+       The getDefaultComputedStyle() method can pull style info from pseudo-elements (e.g., ::before or ::after).
+
+         <h3>generated content</h3>
+
+         h3::after {
+           content: " rocks!";
+         }
+
+         const h3 = document.querySelector("h3");
+         const result = getDefaultComputedStyle(h3, "::after").content;
+
+         console.log("the generated content is: ", result); // returns 'none'
+
+       NOTES
+
+       The returned value is, in certain known cases, expressly incorrect by deliberate intent. In particular, to avoid the so-called CSS History Leak security issue, browsers may expressly "lie" about the used value for a link and always return values as if a user has never visited the linked site, and/or limit the styles that can be applied using the :visited pseudo-selector. See and for details of the examples of how this is implemented.
+
+       SPECIFICATIONS
+
+       Proposed to the CSS working group.
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

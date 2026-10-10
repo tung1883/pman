@@ -1,0 +1,41 @@
+SHELLCHECK.SC2331(1)             Sandbox manual             SHELLCHECK.SC2331(1)
+
+       NAME
+
+       For file existence, prefer standard -e over legacy -a. - if [ -a ~/.bashaliases ]
+
+       FOR FILE EXISTENCE, PREFER STANDARD -E OVER LEGACY -A
+
+       FOR FILE EXISTENCE, PREFER STANDARD -E OVER LEGACY -A
+
+       PROBLEMATIC CODE
+
+         if [ -a ~/.bash_aliases ]
+         then
+           source ~/.bash_aliases
+         fi
+
+       CORRECT CODE
+
+         if [ -e ~/.bash_aliases ]
+         then
+           source ~/.bash_aliases
+         fi
+
+       RATIONALE
+
+       The POSIX standard way to check whether a file exists is [ -e file ].
+
+       Bash and Ksh have historically allowed using -a, but this has no benefit and some potential downsides. For example, in Bash [ -a file ] is true when the file exists, but [ ! -a file ] is also true, and unconditionally so, because -a is treated as logical "and" between non-empty strings.
+
+       Avoid the ambiguity entirely by always using the standard, portable -e.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,61 @@
+WEBAPI.FENCED-FRAME-API-COMMUNICATION-WITH-EMBEDDED-FRAMES(1) Sandbox manual WEBAPI.FENCED-FRAME-API-COMMUNICATION-WITH-EMBEDDED-FRAMES(1)
+
+       NAME
+
+       Communication with embedded frames - This article provides information on how communication differs between an embedder and content embedded inside different types of frame (i.e
+
+       COMMUNICATION WITH EMBEDDED FRAMES
+
+       This article provides information on how communication differs between an embedder and content embedded inside different types of frame (i.e., an and a ), and how passed data can be stored.
+
+       HOW TO COMMUNICATE BETWEEN THE EMBEDDER AND AN
+
+       
+
+       When the third-party code is embedded in an , the and the embedder can send messages freely to each other to request data to be written into their client-side shared storage. The embedder can send a request to that to write data into its own third-party storage with a cross-document communication channel using Window.postMessage(). The third party can also send postMessage() requests to the embedder.
+
+       From the , you can listen to a message event that comes from the embedder. When the embedder dispatches a message to the using postMessage(), the can take that data and store it in its own client-side shared storage. Conversely, the can dispatch a message that the embedder can listen to, and respond by writing data into its shared storage.
+
+       HOW TO COMMUNICATE BETWEEN THE EMBEDDER AND A
+
+       Fenced frames are intended to be used for cases such as displaying targeted ads selected via the Protected Audience API and WindowSharedStorage.selectURL(). Communicating between s and other pages outside the on the page is intentionally limited, but one method of communication between the embedder and shared storage worklets does exist — FencedFrameConfig.setSharedStorageContext().
+
+       > Within the same tree, communication between frames is allowed. For example, a root can send a message to a child in its own tree, and a child can send a message to the parent .
+       Let's look at a more complex example that uses a Select URL output gate operation to render an ad in a .
+
+       
+
+       In this example, a publisher asks a third-party content provider to render some content on the page. The content chosen with WindowSharedStorage.selectURL() is rendered in a , and the content contains an from a measurement provider. Note that a publisher can represent any entity that is embedding a third-party . Also, a measurement provider represents any nested third-party code running in a of a different third party.
+
+       To pass data into a to be used in a shared storage worklet, the embedder can set the data in a FencedFrameConfig. That value will be available as WorkletSharedStorage.context inside the shared storage worklet. This data is not available outside a worklet, and can only be accessed inside a secure and private environment that a shared storage worklet provides.
+
+       
+
+       When a selectURL() call returns a FencedFrameConfig, the frame embedder can pass in data by calling setSharedStorageContext(data):
+
+         const fencedFrameConfig = await window.sharedStorage.selectURL(
+           "creative-rotation",
+           urls,
+           {
+             // …
+             resolveToConfig: true,
+           },
+         );
+
+         fencedFrameConfig.setSharedStorageContext("some-data");
+
+         // Navigate the fenced frame to the config.
+         document.getElementById("my-fenced-frame").config = fencedFrameConfig;
+
+       setSharedStorageContext(data) must be called on the fencedFrameConfig before the intended element recipient has its config attribute set to fencedFrameConfig, as this triggers the frame to navigate.
+
+       Inside a shared storage worklet, WorkletSharedStorage.context can then be accessed to retrieve the data:
+
+         class ReportingOperation {
+           async run() {
+             sharedStorage.set("some-data-from-embedder", sharedStorage.context);
+           }
+         }
+         register("send-report", ReportingOperation);
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,86 @@
+WEBAPI.IDBINDEX-GETALLKEYS(1)    Sandbox manual    WEBAPI.IDBINDEX-GETALLKEYS(1)
+
+       NAME
+
+       IDBIndex: getAllKeys() method - The getAllKeys() method of the IDBIndex
+
+       IDBINDEX: GETALLKEYS() METHOD
+
+       The getAllKeys() method of the IDBIndex interface asynchronously retrieves the primary keys of all objects inside the index, setting them as the result of the request object.
+
+       SYNTAX
+
+         getAllKeys()
+         getAllKeys(query)
+         getAllKeys(query, count)
+         getAllKeys(options)
+
+       PARAMETERS
+
+       The getAllKeys() method can take separate parameters or a single options object containing the parameters as properties.
+
+       The parameters can include:
+
+        * query (optional)
+          * : A key or an IDBKeyRange identifying the keys to retrieve. If this value is null or not specified, the browser will use an unbound key range.
+        * count (optional)
+          * : The number records to return. If this value exceeds the number of records in the
+       query, the browser will only retrieve the first item. If it is lower than 0 or greater than 2^32 - 1 a TypeError exception will be thrown.
+
+       If an object parameter is specified, its properties can include:
+
+        * query (optional)
+          * : See the earlier query definition.
+        * count (optional)
+          * : See the earlier count definition.
+        * direction (optional)
+          * : An enumerated value specifying the direction in which the objects are traversed. Possible values are:
+            * next
+              * : The objects are traversed from the beginning, in increasing key order. This is the default value.
+            * nextunique
+              * : The objects are traversed from the beginning, in increasing key order. Keys duplicated across multiple objects are only yielded once.
+            * prev
+              * : The objects are traversed from the end, in decreasing key order.
+            * prevunique
+              * : The objects are traversed from the end, in decreasing key order. Keys duplicated across multiple objects are only yielded once.
+
+       RETURN VALUE
+
+       An IDBRequest object on which subsequent events related to this operation are fired.
+
+       If the operation is successful, the value of the request's result property is an Array of the keys for all records matching the given query, up to the value of count, if count was supplied.
+
+       EXCEPTIONS
+
+       This method may raise a DOMException of the following types:
+
+        * TransactionInactiveError DOMException
+          * : Thrown if this IDBIndex's transaction is inactive.
+        * InvalidStateError DOMException
+          * : Thrown if the IDBIndex has been deleted or removed.
+        * TypeError DOMException
+          * : Thrown if the count parameter is not between 0 and 2^32 - 1, inclusive.
+
+       EXAMPLES
+
+         const myIndex = objectStore.index("index");
+         const getAllKeysRequest = myIndex.getAllKeys();
+         getAllKeysRequest.onsuccess = () => {
+           console.log(getAllKeysRequest.result);
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

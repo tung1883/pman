@@ -1,0 +1,85 @@
+WEBAPI.DOMIMPLEMENTATION-CREATEHTMLDOCUMENT(1) Sandbox manual WEBAPI.DOMIMPLEMENTATION-CREATEHTMLDOCUMENT(1)
+
+       NAME
+
+       DOMImplementation: createHTMLDocument() method - The
+
+       DOMIMPLEMENTATION: CREATEHTMLDOCUMENT() METHOD
+
+       The DOMImplementation.createHTMLDocument() method creates a new HTML Document.
+
+       SYNTAX
+
+         createHTMLDocument()
+         createHTMLDocument(title)
+
+       PARAMETERS
+
+        * title (optional)
+          * : A string containing the title to give the new HTML document.
+
+       RETURN VALUE
+
+       A new HTML Document object.
+
+       EXAMPLES
+
+       This example creates a new HTML document and inserts it into an in the current document.
+
+       Here's the HTML for this example:
+
+         <button id="create-doc">Create new document</button>
+         <iframe id="theFrame" src="about:blank"></iframe>
+
+       The JavaScript implementation of makeDocument() follows:
+
+         function makeDocument() {
+           const frame = document.getElementById("theFrame");
+
+           const doc = document.implementation.createHTMLDocument("New Document");
+           const p = doc.createElement("p");
+           p.textContent = "This is a new paragraph.";
+
+           try {
+             doc.body.appendChild(p);
+           } catch (e) {
+             console.log(e);
+           }
+
+           // Copy the new HTML document into the frame
+
+           const destDocument = frame.contentDocument;
+           const srcNode = doc.documentElement;
+           const newNode = destDocument.importNode(srcNode, true);
+
+           destDocument.replaceChild(newNode, destDocument.documentElement);
+         }
+
+         document.getElementById("create-doc").addEventListener("click", makeDocument);
+
+       The code handles creating the new HTML document and inserting some content into it. createHTMLDocument() constructs a new HTML document whose is "New Document". Then we create a new paragraph element with some simple content, and then the new paragraph gets inserted into the new document.
+
+       destDocument stores the contentDocument of the frame; this is the document into which we'll be injecting the new content. The next two lines handle importing the contents of our new document into the new document's context. Finally, destDocument.replaceChild actually replaces the contents of the frame with the new document's contents.
+
+       The returned document is pre-constructed with the following HTML:
+
+         <!doctype html>
+         <html lang="en-US">
+           <head>
+             <meta charset="UTF-8" />
+             <title>title</title>
+           </head>
+           <body>
+             …
+           </body>
+         </html>
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The DOMImplementation interface it belongs to.
+
+Web APIs manual                         from the official documentation

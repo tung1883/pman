@@ -1,0 +1,75 @@
+SHELLCHECK.JUNIT2TEXT(1)         Sandbox manual         SHELLCHECK.JUNIT2TEXT(1)
+
+       NAME
+
+       junit2text - Shellcheck can generate checkstyle reports or tty outputs, but not both simultaneously. For CI purposes, it might be needed to generate both
+
+       JUNIT2TEXT
+
+       Shellcheck can generate checkstyle reports or tty outputs, but not both simultaneously. For CI purposes, it might be needed to generate both types however, one for the report, one for the logging output. By using the following xlst, we can translate the checkstyle output to text-based output.
+
+         <?xml version="1.0" encoding="UTF-8"?>
+         <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+           <xsl:output encoding="UTF-8" method="text"/>
+
+           <xsl:template match="/">
+             <xsl:apply-templates select="//file" />
+           </xsl:template>
+
+           <xsl:template match="file">
+             <xsl:variable name="filename" select="@name" />
+             <xsl:variable name="errorcount" select="count(error)" />
+
+             <xsl:value-of select="$filename" />
+             <xsl:text> - </xsl:text>
+             <xsl:value-of select="$errorcount" />
+             <xsl:text> failure(s)</xsl:text>
+             <xsl:text>&#10;</xsl:text>
+
+             <xsl:apply-templates select="error">
+               <xsl:with-param name="filename" select="$filename"/>
+             </xsl:apply-templates>
+
+             <xsl:text>&#10;&#10;</xsl:text>
+           </xsl:template>
+
+           <xsl:template match="error">
+             <xsl:param name="filename"/>
+             <xsl:value-of select="$filename" />
+             <xsl:text>&#58; </xsl:text>
+             <xsl:value-of select="@source" />
+             <xsl:text> (</xsl:text>
+             <xsl:value-of select="@severity" />
+             <xsl:text>) line </xsl:text>
+             <xsl:value-of select="@line" />
+             <xsl:text>, column </xsl:text>
+             <xsl:value-of select="@column" />
+             <xsl:text> - </xsl:text>
+             <xsl:value-of select="@message" />
+             <xsl:text>&#10;</xsl:text>
+             <xsl:text> - </xsl:text>
+             <xsl:value-of select="@message" />
+             <xsl:text>&#10;</xsl:text>
+           </xsl:template>
+         </xsl:stylesheet>
+
+       Since the XSLT cannot show the original line, some sed magic can be used.
+
+         xmlstarlet tr '/tmp/checkstyle2text.xslt' '/path/to/file' | \
+         sed 's|"|\\"|g' | \
+         sed -n \
+             -e "s|^\(.*\) - \([0-9]\+\) failure.*$|echo '========='\n \
+                 echo 'Found \2 failure(s) in \1'\n \
+                 echo '---------'|p" \
+             -e "s|^\(.*\): \(ShellCheck\.\)\?\(\(..\)[0-9]\{4\}\) (\(.*\)) line \([0-9]\+\), column \([0-9]\+\) - \(.*\)$|echo 'In \1 line \6:'\n \
+                 sed -n '\6p' \1\n \
+                 printf \"%\$((\7 - 1\))s^ \"\n \
+                 printf 'https://www.shellcheck.net/wiki/' \
+                 echo \"\3 (\5): \8\"\n \
+                 echo\n|p" | \
+         sh | \
+         tee -a '/path/to/file.log'
+
+       The generated output is similar to the original tty output format.
+
+ShellCheck manual                       from the official documentation

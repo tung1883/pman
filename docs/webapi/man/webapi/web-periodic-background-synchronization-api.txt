@@ -1,0 +1,102 @@
+WEBAPI.WEB-PERIODIC-BACKGROUND-SYNCHRONIZATION-API(1) Sandbox manual WEBAPI.WEB-PERIODIC-BACKGROUND-SYNCHRONIZATION-API(1)
+
+       NAME
+
+       Web Periodic Background Synchronization API - The Web Periodic Background Synchronization API provides a way to register tasks to be run in a service worker at periodic intervals with ne
+
+       WEB PERIODIC BACKGROUND SYNCHRONIZATION API
+
+       The Web Periodic Background Synchronization API provides a way to register tasks to be run in a service worker at periodic intervals with network connectivity. These tasks are referred to as periodic background sync requests.
+
+       CONCEPTS AND USAGE
+
+       The Periodic Background Sync API allows web applications to alert their service worker to make any updates, at a periodic time interval. Uses may include fetching latest content while a device is connected to Wi-Fi, or allowing background updates to an application.
+
+       The minimum time interval is set when the API is invoked; however the user agent might also take into account other factors which affect when the service worker receives the event. For instance previous website engagement, or connection to a known network.
+
+       The PeriodicSyncManager interface is available through ServiceWorkerRegistration.periodicSync. A unique tag identifier is set to 'name' the sync event, which can then be listened for within the ServiceWorker script. Once the event is received you can then run any functionality available, such as updating caches or fetching new resources.
+
+       As this API relies on service workers, functionality provided by this API is only available in a secure context.
+
+       INTERFACES
+
+        * PeriodicSyncManager (experimental)
+          * : Registers tasks to be run in a service worker at periodic intervals with network connectivity. These tasks are referred to as periodic background sync requests.
+        * PeriodicSyncEvent (experimental)
+          * : Represents a synchronization event, sent to the global scope of a ServiceWorker. It provides a way to run tasks in the service worker with network connectivity.
+
+       EXTENSIONS TO OTHER INTERFACES
+
+       The following additions to the Service Worker API are specified in the Periodic Background Sync specification to provide an entry point for using Periodic Background Sync.
+
+        * ServiceWorkerRegistration.periodicSync (read-only) (experimental)
+          * : Returns a reference to the PeriodicSyncManager interface for registering tasks to run at specific intervals.
+        * periodicsync event (experimental)
+          * : Occurs at periodic intervals, which were specified when registering a PeriodicSyncManager.
+
+       SECURITY CONSIDERATIONS
+
+       Access to periodic background sync is controlled by the periodic-background-sync permission. You can use the Permissions API to check whether this permission is granted:
+
+         const status = await navigator.permissions.query({
+           name: "periodic-background-sync",
+         });
+
+       In Chrome, the permission is granted only to an installed web app that has been launched as a separate application. Chrome also uses the site's engagement score to determine whether and how often to fire periodic sync events.
+
+       EXAMPLES
+
+       The following examples show how to use the interface.
+
+       REQUESTING A PERIODIC BACKGROUND SYNC
+
+       The following asynchronous function registers a periodic background sync at a minimum interval of one day from a browsing context:
+
+         async function registerPeriodicNewsCheck() {
+           const registration = await navigator.serviceWorker.ready;
+           try {
+             await registration.periodicSync.register("get-latest-news", {
+               minInterval: 24 * 60 * 60 * 1000,
+             });
+           } catch {
+             console.log("Periodic Sync could not be registered!");
+           }
+         }
+
+       VERIFYING A BACKGROUND PERIODIC SYNC BY TAG
+
+       This code checks to see if a Periodic Background Sync task with a given tag is registered.
+
+         navigator.serviceWorker.ready.then((registration) => {
+           registration.periodicSync.getTags().then((tags) => {
+             if (tags.includes("get-latest-news")) skipDownloadingLatestNewsOnPageLoad();
+           });
+         });
+
+       REMOVING A PERIODIC BACKGROUND SYNC TASK
+
+       The following code removes a Periodic Background Sync task to stop articles syncing in the background.
+
+         navigator.serviceWorker.ready.then((registration) => {
+           registration.periodicSync.unregister("get-latest-news");
+         });
+
+       LISTENING FOR A PERIODIC BACKGROUND SYNC WITHIN A SERVICE WORKER
+
+       The following example shows how to respond to a periodic sync event in the service worker.
+
+         self.addEventListener("periodicsync", (event) => {
+           if (event.tag === "get-latest-news") {
+             event.waitUntil(fetchAndCacheLatestNews());
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * An article on using Periodic Background Sync
+
+Web APIs manual                         from the official documentation

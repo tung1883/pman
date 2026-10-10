@@ -1,0 +1,78 @@
+WEBAPI.DOCUMENT-QUERYCOMMANDSTATE(1) Sandbox manual WEBAPI.DOCUMENT-QUERYCOMMANDSTATE(1)
+
+       NAME
+
+       Document: queryCommandState() method - > [!NOTE]
+
+       DOCUMENT: QUERYCOMMANDSTATE() METHOD
+
+       {{Non-standard_header}}
+
+       > Although the execCommand() method is deprecated, there are still some valid use cases that do not yet have viable alternatives, as mentioned in the execCommand() article. In these cases, you may find this method useful to implement a complete user experience, but test to ensure cross-browser compatibility.
+       The queryCommandState() method will tell you if the current selection has a certain Document.execCommand() command applied.
+
+       SYNTAX
+
+         queryCommandState(command)
+
+       PARAMETERS
+
+        * command
+          * : A command from Document.execCommand()
+
+       RETURN VALUE
+
+       queryCommandState() can return a boolean value or null if the state is unknown.
+
+       EXAMPLE
+
+       HTML
+
+         <div contenteditable="true">Select a part of this text!</div>
+         <button>Test the state of the 'bold' command</button>
+         <hr />
+         <div id="output"></div>
+
+         hr,
+         button {
+           margin: 1rem 0;
+         }
+
+       JAVASCRIPT
+
+         function makeBold() {
+           const state = document.queryCommandState("bold");
+           let message;
+           switch (state) {
+             case true:
+               message = "The bold formatting will be removed from the selected text.";
+               break;
+             case false:
+               message = "The selected text will be displayed in bold.";
+               break;
+             default:
+               message = "The state of the 'bold' command is indeterminable.";
+               break;
+           }
+           document.querySelector("#output").textContent = `Output: ${message}`;
+           document.execCommand("bold");
+         }
+
+         document.querySelector("button").addEventListener("click", makeBold);
+
+       RESULT
+
+       SPECIFICATIONS
+
+       This feature is not part of any current specification. It is no longer on track to become a standard. There is an unofficial W3C execCommand spec draft.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTMLElement.contentEditable
+        * document.designMode
+        * document.execCommand()
+        * Browser bugs related to queryCommandState(): Scribe's "Browser Inconsistencies" documentation
+
+Web APIs manual                         from the official documentation

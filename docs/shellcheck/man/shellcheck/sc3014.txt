@@ -1,0 +1,47 @@
+SHELLCHECK.SC3014(1)             Sandbox manual             SHELLCHECK.SC3014(1)
+
+       NAME
+
+       In POSIX sh, == in place of = is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, IN PLACE OF IS UNDEFINED
+
+       IN POSIX SH, IN PLACE OF IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         if [ $1 == "-n" ]
+         then
+           dry_run=1
+         fi
+
+       CORRECT CODE
+
+         #!/bin/sh
+         if [ $1 = "-n" ]
+         then
+           dry_run=1
+         fi
+
+       RATIONALE
+
+       == is used for equality comparison in C-like languages, and is also supported by bash and ksh in [ .. ] and test expressions.
+
+       sh and dash only supports = for equality comparison, so use that instead.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Greg's Wiki
+            * [Bash Pitfall #20: [ bar == "$foo" ]](https://mywiki.wooledge.org/BashPitfalls#pf20)
+            * Bashism - Conditionals
+
+ShellCheck manual                       from the official documentation

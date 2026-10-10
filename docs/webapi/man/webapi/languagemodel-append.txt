@@ -1,0 +1,151 @@
+WEBAPI.LANGUAGEMODEL-APPEND(1)   Sandbox manual   WEBAPI.LANGUAGEMODEL-APPEND(1)
+
+       NAME
+
+       LanguageModel: append() method - The append() method of the LanguageModel interface adds content to the session's context window without generating a model response. It retu
+
+       LANGUAGEMODEL: APPEND() METHOD
+
+       The append() method of the LanguageModel interface adds content to the session's context window without generating a model response. It returns a Promise that resolves when the content has been successfully loaded into context. Use this method to preload a context before asking the model a question.
+
+       A context may be a document, conversation, history, or background information. You can call the append() method at any point during the session's lifetime.
+
+       SYNTAX
+
+         append(input)
+         append(input, options)
+
+       PARAMETERS
+
+        * input
+          * : The content to append to the context window. This is either:
+            * A string — Shorthand for a single textual message.
+            * An array of objects, each representing a single message in a conversation with a language model.
+       Objects may have the following properties:
+
+              * role
+                * : A string indicating the point of view the message is phrased from. Must be one of:
+                  * system
+                    * : A system-level instruction that guides the model's overall behavior. This must be the first instruction passed to the model.
+                  * user
+                    * : A message from the user, which the API should respond to.
+                  * assistant
+                    * : An input that provides context for the AI assistant, such as its persona or the format of its responses. Such messages mainly serve to provide context/history, and further shape how the model responds.
+              * content
+                * : A string representing a textual prompt, or an array of objects. Each object includes the following properties:
+                  * type
+                    * : An enumerated value representing the type of content. This can be one of:
+                      * audio
+                        * : Audio content.
+                      * image
+                        * : Image content.
+                      * text
+                        * : Textual content.
+                      * tool-call
+                        * : A tool invocation issued by the model.
+                      * tool-response
+                        * : The result of a tool invocation.
+                  * value
+                    * : The content of the message. If the type is text, this is always a string. If the type is audio or image, the value can be one of several different object types; see What data types are accepted?.
+              * prefix (optional)
+                * : A boolean, defaulting to false. When true, the message is treated as a prefix for the model's next generated response rather than a complete turn.
+        * options (optional)
+          * : An object representing the options that can be passed. Properties include:
+            * signal
+              * : An AbortSignal to cancel the append operation.
+
+       RETURN VALUE
+
+       A Promise that resolves with undefined when the content has been prefilled into the context window, or rejects with one of the following exception values on failure.
+
+       EXCEPTIONS
+
+        * AbortError DOMException
+          * : Thrown if the operation was canceled via the signal option.
+        * NotAllowedError DOMException
+          * : Thrown if usage of the method is blocked by a language-model Permissions-Policy.
+        * NotSupportedError DOMException
+          * : Thrown if:
+            * A message's role is assistant and its type is anything other than text.
+            * A message's type is text and its value is not a string.
+            * The input or output text is in a language the user agent doesn't support for prompting.
+            * A message's type is image or audio but the type was not listed in expectedInputs, or the value is not an accepted data type.
+        * OperationError DOMException
+          * : Thrown if prefilling fails for any other reason not listed in the other exception types.
+        * QuotaExceededError DOMException
+          * : Thrown if appending input would cause the session's context usage to exceed the model's LanguageModel.contextWindow.
+        * SyntaxError DOMException
+          * : Thrown if:
+            * No messages are included in the messages array.
+            * A message's prefix property is set to true and:
+              * The message's role is not assistant.
+              * The message is not the last item in the messages array.
+        * TypeError DOMException
+          * : Thrown if a message's role is system but it was not the first message passed to the context.
+
+       EXAMPLES
+
+       See also Adding context with initial and ongoing prompt inputs > Appending extra messages to the context.
+
+       APPEND CONTEXT BEFORE PROMPTING
+
+       This example shows how to append to a context for the user role before calling prompt(). Note that we can just specify text input (documentText) in this case, because user is the default role.
+
+         const documentText = "This is my important essay...";
+         const session = await LanguageModel.create();
+
+         // Preload the document text into context
+         await session.append(documentText);
+
+         // Now ask questions about the document
+         const summary = await session.prompt(
+           "Summarize the key points of this document.",
+         );
+         console.log(summary);
+
+       APPENDING CONTEXT WITH AN ABORT SIGNAL
+
+       An abort signal lets you cancel an append operation. The example below passes an AbortSignal to the signal member and calls its abort() method after 3 seconds.
+
+         const controller = new AbortController();
+         setTimeout(() => controller.abort(), 3000);
+
+         try {
+           await session.append(
+             "Here is some background context for future questions.",
+             {
+               signal: controller.signal,
+             },
+           );
+           console.log("Context appended successfully.");
+         } catch (err) {
+           if (err.name === "AbortError") {
+             console.log("Append was aborted.");
+           }
+         }
+
+       CHECKING CONTEXT USAGE AFTER APPENDING
+
+       The code below shows how to log the number of tokens used after appending a large amount of context.
+
+         const largeDocument = "This is my large body of text...";
+         const session = await LanguageModel.create();
+         await session.append(largeDocument);
+
+         console.log(
+           `Context used: ${session.contextUsage} / ${session.contextWindow} tokens`,
+         );
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * LanguageModel.prompt()
+        * LanguageModel.measureContextUsage()
+        * Prompt API
+        * Using the Prompt API
+        * Adding context with initial and ongoing prompt inputs
+
+Web APIs manual                         from the official documentation

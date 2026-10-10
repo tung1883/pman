@@ -1,0 +1,59 @@
+WEBAPI.HEADERS-GET(1)            Sandbox manual            WEBAPI.HEADERS-GET(1)
+
+       NAME
+
+       Headers: get() method - The get() method of the Headers interface
+
+       HEADERS: GET() METHOD
+
+       The get() method of the Headers interface returns a byte string of all the values of a header within a Headers object with a given name. If the requested header doesn't exist in the Headers object, it returns null.
+
+       For security reasons, some headers can only be controlled by the user agent. These headers include the forbidden request headers and forbidden response header names.
+
+       SYNTAX
+
+         get(name)
+
+       PARAMETERS
+
+        * name
+          * : The name of the HTTP header whose values you want to retrieve from the
+       Headers object. If the given name doesn't match the field-name production in the HTTP specification, this method throws a TypeError. The name is case-insensitive.
+
+       RETURN VALUE
+
+       A String sequence representing the values of the retrieved header or null if this header is not set.
+
+       EXAMPLES
+
+       Creating an empty Headers object is simple:
+
+         const myHeaders = new Headers(); // Currently empty
+         myHeaders.get("Not-Set"); // Returns null
+
+       You could add a header to this using Headers.append, then retrieve it using get():
+
+         myHeaders.append("Content-Type", "image/jpeg");
+         myHeaders.get("Content-Type"); // Returns "image/jpeg"
+
+       If the header has multiple values associated with it, the byte string will contain all the values, in the order they were added to the Headers object:
+
+         myHeaders.append("Accept-Encoding", "deflate");
+         myHeaders.append("Accept-Encoding", "gzip");
+         myHeaders.get("Accept-Encoding"); // Returns "deflate, gzip"
+         myHeaders
+           .get("Accept-Encoding")
+           .split(",")
+           .map((v) => v.trimStart()); // Returns [ "deflate", "gzip" ]
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ServiceWorker API
+        * HTTP access control (CORS)
+        * HTTP
+
+Web APIs manual                         from the official documentation

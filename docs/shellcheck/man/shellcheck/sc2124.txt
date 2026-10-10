@@ -1,0 +1,70 @@
+SHELLCHECK.SC2124(1)             Sandbox manual             SHELLCHECK.SC2124(1)
+
+       NAME
+
+       Assigning an array to a string! Assign as array, or use  instead of @ to concatenate. - var=$@
+
+       ASSIGNING AN ARRAY TO A STRING ASSIGN AS ARRAY, OR USE INSTEAD OF TO C
+
+       ASSIGNING AN ARRAY TO A STRING ASSIGN AS ARRAY, OR USE INSTEAD OF TO C
+
+       PROBLEMATIC CODE
+
+         var=$@
+         for i in $var; do ..; done
+
+       or
+
+         set -- Hello World
+         # Want to concatenate multiple elements into a single string
+         msg=$@
+         echo "You said $msg"
+
+       CORRECT CODE
+
+         # Bash: use an array variable
+         var=( "$@" )
+         for i in "${var[@]}"; do ..; done
+
+         # POSIX sh: without array support, one possible workaround
+         # is to store elements concatenated with a delimiter (here linefeed/newline)
+         var=$(printf '%s\n' "$@")
+         printf '%s\n' "$var" | while IFS='' read -r line; do ..; done
+
+       or
+
+         #!/bin/sh
+         set -- Hello World
+         # Explicitly concatenates all the array elements into a single string
+         msg=$*
+         echo "You said $msg"
+
+       RATIONALE
+
+       Arrays and $@ can contain multiple elements. Simple variables contain only one. When assigning multiple elements to one element, the default behavior depends on the shell (bash concatenates with spaces, zsh concatenates with first char of IFS).
+
+       Since doing this usually indicates a bug, ShellCheck warns and asks you to be explicit about what you want.
+
+       If you want to assign N elements as N elements in Bash or Ksh, use an array, e.g. myArray=( "$@" ).
+
+       Dash and POSIX sh do not support arrays. In this case, either concatenate the values with some delimiter that you can split on later (the example uses linefeeds and splits them back up with a while read loop), or keep the values as positional parameters without putting them in an intermediate variable.
+
+       If you want to assign N elements as 1 element by concatenating them, use instead of @, e.g. myVar=${myArray[]} (this separates elements with the first character of IFS, usually space).
+
+       The same is true for ${@: -1}, which results in 0 or 1 elements: var=${*: -1} assigns the last element or an empty string.
+
+       EXCEPTIONS
+
+       None.
+
+       ADDING AN ELEMENT TO AN ARRAY MAY TRIGGER THIS WARNING WHEN YOU FORGET
+
+         filelist="${filelist[@]}" "$filename"
+
+       What was meant is:
+
+         filelist=("${filelist[@]}" "$filename")
+
+       Note: This syntax is also compatible with older shells, as opposed to filelist+=("$filename") which works in later shells (bash 3.1+ and zsh 4.2+), only.
+
+ShellCheck manual                       from the official documentation

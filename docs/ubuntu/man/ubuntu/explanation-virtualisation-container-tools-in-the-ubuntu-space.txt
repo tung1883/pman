@@ -1,0 +1,65 @@
+UBUNTU.EXPLANATION-VIRTUALISATION-CONTAINER-TOOLS-IN-THE-UBUNTU-SPACE(1) Sandbox manual UBUNTU.EXPLANATION-VIRTUALISATION-CONTAINER-TOOLS-IN-THE-UBUNTU-SPACE(1)
+
+       NAME
+
+       Container tools in the Ubuntu space - Let's take a look at some of the most commonly used tools and technologies available in the Ubuntu container space.
+
+       CONTAINER TOOLS IN THE UBUNTU SPACE
+
+       Let's take a look at some of the most commonly used tools and technologies available in the Ubuntu container space.
+
+       LXC
+
+       Container type: System containers
+
+       Linux Containers, or LXC (pronounced "lex-see"), is a program that creates and administers containers on your local system. It is the foundation of several other system container technologies and provides both an API (to allow higher-level managers like LXD to administer containers), and an interface through which the user can interact with kernel containment features (often called the "userspace interface"). LXC interacts directly with the kernel to isolate processes, resources, etc, and provides the necessary tools - and a container runtime - for creating and managing system containers.
+
+       To get started with LXC containers, check out the LXC Introduction and LXC Getting started pages.
+
+       LXD
+
+       Container type: System containers
+
+       The Linux Containers Daemon, or LXD (pronounced "lex-dee") is the lightervisor, or lightweight container hypervisor. It is a system container management tool built on top of LXC. Since it is an abstraction layer away from LXC it offers a more user-friendly interface, including both a REST API and a command-line interface. The LXD API deals with "remotes", which serve images and containers. In fact, it comes with a built-in image store, so that containers can be created more quickly.
+
+       To get started with LXD from an Ubuntu Server administrator's point of view, check out our how to get started with LXD guide. For a more general beginner's introduction to LXD, we recommend this tutorial from the LXD team.
+
+       In addition to creating and managing containers, LXD can also be used to create virtual machines.
+
+       DOCKER
+
+       Container type: Application containers
+
+       Docker is one of the most popular containerization platforms, which allows developers to package applications - together with their dependencies - into lightweight containers. This provides a consistently reproducible environment for deploying applications, which makes it easy to build, ship, and run them even in different environments. Docker includes a command-line interface and a daemon to create and manage containers.
+
+       Although Docker is widely used by developers, it can also be used by system administrators to manage resources and applications. For instance, by encapsulating applications (and their libraries and dependencies) in a single package, and providing version control, deployment of software and updates can be simplified. It also helps to optimize resource use - particularly through its alignment with microservices architecture.
+
+       To get started with Docker from a system administrator's point of view, check out our Docker guide for sysadmins.
+
+       RUNC
+
+       Container type: Application containers (low-level runtime)
+
+       runc is a lightweight, low-level command-line tool for spawning and running containers according to the Open Container Initiative (OCI) runtime specification. Given a bundle containing a root filesystem and a configuration file, runc does the work of setting up the Linux namespaces, cgroups, and other kernel isolation features needed to start and supervise a single container process.
+
+       Usually, you will not need to invoke runc yourself. Instead, higher-level tools such as containerd (see below) or Docker will use runc internally to create and manage containers. However, if you are debugging or need something bespoke that one of these tools cannot provide, runc can be used directly to handle containers at its lower level.
+
+       Since runc implements the OCI specification, tools built on top of it can swap it out for an alternative runtime such as crun, which is also packaged in Ubuntu.
+
+       CONTAINERD
+
+       Container type: Application containers
+
+       containerd is a container runtime that manages containers at a higher level: pulling and storing images, creating and supervising containers, and configuring their storage and network attachments. It sits between higher-level platforms, such as Docker and Kubernetes, and low-level runtimes like runc, exposing a gRPC Remote Procedure Calls (gRPC) API that these platforms use to create and manage containers without having to reimplement low-level handling themselves.
+
+       On Ubuntu Server, containerd is encountered as a dependency of Docker, where it is also responsible for Docker's image store; see Docker storage, networking, and logging for more on how the two interact. containerd is also the default container runtime used by Canonical's Kubernetes platform.
+
+       SKOPEO
+
+       Skopeo is a command-line tool for working with container images and image registries. It needs no daemon and no root privileges. Skopeo can copy images between registries and local storage, read the layers and metadata of a remote image without downloading it, sign and verify images, and delete images from a registry.
+
+       Since Skopeo talks to registries directly, system administrators can use it to mirror images into an internal registry, check what an image contains before they deploy it, or move images between environments that run different container runtimes.
+
+       To get started with Skopeo, check out our Skopeo guide for sysadmins.
+
+Ubuntu Server manual                    from the official documentation

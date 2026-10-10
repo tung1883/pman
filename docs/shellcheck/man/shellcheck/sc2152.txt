@@ -1,0 +1,47 @@
+SHELLCHECK.SC2152(1)             Sandbox manual             SHELLCHECK.SC2152(1)
+
+       NAME
+
+       Can only return 0-255. Other data should be written to stdout. - myfunc() {
+
+       CAN ONLY RETURN 0-255. OTHER DATA SHOULD BE WRITTEN TO STDOUT
+
+       CAN ONLY RETURN 0-255. OTHER DATA SHOULD BE WRITTEN TO STDOUT
+
+       PROBLEMATIC CODE
+
+         myfunc() {
+           return "Hello $USER"
+         }
+
+       CORRECT CODE
+
+         myfunc() {
+           echo "Hello $USER"
+           return 0
+         }
+
+       RATIONALE
+
+       In many languages, return is used to return from the function with a final result.
+
+       In sh/bash, return can only be used to signal success or failure (0 = success, 1-255 = failure), more akin to throw/raise in other languages.
+
+       Results should instead be written to stdout and captured:
+
+         message=$(myfunc)
+         echo "The function wrote: $message"
+
+       In functions that return small integers, such as getting the cpu temperature, the value should still be written to stdout. return should be reserved for error conditions, such as "can't determine CPU temperature". Error or failure messages should be written to stderr.
+
+       Note in particular that return -1 is equivalent to return 255, but that return 1 is the more canonical way of expressing the first possible error code.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * BashFaq: How do I return a string (or large number, or negative number) from a function? "return" only lets me give a number from 0 to 255.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,213 @@
+CSHARP.GUIDE-USING-PROPERTIES(1) Sandbox manual CSHARP.GUIDE-USING-PROPERTIES(1)
+
+       NAME
+
+       Using Properties (C# Programming Guide) - These examples illustrate using properties in C#. See how the get and set accessors implement read and write access and find out about uses
+
+       USING PROPERTIES (C# PROGRAMMING GUIDE)
+
+       Properties combine aspects of both fields and methods. To the user of an object, a property appears to be a field; accessing the property requires the same syntax. To the implementer of a class, a property is one or two code blocks, representing a get accessor and/or a set or init accessor. The code block for the get accessor is executed when the property is read; the code block for the set or init accessor is executed when the property is assigned a value. A property without a set accessor is considered read-only. A property without a get accessor is considered write-only. A property that has both accessors is read-write. You can use an init accessor instead of a set accessor to enable the property to be set as part of object initialization but otherwise make it read-only.
+
+       Unlike fields, properties aren't classified as variables. Therefore, you can't pass a property as a ref or out parameter.
+
+       Properties have many uses:
+
+        * They can validate data before allowing a change.
+        * They can transparently expose data on a class where that data is retrieved from some other source, such as a database.
+        * They can take an action when data is changed, such as raising an event, or changing the value of other fields.
+       Properties are declared in the class block by specifying the access level of the field, followed by the type of the property, followed by the name of the property, and followed by a code block that declares a get-accessor and/or a set accessor. For example:
+
+         public class Date
+         {
+             private int _month = 7;  // Backing store
+
+             public int Month
+             {
+                 get => _month;
+                 set
+                 {
+                     if ((value > 0) && (value < 13))
+                     {
+                         _month = value;
+                     }
+                 }
+             }
+         }
+
+       In this example, Month is declared as a property so that the set accessor can make sure that the Month value is set between 1 and 12. The Month property uses a private field to track the actual value. The real location of a property's data is often referred to as the property's "backing store." It's common for properties to use private fields as a backing store. The field is marked private in order to make sure that it can only be changed by calling the property. For more information about public and private access restrictions, see Access Modifiers. Automatically implemented properties provide simplified syntax for simple property declarations. For more information, see Automatically implemented properties.
+
+       Beginning with C# 14, you can use field backed properties to add validation to the set accessor of an automatically implemented property, as shown in the following example:
+
+         public class DateExample
+         {
+             public int Month
+             {
+                 get;
+                 set
+                 {
+                     if ((value > 0) && (value < 13))
+                     {
+                         field = value;
+                     }
+                 }
+             }
+         }
+
+       THE GET ACCESSOR
+
+       The body of the get accessor resembles that of a method. It must return a value of the property type. The C# compiler and Just-in-time (JIT) compiler detect common patterns for implementing the get accessor, and optimizes those patterns. For example, a get accessor that returns a field without performing any computation is likely optimized to a memory read of that field. Automatically implemented properties follow this pattern and benefit from these optimizations. However, a virtual get accessor method can't be inlined because the compiler doesn't know at compile time which method might actually be called at run time. The following example shows a get accessor that returns the value of a private field _name:
+
+         class Employee
+         {
+             private string _name;           // the name field
+             public string Name => _name;    // the Name property
+         }
+
+       When you reference the property, except as the target of an assignment, the get accessor is invoked to read the value of the property. For example:
+
+         var employee = new Employee();
+         //...
+
+         System.Console.Write(employee.Name); // the get accessor is invoked here
+
+       The get accessor must be an expression-bodied member, or end in a return or throw statement, and control can't flow off the accessor body.
+
+       > It's generally a bad programming style to change the state of the object by using the get accessor. One exception to this rule is a lazy evaluated property, where the value of a property is computed only when it's first accessed.
+       The get accessor can be used to return the field value or to compute it and return it. For example:
+
+         class Manager
+         {
+             private string _name;
+             public string Name => _name != null ? _name : "NA";
+         }
+
+       In the previous example, if you don't assign a value to the Name property, it returns the value NA.
+
+       THE SET ACCESSOR
+
+       The set accessor resembles a method whose return type is void. It uses an implicit parameter called value, whose type is the type of the property. The compiler and JIT compiler also recognize common patterns for a set or init accessor. Those common patterns are optimized, directly writing the memory for the backing field. In the following example, a set accessor is added to the Name property:
+
+         class Student
+         {
+             private string _name;      // the name field
+             public string Name         // the Name property
+             {
+                 get => _name;
+                 set => _name = value;
+             }
+         }
+
+       When you assign a value to the property, the set accessor is invoked by using an argument that provides the new value. For example:
+
+         var student = new Student();
+         student.Name = "Joe"; // the set accessor is invoked here
+
+         System.Console.Write(student.Name); // the get accessor is invoked here
+
+       It's an error to use the implicit parameter name, value, for a local variable declaration in a set accessor.
+
+       THE INIT ACCESSOR
+
+       The code to create an init accessor is the same as the code to create a set accessor except that you use the init keyword instead of set. The difference is that the init accessor can only be used in the constructor or by using an object-initializer.
+
+       REMARKS
+
+       Properties can be marked as public, private, protected, internal, protected internal, or private protected. These access modifiers define how users of the class can access the property. The get and set accessors for the same property can have different access modifiers. For example, the get might be public to allow read-only access from outside the type, and the set can be private or protected. For more information, see Access Modifiers.
+
+       A property can be declared as a static property by using the static keyword. Static properties are available to callers at any time, even if no instance of the class exists. For more information, see Static Classes and Static Class Members.
+
+       A property can be marked as a virtual property by using the virtual keyword. Virtual properties enable derived classes to override the property behavior by using the override keyword. For more information about these options, see Inheritance.
+
+       A property overriding a virtual property can also be sealed, specifying that for derived classes it's no longer virtual. Lastly, a property can be declared abstract. Abstract properties don't define an implementation in the class, and derived classes must write their own implementation. For more information about these options, see Abstract and Sealed Classes and Class Members.
+
+       > It's an error to use a virtual, abstract, or override modifier on an accessor of a static property.
+
+       EXAMPLES
+
+       This example demonstrates instance, static, and read-only properties. It accepts the name of the employee from the keyboard, increments NumberOfEmployees by 1, and displays the Employee name and number.
+
+         public class Employee
+         {
+             public static int NumberOfEmployees;
+             private static int _counter;
+             private string _name;
+
+             // A read-write instance property:
+             public string Name
+             {
+                 get => _name;
+                 set => _name = value;
+             }
+
+             // A read-only static property:
+             public static int Counter => _counter;
+
+             // A Constructor:
+             public Employee() => _counter = ++NumberOfEmployees; // Calculate the employee's number:
+         }
+
+       HIDDEN PROPERTY EXAMPLE
+
+       This example demonstrates how to access a property in a base class that's hidden by another property that has the same name in a derived class:
+
+         public class Employee
+         {
+             private string _name;
+             public string Name
+             {
+                 get => _name;
+                 set => _name = value;
+             }
+         }
+
+         public class Manager : Employee
+         {
+             private string _name;
+
+             // Notice the use of the new modifier:
+             public new string Name
+             {
+                 get => _name;
+                 set => _name = value + ", Manager";
+             }
+         }
+
+         class TestHiding
+         {
+             public static void Test()
+             {
+                 Manager m1 = new Manager();
+
+                 // Derived class property.
+                 m1.Name = "John";
+
+                 // Base class property.
+                 ((Employee)m1).Name = "Mary";
+
+                 System.Console.WriteLine($"Name in the derived class is: {m1.Name}");
+                 System.Console.WriteLine($"Name in the base class is: {((Employee)m1).Name}");
+             }
+         }
+         /* Output:
+             Name in the derived class is: John, Manager
+             Name in the base class is: Mary
+         */
+
+       The following are important points in the previous example:
+
+        * The property Name in the derived class hides the property Name in the base class. In such a case, the new modifier is used in the declaration of the property in the derived class:
+        * The cast (Employee) is used to access the hidden property in the base class:
+       For more information about hiding members, see the new Modifier.
+
+       OVERRIDE PROPERTY EXAMPLE
+
+       In this example, two classes, Cube and Square, implement an abstract class, Shape, and override its abstract Area property. Note the use of the override modifier on the properties. The program accepts the side as an input and calculates the areas for the square and cube. It also accepts the area as an input and calculates the corresponding side for the square and cube.
+
+       SEE ALSO
+
+        * Properties
+        * Interface properties
+        * Automatically implemented properties
+        * Partial properties
+
+C# manual                               from the official documentation

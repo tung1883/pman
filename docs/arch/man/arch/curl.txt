@@ -1,0 +1,99 @@
+ARCH.CURL(1)                     Sandbox manual                     ARCH.CURL(1)
+
+       cURL is a command line tool and library for transferring data with URLs. The command supports a number of different protocols, including HTTP, HTTPS, FTP, SCP, and SFTP. It is also designed to work without user interaction, like in scripts.
+
+       Note Despite superficially equivalent to wget, this is not the case. See can-i-do-recursive-fetches-with-curl, run the equivalent curl command to a given wget command and what-is-curl-not.
+
+       INSTALLATION
+
+       Install the curl package.
+
+       USAGE
+
+       DOWNLOADING
+
+       A common use case for cURL is to download the resource to a specified file:
+
+         $ curl --output filename URL
+
+       If the URL contains the file name, you can save the resource directly to a file of that name:
+
+         $ curl --remote-name URL
+
+       Similarly, you can use -J/--remote-header-name to accept a hint from an HTTP server (from the Content-Disposition header) for what the file should be named. If combined with -O/--remote-name, curl will use the file name specified by the URL if the HTTP server does not return a file name hint in its response.
+
+       Alternatively you can print the resource to stdout by omitting the output options:
+
+         $ curl URL
+
+       HTTP POST
+
+       You can use cURL to make HTTP POST requests:
+
+         $ curl --data 'request body' URL
+
+       If the request body cannot fit on the command line, cURL can read it from a file:
+
+         $ curl --data @filename URL
+
+       Sometimes, you may need to specify a custom value for the Content-Type header (cURL's default is application/x-www-form-urlencoded). You can do this with -H. For example, if you wanted to make a POST request with a JSON body:
+
+         $ curl --data 'json body' -H 'Content-Type: application/json' URL
+
+       note that curl also has a option to write post data in json and change those headers automatically: --json:
+
+         $ curl --json '{"key":"value"}' URL
+
+       TIPS AND TRICKS
+
+       FOLLOWING REDIRECTS
+
+       To follow redirects (e.g. an HTTP to HTTPS redirect):
+
+         $ curl --location URL
+
+       SHOW DOWNLOAD ERRORS
+
+       By default curl would ignore errors (e.g. when downloading to a file, if there is a error curl would not notify you, and the file would be created empty) so use --fail to make it show a message on error:
+
+         $ curl --fail URL
+
+       COMPRESSION
+
+       If you want to transfer the data compressed, (e.g. in situations where bandwidth is more limited than CPU, curl would download the data compressed then uncompressed it after the download):
+
+         $ curl --compressed URL
+
+       PROGRESSBAR
+
+       curl has option to a normal ProgressBar when it download files (e.g. [##### ] 80% )
+
+         $ curl --progress-bar URL
+
+       GLOBBING
+
+       You can also use globbing in curl:
+
+         $ curl "example.com/images/[1-9].png"
+         $ curl "example.com/{first_page,second_page,third_page}"
+
+       CONFIG FILE
+
+       curl also search for a config file called .curlrc in home directory and in $XDG_CONFIG_HOME/curlrc. You can just put the command line argument you want to use with curl by default, for example :
+
+         $HOME/.curlrc
+
+         # this is a comment, the next line would be the option for progressbar:
+         -#
+         # to make curl always compress:
+         --compressed
+         # or just
+         compressed
+
+       SEE ALSO
+
+        * Wikipedia:cURL
+        * Everything curl - Extensive guide to using cURL
+        * curl(1)
+
+ArchWiki manual                         bundled documentation

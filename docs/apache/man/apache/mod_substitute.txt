@@ -1,0 +1,102 @@
+APACHE.MOD_SUBSTITUTE(1)         Sandbox manual         APACHE.MOD_SUBSTITUTE(1)
+
+       SUBSTITUTE DIRECTIVE
+
+         Description: | Pattern to filter the response content
+         Syntax: | Substitute s/pattern/substitution/[infq]
+         Context: | directory, .htaccess
+         Override: | FileInfo
+         Status: | Extension
+         Module: | mod_substitute
+       The Substitute directive specifies a search and replace pattern to apply to the response body.
+
+       The meaning of the pattern can be modified by using any combination of these flags:
+
+         i
+       Perform a case-insensitive match.
+
+         n
+       By default the pattern is treated as a regular expression. Using the n flag forces the pattern to be treated as a fixed string.
+
+         f
+       The f flag causes mod_substitute to flatten the result of a substitution allowing for later substitutions to take place on the boundary of this one. This is the default.
+
+         q
+       The q flag causes mod_substitute to not flatten the buckets after each substitution. This can result in much faster response and a decrease in memory utilization, but should only be used if there is no possibility that the result of one substitution will ever match a pattern or regex of a subsequent one.
+
+       The substitution may contain literal text and regular expression backreferences
+
+       EXAMPLE
+
+         <Location "/">
+             AddOutputFilterByType SUBSTITUTE text/html
+             Substitute "s/foo/bar/ni"
+         </Location>
+
+       The character which is used to separate (or "delimit") the various parts of the substitution string is referred to as the "delimiter", and it is most common to use a slash for this purpose.
+
+       If either the pattern or the substitution contain a slash character then an alternative delimiter may be used to make the directive more readable:
+
+       EXAMPLE OF USING AN ALTERNATE DELIMITER
+
+         <Location "/">
+             AddOutputFilterByType SUBSTITUTE text/html
+             Substitute "s|<BR */?>|<br />|i"
+         </Location>
+
+       Backreferences can be used in the comparison and in the substitution, when regular expressions are used, as illustrated in the following example:
+
+       EXAMPLE OF USING BACKREFERENCES AND CAPTURES
+
+         <Location "/">
+             AddOutputFilterByType SUBSTITUTE text/html
+             # "foo=k,bar=k" -> "foo/bar=k"
+             Substitute "s|foo=(\w+),bar=\1|foo/bar=$1|"
+         </Location>
+
+       A common use scenario for mod_substitute is the situation in which a front-end server proxies requests to a back-end server which returns HTML with hard-coded embedded URLs that refer to the back-end server. These URLs don't work for the end-user, since the back-end server is unreachable.
+
+       In this case, mod_substitute can be used to rewrite those URLs into something that will work from the front end:
+
+       REWRITING URLS EMBEDDED IN PROXIED CONTENT
+
+         ProxyPass        "/blog/" "http://internal.blog.example.com/"
+         ProxyPassReverse "/blog/" "http://internal.blog.example.com/"
+
+         Substitute "s|http://internal.blog.example.com/|http://www.example.com/blog/|i"
+
+       ProxyPassReverse modifies any Location (redirect) headers that are sent by the back-end server, and, in this example, Substitute takes care of the rest of the problem by fixing up the HTML response as well.
+
+       SUBSTITUTEINHERITBEFORE DIRECTIVE
+
+         Description: | Change the merge order of inherited patterns
+         Syntax: | SubstituteInheritBefore on|off
+         Default: | SubstituteInheritBefore off
+         Context: | directory, .htaccess
+         Override: | FileInfo
+         Status: | Extension
+         Module: | mod_substitute
+         Compatibility: | Available in httpd 2.4.17 and later
+       Whether to apply the inherited Substitute patterns first (on), or after the ones of the current context (off). SubstituteInheritBefore is itself inherited, hence contexts that inherit it (those that don't specify their own SubstituteInheritBefore value) will apply the closest defined merge order.
+
+       SUBSTITUTEMAXLINELENGTH DIRECTIVE
+
+         Description: | Set the maximum line size
+         Syntax: | SubstituteMaxLineLength bytes(b|B|k|K|m|M|g|G)
+         Default: | SubstituteMaxLineLength 1m
+         Context: | directory, .htaccess
+         Override: | FileInfo
+         Status: | Extension
+         Module: | mod_substitute
+         Compatibility: | Available in httpd 2.4.11 and later
+       The maximum line size handled by mod_substitute is limited to restrict memory use. The limit can be configured using SubstituteMaxLineLength. The value can be given as the number of bytes and can be suffixed with a single letter b, B, k, K, m, M, g, G to provide the size in bytes, kilobytes, megabytes or gigabytes respectively.
+
+       EXAMPLE
+
+         <Location "/">
+             AddOutputFilterByType SUBSTITUTE text/html
+             SubstituteMaxLineLength 10m
+             Substitute "s/foo/bar/ni"
+         </Location>
+
+Apache HTTP Server manual               bundled documentation

@@ -1,0 +1,38 @@
+SHELLCHECK.SC2189(1)             Sandbox manual             SHELLCHECK.SC2189(1)
+
+       NAME
+
+       You can't have | between this redirection and the command it should apply to. - ShellCheck has found a stage in a pipeline that consists of a redirection but no command. This doesn't make sense because a redirection with
+
+       YOU CAN'T HAVE BETWEEN THIS REDIRECTION AND THE COMMAND IT SHOULD APPL
+
+       YOU CAN'T HAVE BETWEEN THIS REDIRECTION AND THE COMMAND IT SHOULD APPL
+
+       PROBLEMATIC CODE
+
+         < file.txt | grep foo
+
+       CORRECT CODE
+
+         < file.txt grep foo   # or more canonically: grep foo < file.txt
+
+       RATIONALE
+
+       ShellCheck has found a stage in a pipeline that consists of a redirection but no command. This doesn't make sense because a redirection without a command will not read or write any data.
+
+       This is most likely to occur when deleting a command that had a redirection, but leaving a | behind instead of moving the redirection to a different command:
+
+         # Match lines with line numbers
+         nl < foo.txt | grep bar
+
+         # Incorrect attempt at removing line numbers. grep now has no input:
+         < foo.txt | grep bar
+
+         # Line numbers correctly removed. grep now reads foo.txt as intended.
+         grep bar < foo.txt
+
+       EXCEPTIONS
+
+       It's technically valid to do e.g. echo foo | > "$(cat)" to truncate a file called "foo", but please consider rewriting such code.
+
+ShellCheck manual                       from the official documentation

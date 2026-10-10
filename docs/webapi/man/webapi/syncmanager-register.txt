@@ -1,0 +1,48 @@
+WEBAPI.SYNCMANAGER-REGISTER(1)   Sandbox manual   WEBAPI.SYNCMANAGER-REGISTER(1)
+
+       NAME
+
+       SyncManager: register() method - The register() method of the SyncManager interface registers a synchronization event, triggering a sync event inside the associated service 
+
+       SYNCMANAGER: REGISTER() METHOD
+
+       The register() method of the SyncManager interface registers a synchronization event, triggering a sync event inside the associated service worker as soon as network connectivity is available.
+
+       SYNTAX
+
+         register(tag)
+
+       PARAMETERS
+
+        * tag
+          * : An identifier for this synchronization event. This will be the value of the tag property of the SyncEvent that gets passed into the service worker's sync event handler.
+
+       RETURN VALUE
+
+       A Promise that resolves to undefined.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if current service worker is not active.
+        * NotAllowedError DOMException
+          * : Thrown if background sync has been disabled by the user.
+
+       EXAMPLES
+
+       The following asynchronous function registers a background sync from a browsing context:
+
+         async function syncMessagesLater() {
+           const registration = await navigator.serviceWorker.ready;
+           try {
+             await registration.sync.register("sync-messages");
+           } catch {
+             console.log("Background Sync could not be registered!");
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

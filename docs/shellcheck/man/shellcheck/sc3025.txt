@@ -1,0 +1,37 @@
+SHELLCHECK.SC3025(1)             Sandbox manual             SHELLCHECK.SC3025(1)
+
+       NAME
+
+       In POSIX sh, /dev/{tcp,udp} is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, /DEV/ TCP,UDP IS UNDEFINED
+
+       IN POSIX SH, /DEV/ TCP,UDP IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         echo foo > /dev/tcp/myhost/1234
+
+       CORRECT CODE
+
+       Rewrite using a tool like netcat (nc):
+
+         echo foo | nc myhost 1234
+
+       RATIONALE
+
+       /dev/tcp/$host/$port and /dev/udp/$host/$port are recognized in redirections by bash and ksh, and a socket connection is made instead of opening a file. They do not physically exist in /dev.
+
+       POSIX sh and dash do not support this, so any such code should be rewritten to use a socket tool explicitly. The obvious candidate is netcat aka nc.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

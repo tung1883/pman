@@ -1,0 +1,123 @@
+UBUNTU.EXPLANATION-INTRO-TO-MULTIPATH(1) Sandbox manual UBUNTU.EXPLANATION-INTRO-TO-MULTIPATH(1)
+
+       NAME
+
+       Introduction to device mapper multipathing ("multipath") - Device mapper multipathing (which will be called multipath in this document) allows you to create a virtual device that aggregates multiple
+
+       INTRODUCTION TO DEVICE MAPPER MULTIPATHING ( MULTIPATH )
+
+       Device mapper multipathing (which will be called multipath in this document) allows you to create a virtual device that aggregates multiple input/output (I/O) paths between server nodes and storage arrays. These I/O paths are physical storage area network (SAN) connections that can include separate cables, switches, and controllers.
+
+       HOW A MULTIPATH DEVICE WORKS IN PRACTICE
+
+       If you are not using multipath, your system treats every path from a server node to a storage controller as a separate device, even when the I/O path connects the same server node to the same storage controller. Multipath allows you to organize the I/O paths logically, by creating a single device on top of the underlying paths.
+
+       WHAT IDENTIFIER DOES A MULTIPATH DEVICE USE
+
+       Every multipath device has a World Wide Identifier (WWID), which is guaranteed to be globally unique and unchanging. By default, the name of a multipath device is set to its WWID. However, you can force multipath to give each multipath device a name that is a node-unique alias of the form mpathn by setting the user_friendly_names option in multipath.conf.
+
+       WHAT DOES MULTIPATH PROVIDE
+
+       When you use multipath, it can provide:
+
+        * Redundancy
+       Multipath provides failover in an active/passive configuration. In an active/passive configuration, only half the paths are used at any time for I/O. If any element of an I/O path (the cable, switch, or controller) fails, multipath switches to an alternate path.
+
+        * Improved performance
+       Multipath can be configured in active/active mode, where I/O is spread over the paths in a round-robin fashion. In some configurations, multipath can detect loading on the I/O paths and dynamically re-balance the load.
+
+       CONFIGURING MULTIPATH FOR A STORAGE SYSTEM
+
+       Before you decide to use multipath, check your storage vendor's installation guide for the multipath configuration variables that are recommended for your storage model. The default multipath configuration will probably work but will likely need adjustments based on your storage setup.
+
+       MULTIPATH COMPONENTS
+
+         Component  |  Description
+         -  |  -
+         dm_multipath kernel module  |  Reroutes I/O and supports failover for paths and path groups.
+         multipath command  |  Lists and configures multipath devices. While this command is normally started up with /etc/rc.sysinit, it can also be started up by a udev program whenever a block device is added, or it can be run by the initramfs file system.
+         multipathd daemon  |  Monitors paths; as paths fail and come back, it may initiate path group switches. Provides for interactive changes to multipath devices. This daemon must be restarted for any changes to the /etc/multipath.conf file to take effect.
+         kpartx command  |  Creates device-mapper devices for the partitions on a device. It is necessary to use this command for DOS-based partitions with multipath. The kpartx is provided in its own package, but the multipath-tools package depends on it.
+
+       MULTIPATH SETUP OVERVIEW
+
+       The multipath setup process is usually simple because it has compiled-in default settings that are suitable for common multipath configurations. The basic procedure for configuring your system with multipath is:
+
+        1. Install the multipath-tools and multipath-tools-boot packages.
+        2. Create an empty config file called /etc/multipath.conf.
+        3. Edit the multipath.conf file to modify default values and save the updated file.
+        4. Start the multipath daemon.
+        5. Update initial RAM disk.
+       For detailed setup instructions for multipath configuration see DM-Multipath configuration and DM-Multipath setup.
+
+       EXAMPLE OF A MULTIPATH DEVICE IN USE
+
+       For example, a node with two host bus adapters (HBAs) attached to a storage controller, with two ports, via a single un-zoned FC switch, sees four devices: /dev/sda, /dev/sdb, /dev/sdc, and /dev/sdd. Multipath creates a single device with a unique WWID that reroutes I/O to those four underlying devices according to the multipath configuration.
+
+       When the user_friendly_names configuration option is set to 'yes', the name of the multipath device is set to mpathn. When new devices are brought under the control of multipath, the new devices may be seen in two different places under the /dev directory: /dev/mapper/mpathn and /dev/dm-n.
+
+        * The devices in /dev/mapper are created early in the boot process. Use these devices to access the multipathed devices.
+        * Any devices of the form /dev/dm-n are for internal use only and should never be used directly.
+       You can also set the name of a multipath device to a name of your choosing by using the alias option in the multipaths section of the multipath configuration file.
+
+       > Seealso: For information on the multipath configuration defaults, including the user_friendly_names and alias configuration options, see DM-Multipath configuration.
+
+       CONSISTENT MULTIPATH DEVICE NAMES IN A CLUSTER
+
+       When the user_friendly_names configuration option is set to 'yes', the name of the multipath device is unique to a node, but it is not guaranteed to be the same on all nodes using the multipath device. Similarly, if you set the alias option for a device in the multipaths section of /etc/multipath.conf, the name is not automatically consistent across all nodes in the cluster.
+
+       This should not cause any difficulties if you use LVM to create logical devices from the multipath device, but if you require that your multipath device names be consistent in every node it is recommended that you leave the user_friendly_names option set to 'no' and that you do not configure aliases for the devices.
+
+       If you configure an alias for a device that you would like to be consistent across the nodes in the cluster, you should ensure that the /etc/multipath.conf file is the same for each node in the cluster by following the same procedure:
+
+        1. Configure the aliases for the multipath devices in the in the multipath.conf file on one machine.
+        2. Disable all of your multipath devices on your other machines by running the following commands as root:
+
+            :copy:
+            :user:
+            :host:
+            :dir:
+            systemctl stop multipath-tools.service
+            multipath -F
+
+        3. Copy the /etc/multipath.conf file from the first machine to all other machines in the cluster.
+        4. Re-enable the multipathd daemon on all the other machines in the cluster by running the following command as root:
+
+            :copy:
+            :user:
+            :host:
+            :dir:
+            systemctl start multipath-tools.service
+
+       Whenever you add a new device you will need to repeat this process.
+
+       MULTIPATH DEVICE ATTRIBUTES
+
+       In addition to the user_friendly_names and alias options, a multipath device has numerous attributes. You can modify these attributes for a specific multipath device by creating an entry for that device in the multipaths section of /etc/multipath.conf.
+
+       For information on the multipaths section of the multipath configuration file, see DM-Multipath configuration.
+
+       MULTIPATH DEVICES IN LOGICAL VOLUMES
+
+       After creating multipath devices, you can use the multipath device names just as you would use a physical device name when you are creating an LVM physical volume.
+
+       For example, if /dev/mapper/mpatha is the name of a multipath device, the following command (run as root) will mark /dev/mapper/mpatha as a physical volume:
+
+         pvcreate /dev/mapper/mpatha
+
+       You can use the resulting LVM physical device when you create an LVM volume group just as you would use any other LVM physical device.
+
+       > Note: If you try to create an LVM physical volume on a whole device on which you have configured partitions, the pvcreate command will fail.
+       Once you create an LVM logical volume that has active/passive multipath arrays as the underlying physical devices, you must add filters in the lvm.conf file to exclude the disks that underlie the multipath devices. This is because if the array automatically changes the active path to the passive path when it receives I/O, multipath will failover and fallbacks whenever LVM scans the passive path if these devices are not filtered.
+
+       If an active/passive array requires a command to activate the passive path, LVM will print a warning message. To filter all SCSI devices in the LVM configuration file (lvm.conf), include the following filter in the devices section of the file:
+
+         filter = [ "r/block/", "r/disk/", "r/sd.*/", "a/.*/" ]
+
+       After updating /etc/lvm.conf, it's necessary to update the initrd so that this file will be copied there, where the filter matters the most -- during boot. Perform:
+
+         update-initramfs -u -k all
+
+       > Note: Every time either /etc/lvm.conf or /etc/multipath.conf is updated, the initrd should be rebuilt to reflect these changes. This is imperative when denylists and filters are necessary to maintain a stable storage configuration.
+
+Ubuntu Server manual                    from the official documentation

@@ -1,0 +1,45 @@
+SHELLCHECK.SC2214(1)             Sandbox manual             SHELLCHECK.SC2214(1)
+
+       NAME
+
+       This case is not specified by getopts. - while getopts "vr" n
+
+       THIS CASE IS NOT SPECIFIED BY GETOPTS
+
+       THIS CASE IS NOT SPECIFIED BY GETOPTS
+
+       PROBLEMATIC CODE
+
+         while getopts "vr" n
+         do
+           case "$n" in
+             v) echo "Verbose" ;;
+             r) echo "Recursive" ;;
+             n) echo "Dry-run" ;;
+             *) usage;;
+           esac
+         done
+
+       CORRECT CODE
+
+         while getopts "vrn" n    # 'n' added here
+         do
+           case "$n" in
+             v) echo "Verbose" ;;
+             r) echo "Recursive" ;;
+             n) echo "Dry-run" ;;
+             *) usage;;
+           esac
+         done
+
+       RATIONALE
+
+       You have a case statement in a while getopts loop that matches a flag that hasn't been provided in the getopts option string.
+
+       Either add the flag to the options list, or delete the case statement.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

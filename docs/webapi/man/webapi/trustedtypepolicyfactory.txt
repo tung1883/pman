@@ -1,0 +1,53 @@
+WEBAPI.TRUSTEDTYPEPOLICYFACTORY(1) Sandbox manual WEBAPI.TRUSTEDTYPEPOLICYFACTORY(1)
+
+       NAME
+
+       TrustedTypePolicyFactory - The TrustedTypePolicyFactory interface of the Trusted Types API creates policies and allows the verification of Trusted Type objects against
+
+       TRUSTEDTYPEPOLICYFACTORY
+
+       The TrustedTypePolicyFactory interface of the Trusted Types API creates policies and allows the verification of Trusted Type objects against created policies.
+
+       INSTANCE PROPERTIES
+
+        * TrustedTypePolicyFactory.emptyHTML (read-only)
+          * : Returns a TrustedHTML object containing an empty string.
+        * TrustedTypePolicyFactory.emptyScript (read-only)
+          * : Returns a TrustedScript object containing an empty string.
+        * TrustedTypePolicyFactory.defaultPolicy (read-only)
+          * : Returns the default TrustedTypePolicy or null if this is empty.
+
+       INSTANCE METHODS
+
+        * TrustedTypePolicyFactory.createPolicy()
+          * : Creates a TrustedTypePolicy object that implements the rules passed as policyOptions.
+        * TrustedTypePolicyFactory.isHTML()
+          * : When passed a value checks that it is a valid TrustedHTML object.
+        * TrustedTypePolicyFactory.isScript()
+          * : When passed a value checks that it is a valid TrustedScript object.
+        * TrustedTypePolicyFactory.isScriptURL()
+          * : When passed a value checks that it is a valid TrustedScriptURL object.
+        * TrustedTypePolicyFactory.getAttributeType()
+          * : Allows web developers to check whether a Trusted Type is required for an element and attribute, and if so which one.
+        * TrustedTypePolicyFactory.getPropertyType()
+          * : Allows web developers to check whether a Trusted Type is required for a property, and if so which one.
+
+       EXAMPLES
+
+       The below code creates a policy with the name "myEscapePolicy" with a function defined for createHTML() which sanitizes HTML.
+
+       We then use the policy to sanitize a string, creating a TrustedHTML object, escaped. This object can be tested with isHTML() to ensure that it was created by one of our policies.
+
+         const escapeHTMLPolicy = trustedTypes.createPolicy("myEscapePolicy", {
+           createHTML: (string) => string.replace(/</g, "&lt;"),
+         });
+
+         const escaped = escapeHTMLPolicy.createHTML("<img src=x onerror=alert(1)>");
+
+         console.log(trustedTypes.isHTML(escaped)); // true;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

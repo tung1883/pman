@@ -1,0 +1,570 @@
+ARCH.POWER-MANAGEMENT(1)         Sandbox manual         ARCH.POWER-MANAGEMENT(1)
+
+       Power management is a feature that turns off the power or switches system components to a low-power state when inactive.
+
+       In Arch Linux, power management consists of two main parts:
+
+        * Configuration of the Linux kernel, which interacts with the hardware:
+          * Kernel parameters
+          * Kernel modules
+          * udev rules
+        * Configuration of userspace tools, which interact with the kernel and react to its events. Many userspace tools also allow modification of kernel configuration in a "user-friendly" way. See #Userspace tools for the options.
+
+       USERSPACE TOOLS
+
+       These tools allow you to change a lot of settings without the need to edit config files by hand. Only run one of these tools to avoid possible conflicts as they all work more or less similarly. Have a look at the power management category to get an overview on what power management options exist in Arch Linux.
+
+       These are the more popular scripts and tools designed to help power saving:
+
+       CONSOLE
+
+        * acpid — A daemon for delivering ACPI power management events with netlink support.
+       https://sourceforge.net/projects/acpid2/ || acpid
+
+        * Laptop Mode Tools — Utility to configure laptop power saving settings, considered by many to be the de facto utility for power saving though may take a bit of configuration.
+       https://github.com/rickysarraf/laptop-mode-tools || laptop-mode-toolsAUR
+
+        * libsmbios — Library and tools for interacting with Dell SMBIOS tables.
+       https://github.com/dell/libsmbios || libsmbios
+
+        * power-profiles-daemon — Makes power profiles handling available over D-Bus.
+       https://gitlab.freedesktop.org/upower/power-profiles-daemon || power-profiles-daemon
+
+        * powerstat — A tool that measures power consumption using the ACPI or Intel RAPL interface.
+       https://github.com/ColinIanKing/powerstat || powerstatAUR
+
+        * powertop — A tool to diagnose issues with power consumption and power management to help set power saving settings.
+       https://github.com/fenrus75/powertop || powertop
+
+        * systemd — A system and service manager.
+       https://systemd.io/ || systemd
+
+        * TLP — Advanced power management for Linux.
+       https://linrunner.de/tlp || tlp
+
+        * TuneD — Daemon that performs monitoring and adaptive configuration of devices in the system.
+       https://tuned-project.org || tuned
+
+        * UPower — Abstraction for enumerating power devices, listening to device events and querying history and statistics.
+       https://upower.freedesktop.org || upower
+
+       GRAPHICAL
+
+        * batsignal — Lightweight battery monitor that uses libnotify to warn of low battery levels.
+       https://github.com/electrickite/batsignal || batsignal
+
+        * cbatticon — Lightweight and fast battery icon that sits in your system tray.
+       https://github.com/valr/cbatticon || cbatticon
+
+        * GNOME Power Statistics — System power information and statistics for GNOME.
+       https://gitlab.gnome.org/GNOME/gnome-power-manager || gnome-power-manager
+
+        * KDE Power Devil — Power management module for Plasma.
+       https://invent.kde.org/plasma/powerdevil || powerdevil
+
+        * LXQt Power Management — Power management module for LXQt.
+       https://github.com/lxqt/lxqt-powermanagement || lxqt-powermanagement
+
+        * MATE Power Management — Power management tool for MATE.
+       https://github.com/mate-desktop/mate-power-manager || mate-power-manager
+
+        * MATE Power Statistics — System power information and statistics for MATE.
+       https://github.com/mate-desktop/mate-power-manager || mate-power-manager
+
+        * poweralertd — Daemon for delivering UPower notifications.
+       https://git.sr.ht/~kennylevinsen/poweralertd || poweralertdAUR
+
+        * powerkit — Desktop independent power manager.
+       https://github.com/rodlie/powerkit || powerkitAUR
+
+        * vattery — Battery monitoring application written in Vala that will display the status of a laptop battery in a system tray.
+       https://www.jezra.net/projects/vattery.html || vatteryAUR
+
+        * Wattage — Application designed for monitoring the health and status of your power devices.
+       https://github.com/v81d/wattage || wattageAUR
+
+        * Xfce Power Manager — Power manager for Xfce.
+       https://docs.xfce.org/xfce/xfce4-power-manager/start || xfce4-power-manager
+
+       ACPI EVENTS
+
+       systemd handles some power-related ACPI events, whose actions can be configured in /etc/systemd/logind.conf or /etc/systemd/logind.conf.d/*.conf — see logind.conf(5). On systems with no dedicated power manager, this may replace the acpid daemon which is usually used to react to these ACPI events.
+
+       The specified action for each event can be one of ignore, poweroff, reboot, halt, suspend, hibernate, hybrid-sleep, suspend-then-hibernate, lock or kexec. In case of hibernation and suspension, they must be properly set up. If an event is not configured, systemd will use a default action.
+
+         Event handler | Description | Default action
+         HandlePowerKey | Triggered when the power key/button is pressed. | poweroff
+         HandlePowerKeyLongPress | Triggered when the power key/button is held | ignore
+         HandleRebootKey | Triggered when the reboot key/button is pressed | reboot
+         HandleRebootKeyLongPress | Triggered when the Reboot key/button is held | poweroff
+         HandleSuspendKey | Triggered when the suspend key/button is pressed. | suspend
+         HandleSuspendKeyLongPress | Triggered when the suspend key/button is held | hibernate
+         HandleHibernateKey | Triggered when the hibernate key/button is pressed. | hibernate
+         HandleHibernateKeyLongPress | Triggered when the hibernate key/button is held | ignore
+         HandleLidSwitch | Triggered when the lid is closed, except in the cases below. | suspend
+         HandleLidSwitchDocked | Triggered when the lid is closed if the system is inserted in a docking station, or more than one display is connected. | ignore
+         HandleLidSwitchExternalPower | Triggered when the lid is closed if the system is connected to external power. | action set for HandleLidSwitch
+       To apply changes, reload systemd-logind.service.
+
+       Note
+
+        * systemd cannot handle AC and Battery ACPI events, so if you use Laptop Mode Tools or other similar tools acpid is still required.
+        * When performing lid switches in short succession, logind will delay the suspend action for up to 90s to detect possible docks. [1] You can use HoldoffTimeoutSec= in logind.conf(5) to configure the delay.
+
+       POWER MANAGERS
+
+       Some desktop environments include power managers which inhibit (temporarily turn off) some or all of the systemd ACPI settings. If such a power manager is running, then the actions for ACPI events can be configured in the power manager alone. Changes to /etc/systemd/logind.conf or /etc/systemd/logind.conf.d/*.conf need be made only if you wish to configure behaviour for a particular event that is not inhibited by the power manager.
+
+       Note that if the power manager does not inhibit systemd for the appropriate events you can end up with a situation where systemd suspends your system and then when the system is woken up the other power manager suspends it again. The power managers of GNOME, MATE, Plasma and Xfce issue the necessary inhibited commands. If the inhibited commands are not being issued, such as when using acpid or others to handle ACPI events, set the Handle options to ignore. See also systemd-inhibit(1).
+
+       XSS-LOCK
+
+       xss-lock subscribes to the systemd-events suspend, hibernate, lock-session, and unlock-session with appropriate actions (run locker and wait for user to unlock or kill locker). xss-lock also reacts to DPMS events and runs or kills the locker in response.
+
+       Autostarting the following for example:
+
+         $ xss-lock -- i3lock -n -i background_image.png &
+
+       POWER SAVING
+
+       Note See Laptop#Power management for power management specific to laptops, such as battery monitoring. See also pages specific to your CPU and GPU (e.g., Ryzen, AMDGPU).
+
+       This section is a reference for creating custom scripts and power saving settings such as by udev rules. Make sure that the settings are not managed by some other utility to avoid conflicts.
+
+       Almost all of the features listed here are worth using whether or not the computer is on AC or battery power. Most have negligible performance impact and are just not enabled by default because of commonly broken hardware/drivers. Reducing power usage means reducing heat, which can even lead to higher performance on a modern Intel or AMD CPU, thanks to dynamic overclocking.
+
+       PRINT POWER SETTINGS
+
+       This script prints power settings and a variety of other properties for USB and PCI devices. Note that root permissions are needed to see all settings.
+
+         #!/bin/bash
+
+         for i in $(find /sys/devices/ -name "bMaxPower")
+         do
+         	busdir=${i%/*}
+         	busnum=$(<$busdir/busnum)
+         	devnum=$(<$busdir/devnum)
+         	title=$(lsusb -s $busnum:$devnum)
+
+         	printf "\n\n+++ %s\n  -%s\n" "$title" "$busdir"
+
+         	for ff in $(find $busdir/power/ -type f ! -empty 2>/dev/null)
+         	do
+         		v=$(cat $ff 2>/dev/null|tr -d "\n")
+         		[[ ${#v} -gt 0 ]] && echo -e " ${ff##*/}=$v";
+         		v=;
+         	done | sort -g;
+         done;
+
+         printf "\n\n\n+++ %s\n" "Kernel Modules"
+         for mod in $(lspci -k | sed -n '/in use:/s,^.*: ,,p' | sort -u)
+         do
+         	echo "+ $mod";
+         	systool -v -m $mod 2> /dev/null | sed -n "/Parameters:/,/^$/p";
+         done
+
+       PROCESSORS WITH INTEL HARDWARE P-STATE SUPPORT
+
+       The available energy preferences of an Intel Hardware P-state (HWP) supported processor are default, performance, balance_performance, balance_power, power.
+
+       This can be validated by running
+
+         $ cat /sys/devices/system/cpu/cpufreq/policy*/energy_performance_available_preferences
+
+       To conserve more energy, you can edit the configuration by creating the following file:
+
+         /etc/tmpfiles.d/energy_performance_preference.conf
+
+         w /sys/devices/system/cpu/cpufreq/policy*/energy_performance_preference - - - - balance_power
+
+       See the x86_energy_perf_policy(8) man page for more details on energy-performance policy in Intel processors. Also see systemd-tmpfiles(8) and tmpfiles.d(5) man pages for temporary files/directories details.
+
+       AUDIO
+
+       Whether power saving is turned on by default depends on a given driver, e.g. it is on for HD Audio. Identify the module in use, then run
+
+         $ modinfo --field=parm module_name | column --separator=':' --table --table-columns-limit=2
+
+       and look for a kernel module parameter (like power_save) that adjusts or disables power-saving feature.
+
+       Note Power-saving feature might cause audible click noises (pops) and other issues. See the dedicated pages for the relevant solution:
+
+        * Advanced Linux Sound Architecture/Troubleshooting#Power saving
+        * PipeWire#Noticeable audio delay or audible pop/crack when starting playback
+        * PulseAudio/Troubleshooting#Pops when starting and stopping playback
+
+       BACKLIGHT
+
+       See Backlight.
+
+       BLUETOOTH
+
+       To disable Bluetooth completely, blacklist the btusb and bluetooth modules.
+
+       Alternatively, create the following udev rules:
+
+         /etc/udev/rules.d/50-bluetooth.rules
+
+         # disable bluetooth
+         SUBSYSTEM=="rfkill", ATTR{type}=="bluetooth", ATTR{state}="0"
+
+       To turn off Bluetooth only temporarily, use rfkill(8):
+
+         # rfkill block bluetooth
+
+       WEB CAMERA
+
+       If you will not use integrated web camera then blacklist the uvcvideo module.
+
+       KERNEL PARAMETERS
+
+       This section uses configurations in /etc/sysctl.d/, which is "a drop-in directory for kernel sysctl parameters." See The New Configuration Files and more specifically sysctl.d(5) for more information.
+
+       DISABLING NMI WATCHDOG
+
+       The NMI watchdog is a debugging feature to catch hardware hangs that cause a kernel panic. On some systems it can generate a lot of interrupts, causing a noticeable increase in power usage. To list these interrupts per CPU core since last boot, you can use:
+
+         $ grep NMI /proc/interrupts
+
+         NMI:     22     58     24     23     24     39     22     30   Non-maskable interrupts
+
+       To turn the hardlockup detector off, use:
+
+         /etc/sysctl.d/disable_watchdog.conf
+
+         kernel.nmi_watchdog = 0
+
+       or add nmi_watchdog=0 to the kernel command line.
+
+       Alternatively add nowatchdog to the kernel command line to disable both hard and soft lockup detectors. See [2]
+
+       WRITEBACK TIME
+
+       Increasing the virtual memory dirty writeback time helps to aggregate disk I/O together, thus reducing spanned disk writes, and increasing power saving. To set the value to 60 seconds (default is 5 seconds):
+
+         /etc/sysctl.d/dirty.conf
+
+         vm.dirty_writeback_centisecs = 6000
+
+       To do the same for journal commits on supported filesystems (e.g. ext4, btrfs...), use commit=60 as an option in fstab.
+
+       Note that this value is modified as a side effect of the Laptop Mode setting below. See also sysctl#Virtual memory for other parameters affecting I/O performance and power saving.
+
+       NETWORK INTERFACES
+
+       Wake-on-LAN can be a useful feature, but if you are not making use of it then it is simply draining extra power waiting for a magic packet while in suspend. You can adapt the Wake-on-LAN#udev rule to disable the feature for all ethernet interfaces. To enable powersaving with iw on all wireless interfaces:
+
+         /etc/udev/rules.d/81-wifi-powersave.rules
+
+         ACTION=="add", SUBSYSTEM=="net", KERNEL=="wl*", RUN+="/usr/bin/iw dev $name set power_save on"
+
+       The name of the configuration file is important. With the use of persistent device names in systemd, the above network rule, named lexicographically after 80-net-setup-link.rules, is applied after the device is renamed with a persistent name e.g. wlan0 renamed wlp3s0. Be aware that the RUN command is executed after all rules have been processed and must anyway use the persistent name, available in $name for the matched device.
+
+       INTEL WIRELESS CARDS (IWLWIFI)
+
+       Additional power saving functions of Intel wireless cards with iwlwifi driver can be enabled by passing the correct parameters to the kernel module. Making them persistent can be achieved by adding the lines below to the /etc/modprobe.d/iwlwifi.conf file:
+
+         options iwlwifi power_save=1
+
+       This option will probably increase your median latency:
+
+         options iwlwifi uapsd_disable=0
+
+       On kernels < 5.4 you can use this option, but it will probably decrease your maximum throughput:
+
+         options iwlwifi d0i3_disable=0
+
+       Depending on your wireless card one of these two options will apply.
+
+         options iwlmvm power_scheme=3
+
+         options iwldvm force_cam=0
+
+       You can check which one is relevant by checking which of these modules is running using
+
+         # lsmod | grep '^iwl.vm'
+
+       Keep in mind that these power saving options are experimental and can cause an unstable system.
+
+       IWD
+
+       If using iwd, power-saving can be disabled for all Wi-Fi devices with the following config file:
+
+         /etc/iwd/main.conf
+
+         [DriverQuirks]
+         PowerSaveDisable=*
+
+       You can also replace * with a specific driver name, see iwd.config(5) § SETTINGS.
+
+       NETWORKMANAGER
+
+       If using NetworkManager, power-saving can be disabled globally for every connection with a config file, for example:
+
+         /etc/NetworkManager/conf.d/powersave.conf
+
+         [connection]
+         wifi.powersave=2
+
+       Tip Specifically, this value can be set to any of the following:
+
+        * 0 — to use the globally configured value
+        * 1 — to do not touch the current configuration
+        * 2 — to globally disable power-saving
+        * 3 — to globally enable power-saving
+
+       BUS POWER MANAGEMENT
+
+       ACTIVE STATE POWER MANAGEMENT
+
+       From Wikipedia:
+
+       Active-state power management (ASPM) is a power management mechanism for PCI Express devices to garner power savings while otherwise in a fully active state. Predominantly, this is achieved through active-state link power management; i.e., the PCI Express serial link is powered down when there is no traffic across it. It is normally used on laptops and other mobile Internet devices to extend battery life.
+
+       At boot, the BIOS enables or disables ASPM based on hardware support. To check for support:
+
+         # lspci -vv | grep 'ASPM.*abled;'
+
+       Fetch available ASPM policies and the current system default using the following:
+
+         $ cat /sys/module/pcie_aspm/parameters/policy
+
+         [default] performance powersave powersupersave
+
+       ASPM might be disabled for the following reasons [3]:
+
+        * The BIOS determined that needed to happen.
+        * PCIE requires ASPM but L0s is optional so you might have L0s disabled and only L1 enabled.
+        * You have a buggy BIOS.
+        * You have no BIOS and your systems programmers did not address ASPM yet.
+       If you believe that your hardware has support for ASPM despite the above, it can be force-enabled for the kernel to handle with the pcie_aspm=force kernel parameter.
+
+       Warning
+
+        * Force-enabling ASPM on an unsupported system may lead to increased power consumption. Furthermore, it may cause system freezes or kernel panics, so make sure you have a way to undo the option if it is unsuitable.
+        * Forcing ASPM takes place in the kernel, and therefore it may still remain disabled in hardware and not work. To check whether this is the case, run dmesg | grep ASPM as root. Consult the Wiki article specific to your hardware for more information if possible.
+       As long as ASPM is supported and enabled, it is possible to select a desired policy for the current session. For example, switch to powersupersave for the current session by doing the following:
+
+         # echo powersupersave > /sys/module/pcie_aspm/parameters/policy
+
+       To configure a specific ASPM state to enable upon system boot (using powersupersave as an example), add pcie_aspm.policy=powersupersave as a kernel parameter.
+
+       PCI RUNTIME POWER MANAGEMENT
+
+         /etc/udev/rules.d/pci_pm.rules
+
+         SUBSYSTEM=="pci", ATTR{power/control}="auto"
+         SUBSYSTEM=="ata_port", KERNEL=="ata*", ATTR{device/power/control}="auto"
+
+       The rule above powers down unused devices.
+
+       Some devices will not wake up again. To allow runtime power management only for devices that are known to work, use simple matching against vendor and device IDs (use lspci -nn to get these values):
+
+         /etc/udev/rules.d/pci_pm.rules
+
+         # whitelist for pci autosuspend
+         SUBSYSTEM=="pci", ATTR{vendor}=="0x1234", ATTR{device}=="0x1234", ATTR{power/control}="auto"
+
+       Alternatively, to blacklist devices that are not working with PCI runtime power management and enable it for all other devices:
+
+         /etc/udev/rules.d/pci_pm.rules
+
+         # blacklist for pci runtime power management
+         SUBSYSTEM=="pci", ATTR{vendor}=="0x1234", ATTR{device}=="0x1234", ATTR{power/control}="on", GOTO="pci_pm_end"
+
+         SUBSYSTEM=="pci", ATTR{power/control}="auto"
+         LABEL="pci_pm_end"
+
+       USB AUTOSUSPEND
+
+       The Linux kernel can automatically suspend USB devices when they are not in use. This can sometimes save quite a bit of power, however some USB devices are not compatible with USB power saving and start to misbehave (common for USB mice/keyboards). udev rules based on whitelist or blacklist filtering can help to mitigate the problem.
+
+       The example is enabling autosuspend for all USB devices except for keyboards and mice:
+
+         /etc/udev/rules.d/50-usb_power_save.rules
+
+         ACTION=="add", SUBSYSTEM=="usb", ATTR{product}!="*Mouse", ATTR{product}!="*Keyboard", TEST=="power/control", ATTR{power/control}="auto"
+
+       To allow autosuspend only for devices that are known to work, use simple matching against vendor and product IDs (use lsusb to get these values):
+
+         /etc/udev/rules.d/50-usb_power_save.rules
+
+         # whitelist for usb autosuspend
+         ACTION=="add", SUBSYSTEM=="usb", TEST=="power/control", ATTR{idVendor}=="05c6", ATTR{idProduct}=="9205", ATTR{power/control}="auto"
+
+       Alternatively, to blacklist devices that are not working with USB autosuspend and enable it for all other devices:
+
+         /etc/udev/rules.d/50-usb_power_save.rules
+
+         # blacklist for usb autosuspend
+         ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="05c6", ATTR{idProduct}=="9205", GOTO="power_usb_rules_end"
+
+         ACTION=="add", SUBSYSTEM=="usb", TEST=="power/control", ATTR{power/control}="auto"
+         LABEL="power_usb_rules_end"
+
+       The default autosuspend idle delay time is controlled by the autosuspend parameter of the usbcore built-in kernel module. To set the delay to 5 seconds instead of the default 2 seconds, add the following kernel parameter for your boot loader.
+
+         usbcore.autosuspend=5
+
+       Similarly to power/control, the delay time can be fine-tuned per device by setting the power/autosuspend attribute. This means, alternatively, autosuspend can be disabled by setting power/autosuspend to -1 (i.e., never autosuspend):
+
+         /etc/udev/rules.d/50-usb_power_save.rules
+
+         ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="05c6", ATTR{idProduct}=="9205", ATTR{power/autosuspend}="-1"
+
+       See the Linux kernel documentation for more information on USB power management.
+
+       SATA ACTIVE LINK POWER MANAGEMENT
+
+       The current setting can be read from or written to /sys/class/scsi_host/host*/link_power_management_policy as follows:
+
+         $ grep . /sys/class/scsi_host/host*/link_power_management_policy
+         $ echo "med_power_with_dipm" >/sys/class/scsi_host/hostN/link_power_management_policy
+
+       Available ALPM settings
+
+         Setting | Description | Power saving
+         max_performance | current default | None
+         medium_power | - | ~1.0 Watts
+         med_power_with_dipm | recommended setting1 | ~1.5 Watts
+         min_power | WARNING: possible data loss2 | ~1.5 Watts
+        * Since Linux 4.15 there is a setting called med_power_with_dipm that matches the behaviour of Windows IRST driver settings and should not cause data loss with recent SSDs or HDDs. The power saving can be significant, ranging from 1.0 to 1.5 Watts (when idle). It has become the default setting for Intel based laptops in Linux 4.16 [4]. In Linux 6.11 it became the default setting [5].
+        * Warning The min_power SATA Active Link Power Management setting can lead to data loss on some devices. Do not enable this setting unless you have frequent backups.
+       You can configure link_power_management_policy settings persistently by adding a udev rules file, for example:
+
+         /etc/udev/rules.d/hd_power_save.rules
+
+         ACTION=="add", SUBSYSTEM=="scsi_host", KERNEL=="host*", ATTR{link_power_management_policy}="med_power_with_dipm"
+
+       Note
+
+        * This adds latency when accessing a drive that has been idle, so it is one of the few settings that may be worth toggling based on whether you are on AC power.
+        * Not all combinations of SATA host controllers and storage devices work well with the default med_power_with_dipm setting. For example:
+          * as of linux-6.8.1, Intel 7 Series Chipset controllers will experience timeouts and link degradation when accessing Crucial M550 SSDs (with firmware MU02).
+          * as of linux-6.9.6, AMD 600 Series Chipset SATA Controllers used with HL-DT-ST BDDVDRW GGC-H20L optical disk drives have the annoying effect that the ROM drive will noisily be re-initialized every few minutes.
+       In such cases, using the medium_power setting can fix the problem.
+
+       HARD DISK DRIVE
+
+       See hdparm#Power management configuration for drive parameters that can be set.
+
+       Power saving is not effective when too many programs are frequently writing to the disk. Tracking all programs, and how and when they write to disk is the way to limit disk usage. Use iotop to see which programs use the disk frequently. See Improving performance#Storage devices for other tips.
+
+       Small adjustments such as setting the noatime option can also help. If enough RAM is available, consider disabling or limiting swappiness as it has the possibility to limit a good number of disk writes.
+
+       For Seagate drives with PowerChoice technology, tricks setting APM via hdparm will not work due to the EPC (Extended Power Conditions) feature. Rather than setting APM, you can install openseachestAUR and fully disable EPC like so (replace X with actual drive letter):
+
+         # openSeaChest_PowerControl --scan
+         # openSeaChest_PowerControl -d /dev/sdX -i
+         # openSeaChest_PowerControl -d /dev/sdX --showEPCSettings
+         # openSeaChest_PowerControl -d /dev/sdX --EPCfeature disable
+         # openSeaChest_PowerControl -d /dev/sdX --showEPCSettings
+
+       Last invocation will give the following summary:
+
+         ==========================================================================================
+          openSeaChest_PowerControl - openSeaChest drive utilities - NVMe Enabled
+          Copyright (c) 2014-2023 Seagate Technology LLC and/or its Affiliates, All Rights Reserved
+          openSeaChest_PowerControl Version: 3.3.1-4_1_1 X86_64
+          Build Date: Jul  4 2023
+          Today: Tue Jul  4 17:49:36 2023        User: root
+         ==========================================================================================
+
+         /dev/sdX - ST1000NM0008-2F2100 - ZFA19JG2 - SN02 - ATA
+
+         ===EPC Settings===
+                 * = timer is enabled
+                 C column = Changeable
+                 S column = Savable
+                 All times are in 100 milliseconds
+
+         Name       Current Timer Default Timer Saved Timer   Recovery Time C S
+         Idle A      0            *10           *10           1             Y Y
+         Idle B      0            *1200         *1200         3             Y Y
+         Idle C      0             6000          6000         16            Y Y
+         Standby Z   0             9000          9000         46            Y Y
+
+       Zeroes in the first column confirm that parking and spindown were disabled successfully
+
+       TOOLS AND SCRIPTS
+
+       USING A SCRIPT AND A UDEV RULE
+
+       Since systemd users can suspend and hibernate through systemctl suspend or systemctl hibernate and handle acpi events with /etc/systemd/logind.conf, it might be interesting to remove pm-utils and acpid. There is just one thing systemd cannot do (as of systemd-204): power management depending on whether the system is running on AC or battery. To fill this gap, you can create a single udev rule that runs a script when the AC adapter is plugged and unplugged:
+
+         /etc/udev/rules.d/powersave.rules
+
+         SUBSYSTEM=="power_supply", ATTR{online}=="0", RUN+="/path/to/your/script true"
+         SUBSYSTEM=="power_supply", ATTR{online}=="1", RUN+="/path/to/your/script false"
+
+       Note You can use the same script that pm-powersave uses. You just have to make it executable and place it somewhere else (for example /usr/local/bin/).
+
+       Examples of powersave scripts:
+
+        * ftw, package: ftw-gitAUR
+        * powersave
+        * throttlectl, from throttlectlAUR
+       The above udev rule should work as expected, but if your power settings are not updated after a suspend or hibernate cycle, you should add a script in /usr/lib/systemd/system-sleep/ with the following contents:
+
+         /usr/lib/systemd/system-sleep/00powersave
+
+         #!/bin/sh
+
+         case $1 in
+             pre) /path/to/your/script false ;;
+             post)
+         	if cat /sys/class/power_supply/AC0/online | grep 0 > /dev/null 2>&1
+         	then
+             		/path/to/your/script true
+         	else
+             		/path/to/your/script false
+         	fi
+             ;;
+         esac
+         exit 0
+
+       Do not forget to make it executable!
+
+       Note Be aware that AC0 may be different for your laptop, change it if that is the case.
+
+       ALLOW USERS TO SHUTDOWN
+
+       BUTTON AND LID EVENTS
+
+       The suspend, poweroff and hibernate button presses and lid close events are handled by logind as described in #ACPI events.
+
+       USING SYSTEMD-LOGIND
+
+       If you are using polkit, users with non-remote session can issue power-related commands as long as the session is not broken.
+
+       To check if your session is active:
+
+         $ loginctl show-session $XDG_SESSION_ID --property=Active
+
+       The user can then use systemctl commands in the command line, or add them to menus:
+
+         $ systemctl poweroff
+         $ systemctl reboot
+
+       Other commands can be used as well, including systemctl suspend and systemctl hibernate. See the System Commands section in systemctl(1).
+
+       USING SUDO
+
+       Install sudo, and configure it to give the user root privileges. The user will then be able to use the sudo systemctl commands (e.g. sudo systemctl poweroff, sudo systemctl reboot, sudo systemctl suspend and sudo systemctl hibernate). See the System Commands section in systemctl(1)
+
+       USERS WITHOUT ROOT PRIVILEGES
+
+       If users should only be allowed to use shutdown commands, but not have other privileges, create the following drop-in file using the visudo command as root. Substitute user for your username and hostname for the machine's hostname.
+
+         /etc/sudoers.d/90-user_shutdown
+
+         user hostname =NOPASSWD: /usr/bin/systemctl poweroff,/usr/bin/systemctl halt,/usr/bin/systemctl reboot
+
+       Now your user can shutdown with sudo systemctl poweroff, and reboot with sudo systemctl reboot. Users wishing to power down a system can also use sudo systemctl halt. Use the NOPASSWD: tag only if you do not want to be prompted for your password.
+
+       SEE ALSO
+
+        * ThinkWiki:How to reduce power consumption
+        * How to get longer battery life on Linux
+
+ArchWiki manual                         bundled documentation

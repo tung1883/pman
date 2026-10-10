@@ -1,0 +1,38 @@
+SHELLCHECK.SC1133(1)             Sandbox manual             SHELLCHECK.SC1133(1)
+
+       NAME
+
+       Unexpected start of line. If breaking lines, |/||/&& should be at the end of the previous one. - dmesg
+
+       UNEXPECTED START OF LINE. IF BREAKING LINES, / /&& SHOULD BE AT THE EN
+
+       UNEXPECTED START OF LINE. IF BREAKING LINES, / /&& SHOULD BE AT THE EN
+
+       PROBLEMATIC CODE
+
+         dmesg
+           | grep "error"
+
+       CORRECT CODE
+
+         dmesg |
+           grep "error"
+
+       RATIONALE
+
+       ShellCheck has found a line that unexpectedly started with |, || or &&. This usually happens when a line is broken incorrectly.
+
+       When breaking around a |, || or &&, there are two options:
+
+        * Break the line after this token. dmesg is a complete command by itself, but dmesg | is not so the shell knows to continue on the next line.
+        * Use a \ at the end of the previous line to explicitly tell the shell to continue on the next.
+
+       EXCEPTIONS
+
+       In v0.7.2 and below, this warning triggered incorrectly when starting a line with &>. In these versions, you can either [[ignore]] the warning, or move the redirection after the command name.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,111 @@
+CSHARP.GUIDE-USING-VARIANCE-IN-INTERFACES-FOR-GENERIC-COLLECTIONS(1) Sandbox manual CSHARP.GUIDE-USING-VARIANCE-IN-INTERFACES-FOR-GENERIC-COLLECTIONS(1)
+
+       NAME
+
+       Using Variance in Interfaces for Generic Collections (C#) - Learn how to use covariant and contravariant interfaces for generic collections. See examples of converting and comparing generic collection
+
+       USING VARIANCE IN INTERFACES FOR GENERIC COLLECTIONS (C#)
+
+       A covariant interface allows its methods to return more derived types than those specified in the interface. A contravariant interface allows its methods to accept parameters of less derived types than those specified in the interface.
+
+       In .NET Framework 4, several existing interfaces became covariant and contravariant. These include IEnumerable1 and IComparable1. This enables you to reuse methods that operate with generic collections of base types for collections of derived types.
+
+       For a list of variant interfaces in .NET, see Variance in Generic Interfaces (C#).
+
+       CONVERTING GENERIC COLLECTIONS
+
+       The following example illustrates the benefits of covariance support in the IEnumerable1 interface. The PrintFullName method accepts a collection of the IEnumerable type as a parameter. However, you can reuse it for a collection of the IEnumerable type because Employee inherits Person.
+
+         // Simple hierarchy of classes.
+         public class Person
+         {
+             public string FirstName { get; set; }
+             public string LastName { get; set; }
+         }
+
+         public class Employee : Person { }
+
+         class Program
+         {
+             // The method has a parameter of the IEnumerable<Person> type.
+             public static void PrintFullName(IEnumerable<Person> persons)
+             {
+                 foreach (Person person in persons)
+                 {
+                     Console.WriteLine("Name: {0} {1}",
+                     person.FirstName, person.LastName);
+                 }
+             }
+
+             public static void Test()
+             {
+                 IEnumerable<Employee> employees = new List<Employee>();
+
+                 // You can pass IEnumerable<Employee>,
+                 // although the method expects IEnumerable<Person>.
+
+                 PrintFullName(employees);
+
+             }
+         }
+
+       COMPARING GENERIC COLLECTIONS
+
+       The following example illustrates the benefits of contravariance support in the IEqualityComparer1 interface. The PersonComparer class implements the IEqualityComparer interface. However, you can reuse this class to compare a sequence of objects of the Employee type because Employee inherits Person.
+
+         // Simple hierarchy of classes.
+         public class Person
+         {
+             public string FirstName { get; set; }
+             public string LastName { get; set; }
+         }
+
+         public class Employee : Person { }
+
+         // The custom comparer for the Person type
+         // with standard implementations of Equals()
+         // and GetHashCode() methods.
+         class PersonComparer : IEqualityComparer<Person>
+         {
+             public bool Equals(Person x, Person y)
+             {
+                 if (Object.ReferenceEquals(x, y)) return true;
+                 if (Object.ReferenceEquals(x, null) ||
+                     Object.ReferenceEquals(y, null))
+                     return false;
+                 return x.FirstName == y.FirstName && x.LastName == y.LastName;
+             }
+             public int GetHashCode(Person person)
+             {
+                 if (Object.ReferenceEquals(person, null)) return 0;
+                 return HashCode.Combine(person.FirstName, person.LastName);
+             }
+         }
+
+         class Program
+         {
+
+             public static void Test()
+             {
+                 List<Employee> employees = new List<Employee> {
+                        new Employee() {FirstName = "Michael", LastName = "Alexander"},
+                        new Employee() {FirstName = "Jeff", LastName = "Price"}
+                     };
+
+                 // You can pass PersonComparer,
+                 // which implements IEqualityComparer<Person>,
+                 // although the method expects IEqualityComparer<Employee>.
+
+                 IEnumerable<Employee> noduplicates =
+                     employees.Distinct<Employee>(new PersonComparer());
+
+                 foreach (var employee in noduplicates)
+                     Console.WriteLine(employee.FirstName + " " + employee.LastName);
+             }
+         }
+
+       SEE ALSO
+
+        * Variance in Generic Interfaces (C#)
+
+C# manual                               from the official documentation

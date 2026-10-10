@@ -1,0 +1,106 @@
+CSHARP.INTERFACE(1)              Sandbox manual              CSHARP.INTERFACE(1)
+
+       NAME
+
+       :::no-loc text="interface"::: (C# Reference) - Use the `interface` keyword to define contracts that any implementing type must support. Interfaces provide the means to create common behav
+
+       NO-LOC TEXT INTERFACE ::: (C# REFERENCE)
+
+       An interface defines a contract. Any class, record, or struct that implements that contract must provide an implementation of the members defined in the interface.
+
+       An interface can define a default implementation for a member. It can also define static members to provide a single implementation for common functionality.
+
+       An interface can define static abstract or static virtual members to declare that an implementing type must provide the declared members. Typically, static virtual methods declare that an implementation must define a set of overloaded operators.
+
+       In the following example, class ImplementationClass must implement a method named SampleMethod that has no parameters and returns void.
+
+       For more information and examples, see Interfaces.
+
+       ACCESS MODIFIERS
+
+       An interface can be a member of a namespace or a class. You can declare a top-level interface, one declared in a namespace but not nested inside another type, as public or internal. The default is internal. You can declare nested interface declarations, declared inside another type, by using any access modifier.
+
+       Interface members without an implementation (abstract members) are implicitly public and can't have any other access modifier. Interface members with a default implementation are private by default if you don't specify an access modifier, but you can declare any access modifier (public, private, protected, or internal).
+
+       INTERFACE MEMBERS
+
+       An interface declaration can contain the following members:
+
+        * Methods.
+        * Properties.
+        * Indexers.
+        * Events.
+        * Constants.
+        * Operators.
+        * A static constructor.
+        * Nested types.
+        * Static fields, methods, properties, indexers, and events.
+        * Explicit access modifiers (the default access for abstract methods is public).
+
+       DEFAULT INTERFACE MEMBERS
+
+       Member declarations typically don't contain a body. However, an interface member can declare a body. Member bodies in an interface are the default implementation. By using members with bodies, the interface can provide a default implementation for classes and structs that don't provide an overriding implementation.
+
+       > If you add default interfaces members, any ref struct that implements the interface must explicitly declare that member.
+
+       STATIC ABSTRACT AND VIRTUAL MEMBERS
+
+       An interface can declare static abstract and static virtual members for all member types except fields. By declaring these members, an interface can require that implementing types define operators or other static members. This feature enables generic algorithms to specify number-like behavior. You can see examples in the numeric types in the .NET runtime, such as INumber1. These interfaces define common mathematical operators implemented by many numeric types. The compiler must resolve calls to static virtual and static abstract methods at compile time. The static virtual and static abstract methods declared in interfaces don't have a runtime dispatch mechanism analogous to virtual or abstract methods declared in classes. Instead, the compiler uses type information available at compile time. Therefore, static virtual methods are almost exclusively declared in generic interfaces. Furthermore, most interfaces that declare static virtual or static abstract methods declare that one of the type parameters must implement the declared interface. For example, the INumber interface declares that T must implement INumber. The compiler uses the type argument to resolve calls to the methods and operators declared in the interface declaration. For example, the int type implements INumber. When the type parameter T denotes the type argument int, the static members declared on int are invoked. Alternatively, when double is the type argument, the static members declared on the double type are invoked.
+
+       > Method dispatch for static abstract and static virtual methods declared in interfaces is resolved by using the compile-time type of an expression. If the runtime type of an expression is derived from a different compile-time type, the static methods on the base (compile-time) type are called.
+       You can try this feature by working with the tutorial on static abstract members in interfaces.
+
+       INTERFACE INHERITANCE
+
+       Interfaces can't contain instance state. While static fields are now permitted, instance fields aren't permitted in interfaces. Instance auto-properties aren't supported in interfaces, as they would implicitly declare a hidden field. This rule has a subtle effect on property declarations. In an interface declaration, the following code doesn't declare an automatically implemented property as it does in a class or struct. Instead, it declares a property that doesn't have a default implementation but must be implemented in any type that implements the interface:
+
+         public interface INamed
+         {
+           public string Name {get; set;}
+         }
+
+       An interface can inherit from one or more base interfaces. When an interface inherits from another interface, a type implementing the derived interface must implement all the members in the base interfaces in addition to those members declared in the derived interface, as shown in the following code:
+
+         public interface I1
+         {
+             void M1();
+         }
+
+         public interface I2 : I1
+         {
+             void M2();
+         }
+
+         public class C : I2
+         {
+             // implements I1.M1
+             public void M1() { }
+             // implements I2.M2
+             public void M2() { }
+         }
+
+       When an interface overrides a method implemented in a base interface, it must use the explicit interface implementation syntax.
+
+       When a base type list contains a base class and interfaces, the base class must come first in the list.
+
+       A class that implements an interface can explicitly implement members of that interface. An explicitly implemented member can't be accessed through a class instance, but only through an instance of the interface. In addition, default interface members can only be accessed through an instance of the interface.
+
+       For more information about explicit interface implementation, see Explicit Interface Implementation.
+
+       EXAMPLE INTERFACE IMPLEMENTATION
+
+       The following example demonstrates interface implementation. In this example, the interface contains the property declaration and the class contains the implementation. Any instance of a class that implements IPoint has integer properties x and y.
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information, see the [Interfaces] section of the [C# language specification], including [Interface operators] and [Interface static constructors].
+
+       SEE ALSO
+
+        * C# Keywords
+        * Reference Types
+        * Interfaces
+        * Using Properties
+        * Using Indexers
+
+C# manual                               from the official documentation

@@ -1,0 +1,92 @@
+WEBAPI.HTMLSELECTELEMENT-SHOWPICKER(1) Sandbox manual WEBAPI.HTMLSELECTELEMENT-SHOWPICKER(1)
+
+       NAME
+
+       HTMLSelectElement: showPicker() method - The HTMLSelectElement.showPicker() method displays the browser picker for a select element.
+
+       HTMLSELECTELEMENT: SHOWPICKER() METHOD
+
+       The HTMLSelectElement.showPicker() method displays the browser picker for a select element.
+
+       This is the same picker that would normally be displayed when the element is selected, but can be triggered from a button press or other user interaction.
+
+       SYNTAX
+
+         showPicker()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the element is not mutable, meaning that the user cannot modify it and/or that it cannot be automatically prefilled.
+        * NotAllowedError DOMException
+          * : Thrown if not explicitly triggered by a user action such as a touch gesture or mouse click (the picker requires Transient activation).
+        * NotSupportedError DOMException
+          * : Thrown if the element associated with the picker is not being rendered.
+        * SecurityError DOMException
+          * : Thrown if called in a cross-origin iframe.
+
+       SECURITY CONSIDERATIONS
+
+       Transient user activation is required. The user has to interact with the page or a UI element in order for this feature to work.
+
+       The method is only allowed to be called in same-origin iframes; an exception is thrown if this is called in a cross-origin iframe.
+
+       EXAMPLES
+
+       FEATURE DETECTION
+
+       The code below shows how to check if showPicker() is supported:
+
+         if ("showPicker" in HTMLSelectElement.prototype) {
+           // showPicker() is supported.
+         }
+
+       LAUNCHING THE PICKER
+
+       This example shows how to use a button to launch the picker for a element with two options.
+
+       HTML
+
+         <p>
+           <select>
+             <option value="1">One</option>
+             <option value="2">Two</option>
+           </select>
+           <button type="button">Show Picker</button>
+         </p>
+
+       JAVASCRIPT
+
+       The code gets the and adds a listener for its click event. The event handler gets the element and calls showPicker() on it.
+
+         const button = document.querySelector("button");
+         button.addEventListener("click", (event) => {
+           const select = event.srcElement.previousElementSibling;
+           try {
+             select.showPicker();
+           } catch (error) {
+             window.alert(error);
+           }
+         });
+
+       
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * 
+        * HTMLSelectElement
+        * HTMLInputElement.showPicker()
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,120 @@
+WEBAPI.LARGESTCONTENTFULPAINT(1) Sandbox manual WEBAPI.LARGESTCONTENTFULPAINT(1)
+
+       NAME
+
+       LargestContentfulPaint - The LargestContentfulPaint interface provides timing information about the largest image or text paint before user input on a web page.
+
+       LARGESTCONTENTFULPAINT
+
+       The LargestContentfulPaint interface provides timing information about the largest image or text paint before user input on a web page.
+
+       INSTANCE PROPERTIES
+
+       This interface directly defines the following properties:
+
+        * LargestContentfulPaint.element (read-only)
+          * : The element that is the current largest contentful paint.
+        * LargestContentfulPaint.renderTime (read-only)
+          * : The time the element was rendered to the screen. May be a coarsened value if the element is a cross-origin image loaded without the Timing-Allow-Origin header.
+        * LargestContentfulPaint.loadTime (read-only)
+          * : The time the element was loaded.
+        * LargestContentfulPaint.size (read-only)
+          * : The intrinsic size of the element returned as the area (width \* height).
+        * LargestContentfulPaint.id (read-only)
+          * : The id of the element. This property returns an empty string when there is no id.
+        * LargestContentfulPaint.paintTime (read-only)
+          * : Returns the timestamp when the rendering phase ended and the paint phase started.
+        * LargestContentfulPaint.presentationTime (read-only)
+          * : Returns the timestamp when the painted pixels were actually drawn on the screen.
+        * LargestContentfulPaint.url (read-only)
+          * : If the element is an image, the request url of the image.
+       It also extends the following PerformanceEntry properties, qualifying and constraining them as described:
+
+        * PerformanceEntry.entryType (read-only)
+          * : Returns "largest-contentful-paint".
+        * PerformanceEntry.name (read-only)
+          * : Always returns an empty string.
+        * PerformanceEntry.startTime (read-only)
+          * : Returns the value of this entry's renderTime.
+        * PerformanceEntry.duration (read-only)
+          * : Returns 0, as duration is not applicable to this interface.
+
+       INSTANCE METHODS
+
+        * LargestContentfulPaint.toJSON()
+          * : Returns a JSON-serializable plain object representing the LargestContentfulPaint object. Automatically called by JSON.stringify().
+
+       DESCRIPTION
+
+       The key moment this API provides is the Largest Contentful Paint (LCP) metric. It provides the render time of the largest image or text block visible within the viewport, recorded from when the page first begins to load. The following elements are considered contentful when determining the LCP:
+
+        * elements.
+        * elements inside an SVG.
+        * The poster images of elements.
+        * Elements with a background-image.
+        * Groups of text nodes, such as .
+       To measure render times of other elements, use the PerformanceElementTiming API.
+
+       Additional key paint moments are provided by the PerformancePaintTiming API:
+
+        * First Paint (FP): Time when anything is rendered. Note that the marking of the first paint is optional, not all user agents report it.
+        * First Contentful Paint (FCP): Time when the first bit of DOM text or image content is rendered.
+       LargestContentfulPaint inherits from PerformanceEntry.
+
+       To get an accurate measurement of render time for cross-origin resources, set the Timing-Allow-Origin header.
+
+       See Cross-origin image render time and Use startTime over renderTime for more details.
+
+       EXAMPLES
+
+       OBSERVING THE LARGEST CONTENTFUL PAINT
+
+       In the following example, a PerformanceObserver is registered to get the largest contentful paint while the page is loading. The buffered flag is used to access data from before observer creation.
+
+       The LCP API analyzes all content it finds (including content that is removed from the DOM). When new largest content is found, it creates a new entry. It stops searching for larger content when scroll or input events occur, since these events likely introduce new content on the website. Thus the LCP is the last performance entry reported by the observer.
+
+         const observer = new PerformanceObserver((list) => {
+           const entries = list.getEntries();
+           const lastEntry = entries[entries.length - 1]; // Use the latest LCP candidate
+           console.log("LCP:", lastEntry.startTime);
+           console.log(lastEntry);
+         });
+         observer.observe({ type: "largest-contentful-paint", buffered: true });
+
+       OBSERVING SEPARATE PAINT AND PRESENTATION TIMINGS
+
+       The paintTime and presentationTime properties enable you to retrieve specific timings for the paint phase starting and the painted pixels being drawn on the screen. The paintTime is broadly interoperable, whereas the presentationTime is implementation-dependent.
+
+       This example builds on the earlier observer example, showing how to check for paintTime and presentationTime support and retrieve those values if they are available. In non-supporting browsers, the code retrieves the renderTime or loadTime, depending on what is supported.
+
+         const observer = new PerformanceObserver((list) => {
+           const entries = list.getEntries();
+           const lastEntry = entries[entries.length - 1]; // Use the latest LCP candidate
+           if (lastEntry.presentationTime) {
+             console.log(
+               "LCP paintTime:",
+               lastEntry.paintTime,
+               "LCP presentationTime:",
+               lastEntry.presentationTime,
+             );
+           } else if (lastEntry.paintTime) {
+             console.log("LCP paintTime:", lastEntry.paintTime);
+           } else if (lastEntry.renderTime) {
+             console.log("LCP renderTime:", lastEntry.renderTime);
+           } else {
+             console.log("LCP loadTime:", lastEntry.loadTime);
+           }
+         });
+         observer.observe({ type: "largest-contentful-paint", buffered: true });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Largest Contentful Paint
+        * First Contentful Paint
+        * First Paint
+
+Web APIs manual                         from the official documentation

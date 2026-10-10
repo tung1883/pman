@@ -1,0 +1,91 @@
+WEBAPI.EXTENDABLEEVENT(1)        Sandbox manual        WEBAPI.EXTENDABLEEVENT(1)
+
+       NAME
+
+       ExtendableEvent - service
+
+       EXTENDABLEEVENT
+
+       service
+
+       The ExtendableEvent interface extends the lifetime of the install and activate events dispatched on the global scope as part of the service worker lifecycle. This ensures that any functional events (like FetchEvent) are not dispatched until it upgrades database schemas and deletes the outdated cache entries.
+
+       If waitUntil() is called outside of the ExtendableEvent handler, the browser should throw an InvalidStateError; note also that multiple calls will stack up, and the resulting promises will be added to the list of extend lifetime promises.
+
+       This interface inherits from the Event interface.
+
+       > This interface is only available when the global scope is a ServiceWorkerGlobalScope. It is not available when it is a Window, or the scope of another kind of worker.
+
+       CONSTRUCTOR
+
+        * ExtendableEvent()
+          * : Creates a new ExtendableEvent object.
+
+       INSTANCE PROPERTIES
+
+       _Doesn't implement any specific properties, but inherits properties from its parent, Event._
+
+       INSTANCE METHODS
+
+       _Inherits methods from its parent, Event_.
+
+        * ExtendableEvent.waitUntil()
+          * : Extends the lifetime of the event. It is intended to be called in the install event handler for the installing worker and on the activate event handler for the active worker.
+
+       EXAMPLES
+
+       This code snippet is from the service worker prefetch sample (see prefetch example live.) The code calls ExtendableEvent.waitUntil() in oninstall, delaying treating the ServiceWorkerRegistration.installing worker as installed until the passed promise resolves successfully. The promise resolves when all resources have been fetched and cached, or else when any exception occurs.
+
+       The code snippet also shows a best practice for versioning caches used by the service worker. Though there's only one cache in this example, the same approach can be used for multiple caches. It maps a shorthand identifier for a cache to a specific, versioned cache name.
+
+       > In Chrome, logging statements are visible via the "Inspect" interface for the relevant service worker accessed via chrome://serviceworker-internals.
+
+         const CACHE_VERSION = 1;
+         const CURRENT_CACHES = {
+           prefetch: `prefetch-cache-v${CACHE_VERSION}`,
+         };
+
+         self.addEventListener("install", (event) => {
+           const urlsToPrefetch = [
+             "./static/pre_fetched.txt",
+             "./static/pre_fetched.html",
+             "https://www.chromium.org/_/rsrc/1302286216006/config/customLogo.gif",
+           ];
+
+           console.log(
+             "Handling install event. Resources to pre-fetch:",
+             urlsToPrefetch,
+           );
+
+           event.waitUntil(
+             caches
+               .open(CURRENT_CACHES["prefetch"])
+               .then((cache) =>
+                 cache.addAll(
+                   urlsToPrefetch.map(
+                     (urlToPrefetch) => new Request(urlToPrefetch, { mode: "no-cors" }),
+                   ),
+                 ),
+               )
+               .then(() => {
+                 console.log("All resources have been fetched and cached.");
+               })
+               .catch((error) => {
+                 console.error("Pre-fetching failed:", error);
+               }),
+           );
+         });
+
+       > When fetching resources, it's very important to use {mode: 'no-cors'} if there is any chance that the resources are served off of a server that doesn't support CORS. In this example, www.chromium.org doesn't support CORS.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Service workers basic code example
+        * Using web workers
+
+Web APIs manual                         from the official documentation

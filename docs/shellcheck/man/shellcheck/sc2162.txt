@@ -1,0 +1,47 @@
+SHELLCHECK.SC2162(1)             Sandbox manual             SHELLCHECK.SC2162(1)
+
+       NAME
+
+       read without -r will mangle backslashes. - echo "Enter name:"
+
+       READ WITHOUT -R WILL MANGLE BACKSLASHES
+
+       READ WITHOUT -R WILL MANGLE BACKSLASHES
+
+       PROBLEMATIC CODE
+
+         echo "Enter name:"
+         read name
+
+       CORRECT CODE
+
+         echo "Enter name:"
+         read -r name
+
+       or
+
+         echo "Enter name:"
+         IFS= read -r name
+
+       RATIONALE
+
+       By default, read will interpret backslashes before spaces and line feeds (i.e. you can use backslashes in your string as an escape character). This is rarely expected or desired.
+
+       Normally you just want to read data _including backslashes_ which are part of the input string and have no special escape meaning, which is what read -r does. You should always use -r unless you have a good reason not to:
+
+       > -r
+       > If this option is given, backslash does not act as an escape character.
+
+       TRIMMING WHITESPACE
+
+       Even with read -r, leading and trailing whitespace will be stripped from the input. Although this may sometimes be desirable or harmless it is often surprising and difficult to catch. Clearing the IFS disables this behavior, so IFS= read -r is generally safest.
+
+       SEE ALSO
+
+        * Bash FAQ 001
+
+       EXCEPTIONS
+
+       If you want backslashes to affect field splitting and line terminators instead of being read, you can disable this message with a [[directive]].
+
+ShellCheck manual                       from the official documentation

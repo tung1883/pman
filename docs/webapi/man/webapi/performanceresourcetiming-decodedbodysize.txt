@@ -1,0 +1,65 @@
+WEBAPI.PERFORMANCERESOURCETIMING-DECODEDBODYSIZE(1) Sandbox manual WEBAPI.PERFORMANCERESOURCETIMING-DECODEDBODYSIZE(1)
+
+       NAME
+
+       PerformanceResourceTiming: decodedBodySize property - The decodedBodySize read-only property returns the size (in octets) received from the fetch (HTTP or cache) of the message body after removi
+
+       PERFORMANCERESOURCETIMING: DECODEDBODYSIZE PROPERTY
+
+       The decodedBodySize read-only property returns the size (in octets) received from the fetch (HTTP or cache) of the message body after removing any applied content encoding (like gzip or Brotli). If the resource is retrieved from an application cache or local resources, it returns the size of the payload after removing any applied content encoding.
+
+       VALUE
+
+       The decodedBodySize property can have the following values:
+
+        * A number representing the size (in octets) received from the fetch (HTTP or cache) of the message body, after removing any applied content encoding.
+        * 0 if the resource is a cross-origin request and no Timing-Allow-Origin HTTP response header is used.
+
+       EXAMPLES
+
+       CHECKING IF CONTENT WAS COMPRESSED
+
+       If the decodedBodySize and encodedBodySize properties are non-null and differ, the content was compressed (for example, gzip or Brotli).
+
+       Example using a PerformanceObserver, which notifies of new resource performance entries as they are recorded in the browser's performance timeline. Use the buffered option to access entries from before the observer creation.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             const uncompressed =
+               entry.decodedBodySize && entry.decodedBodySize === entry.encodedBodySize;
+             if (uncompressed) {
+               console.log(`${entry.name} was not compressed!`);
+             }
+           });
+         });
+
+         observer.observe({ type: "resource", buffered: true });
+
+       Example using Performance.getEntriesByType(), which only shows resource performance entries present in the browser's performance timeline at the time you call this method:
+
+         const resources = performance.getEntriesByType("resource");
+         resources.forEach((entry) => {
+           const uncompressed =
+             entry.decodedBodySize && entry.decodedBodySize === entry.encodedBodySize;
+           if (uncompressed) {
+             console.log(`${entry.name} was not compressed!`);
+           }
+         });
+
+       CROSS-ORIGIN CONTENT SIZE INFORMATION
+
+       If the value of the decodedBodySize property is 0, the resource might be a cross-origin request. To expose cross-origin content size information, the Timing-Allow-Origin HTTP response header needs to be set.
+
+       For example, to allow https://developer.mozilla.org to see content sizes, the cross-origin resource should send:
+
+         Timing-Allow-Origin: https://developer.mozilla.org
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Timing-Allow-Origin
+
+Web APIs manual                         from the official documentation

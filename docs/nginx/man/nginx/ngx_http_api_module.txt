@@ -1,0 +1,2616 @@
+NGINX.NGX_HTTP_API_MODULE(1)     Sandbox manual     NGINX.NGX_HTTP_API_MODULE(1)
+
+       MODULE NGX_HTTP_API_MODULE
+
+         Example Configuration Directives  api  status_zone Compatibility Endpoints  /  /nginx  /processes  /connections  /slabs/  /slabs/{slabZoneName}  /http/  /http/requests  /http/server_zones/  /http/server_zones/{httpServerZoneName}  /http/location_zones/  /http/location_zones/{httpLocationZoneName}  /http/caches/  /http/caches/{httpCacheZoneName}  /http/limit_conns/  /http/limit_conns/{httpLimitConnZoneName}  /http/limit_reqs/  /http/limit_reqs/{httpLimitReqZoneName}  /http/upstreams/  /http/upstreams/{httpUpstreamName}/  /http/upstreams/{httpUpstreamName}/servers/  /http/upstreams/{httpUpstreamName}/servers/{httpUpstreamServerId}  /http/keyvals/  /http/keyvals/{httpKeyvalZoneName}  /stream/  /stream/server_zones/  /stream/server_zones/{streamServerZoneName}  /stream/limit_conns/  /stream/limit_conns/{streamLimitConnZoneName}  /stream/upstreams/  /stream/upstreams/{streamUpstreamName}/  /stream/upstreams/{streamUpstreamName}/servers/  /stream/upstreams/{streamUpstreamName}/servers/{streamUpstreamServerId}  /stream/keyvals/  /stream/keyvals/{streamKeyvalZoneName}  /stream/zone_sync/  /resolvers/  /resolvers/{resolverZoneName}  /ssl  /license  /workers/  /workers/{workerId} Response Objects
+       The ngx_http_api_module module (1.13.3) provides REST API for accessing various status information, configuring upstream server groups on-the-fly, and managing key-value pairs without the need of reconfiguring nginx.
+
+       > The module supersedes the ngx_http_status_module and ngx_http_upstream_conf_module modules.
+
+       When using the PATCH or POST methods, make sure that the payload does not exceed the buffer size for reading the client request body, otherwise, the 413 (Request Entity Too Large) error may be returned.
+
+       > This module is available as part of our commercial subscription.
+
+       EXAMPLE CONFIGURATION
+
+         http {
+             upstream backend {
+                 zone http_backend 64k;
+
+                 server backend1.example.com weight=5;
+                 server backend2.example.com;
+             }
+
+             proxy_cache_path /data/nginx/cache_backend keys_zone=cache_backend:10m;
+
+             server {
+                 server_name backend.example.com;
+
+                 location / {
+                     proxy_pass  http://backend;
+                     proxy_cache cache_backend;
+
+                     health_check;
+                 }
+
+                 status_zone server_backend;
+             }
+
+             keyval_zone zone=one:32k state=one.keyval;
+             keyval $arg_text $text zone=one;
+
+             server {
+                 listen 127.0.0.1;
+
+                 location /api {
+                     api write=on;
+                     allow 127.0.0.1;
+                     deny all;
+                 }
+             }
+         }
+
+         stream {
+             upstream backend {
+                 zone stream_backend 64k;
+
+                 server backend1.example.com:12345 weight=5;
+                 server backend2.example.com:12345;
+             }
+
+             server {
+                 listen      127.0.0.1:12345;
+                 proxy_pass  backend;
+                 status_zone server_backend;
+                 health_check;
+             }
+         }
+
+       All API requests include a supported API version in the URI. Examples of API requests with this configuration:
+
+         http://127.0.0.1/api/10/
+         http://127.0.0.1/api/10/nginx
+         http://127.0.0.1/api/10/connections
+         http://127.0.0.1/api/10/workers
+         http://127.0.0.1/api/10/http/requests
+         http://127.0.0.1/api/10/http/server_zones/server_backend
+         http://127.0.0.1/api/10/http/caches/cache_backend
+         http://127.0.0.1/api/10/http/upstreams/backend
+         http://127.0.0.1/api/10/http/upstreams/backend/servers/
+         http://127.0.0.1/api/10/http/upstreams/backend/servers/1
+         http://127.0.0.1/api/10/http/keyvals/one?key=arg1
+         http://127.0.0.1/api/10/stream/
+         http://127.0.0.1/api/10/stream/server_zones/server_backend
+         http://127.0.0.1/api/10/stream/upstreams/
+         http://127.0.0.1/api/10/stream/upstreams/backend
+         http://127.0.0.1/api/10/stream/upstreams/backend/servers/1
+
+       DIRECTIVES
+
+       API
+
+         Syntax: | api [write=on|off];
+         Default: | —
+         Context: | location
+       Turns on the REST API interface in the surrounding location. Access to this location should be limited.
+
+       The write parameter determines whether the API is read-only or read-write. By default, the API is read-only.
+
+       All API requests should contain a supported API version in the URI. If the request URI equals the location prefix, the list of supported API versions is returned. The current API version is “10”.
+
+       The optional “fields” argument in the request line specifies which fields of the requested objects will be output:
+
+         http://127.0.0.1/api/10/nginx?fields=version,build
+
+       STATUS_ZONE
+
+         Syntax: | status_zone zone;
+         Default: | —
+         Context: | server, location, if in location
+       This directive appeared in version 1.13.12.
+
+       Enables collection of virtual http or stream server status information in the specified zone. Several servers may share the same zone.
+
+       Starting from 1.17.0, status information can be collected per location. The special value off disables statistics collection in nested location blocks. Note that the statistics is collected in the context of a location where processing ends. It may be different from the original location, if an internal redirect happens during request processing.
+
+       COMPATIBILITY
+
+        * Deferred autorenewal of JWT license tokens: the “PUT” method for adding a JWT license token, and the “pending_renewal” field were added to the /license data in version 10.
+        * The “response_time_hist” data for each HTTP upstream were added in version 9 (1.29.8).
+        * The “uuid” field was added to the /license data in version 9 (1.29.0).
+        * The /license data were added in version 9 (1.27.2).
+        * The /workers/ data were added in version 9.
+        * Detailed failure counters were added to SSL statistics in version 8 (1.23.2).
+        * The ssl data for each HTTP upstream, server zone, and stream upstream, server zone, were added in version 8 (1.21.6).
+        * The codes data in responses for each HTTP upstream, server zone, and location zone were added in version 7.
+        * The /stream/limit_conns/ data were added in version 6.
+        * The /http/limit_conns/ data were added in version 6.
+        * The /http/limit_reqs/ data were added in version 6.
+        * The “expire” parameter of a key-value pair can be set or changed since version 5.
+        * The /resolvers/ data were added in version 5.
+        * The /http/location_zones/ data were added in version 5.
+        * The path and method fields of nginx error object were removed in version 4. These fields continue to exist in earlier api versions, but show an empty value.
+        * The /stream/zone_sync/ data were added in version 3.
+        * The drain parameter was added in version 2.
+        * The /stream/keyvals/ data were added in version 2.
+
+       ENDPOINTS
+
+         /
+       Supported methods:
+
+        * GET - Return list of root endpoints  Returns a list of root endpoints.
+       Possible responses:
+
+          * 200 - Success, returns an array of strings
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /nginx
+       Supported methods:
+
+        * GET - Return status of nginx running instance  Returns nginx version, build name, address, number of configuration reloads, IDs of master and worker processes.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of nginx running instance will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns nginx
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /processes
+       Supported methods:
+
+        * GET - Return nginx processes status  Returns the number of abnormally terminated and respawned child processes.
+       Possible responses:
+
+          * 200 - Success, returns Processes
+          * 404 - Unknown version (UnknownVersion), returns Error
+        * DELETE - Reset nginx processes statistics  Resets counters of abnormally terminated and respawned child processes.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /connections
+       Supported methods:
+
+        * GET - Return client connections statistics  Returns statistics of client connections.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the connections statistics will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns Connections
+          * 404 - Unknown version (UnknownVersion), returns Error
+        * DELETE - Reset client connections statistics  Resets statistics of accepted and dropped client connections.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /slabs/
+       Supported methods:
+
+        * GET - Return status of all slabs  Returns status of slabs for each shared memory zone with slab allocator.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of slab zones will be output. If the “fields” value is empty, then only zone names will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "Shared memory zone with slab allocator" objects for all slabs
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /slabs/{slabZoneName}
+       Parameters common for all methods:
+
+         slabZoneName (string, required)
+       The name of the shared memory zone with slab allocator.
+
+       Supported methods:
+
+        * GET - Return status of a slab  Returns status of slabs for a particular shared memory zone with slab allocator.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the slab zone will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns Shared memory zone with slab allocator
+          * 404 - Slab not found (SlabNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset slab statistics  Resets the “reqs” and “fails” metrics for each memory slot.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Slab not found (SlabNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /http/
+       Supported methods:
+
+        * GET - Return list of HTTP-related endpoints  Returns a list of first level HTTP endpoints.
+       Possible responses:
+
+          * 200 - Success, returns an array of strings
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /http/requests
+       Supported methods:
+
+        * GET - Return HTTP requests statistics  Returns status of client HTTP requests.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of client HTTP requests statistics will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns HTTP Requests
+          * 404 - Unknown version (UnknownVersion), returns Error
+        * DELETE - Reset HTTP requests statistics  Resets the number of total client HTTP requests.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /http/server_zones/
+       Supported methods:
+
+        * GET - Return status of all HTTP server zones  Returns status information for each HTTP server zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of server zones will be output. If the “fields” value is empty, then only server zone names will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "HTTP Server Zone" objects for all HTTP server zones
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /http/server_zones/{httpServerZoneName}
+       Parameters common for all methods:
+
+         httpServerZoneName (string, required)
+       The name of an HTTP server zone.
+
+       Supported methods:
+
+        * GET - Return status of an HTTP server zone  Returns status of a particular HTTP server zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the server zone will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns HTTP Server Zone
+          * 404 - Server zone not found (ServerZoneNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset statistics for an HTTP server zone  Resets statistics of accepted and discarded requests, responses, received and sent bytes, counters of SSL handshakes and session reuses in a particular HTTP server zone.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Server zone not found (ServerZoneNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /http/location_zones/
+       Supported methods:
+
+        * GET - Return status of all HTTP location zones  Returns status information for each HTTP location zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of location zones will be output. If the “fields” value is empty, then only zone names will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "HTTP Location Zone" objects for all HTTP location zones
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /http/location_zones/{httpLocationZoneName}
+       Parameters common for all methods:
+
+         httpLocationZoneName (string, required)
+       The name of an HTTP location zone.
+
+       Supported methods:
+
+        * GET - Return status of an HTTP location zone  Returns status of a particular HTTP location zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the location zone will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns HTTP Location Zone
+          * 404 - Location zone not found (LocationZoneNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset statistics for a location zone.  Resets statistics of accepted and discarded requests, responses, received and sent bytes in a particular location zone.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Location zone not found (LocationZoneNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /http/caches/
+       Supported methods:
+
+        * GET - Return status of all caches  Returns status of each cache configured by proxy_cache_path and other “*_cache_path” directives.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of cache zones will be output. If the “fields” value is empty, then only names of cache zones will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "HTTP Cache" objects for all HTTP caches
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /http/caches/{httpCacheZoneName}
+       Parameters common for all methods:
+
+         httpCacheZoneName (string, required)
+       The name of the cache zone.
+
+       Supported methods:
+
+        * GET - Return status of a cache  Returns status of a particular cache.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the cache zone will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns HTTP Cache
+          * 404 - Cache not found (CacheNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset cache statistics  Resets statistics of cache hits/misses in a particular cache zone.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Cache not found (CacheNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /http/limit_conns/
+       Supported methods:
+
+        * GET - Return status of all HTTP limit_conn zones  Returns status information for each HTTP limit_conn zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of limit_conn zones will be output. If the “fields” value is empty, then only zone names will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "HTTP Connections Limiting" objects for all HTTP limit conns
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /http/limit_conns/{httpLimitConnZoneName}
+       Parameters common for all methods:
+
+         httpLimitConnZoneName (string, required)
+       The name of a limit_conn zone.
+
+       Supported methods:
+
+        * GET - Return status of an HTTP limit_conn zone  Returns status of a particular HTTP limit_conn zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the limit_conn zone will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns HTTP Connections Limiting
+          * 404 - limit_conn not found (LimitConnNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset statistics for an HTTP limit_conn zone  Resets the connection limiting statistics.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - limit_conn not found (LimitConnNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /http/limit_reqs/
+       Supported methods:
+
+        * GET - Return status of all HTTP limit_req zones  Returns status information for each HTTP limit_req zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of limit_req zones will be output. If the “fields” value is empty, then only zone names will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "HTTP Requests Rate Limiting" objects for all HTTP limit reqs
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /http/limit_reqs/{httpLimitReqZoneName}
+       Parameters common for all methods:
+
+         httpLimitReqZoneName (string, required)
+       The name of a limit_req zone.
+
+       Supported methods:
+
+        * GET - Return status of an HTTP limit_req zone  Returns status of a particular HTTP limit_req zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the limit_req zone will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns HTTP Requests Rate Limiting
+          * 404 - limit_req not found (LimitReqNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset statistics for an HTTP limit_req zone  Resets the requests limiting statistics.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - limit_req not found (LimitReqNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /http/upstreams/
+       Supported methods:
+
+        * GET - Return status of all HTTP upstream server groups  Returns status of each HTTP upstream server group and its servers.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of upstream server groups will be output. If the “fields” value is empty, only names of upstreams will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "HTTP Upstream" objects for all HTTP upstreams
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /http/upstreams/{httpUpstreamName}/
+       Parameters common for all methods:
+
+         httpUpstreamName (string, required)
+       The name of an HTTP upstream server group.
+
+       Supported methods:
+
+        * GET - Return status of an HTTP upstream server group  Returns status of a particular HTTP upstream server group and its servers.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the upstream server group will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns HTTP Upstream
+          * 400 - Upstream is static (UpstreamStatic), returns Error
+          * 404 - Unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+        * DELETE - Reset statistics of an HTTP upstream server group  Resets the statistics for each upstream server in an upstream server group and queue statistics.
+       Possible responses:
+
+          * 204 - Success
+          * 400 - Upstream is static (UpstreamStatic), returns Error
+          * 404 - Unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /http/upstreams/{httpUpstreamName}/servers/
+       Parameters common for all methods:
+
+         httpUpstreamName (string, required)
+       The name of an upstream server group.
+
+       Supported methods:
+
+        * GET - Return configuration of all servers in an HTTP upstream server group  Returns configuration of each server in a particular HTTP upstream server group.
+       Possible responses:
+
+          * 200 - Success, returns an array of HTTP Upstream Servers
+          * 400 - Upstream is static (UpstreamStatic), returns Error
+          * 404 - Unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+        * POST - Add a server to an HTTP upstream server group  Adds a new server to an HTTP upstream server group. Server parameters are specified in the JSON format.
+       Request parameters:
+
+         postHttpUpstreamServer (HTTP Upstream Server, required)
+       Address of a new server and other optional parameters in the JSON format. The “ID”, “backup”, and “service” parameters cannot be changed.
+
+       Possible responses:
+
+          * 201 - Created, returns HTTP Upstream Server
+          * 400 - Upstream is static (UpstreamStatic), invalid “parameter” value (UpstreamConfFormatError), missing “server” argument (UpstreamConfFormatError), unknown parameter “name” (UpstreamConfFormatError), nested object or list (UpstreamConfFormatError), “error” while parsing (UpstreamBadAddress), service upstream “host” may not have port (UpstreamBadAddress), service upstream “host” requires domain name (UpstreamBadAddress), invalid “weight” (UpstreamBadWeight), invalid “max_conns” (UpstreamBadMaxConns), invalid “max_fails” (UpstreamBadMaxFails), invalid “fail_timeout” (UpstreamBadFailTimeout), invalid “slow_start” (UpstreamBadSlowStart), reading request body failed BodyReadError), route is too long (UpstreamBadRoute), “service” is empty (UpstreamBadService), no resolver defined to resolve (UpstreamConfNoResolver), upstream “name” has no backup (UpstreamNoBackup), upstream “name” memory exhausted (UpstreamOutOfMemory), returns Error
+          * 404 - Unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+          * 409 - Entry exists (EntryExists), returns Error
+          * 415 - JSON error (JsonError), returns Error
+         /http/upstreams/{httpUpstreamName}/servers/{httpUpstreamServerId}
+       Parameters common for all methods:
+
+         httpUpstreamName (string, required)
+       The name of the upstream server group.
+
+         httpUpstreamServerId (string, required)
+       The ID of the server.
+
+       Supported methods:
+
+        * GET - Return configuration of a server in an HTTP upstream server group  Returns configuration of a particular server in the HTTP upstream server group.
+       Possible responses:
+
+          * 200 - Success, returns HTTP Upstream Server
+          * 400 - Upstream is static (UpstreamStatic), invalid server ID (UpstreamBadServerId), returns Error
+          * 404 - Server with ID “id” does not exist (UpstreamServerNotFound), unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+        * PATCH - Modify a server in an HTTP upstream server group  Modifies settings of a particular server in an HTTP upstream server group. Server parameters are specified in the JSON format.
+       Request parameters:
+
+         patchHttpUpstreamServer (HTTP Upstream Server, required)
+       Server parameters, specified in the JSON format. The “ID”, “backup”, and “service” parameters cannot be changed.
+
+       Possible responses:
+
+          * 200 - Success, returns HTTP Upstream Server
+          * 400 - Upstream is static (UpstreamStatic), invalid “parameter” value (UpstreamConfFormatError), unknown parameter “name” (UpstreamConfFormatError), nested object or list (UpstreamConfFormatError), “error” while parsing (UpstreamBadAddress), invalid “server” argument (UpstreamBadAddress), invalid server ID (UpstreamBadServerId), invalid “weight” (UpstreamBadWeight), invalid “max_conns” (UpstreamBadMaxConns), invalid “max_fails” (UpstreamBadMaxFails), invalid “fail_timeout” (UpstreamBadFailTimeout), invalid “slow_start” (UpstreamBadSlowStart), reading request body failed BodyReadError), route is too long (UpstreamBadRoute), “service” is empty (UpstreamBadService), server “ID” address is immutable (UpstreamServerImmutable), server “ID” weight is immutable (UpstreamServerWeightImmutable), upstream “name” memory exhausted (UpstreamOutOfMemory), returns Error
+          * 404 - Server with ID “id” does not exist (UpstreamServerNotFound), unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+          * 415 - JSON error (JsonError), returns Error
+        * DELETE - Remove a server from an HTTP upstream server group  Removes a server from an HTTP upstream server group.
+       Possible responses:
+
+          * 200 - Success, returns an array of HTTP Upstream Servers
+          * 400 - Upstream is static (UpstreamStatic), invalid server ID (UpstreamBadServerId), server “id” not removable (UpstreamServerImmutable), returns Error
+          * 404 - Server with ID “id” does not exist (UpstreamServerNotFound), unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /http/keyvals/
+       Supported methods:
+
+        * GET - Return key-value pairs from all HTTP keyval zones  Returns key-value pairs for each HTTP keyval shared memory zone.
+       Request parameters:
+
+         fields (string, optional)
+       If the “fields” value is empty, then only HTTP keyval zone names will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "HTTP Keyval Shared Memory Zone" objects for all HTTP keyvals
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /http/keyvals/{httpKeyvalZoneName}
+       Parameters common for all methods:
+
+         httpKeyvalZoneName (string, required)
+       The name of an HTTP keyval shared memory zone.
+
+       Supported methods:
+
+        * GET - Return key-value pairs from an HTTP keyval zone  Returns key-value pairs stored in a particular HTTP keyval shared memory zone.
+       Request parameters:
+
+         key (string, optional)
+       Get a particular key-value pair from the HTTP keyval zone.
+
+       Possible responses:
+
+          * 200 - Success, returns HTTP Keyval Shared Memory Zone
+          * 404 - Keyval not found (KeyvalNotFound), keyval key not found (KeyvalKeyNotFound), unknown version (UnknownVersion), returns Error
+        * POST - Add a key-value pair to the HTTP keyval zone  Adds a new key-value pair to the HTTP keyval shared memory zone. Several key-value pairs can be entered if the HTTP keyval shared memory zone is empty.
+       Request parameters:
+
+         Key-value (HTTP Keyval Shared Memory Zone, required)
+       A key-value pair is specified in the JSON format. Several key-value pairs can be entered if the HTTP keyval shared memory zone is empty. Expiration time in milliseconds can be specified for a key-value pair with the expire parameter which overrides the timeout parameter of the keyval_zone directive.
+
+       Possible responses:
+
+          * 201 - Created
+          * 400 - Invalid JSON (KeyvalFormatError), invalid key format (KeyvalFormatError), key required (KeyvalFormatError), keyval timeout is not enabled (KeyvalFormatError), only one key can be added (KeyvalFormatError), reading request body failed BodyReadError), returns Error
+          * 404 - Keyval not found (KeyvalNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+          * 409 - Entry exists (EntryExists), key already exists (KeyvalKeyExists), returns Error
+          * 413 - Request Entity Too Large, returns Error
+          * 415 - JSON error (JsonError), returns Error
+        * PATCH - Modify a key-value or delete a key  Changes the value of the selected key in the key-value pair, deletes a key by setting the key value to null, changes expiration time of a key-value pair. If synchronization of keyval zones in a cluster is enabled, deletes a key only on a target cluster node. Expiration time in milliseconds can be specified for a key-value pair with the expire parameter which overrides the timeout parameter of the keyval_zone directive.
+       Request parameters:
+
+         httpKeyvalZoneKeyValue (HTTP Keyval Shared Memory Zone, required)
+       A new value for the key is specified in the JSON format.
+
+       Possible responses:
+
+          * 204 - Success
+          * 400 - Invalid JSON (KeyvalFormatError), key required (KeyvalFormatError), keyval timeout is not enabled (KeyvalFormatError), only one key can be updated (KeyvalFormatError), reading request body failed BodyReadError), returns Error
+          * 404 - Keyval not found (KeyvalNotFound), keyval key not found (KeyvalKeyNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+          * 413 - Request Entity Too Large, returns Error
+          * 415 - JSON error (JsonError), returns Error
+        * DELETE - Empty the HTTP keyval zone  Deletes all key-value pairs from the HTTP keyval shared memory zone. If synchronization of keyval zones in a cluster is enabled, empties the keyval zone only on a target cluster node.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Keyval not found (KeyvalNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /stream/
+       Supported methods:
+
+        * GET - Return list of stream-related endpoints  Returns a list of first level stream endpoints.
+       Possible responses:
+
+          * 200 - Success, returns an array of strings
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /stream/server_zones/
+       Supported methods:
+
+        * GET - Return status of all stream server zones  Returns status information for each stream server zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of server zones will be output. If the “fields” value is empty, then only server zone names will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "Stream Server Zone" objects for all stream server zones
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /stream/server_zones/{streamServerZoneName}
+       Parameters common for all methods:
+
+         streamServerZoneName (string, required)
+       The name of a stream server zone.
+
+       Supported methods:
+
+        * GET - Return status of a stream server zone  Returns status of a particular stream server zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the server zone will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns Stream Server Zone
+          * 404 - Server zone not found (ServerZoneNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset statistics for a stream server zone  Resets statistics of accepted and discarded connections, sessions, received and sent bytes, counters of SSL handshakes and session reuses in a particular stream server zone.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Server zone not found (ServerZoneNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /stream/limit_conns/
+       Supported methods:
+
+        * GET - Return status of all stream limit_conn zones  Returns status information for each stream limit_conn zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of limit_conn zones will be output. If the “fields” value is empty, then only zone names will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "Stream Connections Limiting" objects for all stream limit conns
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /stream/limit_conns/{streamLimitConnZoneName}
+       Parameters common for all methods:
+
+         streamLimitConnZoneName (string, required)
+       The name of a limit_conn zone.
+
+       Supported methods:
+
+        * GET - Return status of an stream limit_conn zone  Returns status of a particular stream limit_conn zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the limit_conn zone will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns Stream Connections Limiting
+          * 404 - limit_conn not found (LimitConnNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset statistics for a stream limit_conn zone  Resets the connection limiting statistics.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - limit_conn not found (LimitConnNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /stream/upstreams/
+       Supported methods:
+
+        * GET - Return status of all stream upstream server groups  Returns status of each stream upstream server group and its servers.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of upstream server groups will be output. If the “fields” value is empty, only names of upstreams will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "Stream Upstream" objects for all stream upstreams
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /stream/upstreams/{streamUpstreamName}/
+       Parameters common for all methods:
+
+         streamUpstreamName (string, required)
+       The name of a stream upstream server group.
+
+       Supported methods:
+
+        * GET - Return status of a stream upstream server group  Returns status of a particular stream upstream server group and its servers.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the upstream server group will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns Stream Upstream
+          * 400 - Upstream is static (UpstreamStatic), returns Error
+          * 404 - Unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+        * DELETE - Reset statistics of a stream upstream server group  Resets the statistics for each upstream server in an upstream server group.
+       Possible responses:
+
+          * 204 - Success
+          * 400 - Upstream is static (UpstreamStatic), returns Error
+          * 404 - Unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /stream/upstreams/{streamUpstreamName}/servers/
+       Parameters common for all methods:
+
+         streamUpstreamName (string, required)
+       The name of an upstream server group.
+
+       Supported methods:
+
+        * GET - Return configuration of all servers in a stream upstream server group  Returns configuration of each server in a particular stream upstream server group.
+       Possible responses:
+
+          * 200 - Success, returns an array of Stream Upstream Servers
+          * 400 - Upstream is static (UpstreamStatic), returns Error
+          * 404 - Unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+        * POST - Add a server to a stream upstream server group  Adds a new server to a stream upstream server group. Server parameters are specified in the JSON format.
+       Request parameters:
+
+         postStreamUpstreamServer (Stream Upstream Server, required)
+       Address of a new server and other optional parameters in the JSON format. The “ID”, “backup”, and “service” parameters cannot be changed.
+
+       Possible responses:
+
+          * 201 - Created, returns Stream Upstream Server
+          * 400 - Upstream is static (UpstreamStatic), invalid “parameter” value (UpstreamConfFormatError), missing “server” argument (UpstreamConfFormatError), unknown parameter “name” (UpstreamConfFormatError), nested object or list (UpstreamConfFormatError), “error” while parsing (UpstreamBadAddress), no port in server “host” (UpstreamBadAddress), service upstream “host” may not have port (UpstreamBadAddress), service upstream “host” requires domain name (UpstreamBadAddress), invalid “weight” (UpstreamBadWeight), invalid “max_conns” (UpstreamBadMaxConns), invalid “max_fails” (UpstreamBadMaxFails), invalid “fail_timeout” (UpstreamBadFailTimeout), invalid “slow_start” (UpstreamBadSlowStart), “service” is empty (UpstreamBadService), no resolver defined to resolve (UpstreamConfNoResolver), upstream “name” has no backup (UpstreamNoBackup), upstream “name” memory exhausted (UpstreamOutOfMemory), reading request body failed BodyReadError), returns Error
+          * 404 - Unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+          * 409 - Entry exists (EntryExists), returns Error
+          * 415 - JSON error (JsonError), returns Error
+         /stream/upstreams/{streamUpstreamName}/servers/{streamUpstreamServerId}
+       Parameters common for all methods:
+
+         streamUpstreamName (string, required)
+       The name of the upstream server group.
+
+         streamUpstreamServerId (string, required)
+       The ID of the server.
+
+       Supported methods:
+
+        * GET - Return configuration of a server in a stream upstream server group  Returns configuration of a particular server in the stream upstream server group.
+       Possible responses:
+
+          * 200 - Success, returns Stream Upstream Server
+          * 400 - Upstream is static (UpstreamStatic), invalid server ID (UpstreamBadServerId), returns Error
+          * 404 - Unknown version (UnknownVersion), upstream not found (UpstreamNotFound), server with ID “id” does not exist (UpstreamServerNotFound), returns Error
+        * PATCH - Modify a server in a stream upstream server group  Modifies settings of a particular server in a stream upstream server group. Server parameters are specified in the JSON format.
+       Request parameters:
+
+         patchStreamUpstreamServer (Stream Upstream Server, required)
+       Server parameters, specified in the JSON format. The “ID”, “backup”, and “service” parameters cannot be changed.
+
+       Possible responses:
+
+          * 200 - Success, returns Stream Upstream Server
+          * 400 - Upstream is static (UpstreamStatic), invalid “parameter” value (UpstreamConfFormatError), unknown parameter “name” (UpstreamConfFormatError), nested object or list (UpstreamConfFormatError), “error” while parsing (UpstreamBadAddress), invalid “server” argument (UpstreamBadAddress), no port in server “host” (UpstreamBadAddress), invalid server ID (UpstreamBadServerId), invalid “weight” (UpstreamBadWeight), invalid “max_conns” (UpstreamBadMaxConns), invalid “max_fails” (UpstreamBadMaxFails), invalid “fail_timeout” (UpstreamBadFailTimeout), invalid “slow_start” (UpstreamBadSlowStart), reading request body failed BodyReadError), “service” is empty (UpstreamBadService), server “ID” address is immutable (UpstreamServerImmutable), server “ID” weight is immutable (UpstreamServerWeightImmutable), upstream “name” memory exhausted (UpstreamOutOfMemory), returns Error
+          * 404 - Server with ID “id” does not exist (UpstreamServerNotFound), unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+          * 415 - JSON error (JsonError), returns Error
+        * DELETE - Remove a server from a stream upstream server group  Removes a server from a stream server group.
+       Possible responses:
+
+          * 200 - Success, returns an array of Stream Upstream Servers
+          * 400 - Upstream is static (UpstreamStatic), invalid server ID (UpstreamBadServerId), server “id” not removable (UpstreamServerImmutable), returns Error
+          * 404 - Server with ID “id” does not exist (UpstreamServerNotFound), unknown version (UnknownVersion), upstream not found (UpstreamNotFound), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /stream/keyvals/
+       Supported methods:
+
+        * GET - Return key-value pairs from all stream keyval zones  Returns key-value pairs for each stream keyval shared memory zone.
+       Request parameters:
+
+         fields (string, optional)
+       If the “fields” value is empty, then only stream keyval zone names will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "Stream Keyval Shared Memory Zone" objects for all stream keyvals
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /stream/keyvals/{streamKeyvalZoneName}
+       Parameters common for all methods:
+
+         streamKeyvalZoneName (string, required)
+       The name of a stream keyval shared memory zone.
+
+       Supported methods:
+
+        * GET - Return key-value pairs from a stream keyval zone  Returns key-value pairs stored in a particular stream keyval shared memory zone.
+       Request parameters:
+
+         key (string, optional)
+       Get a particular key-value pair from the stream keyval zone.
+
+       Possible responses:
+
+          * 200 - Success, returns Stream Keyval Shared Memory Zone
+          * 404 - Keyval not found (KeyvalNotFound), keyval key not found (KeyvalKeyNotFound), unknown version (UnknownVersion), returns Error
+        * POST - Add a key-value pair to the stream keyval zone  Adds a new key-value pair to the stream keyval shared memory zone. Several key-value pairs can be entered if the stream keyval shared memory zone is empty.
+       Request parameters:
+
+         Key-value (Stream Keyval Shared Memory Zone, required)
+       A key-value pair is specified in the JSON format. Several key-value pairs can be entered if the stream keyval shared memory zone is empty. Expiration time in milliseconds can be specified for a key-value pair with the expire parameter which overrides the timeout parameter of the keyval_zone directive.
+
+       Possible responses:
+
+          * 201 - Created
+          * 400 - Invalid JSON (KeyvalFormatError), invalid key format (KeyvalFormatError), key required (KeyvalFormatError), keyval timeout is not enabled (KeyvalFormatError), only one key can be added (KeyvalFormatError), reading request body failed BodyReadError), returns Error
+          * 404 - Keyval not found (KeyvalNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+          * 409 - Entry exists (EntryExists), key already exists (KeyvalKeyExists), returns Error
+          * 413 - Request Entity Too Large, returns Error
+          * 415 - JSON error (JsonError), returns Error
+        * PATCH - Modify a key-value or delete a key  Changes the value of the selected key in the key-value pair, deletes a key by setting the key value to null, changes expiration time of a key-value pair. If synchronization of keyval zones in a cluster is enabled, deletes a key only on a target cluster node. Expiration time is specified in milliseconds with the expire parameter which overrides the timeout parameter of the keyval_zone directive.
+       Request parameters:
+
+         streamKeyvalZoneKeyValue (Stream Keyval Shared Memory Zone, required)
+       A new value for the key is specified in the JSON format.
+
+       Possible responses:
+
+          * 204 - Success
+          * 400 - Invalid JSON (KeyvalFormatError), key required (KeyvalFormatError), keyval timeout is not enabled (KeyvalFormatError), only one key can be updated (KeyvalFormatError), reading request body failed BodyReadError), returns Error
+          * 404 - Keyval not found (KeyvalNotFound), keyval key not found (KeyvalKeyNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+          * 413 - Request Entity Too Large, returns Error
+          * 415 - JSON error (JsonError), returns Error
+        * DELETE - Empty the stream keyval zone  Deletes all key-value pairs from the stream keyval shared memory zone. If synchronization of keyval zones in a cluster is enabled, empties the keyval zone only on a target cluster node.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Keyval not found (KeyvalNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /stream/zone_sync/
+       Supported methods:
+
+        * GET - Return sync status of a node  Returns synchronization status of a cluster node.
+       Possible responses:
+
+          * 200 - Success, returns Stream Zone Sync Node
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /resolvers/
+       Supported methods:
+
+        * GET - Return status for all resolver zones  Returns status information for each resolver zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of resolvers statistics will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "Resolver Zone" objects for all resolvers
+          * 404 - Unknown version (UnknownVersion), returns Error
+         /resolvers/{resolverZoneName}
+       Parameters common for all methods:
+
+         resolverZoneName (string, required)
+       The name of a resolver zone.
+
+       Supported methods:
+
+        * GET - Return statistics of a resolver zone  Returns statistics stored in a particular resolver zone.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of the resolver zone will be output (requests, responses, or both).
+
+       Possible responses:
+
+          * 200 - Success, returns Resolver Zone
+          * 404 - Resolver zone not found (ResolverZoneNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset statistics for a resolver zone.  Resets statistics in a particular resolver zone.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Resolver zone not found (ResolverZoneNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /ssl
+       Supported methods:
+
+        * GET - Return SSL statistics  Returns SSL statistics.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of SSL statistics will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns SSL
+          * 404 - Unknown version (UnknownVersion), returns Error
+        * DELETE - Reset SSL statistics  Resets counters of SSL handshakes and session reuses.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /license
+       Supported methods:
+
+        * GET - Return license info
+       Possible responses:
+
+          * 200 - Success, returns License
+          * 404 - Unknown version (UnknownVersion), returns Error
+        * PUT - Apply a license token  Accepts a raw JWT license token, validates it, saves to the active token path, and applies it in-memory. Requires the license_pending_token directive to be configured.
+       Request parameters:
+
+         putLicenseToken (A raw JWT license token string to be validated and applied, required)
+       A raw JWT license token string to be validated and applied
+
+       Possible responses:
+
+          * 200 - Success, returns JWT licence token information
+          * 400 - Invalid license token (LicenseFormatError), Request body is empty (LicenseFormatError), returns Error
+          * 404 - Unknown version (UnknownVersion), returns Error
+          * 409 - Renewed license does not match the current one (LicenseMismatch), returns Error
+         /workers/
+       Supported methods:
+
+        * GET - Return statistics for all worker processes  Returns statistics for all worker processes such as accepted, dropped, active, idle connections, total and current requests.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of worker process statistics will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns a collection of "Worker process" objects for all workers
+          * 404 - Worker not found (WorkerNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset statistics for all worker processes.  Resets statistics for all worker processes such as accepted, dropped, active, idle connections, total and current requests.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Worker not found (WorkerNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+         /workers/{workerId}
+       Parameters common for all methods:
+
+         workerId (string, required)
+       The ID of the worker process.
+
+       Supported methods:
+
+        * GET - Return status of a worker process  Returns status of a particular worker process.
+       Request parameters:
+
+         fields (string, optional)
+       Limits which fields of worker process statistics will be output.
+
+       Possible responses:
+
+          * 200 - Success, returns Worker process
+          * 404 - Worker not found (WorkerNotFound), unknown version (UnknownVersion), returns Error
+        * DELETE - Reset statistics for a worker process.  Resets statistics of accepted, dropped, active, idle connections, as well as total and current requests.
+       Possible responses:
+
+          * 204 - Success
+          * 404 - Worker not found (WorkerNotFound), unknown version (UnknownVersion), returns Error
+          * 405 - Method disabled (MethodDisabled), returns Error
+
+       RESPONSE OBJECTS
+
+        * nginx:
+       General information about nginx:
+
+         version (string)
+       Version of nginx.
+
+         build (string)
+       Name of nginx build.
+
+         address (string)
+       The address of the server that accepted status request.
+
+         generation (integer)
+       The total number of configuration reloads.
+
+         load_timestamp (string)
+       Time of the last reload of configuration, in the ISO 8601 format with millisecond resolution.
+
+         timestamp (string)
+       Current time in the ISO 8601 format with millisecond resolution.
+
+         pid (integer)
+       The ID of the worker process that handled status request.
+
+         ppid (integer)
+       The ID of the master process that started the worker process.
+
+       Example:
+
+         {
+           "nginx" : {
+             "version" : "1.21.6",
+             "build" : "nginx-plus-r27",
+             "address" : "206.251.255.64",
+             "generation" : 6,
+             "load_timestamp" : "2022-06-28T11:15:44.467Z",
+             "timestamp" : "2022-06-28T09:26:07.305Z",
+             "pid" : 32212,
+             "ppid" : 32210
+           }
+         }
+
+        * Processes:
+         respawned (integer)
+       The total number of abnormally terminated and respawned child processes.
+
+       Example:
+
+         {
+           "respawned" : 0
+         }
+
+        * Connections:
+       The number of accepted, dropped, active, and idle connections.
+
+         accepted (integer)
+       The total number of accepted client connections.
+
+         dropped (integer)
+       The total number of dropped client connections.
+
+         active (integer)
+       The current number of active client connections.
+
+         idle (integer)
+       The current number of idle client connections.
+
+       Example:
+
+         {
+           "accepted" : 4968119,
+           "dropped" : 0,
+           "active" : 5,
+           "idle" : 117
+         }
+
+        * SSL:
+         handshakes (integer)
+       The total number of successful SSL handshakes.
+
+         handshakes_failed (integer)
+       The total number of failed SSL handshakes.
+
+         session_reuses (integer)
+       The total number of session reuses during SSL handshake.
+
+         no_common_protocol (integer)
+       The number of SSL handshakes failed because of no common protocol.
+
+         no_common_cipher (integer)
+       The number of SSL handshakes failed because of no shared cipher.
+
+         handshake_timeout (integer)
+       The number of SSL handshakes failed because of a timeout.
+
+         peer_rejected_cert (integer)
+       The number of failed SSL handshakes when nginx presented the certificate to the client but it was rejected with a corresponding alert message.
+
+         verify_failures
+       SSL certificate verification errors
+
+         no_cert (integer)
+       A client did not provide the required certificate.
+
+         expired_cert (integer)
+       An expired or not yet valid certificate was presented by a client.
+
+         revoked_cert (integer)
+       A revoked certificate was presented by a client.
+
+         hostname_mismatch (integer)
+       Server's certificate doesn't match the hostname.
+
+         other (integer)
+       Other SSL certificate verification errors.
+
+       Example:
+
+         {
+           "handshakes" : 79572,
+           "handshakes_failed" : 21025,
+           "session_reuses" : 15762,
+           "no_common_protocol" : 4,
+           "no_common_cipher" : 2,
+           "handshake_timeout" : 0,
+           "peer_rejected_cert" : 0,
+           "verify_failures" : {
+             "no_cert" : 0,
+             "expired_cert" : 2,
+             "revoked_cert" : 1,
+             "hostname_mismatch" : 2,
+             "other" : 1
+           }
+         }
+
+        * Shared memory zone with slab allocator:
+       Shared memory zone with slab allocator
+
+         pages
+       The number of free and used memory pages.
+
+         used (integer)
+       The current number of used memory pages.
+
+         free (integer)
+       The current number of free memory pages.
+
+         slots
+       Status data for memory slots (8, 16, 32, 64, 128, etc.)
+
+       A collection of "Memory Slot" objects
+
+       Example:
+
+         {
+           "pages" : {
+             "used" : 1143,
+             "free" : 2928
+           },
+           "slots" : {
+             "8" : {
+               "used" : 0,
+               "free" : 0,
+               "reqs" : 0,
+               "fails" : 0
+             },
+             "16" : {
+               "used" : 0,
+               "free" : 0,
+               "reqs" : 0,
+               "fails" : 0
+             },
+             "32" : {
+               "used" : 0,
+               "free" : 0,
+               "reqs" : 0,
+               "fails" : 0
+             },
+             "64" : {
+               "used" : 1,
+               "free" : 63,
+               "reqs" : 1,
+               "fails" : 0
+             },
+             "128" : {
+               "used" : 0,
+               "free" : 0,
+               "reqs" : 0,
+               "fails" : 0
+             },
+             "256" : {
+               "used" : 18078,
+               "free" : 178,
+               "reqs" : 1635736,
+               "fails" : 0
+             }
+           }
+         }
+
+        * Memory Slot:
+         used (integer)
+       The current number of used memory slots.
+
+         free (integer)
+       The current number of free memory slots.
+
+         reqs (integer)
+       The total number of attempts to allocate memory of specified size.
+
+         fails (integer)
+       The number of unsuccessful attempts to allocate memory of specified size.
+
+        * HTTP Requests:
+         total (integer)
+       The total number of client requests.
+
+         current (integer)
+       The current number of client requests.
+
+       Example:
+
+         {
+           "total" : 10624511,
+           "current" : 4
+         }
+
+        * HTTP Server Zone:
+         processing (integer)
+       The number of client requests that are currently being processed.
+
+         requests (integer)
+       The total number of client requests received from clients.
+
+         responses
+       The total number of responses sent to clients, the number of responses with status codes “1xx”, “2xx”, “3xx”, “4xx”, and “5xx”, and the number of responses per each status code.
+
+         1xx (integer)
+       The number of responses with “1xx” status codes.
+
+         2xx (integer)
+       The number of responses with “2xx” status codes.
+
+         3xx (integer)
+       The number of responses with “3xx” status codes.
+
+         4xx (integer)
+       The number of responses with “4xx” status codes.
+
+         5xx (integer)
+       The number of responses with “5xx” status codes.
+
+         codes
+       The number of responses per each status code.
+
+         codeNumber (integer)
+       The number of responses with this particular status code.
+
+         total (integer)
+       The total number of responses sent to clients.
+
+         discarded (integer)
+       The total number of requests completed without sending a response.
+
+         received (integer)
+       The total number of bytes received from clients.
+
+         sent (integer)
+       The total number of bytes sent to clients.
+
+         ssl
+         handshakes (integer)
+       The total number of successful SSL handshakes.
+
+         handshakes_failed (integer)
+       The total number of failed SSL handshakes.
+
+         session_reuses (integer)
+       The total number of session reuses during SSL handshake.
+
+         no_common_protocol (integer)
+       The number of SSL handshakes failed because of no common protocol.
+
+         no_common_cipher (integer)
+       The number of SSL handshakes failed because of no shared cipher.
+
+         handshake_timeout (integer)
+       The number of SSL handshakes failed because of a timeout.
+
+         peer_rejected_cert (integer)
+       The number of failed SSL handshakes when nginx presented the certificate to the client but it was rejected with a corresponding alert message.
+
+         verify_failures
+       SSL certificate verification errors
+
+         no_cert (integer)
+       A client did not provide the required certificate.
+
+         expired_cert (integer)
+       An expired or not yet valid certificate was presented by a client.
+
+         revoked_cert (integer)
+       A revoked certificate was presented by a client.
+
+         other (integer)
+       Other SSL certificate verification errors.
+
+       Example:
+
+         {
+           "processing" : 1,
+           "requests" : 706690,
+           "responses" : {
+             "1xx" : 0,
+             "2xx" : 699482,
+             "3xx" : 4522,
+             "4xx" : 907,
+             "5xx" : 266,
+             "codes" : {
+               "200" : 699482,
+               "301" : 4522,
+               "404" : 907,
+               "503" : 266
+             },
+             "total" : 705177
+           },
+           "discarded" : 1513,
+           "received" : 172711587,
+           "sent" : 19415530115,
+           "ssl" : {
+             "handshakes" : 104303,
+             "handshakes_failed" : 1421,
+             "session_reuses" : 54645,
+             "no_common_protocol" : 4,
+             "no_common_cipher" : 2,
+             "handshake_timeout" : 0,
+             "peer_rejected_cert" : 0,
+             "verify_failures" : {
+               "no_cert" : 0,
+               "expired_cert" : 2,
+               "revoked_cert" : 1,
+               "other" : 1
+             }
+           }
+         }
+
+        * HTTP Location Zone:
+         requests (integer)
+       The total number of client requests received from clients.
+
+         responses
+       The total number of responses sent to clients, the number of responses with status codes “1xx”, “2xx”, “3xx”, “4xx”, and “5xx”, and the number of responses per each status code.
+
+         1xx (integer)
+       The number of responses with “1xx” status codes.
+
+         2xx (integer)
+       The number of responses with “2xx” status codes.
+
+         3xx (integer)
+       The number of responses with “3xx” status codes.
+
+         4xx (integer)
+       The number of responses with “4xx” status codes.
+
+         5xx (integer)
+       The number of responses with “5xx” status codes.
+
+         codes
+       The number of responses per each status code.
+
+         codeNumber (integer)
+       The number of responses with this particular status code.
+
+         total (integer)
+       The total number of responses sent to clients.
+
+         discarded (integer)
+       The total number of requests completed without sending a response.
+
+         received (integer)
+       The total number of bytes received from clients.
+
+         sent (integer)
+       The total number of bytes sent to clients.
+
+       Example:
+
+         {
+           "requests" : 706690,
+           "responses" : {
+             "1xx" : 0,
+             "2xx" : 699482,
+             "3xx" : 4522,
+             "4xx" : 907,
+             "5xx" : 266,
+             "codes" : {
+               "200" : 112674,
+               "301" : 4522,
+               "404" : 2504,
+               "503" : 266
+             },
+             "total" : 705177
+           },
+           "discarded" : 1513,
+           "received" : 172711587,
+           "sent" : 19415530115
+         }
+
+        * HTTP Cache:
+         size (integer)
+       The current size of the cache.
+
+         max_size (integer)
+       The limit on the maximum size of the cache specified in the configuration.
+
+         cold (boolean)
+       A boolean value indicating whether the “cache loader” process is still loading data from disk into the cache.
+
+         hit
+         responses (integer)
+       The total number of valid responses read from the cache.
+
+         bytes (integer)
+       The total number of bytes read from the cache.
+
+         stale
+         responses (integer)
+       The total number of expired responses read from the cache (see proxy_cache_use_stale and other “*_cache_use_stale” directives).
+
+         bytes (integer)
+       The total number of bytes read from the cache.
+
+         updating
+         responses (integer)
+       The total number of expired responses read from the cache while responses were being updated (see proxy_cache_use_stale and other “*_cache_use_stale” directives).
+
+         bytes (integer)
+       The total number of bytes read from the cache.
+
+         revalidated
+         responses (integer)
+       The total number of expired and revalidated responses read from the cache (see proxy_cache_revalidate and other “*_cache_revalidate” directives.
+
+         bytes (integer)
+       The total number of bytes read from the cache.
+
+         miss
+         responses (integer)
+       The total number of responses not found in the cache.
+
+         bytes (integer)
+       The total number of bytes read from the proxied server.
+
+         responses_written (integer)
+       The total number of responses written to the cache.
+
+         bytes_written (integer)
+       The total number of bytes written to the cache.
+
+         expired
+         responses (integer)
+       The total number of expired responses not taken from the cache.
+
+         bytes (integer)
+       The total number of bytes read from the proxied server.
+
+         responses_written (integer)
+       The total number of responses written to the cache.
+
+         bytes_written (integer)
+       The total number of bytes written to the cache.
+
+         bypass
+         responses (integer)
+       The total number of responses not looked up in the cache due to the proxy_cache_bypass and other “*_cache_bypass” directives.
+
+         bytes (integer)
+       The total number of bytes read from the proxied server.
+
+         responses_written (integer)
+       The total number of responses written to the cache.
+
+         bytes_written (integer)
+       The total number of bytes written to the cache.
+
+       Example:
+
+         {
+           "size" : 530915328,
+           "max_size" : 536870912,
+           "cold" : false,
+           "hit" : {
+             "responses" : 254032,
+             "bytes" : 6685627875
+           },
+           "stale" : {
+             "responses" : 0,
+             "bytes" : 0
+           },
+           "updating" : {
+             "responses" : 0,
+             "bytes" : 0
+           },
+           "revalidated" : {
+             "responses" : 0,
+             "bytes" : 0
+           },
+           "miss" : {
+             "responses" : 1619201,
+             "bytes" : 53841943822
+           },
+           "expired" : {
+             "responses" : 45859,
+             "bytes" : 1656847080,
+             "responses_written" : 44992,
+             "bytes_written" : 1641825173
+           },
+           "bypass" : {
+             "responses" : 200187,
+             "bytes" : 5510647548,
+             "responses_written" : 200173,
+             "bytes_written" : 44992
+           }
+         }
+
+        * HTTP Connections Limiting:
+         passed (integer)
+       The total number of connections that were neither limited nor accounted as limited.
+
+         rejected (integer)
+       The total number of connections that were rejected.
+
+         rejected_dry_run (integer)
+       The total number of connections accounted as rejected in the dry run mode.
+
+       Example:
+
+         {
+           "passed" : 15,
+           "rejected" : 0,
+           "rejected_dry_run" : 2
+         }
+
+        * HTTP Requests Rate Limiting:
+         passed (integer)
+       The total number of requests that were neither limited nor accounted as limited.
+
+         delayed (integer)
+       The total number of requests that were delayed.
+
+         rejected (integer)
+       The total number of requests that were rejected.
+
+         delayed_dry_run (integer)
+       The total number of requests accounted as delayed in the dry run mode.
+
+         rejected_dry_run (integer)
+       The total number of requests accounted as rejected in the dry run mode.
+
+       Example:
+
+         {
+           "passed" : 15,
+           "delayed" : 4,
+           "rejected" : 0,
+           "delayed_dry_run" : 1,
+           "rejected_dry_run" : 2
+         }
+
+        * HTTP Upstream:
+         peers
+       An array of:
+
+         id (integer)
+       The ID of the server.
+
+         server (string)
+       An address of the server.
+
+         service (string)
+       The service parameter value of the server directive.
+
+         name (string)
+       The name of the server specified in the server directive.
+
+         backup (boolean)
+       A boolean value indicating whether the server is a backup server.
+
+         weight (integer)
+       Weight of the server.
+
+         state (string)
+       Current state, which may be one of “up”, “draining”, “down”, “unavail”, “checking”, and “unhealthy”.
+
+         active (integer)
+       The current number of active connections.
+
+         ssl
+         handshakes (integer)
+       The total number of successful SSL handshakes.
+
+         handshakes_failed (integer)
+       The total number of failed SSL handshakes.
+
+         session_reuses (integer)
+       The total number of session reuses during SSL handshake.
+
+         no_common_protocol (integer)
+       The number of SSL handshakes failed because of no common protocol.
+
+         handshake_timeout (integer)
+       The number of SSL handshakes failed because of a timeout.
+
+         peer_rejected_cert (integer)
+       The number of failed SSL handshakes when nginx presented the certificate to the upstream server but it was rejected with a corresponding alert message.
+
+         verify_failures
+       SSL certificate verification errors
+
+         expired_cert (integer)
+       An expired or not yet valid certificate was presented by an upstream server.
+
+         revoked_cert (integer)
+       A revoked certificate was presented by an upstream server.
+
+         hostname_mismatch (integer)
+       Server's certificate doesn't match the hostname.
+
+         other (integer)
+       Other SSL certificate verification errors.
+
+         max_conns (integer)
+       The max_conns limit for the server.
+
+         requests (integer)
+       The total number of client requests forwarded to this server.
+
+         responses
+         1xx (integer)
+       The number of responses with “1xx” status codes.
+
+         2xx (integer)
+       The number of responses with “2xx” status codes.
+
+         3xx (integer)
+       The number of responses with “3xx” status codes.
+
+         4xx (integer)
+       The number of responses with “4xx” status codes.
+
+         5xx (integer)
+       The number of responses with “5xx” status codes.
+
+         codes
+       The number of responses per each status code.
+
+         codeNumber (integer)
+       The number of responses with this particular status code.
+
+         total (integer)
+       The total number of responses obtained from this server.
+
+         sent (integer)
+       The total number of bytes sent to this server.
+
+         received (integer)
+       The total number of bytes received from this server.
+
+         fails (integer)
+       The total number of unsuccessful attempts to communicate with the server.
+
+         unavail (integer)
+       How many times the server became unavailable for client requests (state “unavail”) due to the number of unsuccessful attempts reaching the max_fails threshold.
+
+         health_checks
+         checks (integer)
+       The total number of health check requests made.
+
+         fails (integer)
+       The number of failed health checks.
+
+         unhealthy (integer)
+       How many times the server became unhealthy (state “unhealthy”).
+
+         last_passed (boolean)
+       Boolean indicating if the last health check request was successful and passed tests.
+
+         downtime (integer)
+       Total time the server was in the “unavail”, “checking”, and “unhealthy” states.
+
+         downstart (string)
+       The time when the server became “unavail”, “checking”, or “unhealthy”, in the ISO 8601 format with millisecond resolution.
+
+         selected (string)
+       The time when the server was last selected to process a request, in the ISO 8601 format with millisecond resolution.
+
+         header_time (integer)
+       The average time to get the response header from the server.
+
+         response_time (integer)
+       The average time to get the full response from the server.
+
+         response_time_hist
+       Histogram of upstream response times collected per upstream server.
+
+         count (integer)
+       Total number of recorded responses.
+
+         sum (integer)
+       Sum of all recorded upstream response times, in milliseconds.
+
+         buckets
+       Histogram bucket counters for upstream response times, in milliseconds. Each bucket name ("5","10","25","50", etc.) is a time limit in milliseconds. Each bucket value is the number of responses within that time bucket. The "inf" bucket counts responses greater than 10000 ms.
+
+         5 (integer)
+       The total number of responses with response time less than or equal to 5 ms.
+
+         10 (integer)
+       The total number of responses with response time greater than 5 ms and less than or equal to 10 ms.
+
+         25 (integer)
+       The total number of responses with response time greater than 10 ms and less than or equal to 25 ms.
+
+         50 (integer)
+       The total number of responses with response time greater than 25 ms and less than or equal to 50 ms.
+
+         75 (integer)
+       The total number of responses with response time greater than 50 ms and less than or equal to 75 ms.
+
+         100 (integer)
+       The total number of responses with response time greater than 75 ms and less than or equal to 100 ms.
+
+         250 (integer)
+       The total number of responses with response time greater than 100 ms and less than or equal to 250 ms.
+
+         500 (integer)
+       The total number of responses with response time greater than 250 ms and less than or equal to 500 ms.
+
+         750 (integer)
+       The total number of responses with response time greater than 500 ms and less than or equal to 750 ms.
+
+         1000 (integer)
+       The total number of responses with response time greater than 750 ms and less than or equal to 1000 ms.
+
+         2500 (integer)
+       The total number of responses with response time greater than 1000 ms and less than or equal to 2500 ms.
+
+         5000 (integer)
+       The total number of responses with response time greater than 2500 ms and less than or equal to 5000 ms.
+
+         7500 (integer)
+       The total number of responses with response time greater than 5000 ms and less than or equal to 7500 ms.
+
+         10000 (integer)
+       The total number of responses with response time greater than 7500 ms and less than or equal to 10000 ms.
+
+         inf (integer)
+       The total number of observations with response time greater than 10000 ms.
+
+         keepalive (integer)
+       The current number of idle keepalive connections.
+
+         zombies (integer)
+       The current number of servers removed from the group but still processing active client requests.
+
+         zone (string)
+       The name of the shared memory zone that keeps the group’s configuration and run-time state.
+
+         queue
+       For the requests queue, the following data are provided:
+
+         size (integer)
+       The current number of requests in the queue.
+
+         max_size (integer)
+       The maximum number of requests that can be in the queue at the same time.
+
+         overflows (integer)
+       The total number of requests rejected due to the queue overflow.
+
+       Example:
+
+         {
+           "upstream_backend" : {
+             "peers" : [
+               {
+                 "id" : 0,
+                 "server" : "10.0.0.1:8088",
+                 "name" : "10.0.0.1:8088",
+                 "backup" : false,
+                 "weight" : 5,
+                 "state" : "up",
+                 "active" : 0,
+                 "ssl" : {
+                   "handshakes" : 620311,
+                   "handshakes_failed" : 3432,
+                   "session_reuses" : 36442,
+                   "no_common_protocol" : 4,
+                   "handshake_timeout" : 0,
+                   "peer_rejected_cert" : 0,
+                   "verify_failures" : {
+                     "expired_cert" : 2,
+                     "revoked_cert" : 1,
+                     "hostname_mismatch" : 2,
+                     "other" : 1
+                   }
+                 },
+                 "max_conns" : 20,
+                 "requests" : 667231,
+                 "header_time" : 20,
+                 "response_time" : 36,
+                 "response_time_hist" : {
+                   "count" : 9817,
+                   "sum" : 57625,
+                   "buckets" : {
+                     "5" : 4428,
+                     "10" : 4755,
+                     "25" : 350,
+                     "50" : 235,
+                     "75" : 54,
+                     "100" : 47,
+                     "250" : 1,
+                     "500" : 0,
+                     "750" : 0,
+                     "1000" : 0,
+                     "2500" : 0,
+                     "5000" : 0,
+                     "7500" : 0,
+                     "10000" : 0,
+                     "inf" : 0
+                   }
+                 },
+                 "responses" : {
+                   "1xx" : 0,
+                   "2xx" : 666310,
+                   "3xx" : 0,
+                   "4xx" : 915,
+                   "5xx" : 6,
+                   "codes" : {
+                     "200" : 666310,
+                     "404" : 915,
+                     "503" : 6
+                   },
+                   "total" : 667231
+                 },
+                 "sent" : 251946292,
+                 "received" : 19222475454,
+                 "fails" : 0,
+                 "unavail" : 0,
+                 "health_checks" : {
+                   "checks" : 26214,
+                   "fails" : 0,
+                   "unhealthy" : 0,
+                   "last_passed" : true
+                 },
+                 "downtime" : 0,
+                 "downstart" : "2022-06-28T11:09:21.602Z",
+                 "selected" : "2022-06-28T15:01:25.000Z"
+               },
+               {
+                 "id" : 1,
+                 "server" : "10.0.0.1:8089",
+                 "name" : "10.0.0.1:8089",
+                 "backup" : true,
+                 "weight" : 1,
+                 "state" : "unhealthy",
+                 "active" : 0,
+                 "max_conns" : 20,
+                 "requests" : 0,
+                 "responses" : {
+                   "1xx" : 0,
+                   "2xx" : 0,
+                   "3xx" : 0,
+                   "4xx" : 0,
+                   "5xx" : 0,
+                   "codes" : {
+                   },
+                   "total" : 0
+                 },
+                 "sent" : 0,
+                 "received" : 0,
+                 "fails" : 0,
+                 "unavail" : 0,
+                 "health_checks" : {
+                   "checks" : 26284,
+                   "fails" : 26284,
+                   "unhealthy" : 1,
+                   "last_passed" : false
+                 },
+                 "downtime" : 262925617,
+                 "downstart" : "2022-06-28T11:09:21.602Z",
+                 "selected" : "2022-06-28T15:01:25.000Z"
+               }
+             ],
+             "keepalive" : 0,
+             "zombies" : 0,
+             "zone" : "upstream_backend"
+           }
+         }
+
+        * HTTP Upstream Server:
+       Dynamically configurable parameters of an HTTP upstream server:
+
+         id (integer)
+       The ID of the HTTP upstream server. The ID is assigned automatically and cannot be changed.
+
+         server (string)
+       Same as the address parameter of the HTTP upstream server. When adding a server, it is possible to specify it as a domain name. In this case, changes of the IP addresses that correspond to a domain name will be monitored and automatically applied to the upstream configuration without the need of restarting nginx. This requires the resolver directive in the “http” block. See also the resolve parameter of the HTTP upstream server.
+
+         service (string)
+       Same as the service parameter of the HTTP upstream server. This parameter cannot be changed.
+
+         weight (integer)
+       Same as the weight parameter of the HTTP upstream server.
+
+         max_conns (integer)
+       Same as the max_conns parameter of the HTTP upstream server.
+
+         max_fails (integer)
+       Same as the max_fails parameter of the HTTP upstream server.
+
+         fail_timeout (string)
+       Same as the fail_timeout parameter of the HTTP upstream server.
+
+         slow_start (string)
+       Same as the slow_start parameter of the HTTP upstream server.
+
+         route (string)
+       Same as the route parameter of the HTTP upstream server.
+
+         backup (boolean)
+       When true, adds a backup server. This parameter cannot be changed.
+
+         down (boolean)
+       Same as the down parameter of the HTTP upstream server.
+
+         drain (boolean)
+       Same as the drain parameter of the HTTP upstream server.
+
+         parent (string)
+       Parent server ID of the resolved server. The ID is assigned automatically and cannot be changed.
+
+         host (string)
+       Hostname of the resolved server. The hostname is assigned automatically and cannot be changed.
+
+       Example:
+
+         {
+           "id" : 1,
+           "server" : "10.0.0.1:8089",
+           "weight" : 4,
+           "max_conns" : 0,
+           "max_fails" : 0,
+           "fail_timeout" : "10s",
+           "slow_start" : "10s",
+           "route" : "",
+           "backup" : true,
+           "down" : true
+         }
+
+        * HTTP Keyval Shared Memory Zone:
+       Contents of an HTTP keyval shared memory zone when using the GET method.
+
+       Example:
+
+         {
+           "key1" : "value1",
+           "key2" : "value2",
+           "key3" : "value3"
+         }
+
+        * HTTP Keyval Shared Memory Zone:
+       Contents of an HTTP keyval shared memory zone when using the POST or PATCH methods.
+
+       Example:
+
+         {
+           "key1" : "value1",
+           "key2" : "value2",
+           "key3" : {
+             "value" : "value3",
+             "expire" : 30000
+           }
+         }
+
+        * Stream Server Zone:
+         processing (integer)
+       The number of client connections that are currently being processed.
+
+         connections (integer)
+       The total number of connections accepted from clients.
+
+         sessions
+       The total number of completed sessions, and the number of sessions completed with status codes “2xx”, “4xx”, or “5xx”.
+
+         2xx (integer)
+       The total number of sessions completed with status codes “2xx”.
+
+         4xx (integer)
+       The total number of sessions completed with status codes “4xx”.
+
+         5xx (integer)
+       The total number of sessions completed with status codes “5xx”.
+
+         total (integer)
+       The total number of completed client sessions.
+
+         discarded (integer)
+       The total number of connections completed without creating a session.
+
+         received (integer)
+       The total number of bytes received from clients.
+
+         sent (integer)
+       The total number of bytes sent to clients.
+
+         ssl
+         handshakes (integer)
+       The total number of successful SSL handshakes.
+
+         handshakes_failed (integer)
+       The total number of failed SSL handshakes.
+
+         session_reuses (integer)
+       The total number of session reuses during SSL handshake.
+
+         no_common_protocol (integer)
+       The number of SSL handshakes failed because of no common protocol.
+
+         no_common_cipher (integer)
+       The number of SSL handshakes failed because of no shared cipher.
+
+         handshake_timeout (integer)
+       The number of SSL handshakes failed because of a timeout.
+
+         peer_rejected_cert (integer)
+       The number of failed SSL handshakes when nginx presented the certificate to the client but it was rejected with a corresponding alert message.
+
+         verify_failures
+       SSL certificate verification errors
+
+         no_cert (integer)
+       A client did not provide the required certificate.
+
+         expired_cert (integer)
+       An expired or not yet valid certificate was presented by a client.
+
+         revoked_cert (integer)
+       A revoked certificate was presented by a client.
+
+         other (integer)
+       Other SSL certificate verification errors.
+
+       Example:
+
+         {
+           "dns" : {
+             "processing" : 1,
+             "connections" : 155569,
+             "sessions" : {
+               "2xx" : 155564,
+               "4xx" : 0,
+               "5xx" : 0,
+               "total" : 155569
+             },
+             "discarded" : 0,
+             "received" : 4200363,
+             "sent" : 20489184,
+             "ssl" : {
+               "handshakes" : 76455,
+               "handshakes_failed" : 432,
+               "session_reuses" : 28770,
+               "no_common_protocol" : 4,
+               "no_common_cipher" : 2,
+               "handshake_timeout" : 0,
+               "peer_rejected_cert" : 0,
+               "verify_failures" : {
+                 "no_cert" : 0,
+                 "expired_cert" : 2,
+                 "revoked_cert" : 1,
+                 "other" : 1
+               }
+             }
+           }
+         }
+
+        * Stream Connections Limiting:
+         passed (integer)
+       The total number of connections that were neither limited nor accounted as limited.
+
+         rejected (integer)
+       The total number of connections that were rejected.
+
+         rejected_dry_run (integer)
+       The total number of connections accounted as rejected in the dry run mode.
+
+       Example:
+
+         {
+           "passed" : 15,
+           "rejected" : 0,
+           "rejected_dry_run" : 2
+         }
+
+        * Stream Upstream:
+         peers
+       An array of:
+
+         id (integer)
+       The ID of the server.
+
+         server (string)
+       An address of the server.
+
+         service (string)
+       The service parameter value of the server directive.
+
+         name (string)
+       The name of the server specified in the server directive.
+
+         backup (boolean)
+       A boolean value indicating whether the server is a backup server.
+
+         weight (integer)
+       Weight of the server.
+
+         state (string)
+       Current state, which may be one of “up”, “down”, “unavail”, “checking”, or “unhealthy”.
+
+         active (integer)
+       The current number of connections.
+
+         ssl
+         handshakes (integer)
+       The total number of successful SSL handshakes.
+
+         handshakes_failed (integer)
+       The total number of failed SSL handshakes.
+
+         session_reuses (integer)
+       The total number of session reuses during SSL handshake.
+
+         no_common_protocol (integer)
+       The number of SSL handshakes failed because of no common protocol.
+
+         handshake_timeout (integer)
+       The number of SSL handshakes failed because of a timeout.
+
+         peer_rejected_cert (integer)
+       The number of failed SSL handshakes when nginx presented the certificate to the upstream server but it was rejected with a corresponding alert message.
+
+         verify_failures
+       SSL certificate verification errors
+
+         expired_cert (integer)
+       An expired or not yet valid certificate was presented by an upstream server.
+
+         revoked_cert (integer)
+       A revoked certificate was presented by an upstream server.
+
+         hostname_mismatch (integer)
+       Server's certificate doesn't match the hostname.
+
+         other (integer)
+       Other SSL certificate verification errors.
+
+         max_conns (integer)
+       The max_conns limit for the server.
+
+         connections (integer)
+       The total number of client connections forwarded to this server.
+
+         connect_time (integer)
+       The average time to connect to the upstream server.
+
+         first_byte_time (integer)
+       The average time to receive the first byte of data.
+
+         response_time (integer)
+       The average time to receive the last byte of data.
+
+         sent (integer)
+       The total number of bytes sent to this server.
+
+         received (integer)
+       The total number of bytes received from this server.
+
+         fails (integer)
+       The total number of unsuccessful attempts to communicate with the server.
+
+         unavail (integer)
+       How many times the server became unavailable for client connections (state “unavail”) due to the number of unsuccessful attempts reaching the max_fails threshold.
+
+         health_checks
+         checks (integer)
+       The total number of health check requests made.
+
+         fails (integer)
+       The number of failed health checks.
+
+         unhealthy (integer)
+       How many times the server became unhealthy (state “unhealthy”).
+
+         last_passed (boolean)
+       Boolean indicating whether the last health check request was successful and passed tests.
+
+         downtime (integer)
+       Total time the server was in the “unavail”, “checking”, and “unhealthy” states.
+
+         downstart (string)
+       The time when the server became “unavail”, “checking”, or “unhealthy”, in the ISO 8601 format with millisecond resolution.
+
+         selected (string)
+       The time when the server was last selected to process a connection, in the ISO 8601 format with millisecond resolution.
+
+         zombies (integer)
+       The current number of servers removed from the group but still processing active client connections.
+
+         zone (string)
+       The name of the shared memory zone that keeps the group’s configuration and run-time state.
+
+       Example:
+
+         {
+           "dns" : {
+             "peers" : [
+               {
+                 "id" : 0,
+                 "server" : "10.0.0.1:12347",
+                 "name" : "10.0.0.1:12347",
+                 "backup" : false,
+                 "weight" : 5,
+                 "state" : "up",
+                 "active" : 0,
+                 "ssl" : {
+                   "handshakes" : 200,
+                   "handshakes_failed" : 4,
+                   "session_reuses" : 189,
+                   "no_common_protocol" : 4,
+                   "handshake_timeout" : 0,
+                   "peer_rejected_cert" : 0,
+                   "verify_failures" : {
+                     "expired_cert" : 2,
+                     "revoked_cert" : 1,
+                     "hostname_mismatch" : 2,
+                     "other" : 1
+                   }
+                 },
+                 "max_conns" : 50,
+                 "connections" : 667231,
+                 "sent" : 251946292,
+                 "received" : 19222475454,
+                 "fails" : 0,
+                 "unavail" : 0,
+                 "health_checks" : {
+                   "checks" : 26214,
+                   "fails" : 0,
+                   "unhealthy" : 0,
+                   "last_passed" : true
+                 },
+                 "downtime" : 0,
+                 "downstart" : "2022-06-28T11:09:21.602Z",
+                 "selected" : "2022-06-28T15:01:25.000Z"
+               },
+               {
+                 "id" : 1,
+                 "server" : "10.0.0.1:12348",
+                 "name" : "10.0.0.1:12348",
+                 "backup" : true,
+                 "weight" : 1,
+                 "state" : "unhealthy",
+                 "active" : 0,
+                 "max_conns" : 50,
+                 "connections" : 0,
+                 "sent" : 0,
+                 "received" : 0,
+                 "fails" : 0,
+                 "unavail" : 0,
+                 "health_checks" : {
+                   "checks" : 26284,
+                   "fails" : 26284,
+                   "unhealthy" : 1,
+                   "last_passed" : false
+                 },
+                 "downtime" : 262925617,
+                 "downstart" : "2022-06-28T11:09:21.602Z",
+                 "selected" : "2022-06-28T15:01:25.000Z"
+               }
+             ],
+             "zombies" : 0,
+             "zone" : "dns"
+           }
+         }
+
+        * Stream Upstream Server:
+       Dynamically configurable parameters of a stream upstream server:
+
+         id (integer)
+       The ID of the stream upstream server. The ID is assigned automatically and cannot be changed.
+
+         server (string)
+       Same as the address parameter of the stream upstream server. When adding a server, it is possible to specify it as a domain name. In this case, changes of the IP addresses that correspond to a domain name will be monitored and automatically applied to the upstream configuration without the need of restarting nginx. This requires the resolver directive in the “stream” block. See also the resolve parameter of the stream upstream server.
+
+         service (string)
+       Same as the service parameter of the stream upstream server. This parameter cannot be changed.
+
+         weight (integer)
+       Same as the weight parameter of the stream upstream server.
+
+         max_conns (integer)
+       Same as the max_conns parameter of the stream upstream server.
+
+         max_fails (integer)
+       Same as the max_fails parameter of the stream upstream server.
+
+         fail_timeout (string)
+       Same as the fail_timeout parameter of the stream upstream server.
+
+         slow_start (string)
+       Same as the slow_start parameter of the stream upstream server.
+
+         backup (boolean)
+       When true, adds a backup server. This parameter cannot be changed.
+
+         down (boolean)
+       Same as the down parameter of the stream upstream server.
+
+         parent (string)
+       Parent server ID of the resolved server. The ID is assigned automatically and cannot be changed.
+
+         host (string)
+       Hostname of the resolved server. The hostname is assigned automatically and cannot be changed.
+
+       Example:
+
+         {
+           "id" : 0,
+           "server" : "10.0.0.1:12348",
+           "weight" : 1,
+           "max_conns" : 0,
+           "max_fails" : 1,
+           "fail_timeout" : "10s",
+           "slow_start" : 0,
+           "backup" : false,
+           "down" : false
+         }
+
+        * Stream Keyval Shared Memory Zone:
+       Contents of a stream keyval shared memory zone when using the GET method.
+
+       Example:
+
+         {
+           "key1" : "value1",
+           "key2" : "value2",
+           "key3" : "value3"
+         }
+
+        * Stream Keyval Shared Memory Zone:
+       Contents of a stream keyval shared memory zone when using the POST or PATCH methods.
+
+       Example:
+
+         {
+           "key1" : "value1",
+           "key2" : "value2",
+           "key3" : {
+             "value" : "value3",
+             "expire" : 30000
+           }
+         }
+
+        * Stream Zone Sync Node:
+         zones
+       Synchronization information per each shared memory zone.
+
+       A collection of "Sync Zone" objects
+
+         status
+       Synchronization information per node in a cluster.
+
+         bytes_in (integer)
+       The number of bytes received by this node.
+
+         msgs_in (integer)
+       The number of messages received by this node.
+
+         msgs_out (integer)
+       The number of messages sent by this node.
+
+         bytes_out (integer)
+       The number of bytes sent by this node.
+
+         nodes_online (integer)
+       The number of peers this node is connected to.
+
+       Example:
+
+         {
+           "zones" : {
+             "zone1" : {
+               "records_pending" : 2061,
+               "records_total" : 260575
+             },
+             "zone2" : {
+               "records_pending" : 0,
+               "records_total" : 14749
+             }
+           },
+           "status" : {
+             "bytes_in" : 1364923761,
+             "msgs_in" : 337236,
+             "msgs_out" : 346717,
+             "bytes_out" : 1402765472,
+             "nodes_online" : 15
+           }
+         }
+
+        * Sync Zone:
+       Synchronization status of a shared memory zone.
+
+         records_pending (integer)
+       The number of records that need to be sent to the cluster.
+
+         records_total (integer)
+       The total number of records stored in the shared memory zone.
+
+        * Resolver Zone:
+       Statistics of DNS requests and responses per particular resolver zone.
+
+         requests
+         name (integer)
+       The total number of requests to resolve names to addresses.
+
+         srv (integer)
+       The total number of requests to resolve SRV records.
+
+         addr (integer)
+       The total number of requests to resolve addresses to names.
+
+         responses
+         noerror (integer)
+       The total number of successful responses.
+
+         formerr (integer)
+       The total number of FORMERR (Format error) responses.
+
+         servfail (integer)
+       The total number of SERVFAIL (Server failure) responses.
+
+         nxdomain (integer)
+       The total number of NXDOMAIN (Host not found) responses.
+
+         notimp (integer)
+       The total number of NOTIMP (Unimplemented) responses.
+
+         refused (integer)
+       The total number of REFUSED (Operation refused) responses.
+
+         timedout (integer)
+       The total number of timed out requests.
+
+         unknown (integer)
+       The total number of requests completed with an unknown error.
+
+       Example:
+
+         {
+           "resolver_zone1" : {
+             "requests" : {
+               "name" : 25460,
+               "srv" : 130,
+               "addr" : 2580
+             },
+             "responses" : {
+               "noerror" : 26499,
+               "formerr" : 0,
+               "servfail" : 3,
+               "nxdomain" : 0,
+               "notimp" : 0,
+               "refused" : 0,
+               "timedout" : 243,
+               "unknown" : 478
+             }
+           }
+         }
+
+        * License:
+       License and usage reporting status of NGINX Plus instance.
+
+         eval (boolean)
+       Indicates whether NGINX Plus license is trial.
+
+         active_till (integer)
+       The Unix timestamp of license expiration.
+
+         reporting
+         healthy (boolean)
+       Indicates whether the reporting state is still considered healthy despite recent failed attempts.
+
+         fails (integer)
+       The number of failed reporting attempts, reset each time the usage report is successfully sent.
+
+         grace (integer)
+       The number of seconds before traffic processing is stopped after unsuccessful report attempt.
+
+         uuid (string)
+       The ID of NGINX Plus instance in the UUID format.
+
+         pending_renewal (boolean)
+       Indicates whether a renewed license token has been saved as pending but not yet applied.
+
+       Example:
+
+         {
+           "eval" : false,
+           "active_till" : 1749268757,
+           "reporting" : {
+             "healthy" : true,
+             "fails" : 2,
+             "grace" : 15551961,
+             "uuid" : "13754cba-29fb-53e5-c32e-a6cf57c84b01"
+           },
+           "pending_renewal" : false
+         }
+
+        * JWT licence token information:
+       Represents the JWT license status and related metadata.
+
+         id (string)
+       Unique identifier of the license. Example: "abc123"
+
+         type (string)
+       Type of license. Example: "commercial"
+
+         status (string)
+       Current status of the license. Example: "active"
+
+         expires (string)
+       Date and time at which the license expires, in ISO 8601 format. Example: "2025-12-31T23:59:59Z"
+
+       Example:
+
+         {
+           "id" : "abc123",
+           "type" : "commercial",
+           "status" : "active",
+           "expires" : "2025-12-31T23:59:59Z"
+         }
+
+        * Worker process:
+       Statistics per each worker process.
+
+         id (integer)
+       The ID of the worker process.
+
+         pid (integer)
+       The PID identifier of the worker process used by the operating system.
+
+         connections
+       The number of accepted, dropped, active, and idle connections per worker process.
+
+         accepted (integer)
+       The total number of client connections accepted by the worker process.
+
+         dropped (integer)
+       The total number of client connections dropped by the worker process.
+
+         active (integer)
+       The current number of active client connections that are currently being handled by the worker process.
+
+         idle (integer)
+       The number of idle client connections that are currently being handled by the worker process.
+
+         http
+         requests
+       The total number of client requests handled by the worker process.
+
+         total (integer)
+       The total number of client requests received by the worker process.
+
+         current (integer)
+       The current number of client requests that are currently being processed by the worker process.
+
+       Example:
+
+         {
+           "id" : 0,
+           "pid" : 32212,
+           "connections" : {
+             "accepted" : 1,
+             "dropped" : 0,
+             "active" : 1,
+             "idle" : 0
+           },
+           "http" : {
+             "requests" : {
+               "total" : 15,
+               "current" : 1
+             }
+           }
+         }
+
+        * Error:
+       nginx error object.
+
+         error
+         status (integer)
+       HTTP error code.
+
+         text (string)
+       Error description.
+
+         code (string)
+       Internal nginx error code.
+
+         request_id (string)
+       The ID of the request, equals the value of the $request_id variable.
+
+         href (string)
+       Link to reference documentation.
+
+nginx manual                            bundled documentation

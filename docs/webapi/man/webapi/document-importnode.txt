@@ -1,0 +1,72 @@
+WEBAPI.DOCUMENT-IMPORTNODE(1)    Sandbox manual    WEBAPI.DOCUMENT-IMPORTNODE(1)
+
+       NAME
+
+       Document: importNode() method - The importNode() method of the Document interface creates a copy of a Node or DocumentFragment from another document, to be inserted into th
+
+       DOCUMENT: IMPORTNODE() METHOD
+
+       The importNode() method of the Document interface creates a copy of a Node or DocumentFragment from another document, to be inserted into the current document later.
+
+       The imported node is not yet included in the document tree. To include it, you need to call an insertion method such as appendChild() or insertBefore() with a node that _is_ currently in the document tree.
+
+       Unlike document.adoptNode(), the original node is not removed from its original document. The imported node is a clone of the original.
+
+       The Node.cloneNode() method also creates a copy of a node. The difference is that importNode() clones the node in the context of the calling document, whereas cloneNode() uses the document of the node being cloned. The document context determines the CustomElementRegistry for constructing any custom elements. For this reason, to clone nodes to be used in another document, use importNode() on the target document. The HTMLTemplateElement.content is owned by a separate document, so it should also be cloned using document.importNode() so that custom element descendants are constructed using the definitions in the current document. See the Node.cloneNode() page's examples for more details.
+
+       SYNTAX
+
+         importNode(externalNode)
+         importNode(externalNode, deep)
+
+       PARAMETERS
+
+        * externalNode
+          * : The external Node or DocumentFragment to import into
+       the current document.
+
+        * deep (optional)
+          * : A boolean flag, whose default value is false,
+       which controls whether to include the entire DOM subtree of the externalNode in the import.
+
+            * If deep is set to true, then
+       externalNode and all of its descendants are copied.
+
+            * If deep is set to false, then only
+       externalNode is imported — the new node has no children.
+
+       RETURN VALUE
+
+       The copied importedNode in the scope of the importing document.
+
+       > importedNode's Node.parentNode is null, since it has not yet been inserted into the document tree!
+
+       EXAMPLES
+
+       USING IMPORTNODE()
+
+         const iframe = document.querySelector("iframe");
+         const oldNode = iframe.contentWindow.document.getElementById("myNode");
+         const newNode = document.importNode(oldNode, true);
+         document.getElementById("container").appendChild(newNode);
+
+       NOTES
+
+       Before they can be inserted into the current document, nodes from external documents should either be:
+
+        * cloned using document.importNode(); or
+        * adopted using document.adoptNode().
+       > Although Firefox doesn't currently enforce this rule, we encourage you to follow this rule for improved future compatibility.
+       For more on the Node.ownerDocument issues, see the W3C DOM FAQ.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * document.adoptNode(), which behaves very similar to this method
+        * Node.appendChild()
+        * Node.insertBefore()
+
+Web APIs manual                         from the official documentation

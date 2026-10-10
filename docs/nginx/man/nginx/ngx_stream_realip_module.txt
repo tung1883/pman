@@ -1,0 +1,35 @@
+NGINX.NGX_STREAM_REALIP_MODULE(1) Sandbox manual NGINX.NGX_STREAM_REALIP_MODULE(1)
+
+       MODULE NGX_STREAM_REALIP_MODULE
+
+         Example Configuration Directives  set_real_ip_from Embedded Variables
+       The ngx_stream_realip_module module is used to change the client address and port to the ones sent in the PROXY protocol header (1.11.4). The PROXY protocol must be previously enabled by setting the proxy_protocol parameter in the listen directive.
+
+       This module is not built by default, it should be enabled with the --with-stream_realip_module configuration parameter.
+
+       EXAMPLE CONFIGURATION
+
+         listen 12345 proxy_protocol;
+
+         set_real_ip_from  192.168.1.0/24;
+         set_real_ip_from  192.168.2.1;
+         set_real_ip_from  2001:0db8::/32;
+
+       DIRECTIVES
+
+       SET_REAL_IP_FROM
+
+         Syntax: | set_real_ip_from address | CIDR | unix:;
+         Default: | —
+         Context: | stream, server
+       Defines trusted addresses that are known to send correct replacement addresses. If the special value unix: is specified, all UNIX-domain sockets will be trusted.
+
+       EMBEDDED VARIABLES
+
+         $realip_remote_addr
+       keeps the original client address
+
+         $realip_remote_port
+       keeps the original client port
+
+nginx manual                            bundled documentation

@@ -1,0 +1,89 @@
+WEBAPI.PERFORMANCEMARK-PERFORMANCEMARK(1) Sandbox manual WEBAPI.PERFORMANCEMARK-PERFORMANCEMARK(1)
+
+       NAME
+
+       PerformanceMark: PerformanceMark() constructor - The PerformanceMark() constructor creates a timestamp with the given name.
+
+       PERFORMANCEMARK: PERFORMANCEMARK() CONSTRUCTOR
+
+       The PerformanceMark() constructor creates a timestamp with the given name.
+
+       Unlike performance.mark(), performance marks created by the constructor aren't added to the browser's performance timeline. This means that calls to the Performance interface's getEntries*() methods (getEntries(), getEntriesByName() or getEntriesByType()) won't show entries for these marks.
+
+       SYNTAX
+
+         new PerformanceMark(name)
+         new PerformanceMark(name, markOptions)
+
+       PARAMETERS
+
+        * name
+          * : A string representing the name of the mark.
+        * markOptions (optional)
+          * : An object for specifying a timestamp and additional metadata for the mark.
+            * detail (optional)
+              * : Arbitrary metadata to include in the mark. Defaults to null.
+                * devtools (optional) (experimental)
+                  * : Some browsers have use a structured devtools object within the detail object as part of an Extensibility API that surfaces these in custom tracks in performance traces. See the Chrome's Extensibility API documentation for more information.
+                    * dataType (experimental)
+                      * : A string which must be set to marker. Identifies as a marker.
+                    * color (optional) (experimental)
+                      * : Defaults to "primary". Must be one of "primary", "primary-light", "primary-dark", "secondary", "secondary-light", "secondary-dark", "tertiary", "tertiary-light", "tertiary-dark", "error".
+                    * properties (optional) (experimental)
+                      * : Array of key-value pairs. Values can be any JSON-compatible type.
+                    * tooltipText (optional) (experimental)
+                      * : Short description for tooltip.
+            * startTime (optional)
+              * : DOMHighResTimeStamp to use as the mark time. Defaults to performance.now().
+
+       RETURN VALUE
+
+       A PerformanceMark object.
+
+       EXCEPTIONS
+
+        * SyntaxError: Thrown if the name given to this method already exists in the PerformanceTiming interface.
+        * TypeError: Thrown if startTime is negative.
+
+       EXAMPLES
+
+       CREATING NAMED MARKERS
+
+       The following example shows how PerformanceMark entries are constructed and then aren't part of the browser's performance timeline.
+
+         new PerformanceMark("squirrel");
+         new PerformanceMark("monkey");
+         new PerformanceMark("dog");
+
+         const allEntries = performance.getEntriesByType("mark");
+         console.log(allEntries.length);
+         // 0
+
+       DEVTOOLS EXTENSIBILITY API
+
+       For browsers that support the Extensibility API you can use the detail parameter to provide more details in a devtools object that will be used to display this in performance profiles:
+
+         // Marker indicating when the processed image was uploaded
+         performance.mark("Image Upload", {
+           detail: {
+             devtools: {
+               dataType: "marker",
+               color: "secondary",
+               properties: [
+                 ["Image Size", "2.5MB"],
+                 ["Upload Destination", "Cloud Storage"],
+               ],
+               tooltipText: "Processed image uploaded",
+             },
+           },
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * performance.mark()
+
+Web APIs manual                         from the official documentation

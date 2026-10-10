@@ -1,0 +1,72 @@
+WEBAPI.DOCUMENT-FORMS(1)         Sandbox manual         WEBAPI.DOCUMENT-FORMS(1)
+
+       NAME
+
+       Document: forms property - The forms read-only property of the Document interface returns an HTMLCollection listing all the <form> elements contained in the document.
+
+       DOCUMENT: FORMS PROPERTY
+
+       The forms read-only property of the Document interface returns an HTMLCollection listing all the elements contained in the document.
+
+       > Similarly, you can access a list of a form's component user input elements using the HTMLFormElement.elements property.
+       You can also access named elements as properties of the document object. For example, document["login-form"] and document.forms["login-form"] can both be used to access the form named login-form.
+
+       > Relying on the document["form-name"] pattern is dangerous and discouraged because it can lead to unexpected conflicts with existing or future APIs in the browser.
+       > For example, if a browser introduces a built-in document["login-form"] property in the future, your code may no longer be able to access the form element.
+       > To avoid such conflicts, always use document.forms to access named forms.
+
+       VALUE
+
+       An HTMLCollection object listing all of the document's forms. Each item in the collection is a HTMLFormElement representing a single element.
+
+       If the document has no forms, the returned collection is empty, with a length of zero.
+
+       EXAMPLES
+
+       GETTING FORM INFORMATION
+
+         <form id="robby">
+           <input type="button" value="robby's form" />
+         </form>
+
+         <form id="dave">
+           <input type="button" value="dave's form" />
+         </form>
+
+         <form id="paul">
+           <input type="button" value="paul's form" />
+         </form>
+
+         document.querySelectorAll("input[type=button]").forEach((button, i) => {
+           button.addEventListener("click", (event) => {
+             console.log(document.forms[i].id);
+           });
+         });
+
+       GETTING AN ELEMENT FROM WITHIN A FORM
+
+         const selectForm = document.forms[index];
+         const selectFormElement = document.forms[index].elements[index];
+
+       NAMED FORM ACCESS
+
+         <form name="login">
+           <input name="email" type="email" />
+           <input name="password" type="password" />
+           <button type="submit">Log in</button>
+         </form>
+
+         const loginForm = document.forms.login; // Or document.forms['login']
+         loginForm.elements.email.placeholder = "test@example.com";
+         loginForm.elements.password.placeholder = "password";
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTML forms
+        * and the HTMLFormElement interface
+
+Web APIs manual                         from the official documentation

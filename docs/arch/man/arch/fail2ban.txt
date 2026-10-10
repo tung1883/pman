@@ -1,0 +1,181 @@
+ARCH.FAIL2BAN(1)                 Sandbox manual                 ARCH.FAIL2BAN(1)
+
+       Fail2ban scans log files (e.g. /var/log/httpd/error_log) and bans IPs that show the malicious signs like too many authentication attempts, scanning for vulnerabilities, etc. Generally Fail2ban is then used to update firewall rules to reject the IP addresses for a specified amount of time, although any other arbitrary action (e.g. sending an email) could also be configured.
+
+       Warning
+
+        * Using an IP banning software will stop trivial attacks but it relies on an additional daemon and successful logging.
+        * It usually does not make sense to use fail2ban with sshd when only public key authentication or similar is enabled.
+        * It is also not a substitute for a VPN. Do not expose your services to the internet unless necessary.
+        * Additionally, if the attacker knows your IP address, they could send packets with a spoofed source header and get your IP address banned. Make sure to specify your IP in ignoreip.
+
+       INSTALLATION
+
+       Install the fail2ban package.
+
+       USAGE
+
+       Configure Fail2ban and enable/start fail2ban.service.
+
+       FAIL2BAN-CLIENT
+
+       The fail2ban-client allows monitoring jails (reload, restart, status, etc.), to view all available commands:
+
+         $ fail2ban-client
+
+       To view all enabled jails:
+
+         # fail2ban-client status
+
+       To check the status of a jail, e.g. for sshd:
+
+         # fail2ban-client status sshd
+
+         Status for the jail: sshd
+         |- Filter
+         |  |- Currently failed: 1
+         |  |- Total failed:     9
+         |  `- Journal matches:  _SYSTEMD_UNIT=sshd.service + _COMM=sshd
+         `- Actions
+            |- Currently banned: 1
+            |- Total banned:     1
+            `- Banned IP list:   0.0.0.0
+
+       For a compact version for all jails, including banned IPs:
+
+         # fail2ban-client banned
+
+         [{'sshd': ['192.168.100.50']}, {'apache-auth': []}]
+
+       CONFIGURATION
+
+       Due to the possibility of Pacnew and Pacsave files being created for /etc/fail2ban/jail.conf during an upgrade, jail.conf(5) § CONFIGURATION FILES FORMAT recommends that users create a /etc/fail2ban/jail.local file to "ease upgrades".
+
+       For example, to change the default ban time to 1 day:
+
+         /etc/fail2ban/jail.local
+
+         [DEFAULT]
+         bantime = 1d
+
+       Or create separate name.local files under the /etc/fail2ban/jail.d directory, e.g. /etc/fail2ban/jail.d/sshd.local.
+
+       Reload fail2ban.service to apply the configuration changes.
+
+       ENABLING JAILS
+
+       By default all jails are disabled. Append enabled = true to the jail you want to use, e.g. to enable the OpenSSH jail:
+
+         /etc/fail2ban/jail.local
+
+         [sshd]
+         enabled = true
+
+       See #Custom SSH jail.
+
+       RECEIVE AN ALERT E-MAIL
+
+       If you want to receive an e-mail when someone has been banned, you have to configure an SMTP client (e.g. msmtp) and change default action, as given below.
+
+         /etc/fail2ban/jail.local
+
+         [DEFAULT]
+         destemail = yourname@example.com
+         sender = yourname@example.com
+
+         # to ban & send an e-mail with whois report to the destemail.
+         action = %(action_mw)s
+
+         # same as action_mw but also send relevant log lines
+         #action = %(action_mwl)s
+
+       FIREWALL AND SERVICES
+
+       By default, Fail2ban uses iptables. However, configuration of most firewalls and services is straightforward. For example, to use nftables:
+
+         /etc/fail2ban/jail.local
+
+         [DEFAULT]
+         banaction = nftables
+         banaction_allports = nftables[type=allports]
+
+       See /etc/fail2ban/action.d/ for other examples, e.g. ufw.conf.
+
+       TIPS AND TRICKS
+
+       CUSTOM SSH JAIL
+
+       Warning If the attacker knows your IP address, they can send packets with a spoofed source header and get your IP address locked out of the server. SSH keys provide an elegant solution to the problem of brute forcing without these problems.
+
+       Edit /etc/fail2ban/jail.d/sshd.local, add this section and update the list of trusted IP addresses in ignoreip:
+
+         /etc/fail2ban/jail.d/sshd.local
+
+         [sshd]
+         enabled   = true
+         filter    = sshd
+         banaction = iptables
+         backend   = systemd
+         maxretry  = 5
+         findtime  = 1d
+         bantime   = 2w
+         ignoreip  = 127.0.0.1/8 ::1
+
+       Note
+
+        * It may be necessary to set LogLevel VERBOSE in /etc/ssh/sshd_config to allow full fail2ban monitoring as otherwise password failures may not be logged correctly.
+        * Fail2ban has IPv6 support since version 0.10. Adapt your firewall accordingly, e.g. start/enable ip6tables.service.
+        * When using journal namespaces (by adding LogNamespace=something to a unit file), you can make fail2ban read those logs by setting backend like this: backend = systemd[journalfiles="/var/log/journal/*.something/system.journal"].
+       Tip
+
+        * If using iptables front-ends like ufw, one can use banaction = ufw instead of using iptables.
+        * When using Shorewall, one can use banaction = shorewall and also set BLACKLIST to ALL in /etc/shorewall/shorewall.conf, otherwise the rule added to ban an IP address will affect only new connections.
+
+       SYSTEMD BACKEND: JOURNALD FILTERING
+
+       When using the systemd backend to improve performance, configure a filter with journalmatch. For example, to parse only kernel-level log messages:
+
+         /etc/fail2ban/filter.d/fwdrop.local
+
+         [Definition]
+         failregex = ^.*DROP_.*SRC=<ADDR> DST=.*$
+         journalmatch = _TRANSPORT=kernel
+
+       See also systemd.journal-fields(7).
+
+       SERVICE HARDENING
+
+       Currently, Fail2ban must be run as root. Therefore, you may wish to consider hardening the process with systemd.
+
+       Create a drop-in file for fail2ban.service:
+
+         /etc/systemd/system/fail2ban.service.d/override.conf
+
+         [Service]
+         PrivateDevices=yes
+         PrivateTmp=yes
+         ProtectHome=read-only
+         ProtectSystem=strict
+         ReadWritePaths=-/var/run/fail2ban
+         ReadWritePaths=-/var/lib/fail2ban
+         ReadWritePaths=-/var/log/fail2ban.log
+         ReadWritePaths=-/var/spool/postfix/maildrop
+         ReadWritePaths=-/run/xtables.lock
+         CapabilityBoundingSet=CAP_AUDIT_READ CAP_DAC_READ_SEARCH CAP_NET_ADMIN CAP_NET_RAW
+
+       The CapabilityBoundingSet parameters CAP_DAC_READ_SEARCH will allow Fail2ban full read access to every directory and file. CAP_NET_ADMIN and CAP_NET_RAW allow Fail2ban to operate on any firewall that has command-line shell interface. See capabilities(7) for more info.
+
+       By using ProtectSystem=strict the filesystem hierarchy will only be read-only, ReadWritePaths allows Fail2ban to have write access on required paths.
+
+       Finally, do a daemon-reload to apply the changes of the unit and restart fail2ban.service.
+
+       SEE ALSO
+
+        * Using a Fail2Ban Jail to Whitelist a User
+        * Optimising your Fail2Ban filters
+        * Fail2Ban and sendmail
+        * Fail2Ban and iptables
+        * Fail2Ban 0.8.3 Howto
+        * Monitoring the fail2ban log
+
+ArchWiki manual                         bundled documentation

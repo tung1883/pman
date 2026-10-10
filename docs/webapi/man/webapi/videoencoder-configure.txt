@@ -1,0 +1,107 @@
+WEBAPI.VIDEOENCODER-CONFIGURE(1) Sandbox manual WEBAPI.VIDEOENCODER-CONFIGURE(1)
+
+       NAME
+
+       VideoEncoder: configure() method - windowanddedicated
+
+       VIDEOENCODER: CONFIGURE() METHOD
+
+       window_and_dedicated
+
+       The configure() method of the VideoEncoder interface changes the state of the encoder to "configured" and asynchronously prepares the encoder to accept VideoEncoders for encoding with the specified parameters. If the encoder doesn't support the specified parameters or can't be initialized for other reasons an error will be reported via the error callback provided to the VideoEncoder constructor.
+
+       If the VideoEncoder has been previously configured, the new configuration will not be applied until all previous tasks have completed.
+
+       SYNTAX
+
+         configure(config)
+
+       PARAMETERS
+
+        * config
+          * : A dictionary object containing the following members:
+            * codec
+              * : A string containing a valid codec string. See "codecs" parameter for details on codec string construction.
+            * width (optional)
+              * : An integer representing the width of each output EncodedVideoChunk in pixels, before any ratio adjustments.
+            * height (optional)
+              * : An integer representing the height of each output EncodedVideoChunk in pixels, before any ratio adjustments.
+            * displayWidth (optional)
+              * : An integer representing the intended display width of each output EncodedVideoChunk in pixels when displayed.
+            * displayHeight (optional)
+              * : An integer representing the vertical dimension of each output EncodedVideoChunk in pixels when displayed.
+            * hardwareAcceleration
+              * : A hint that configures the hardware acceleration method of this codec. One of:
+                * "no-preference"
+                * "prefer-hardware"
+                * "prefer-software"
+            * bitrate
+              * : An integer containing the average bitrate of the encoded video in units of bits per second.
+            * framerate
+              * : An integer containing the expected frame rate in frames per second.
+            * alpha
+              * : A string indicating whether the alpha component of the VideoFrame inputs should be kept or discarded prior to encoding. One of:
+                * "discard" (default)
+                * "keep"
+            * scalabilityMode
+              * : A string containing an encoding scalability mode identifier as defined in WebRTC.
+            * bitrateMode (optional)
+              * : A string containing a bitrate mode. One of:
+                * "constant"
+                  * : The encoder will target constant bitrate.
+                * "variable" (default)
+                  * : The encoder will target a variable bitrate, allowing more space to be used for complex signals and less space for less complex signals.
+                * "quantizer"
+                  * : The encoder will disregard the bitrate option and instead it will use codec-specific quantizer values specified for each frame in the options parameter to VideoEncoder.encode().
+            * latencyMode (optional)
+              * : A string containing a value that configures the latency behavior of this codec. One of:
+                * "quality" (default)
+                  * : The encoder should optimize for encoding quality.
+                * "realtime"
+                  * : The encoder should optimize for low latency and may even drop frames to honor framerate.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the provided config is invalid.
+        * InvalidStateError DOMException
+          * : Thrown if the state is "closed".
+        * NotSupportedError DOMException
+          * : Thrown if the provided config is valid but the user agent cannot provide a codec that can decode this profile.
+
+       EXAMPLES
+
+       The following example creates a new VideoEncoder and configures it with some of the available options.
+
+         const init = {
+           output: handleChunk,
+           error(e) {
+             console.log(e.message);
+           },
+         };
+
+         let config = {
+           codec: "vp8",
+           width: 640,
+           height: 480,
+           bitrate: 2_000_000, // 2 Mbps
+           framerate: 30,
+         };
+
+         let encoder = new VideoEncoder(init);
+         encoder.configure(config);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * VideoEncoder.isConfigSupported()
+        * Codec String Support Table
+
+Web APIs manual                         from the official documentation

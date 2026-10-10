@@ -1,0 +1,59 @@
+WEBAPI.WEBSOCKETSTREAM-CLOSE(1)  Sandbox manual  WEBAPI.WEBSOCKETSTREAM-CLOSE(1)
+
+       NAME
+
+       WebSocketStream: close() method - The close() method of the
+
+       WEBSOCKETSTREAM: CLOSE() METHOD
+
+       {{non-standard_header}}
+
+       The close() method of the WebSocketStream interface closes the WebSocket connection. The method optionally accepts an object containing a custom code and/or reason indicating why the connection was closed.
+
+       SYNTAX
+
+         close()
+         close(options)
+
+       PARAMETERS
+
+        * options (optional)
+          * : An options object containing the following properties:
+            * closeCode (optional)
+              * : A number representing the closing code (see the full list of CloseEvent status codes).
+            * reason (optional)
+              * : A string representing a human-readable description of the reason why the socket connection is closed. The maximum allowed length for a reason string is 123 bytes. The string is automatically encoded as UTF-8 when the function is invoked.
+       > Depending on the server setup and status code you use, the server may choose to ignore a custom code in favor of a valid code that is correct for the closing reason. Valid codes are 1000, and any code within the range 3000 to 4999, inclusive.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * SyntaxError DOMException
+          * : Thrown if the provided reason is longer than the maximum allowed length of 123 bytes.
+
+       EXAMPLES
+
+         const wsURL = "wss://127.0.0.1/";
+         const wss = new WebSocketStream(wsURL);
+
+         setTimeout(() => {
+           wss.close({
+             closeCode: 1000,
+             reason: "That's all folks",
+           });
+         }, 10000);
+
+       SPECIFICATIONS
+
+       Not currently a part of any specification. See https://github.com/whatwg/websockets/pull/48 for standardization progress.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebSocketStream: integrating streams with the WebSocket API, developer.chrome.com (2020)
+
+Web APIs manual                         from the official documentation

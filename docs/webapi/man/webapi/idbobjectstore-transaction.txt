@@ -1,0 +1,90 @@
+WEBAPI.IDBOBJECTSTORE-TRANSACTION(1) Sandbox manual WEBAPI.IDBOBJECTSTORE-TRANSACTION(1)
+
+       NAME
+
+       IDBObjectStore: transaction property - The transaction read-only property of the
+
+       IDBOBJECTSTORE: TRANSACTION PROPERTY
+
+       The transaction read-only property of the IDBObjectStore interface returns the transaction object to which this object store belongs.
+
+       VALUE
+
+       An IDBTransaction object.
+
+       EXAMPLES
+
+       In the following code snippet, we open a read/write transaction on our database and add some data to an object store using add(). After the object store has been created, we log objectStore.transaction to the console. For a full working example, see our To-do Notifications app (view example live).
+
+         // Let us open our database
+         const DBOpenRequest = window.indexedDB.open("toDoList", 4);
+
+         DBOpenRequest.onsuccess = (event) => {
+           note.appendChild(document.createElement("li")).textContent =
+             "Database initialized.";
+
+           // store the result of opening the database in the db variable.
+           // This is used a lot below
+           db = DBOpenRequest.result;
+
+           // Run the addData() function to add the data to the database
+           addData();
+         };
+
+         function addData() {
+           // Create a new object ready to insert into the IDB
+           const newItem = [
+             {
+               taskTitle: "Walk dog",
+               hours: 19,
+               minutes: 30,
+               day: 24,
+               month: "December",
+               year: 2013,
+               notified: "no",
+             },
+           ];
+
+           // open a read/write db transaction, ready for adding the data
+           const transaction = db.transaction(["toDoList"], "readwrite");
+
+           // report on the success of the transaction completing, when everything is done
+           transaction.oncomplete = (event) => {
+             note.appendChild(document.createElement("li")).textContent =
+               "Transaction completed.";
+           };
+
+           transaction.onerror = (event) => {
+             note.appendChild(document.createElement("li")).textContent =
+               "Transaction not opened due to error. Duplicate items not allowed.";
+           };
+
+           // create an object store on the transaction
+           const objectStore = transaction.objectStore("toDoList");
+           console.log(objectStore.transaction);
+
+           // Make a request to add our newItem object to the object store
+           const objectStoreRequest = objectStore.add(newItem[0]);
+
+           objectStoreRequest.onsuccess = (event) => {
+             // report the success of our request
+             note.appendChild(document.createElement("li")).textContent =
+               "Request successful.";
+           };
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,745 @@
+ARCH.RAID(1)                     Sandbox manual                     ARCH.RAID(1)
+
+       Redundant Array of Independent Disks (RAID) is a storage technology that combines multiple disk drive components—typically disk drives or partitions thereof—into a logical unit. Depending on the RAID implementation, this logical unit can be a file system or an additional transparent layer that can hold several partitions.
+
+       Data is distributed across the drives in one of several ways called #RAID levels, depending on the level of redundancy and performance required. The RAID level chosen can thus prevent data loss in the event of a hard disk failure, increase performance or be a combination of both.
+
+       This article explains how to create and manage a software RAID array using mdadm(8).
+
+       Warning Be sure to back up all data before proceeding.
+
+       RAID LEVELS
+
+       Despite redundancy implied by most RAID levels, RAID does not guarantee that data is safe. A RAID will not protect data if there is a fire, the computer is stolen or multiple hard drives fail at once. Furthermore, installing a system with RAID is a complex process that may destroy data.
+
+       STANDARD RAID LEVELS
+
+       There are many different levels of RAID; listed below are the most common.
+
+         RAID 0
+       Uses striping to combine disks. Even though it does not provide redundancy (actually decreasing reliability), it is still considered RAID. It does, however, provide a big speed benefit. If the speed increase is worth the possibility of data loss (for swap partition for example), choose this RAID level. On a server, RAID 1 and RAID 5 arrays are more appropriate. The size of a RAID 0 array block device is the size of the smallest component partition times the number of component partitions.
+
+         RAID 1
+       The most straightforward RAID level: straight mirroring. As with other RAID levels, it only makes sense if the partitions are on different physical disk drives. If one of those drives fails, the block device provided by the RAID array will continue to function as normal. The example will be using RAID 1 for everything except swap and temporary data. Please note that with a software implementation, the RAID 1 level is the only option for the boot partition, because bootloaders reading the boot partition do not understand RAID, but a RAID 1 component partition can be read as a normal partition. The size of a RAID 1 array block device is the size of the smallest component partition.
+
+         RAID 5
+       Requires 3 or more physical drives, and provides the redundancy of RAID 1 combined with the speed and size benefits of RAID 0. RAID 5 uses striping, like RAID 0, but also stores parity blocks distributed across each member disk. In the event of a failed disk, these parity blocks are used to reconstruct the data on a replacement disk. RAID 5 can withstand the loss of one member disk.
+
+       Note RAID 5 is a common choice due to its combination of speed and data redundancy. The caveat is that if one drive were to fail and another drive failed before that drive was replaced, all data will be lost. Furthermore, with modern disk sizes and expected unrecoverable read error (URE) rates on consumer disks, the rebuild of a 4TiB array is expected (i.e. higher than 50% chance) to have at least one URE. Because of this, RAID 5 is no longer advised by the storage industry.
+
+         RAID 6
+       Requires 4 or more physical drives, and provides the benefits of RAID 5 but with security against two drive failures. RAID 6 also uses striping, like RAID 5, but stores two distinct parity blocks distributed across each member disk. In the event of a failed disk, these parity blocks are used to reconstruct the data on a replacement disk. RAID 6 can withstand the loss of two member disks. The robustness against unrecoverable read errors is somewhat better, because the array still has parity blocks when rebuilding from a single failed drive. However, given the overhead, RAID 6 is costly and in most settings RAID 10 in far2 layout (see below) provides better speed benefits and robustness, and is therefore preferred.
+
+       NESTED RAID LEVELS
+
+         RAID 1+0
+       RAID1+0 is a nested RAID that combines two of the standard levels of RAID to gain performance and additional redundancy. It is commonly referred to as RAID10, however, Linux MD RAID10 is slightly different from simple RAID layering, see below.
+
+         RAID 10
+       RAID10 under Linux is built on the concepts of RAID1+0, however, it implements this as a single layer, with multiple possible layouts.
+
+       The near X layout on Y disks repeats each chunk X times on Y/2 stripes, but does not need X to divide Y evenly. The chunks are placed on almost the same location on each disk they are mirrored on, hence the name. It can work with any number of disks, starting at 2. Near 2 on 2 disks is equivalent to RAID1, near 2 on 4 disks to RAID1+0.
+
+       The far X layout on Y disks is designed to offer striped read performance on a mirrored array. It accomplishes this by dividing each disk in two sections, say front and back, and what is written to disk 1 front is mirrored in disk 2 back, and vice versa. This has the effect of being able to stripe sequential reads, which is where RAID0 and RAID5 get their performance from. The drawback is that sequential writing has a very slight performance penalty because of the distance the disk needs to seek to the other section of the disk to store the mirror. RAID10 in far 2 layout is, however, preferable to layered RAID1+0 and RAID5 whenever read speeds are of concern and availability / redundancy is crucial.
+
+       Warning mdadm cannot reshape arrays in far X layouts which means once the array is created, you will not be able to mdadm --grow it. For example, if you have a 4×24TB RAID10 array and you want to switch to 32TB disks, your usable capacity will remain 48TB. For such use cases, stick to near X layouts.
+
+       RAID LEVEL COMPARISON
+
+         RAID level | Data redundancy | Physical drive utilization | Read performance | Write performance | Min drives
+         nX
+       Best
+
+       nX
+
+       Best
+
+       0 | No | 100% | 2
+
+         1 | Yes | 50% | Up to nX if multiple processes are reading, otherwise 1X | 1X | 2
+         (n−1)X
+       Superior
+
+       (n−1)X
+
+       Superior
+
+       5 | Yes | 67% - 94% | 3
+
+         6 | Yes | 50% - 88% | (n−2)X | (n−2)X | 4
+         nX
+       Best; on par with RAID0 but redundant
+
+       10,far2 | Yes | 50% | (n/2)X | 2
+
+         10,near2 | Yes | 50% | Up to nX if multiple processes are reading, otherwise 1X | (n/2)X | 2
+       * Where n is standing for the number of dedicated disks.
+
+       LINEAR
+
+       LINEAR allows to map two or more devices into a single device, without parallel accesses like RAID0 but allowing to fully use disks from different sizes. To create a pseudo RAID using this mode without mdadm, one can either use the low-level dmsetup(8) utility, the high-level LVM framework or the Btrfs filesystem.
+
+       IMPLEMENTATION
+
+       The RAID devices can be managed in different ways:
+
+         Software RAID
+       This is the easiest implementation as it does not rely on obscure proprietary firmware and software to be used. The array is managed by the operating system either by:
+
+        * an abstraction layer (e.g. mdadm); Note This is the method we will use later in this guide.
+        * a logical volume manager (e.g. LVM);
+        * a component of a file system (e.g. ZFS, Btrfs).
+         Hardware RAID
+       The array is directly managed by a dedicated hardware card installed in the PC to which the disks are directly connected. The RAID logic runs on an on-board processor independently of the host processor (CPU). Although this solution is independent of any operating system, the latter requires a driver in order to function properly with the hardware RAID controller. The RAID array can either be configured via an option rom interface or, depending on the manufacturer, with a dedicated application when the OS has been installed. The configuration is transparent for the Linux kernel: it does not see the disks separately.
+
+         FakeRAID
+       This type of RAID is properly called BIOS or Onboard RAID, but is falsely advertised as hardware RAID. The array is managed by pseudo-RAID controllers where the RAID logic is implemented in an option ROM or in the firmware itself with a EFI SataDriver (in case of UEFI), but are not full hardware RAID controllers with all RAID features implemented. Therefore, this type of RAID is sometimes called FakeRAID. dmraid will be used to deal with these controllers. Here are some examples of FakeRAID controllers: Intel Rapid Storage, JMicron JMB36x RAID ROM, AMD RAID, ASMedia 106x, and NVIDIA MediaShield.
+
+       WHICH TYPE OF RAID DO I HAVE
+
+       Since software RAID is implemented by the user, the type of RAID is easily known to the user.
+
+       However, discerning between FakeRAID and true hardware RAID can be more difficult. As stated, manufacturers often incorrectly distinguish these two types of RAID and false advertising is always possible. The best solution in this instance is to run the lspci command and looking through the output to find the RAID controller. Then do a search to see what information can be located about the RAID controller. Hardware RAID controllers appear in this list, but FakeRAID implementations do not. Also, true hardware RAID controllers are often rather expensive, so if someone customized the system, then it is very likely that choosing a hardware RAID setup made a very noticeable change in the computer's price.
+
+       INSTALLATION
+
+       Install mdadm. mdadm is used for administering pure software RAID using plain block devices: the underlying hardware does not provide any RAID logic, just a supply of disks. mdadm will work with any collection of block devices. Even if unusual. For example, one can thus make a RAID array from a collection of thumb drives.
+
+       PREPARE THE DEVICES
+
+       Warning These steps erase everything on a device, so type carefully!
+
+       If the device is being reused or re-purposed from an existing array, erase any old RAID configuration information:
+
+         # mdadm --misc --zero-superblock /dev/drive
+
+       or if a particular partition on a drive is to be deleted:
+
+         # mdadm --misc --zero-superblock /dev/partition
+
+       Note
+
+        * Zapping a partition's superblock should not affect the other partitions on the disk.
+        * Due to the nature of RAID functionality it is very difficult to securely wipe disks fully on a running array. Consider whether it is useful to do so before creating it.
+        * You can do the whole disk preparation procedure from a GUI with blivet-guiAUR.
+
+       PARTITION THE DEVICES
+
+       It is highly recommended to partition the disks to be used in the array. Since most RAID users are selecting disk drives larger than 2 TiB, GPT is required and recommended. See Partitioning for more information on partitioning and the available partitioning tools.
+
+       Note It is also possible to create a RAID directly on the raw disks (without partitions), but not recommended because it can cause problems when swapping a failed disk.
+
+       Tip When replacing a failed disk of a RAID, the new disk has to be exactly the same size as the failed disk or bigger — otherwise the array recreation process will not work. Even hard drives of the same manufacturer and model can have small size differences. By leaving a little space at the end of the disk unallocated one can compensate for the size differences between drives, which makes choosing a replacement drive model easier. Therefore, it is good practice to leave about 100 MiB of unallocated space at the end of the disk.
+
+       GUID PARTITION TABLE
+
+        * After creating the partitions, their partition type GUIDs should be A19D880F-05FC-4D3B-A006-743F0F84911E (it can be assigned by selecting partition type Linux RAID in fdisk or FD00 in gdisk).
+        * If a larger disk array is employed, consider assigning filesystem labels or partition labels to make it easier to identify an individual disk later.
+        * Creating partitions that are of the same size on each of the devices is recommended.
+
+       MASTER BOOT RECORD
+
+       For those creating partitions on HDDs with a MBR partition table, the partition types IDs available for use are:
+
+        * 0xDA for non-FS data (Non-FS data in fdisk). This is the recommended mdadm partition type for RAID arrays on Arch Linux.
+        * 0xFD for RAID autodetect arrays (Linux RAID autodetect in fdisk). This partition type should only be used if RAID autodetection is desireable (non-initramfs system, old mdadm metadata format).
+       See Linux Raid Wiki:Partition Types for more information.
+
+       BUILD THE ARRAY
+
+       Use mdadm to build the array. See mdadm(8) for supported options. Several examples are given below.
+
+       Warning Do not simply copy/paste the examples below; make sure you substitute the correct options and drive letters.
+
+       Note
+
+        * If this is a RAID1 array which is intended to boot from Syslinux a limitation in syslinux v4.07 requires the metadata value to be 1.0 rather than the default of 1.2.
+        * When creating an array from Arch installation medium use the option --homehost=yourhostname (or --homehost=any to always have the same name regardless of the host) to set the hostname, otherwise the hostname archiso will be written in the array metadata.
+       Tip You can specify a custom raid device name using the option --name=MyRAIDName or by setting the raid device path to /dev/md/MyRAIDName. Udev will create symlinks to the raid arrays in /dev/md/ using that name. If homehost matches the current hostname (or if homehost is set to any) the link will be /dev/md/name, if the hostname does not match the link be /dev/md/homehost:name.
+
+       The following example shows building a 2-device RAID1 array:
+
+         # mdadm --create --verbose --level=1 --raid-devices=2 /dev/md/MyRAID1Array /dev/sdb1 /dev/sdc1
+
+       The following example shows building a RAID5 array with 4 active devices and 1 spare device:
+
+         # mdadm --create --verbose --level=5 --raid-devices=4 /dev/md/MyRAID5Array /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 --spare-devices=1 /dev/sdf1
+
+       Tip --chunk is used to change the chunk size from the default value. See Chunks: the hidden key to RAID performance for more on chunk size optimisation.
+
+       The following example shows building a RAID10,far2 array with 2 devices:
+
+         # mdadm --create --verbose --level=10 --raid-devices=2 --layout=f2 /dev/md/MyRAID10Array /dev/sdb1 /dev/sdc1
+
+       The array is created under the virtual device /dev/mdX, assembled and ready to use (in degraded mode). One can directly start using it while mdadm resyncs the array in the background. It can take a long time to restore parity. Check the progress with:
+
+         $ cat /proc/mdstat
+
+       UPDATE CONFIGURATION FILE
+
+       By default, most of mdadm.conf is commented out, and it contains just the following:
+
+         /etc/mdadm.conf
+
+         ...
+         DEVICE partitions
+         ...
+
+       This directive tells mdadm to examine the devices referenced by /proc/partitions and assemble as many arrays as possible. This is fine if you really do want to start all available arrays and are confident that no unexpected superblocks will be found (such as after installing a new storage device). A more precise approach is to explicitly add the arrays to /etc/mdadm.conf:
+
+         # mdadm --detail --scan >> /etc/mdadm.conf
+
+       This results in something like the following:
+
+         /etc/mdadm.conf
+
+         ...
+         DEVICE partitions
+         ...
+         ARRAY /dev/md/MyRAID1Array metadata=1.2 name=pine:MyRAID1Array UUID=27664f0d:111e493d:4d810213:9f291abe
+
+       This also causes mdadm to examine the devices referenced by /proc/partitions. However, only devices that have superblocks with a UUID of 27664… are assembled in to active arrays.
+
+       See mdadm.conf(5) for more information.
+
+       ASSEMBLE THE ARRAY
+
+       Once the configuration file has been updated the array can be assembled using mdadm:
+
+         # mdadm --assemble --scan
+
+       FORMAT THE RAID FILESYSTEM
+
+       Tip To create multiple volumes inside a RAID array, follow the LVM on software RAID article.
+
+       The array can now be formatted with a file system like any other partition, just keep in mind that:
+
+        * Due to the large volume size not all filesystems are suited (see: Wikipedia:Comparison of file systems#Limits).
+        * The filesystem should support growing and shrinking while online (see: Wikipedia:Comparison of file systems#Features).
+        * One should calculate the correct stride and stripe-width for optimal performance.
+
+       CALCULATING THE STRIDE AND STRIPE WIDTH
+
+       Two parameters are required to optimise the filesystem structure to fit optimally within the underlying RAID structure: the stride and stripe width. These are derived from the RAID chunk size, the filesystem block size, and the number of "data disks".
+
+       The chunk size is a property of the RAID array, decided at the time of its creation. mdadm's current default is 512 KiB. It can be found with mdadm:
+
+         # mdadm --detail /dev/mdX | grep 'Chunk Size'
+
+       The block size is a property of the filesystem, decided at its creation. The default for many filesystems, including ext4, is 4 KiB. See /etc/mke2fs.conf for details on ext4.
+
+       The number of "data disks" is the minimum number of devices in the array required to completely rebuild it without data loss. For example, this is N for a raid0 array of N devices and N-1 for raid5.
+
+       Once you have these three quantities, the stride and the stripe width can be calculated using the following formulas:
+
+         stride = chunk size / block size
+         stripe width = number of data disks * stride
+
+       EXAMPLE 1. RAID0
+
+       Example formatting to ext4 with the correct stripe width and stride:
+
+        * Hypothetical RAID0 array is composed of 2 physical disks.
+        * Chunk size is 512 KiB.
+        * Block size is 4 KiB.
+       stride = chunk size / block size. In this example, the math is 512/4 so the stride = 128.
+
+       stripe width = # of physical data disks * stride. In this example, the math is 2*128 so the stripe width = 256.
+
+         # mkfs.ext4 -v -L myarray -b 4096 -E stride=128,stripe-width=256 /dev/md0
+
+       EXAMPLE 2. RAID5
+
+       Example formatting to ext4 with the correct stripe width and stride:
+
+        * Hypothetical RAID5 array is composed of 4 physical disks; 3 data discs and 1 parity disc.
+        * Chunk size is 512 KiB.
+        * Block size is 4 KiB.
+       stride = chunk size / block size. In this example, the math is 512/4 so the stride = 128.
+
+       stripe width = # of physical data disks * stride. In this example, the math is 3*128 so the stripe width = 384.
+
+         # mkfs.ext4 -v -L myarray -b 4096 -E stride=128,stripe-width=384 /dev/md0
+
+       For more on stride and stripe width, see: RAID Math.
+
+       EXAMPLE 3. RAID10,FAR2
+
+       Example formatting to ext4 with the correct stripe width and stride:
+
+        * Hypothetical RAID10 array is composed of 2 physical disks. Because of the properties of RAID10 in far2 layout, both count as data disks.
+        * Chunk size is 512 KiB.
+        * Block size is 4 KiB.
+       stride = chunk size / block size. In this example, the math is 512/4 so the stride = 128.
+
+       stripe width = # of physical data disks * stride. In this example, the math is 2*128 so the stripe width = 256.
+
+         # mkfs.ext4 -v -L myarray -b 4096 -E stride=128,stripe-width=256 /dev/md0
+
+       MOUNTING FROM A LIVE CD
+
+       Users wanting to mount the RAID partition from a Live CD, use:
+
+         # mdadm --assemble /dev/mdnumber /dev/disk1 /dev/disk2 /dev/disk3 /dev/disk4
+
+       If your RAID 1 that is missing a disk array was wrongly auto-detected as RAID 1 (as per mdadm --detail /dev/mdnumber) and reported as inactive (as per cat /proc/mdstat), stop the array first:
+
+         # mdadm --stop /dev/mdnumber
+
+       INSTALLING ARCH LINUX ON RAID
+
+       Note The following section is applicable only if the root filesystem resides on the array. Users may skip this section if the array holds a data partition(s).
+
+       You should create the RAID array between the Partitioning and formatting steps of the Installation Procedure. Instead of directly formatting a partition to be your root file system, it will be created on a RAID array. Follow the section #Installation to create the RAID array. Then continue with the installation procedure until the pacstrap step is completed. When using UEFI boot, also read EFI system partition#ESP on software RAID1.
+
+       UPDATE CONFIGURATION FILE
+
+       Note This should be done outside of the chroot, hence the prefix /mnt to the filepath.
+
+       After the base system is installed the default configuration file, mdadm.conf, must be updated like so:
+
+         # mdadm --detail --scan >> /mnt/etc/mdadm.conf
+
+       Always check the mdadm.conf configuration file using a text editor after running this command to ensure that its contents look reasonable.
+
+       Note To prevent failure of mdmonitor.service at boot (activated by udev), you will need to uncomment MAILADDR and provide an e-mail address and/or application to handle notification of problems with your array at the bottom of mdadm.conf. See #Email notifications.
+
+       Continue with the installation procedure until you reach the step Installation guide#Initramfs, then follow the next section.
+
+       CONFIGURE MKINITCPIO
+
+       Note This should be done whilst chrooted.
+
+       Install mdadm and add mdadm_udev to the HOOKS array of the mkinitcpio.conf to add support for mdadm into the initramfs image:
+
+         /etc/mkinitcpio.conf
+
+         ...
+         HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block mdadm_udev filesystems fsck)
+         ...
+
+       Then regenerate the initramfs.
+
+       Note Every time when you make changes to /etc/mdadm.conf, the initramfs needs to be regenerated.
+
+       CONFIGURE THE BOOT LOADER
+
+       ROOT DEVICE
+
+       Point the root parameter to the mapped device. E.g.:
+
+         root=/dev/md/MyRAIDArray
+
+       If booting from a software raid partition fails using the kernel device node method above, an alternative way is to use one of the methods from Persistent block device naming, for example:
+
+         root=LABEL=Root_Label
+
+       See also GRUB#RAID.
+
+       RAID0 LAYOUT
+
+       Note This also affects existing mdraid RAID0 users that upgrade from an older version of the Linux kernel to 5.3.4 or newer.
+
+       Since version 5.3.4 of the Linux kernel, you need to explicitly tell the kernel which RAID0 layout should be used: RAID0_ORIG_LAYOUT (1) or RAID0_ALT_MULTIZONE_LAYOUT (2).[1] You can do this by providing the kernel parameter as follows:
+
+         raid0.default_layout=2
+
+       The correct value depends upon the kernel version that was used to create the raid array: use 1 if created using kernel 3.14 or earlier, use 2 if using a more recent version of the kernel. One way to check this is to look at the creation time of the raid array:
+
+         mdadm --detail /dev/md1
+
+         /dev/md1:
+                    Version : 1.2
+              Creation Time : Thu Sep 24 10:17:41 2015
+                 Raid Level : raid0
+                 Array Size : 975859712 (930.65 GiB 999.28 GB)
+               Raid Devices : 3
+              Total Devices : 3
+                Persistence : Superblock is persistent
+
+                Update Time : Thu Sep 24 10:17:41 2015
+                      State : clean
+             Active Devices : 3
+            Working Devices : 3
+             Failed Devices : 0
+              Spare Devices : 0
+
+                 Chunk Size : 512K
+
+         Consistency Policy : none
+
+                       Name : archiso:root
+                       UUID : 028de718:20a81234:4db79a2c:e94fd560
+                     Events : 0
+
+             Number   Major   Minor   RaidDevice State
+                0     259        2        0      active sync   /dev/nvme0n1p1
+                1     259        6        1      active sync   /dev/nvme2n1p1
+                2     259        5        2      active sync   /dev/nvme1n1p2
+
+       Here we can see that this raid array was created on September 24, 2015. The release date of Linux Kernel 3.14 was March 30, 2014, and as such this raid array is most likely created using a multizone layout (2).
+
+       RAID MAINTENANCE
+
+       SCRUBBING
+
+       It is good practice to regularly run data scrubbing to check for and fix errors. Depending on the size/configuration of the array, a scrub may take multiple hours to complete.
+
+       To initiate a data scrub:
+
+         # echo check > /sys/block/mdX/md/sync_action
+
+       Alternatively, you may enable the included mdcheck_start.timer which performs weekly scans.
+
+       The check operation scans the drives for bad sectors and automatically repairs them. If it finds good sectors that contain bad data (i.e. a mismatch, the data in a sector does not agree with what the data from another disk indicates that it should be, for example the parity block + the other data blocks would cause us to think that this data block is incorrect), then no action is taken, but the event is logged (see below). This "do nothing" allows admins to inspect the data in the sector and the data that would be produced by rebuilding the sectors from redundant information and pick the correct data to keep.
+
+       As with many tasks/items relating to mdadm, the status of the scrub can be queried by reading /proc/mdstat.
+
+       Example:
+
+         $ cat /proc/mdstat
+
+         Personalities : [raid6] [raid5] [raid4] [raid1]
+         md0 : active raid1 sdb1[0] sdc1[1]
+               3906778112 blocks super 1.2 [2/2] [UU]
+               [>....................]  check =  4.0% (158288320/3906778112) finish=386.5min speed=161604K/sec
+               bitmap: 0/30 pages [0KB], 65536KB chunk
+
+       To stop a currently running data scrub safely:
+
+         # echo idle > /sys/block/md0/md/sync_action
+
+       Note If the system is rebooted after a partial scrub has been suspended, the scrub will start over.
+
+       When the scrub is complete, admins may check how many blocks (if any) have been flagged as bad:
+
+         # cat /sys/block/md0/md/mismatch_cnt
+
+       GENERAL NOTES ON SCRUBBING
+
+       Note Users may alternatively echo repair to /sys/block/md0/md/sync_action but this is ill-advised since if a mismatch in the data is encountered, it would be automatically updated to be consistent. The danger is that we really do not know whether it is the parity or the data block that is correct (or which data block in case of RAID1). It is luck-of-the-draw whether or not the operation gets the right data instead of the bad data.
+
+       It is a good idea to set up a cron job as root to schedule a periodic scrub. See raid-checkAUR which can assist with this. To perform a periodic scrub using systemd timers instead of cron, See raid-check-systemdAUR which contains the same script along with associated systemd timer unit files.
+
+       Note For typical platter drives, scrubbing can take approximately six seconds per gigabyte (that is one hour forty-five minutes per terabyte) so plan the start of your cron job or timer appropriately.
+
+       RAID1 AND RAID10 NOTES ON SCRUBBING
+
+       Due to the fact that RAID1 and RAID10 writes in the kernel are unbuffered, an array can have non-0 mismatch counts even when the array is healthy. These non-0 counts will only exist in transient data areas where they do not pose a problem. However, we cannot tell the difference between a non-0 count that is just in transient data or a non-0 count that signifies a real problem. This fact is a source of false positives for RAID1 and RAID10 arrays. It is however still recommended to scrub regularly in order to catch and correct any bad sectors that might be present in the devices.
+
+       REMOVING DEVICES FROM AN ARRAY
+
+       One can remove a block device from the array after marking it as faulty:
+
+         # mdadm --fail /dev/md0 /dev/failing_array_member
+
+       Now remove it from the array:
+
+         # mdadm --remove /dev/md0 /dev/failing_array_member
+
+       If the device has not failed entirely, but you would like to replace it, e.g. because it looks like it is dying, you can actually handle replacement more gracefully by first adding a new drive and then telling mdadm to replace it.
+
+       For example, with /dev/sdc1 as the new one and /dev/sdb1 as the failing one:
+
+         # mdadm /dev/md0 --add /dev/sdc1
+         # mdadm /dev/md0 --replace /dev/sdb1 --with /dev/sdc1
+
+       The --with /dev/sdc1 part is optional, but more explicit. See [2] for more details.
+
+       To remove a device permanently (for example, to use it individually from now on), follow the steps above (fail/remove or add/replace) and then run:
+
+         # mdadm --zero-superblock /dev/failing_array_member
+
+       Warning
+
+        * Do not issue this command on linear or RAID0 arrays or data loss will occur!
+        * Reusing the removed disk without zeroing the superblock will cause loss of all data on the next boot. (After mdadm will try to use it as the part of the raid array).
+       Stop using an array:
+
+        * Umount target array
+        * Stop the array with: mdadm --stop /dev/md0
+        * Repeat the three command described in the beginning of this section on each device.
+        * Remove the corresponding line from /etc/mdadm.conf.
+
+       ADDING A NEW DEVICE TO AN ARRAY
+
+       Adding new devices with mdadm can be done on a running system with the devices mounted. Partition the new device using the same layout as one of those already in the arrays as discussed above.
+
+       Assemble the RAID array if it is not already assembled:
+
+         # mdadm --assemble /dev/md0 /dev/sda1 /dev/sdb1
+
+       Add the new device to the array:
+
+         # mdadm --add /dev/md0 /dev/sdc1
+
+       This should not take long for mdadm to do.
+
+       Depending on the type of RAID (for example, with RAID1), mdadm may add the device as a spare without syncing data to it. You can increase the number of disks the RAID uses by using --grow with the --raid-devices option. For example, to increase an array to four disks:
+
+         # mdadm --grow /dev/md0 --raid-devices=4
+
+       You can check the progress with:
+
+         # cat /proc/mdstat
+
+       Check that the device has been added with the command:
+
+         # mdadm --misc --detail /dev/md0
+
+       Note For RAID0 arrays you may get the following error message:
+
+         mdadm: add new device failed for /dev/sdc1 as 2: Invalid argument
+
+       This is because the above commands will add the new disk as a "spare" but RAID0 does not have spares. If you want to add a device to a RAID0 array, you need to "grow" and "add" in the same command, as demonstrated below:
+
+         # mdadm --grow /dev/md0 --raid-devices=3 --add /dev/sdc1
+
+       INCREASING SIZE OF A RAID VOLUME
+
+       If larger disks are installed in a RAID array or partition size has been increased, it may be desirable to increase the size of the RAID volume to fill the larger available space. This process may be begun by first following the above sections pertaining to replacing disks. Once the RAID volume has been rebuilt onto the larger disks it must be "grown" to fill the space.
+
+         # mdadm --grow /dev/md0 --size=max
+
+       Next, partitions present on the RAID volume /dev/md0 may need to be resized. See Partitioning for details. Finally, the filesystem on the above mentioned partition will need to be resized. If partitioning was performed with gparted this will be done automatically. If other tools were used, unmount and then resize the filesystem manually.
+
+         # umount /storage
+         # fsck.ext4 -f /dev/md0p1
+         # resize2fs /dev/md0p1
+
+       CHANGE SYNC SPEED LIMITS
+
+       Syncing can take a while. If the machine is not needed for other tasks the speed limit can be increased.
+
+         # cat /proc/mdstat
+
+          Personalities : [raid10]
+          md127 : active raid10 sdd1[3] sdc1[2] sdb1[1] sda1[0]
+              31251490816 blocks super 1.2 512K chunks 2 far-copies [4/4] [UUUU]
+              [=>...................]  resync =  5.2% (1629533760/31251490816) finish=2071.7min speed=238293K/sec
+              bitmap: 221/233 pages [884KB], 65536KB chunk
+
+       In the above example, it would seem the max speed is limited to approximately 238 M/sec.
+
+       Check the current speed limit (in kibibytes per second, KiB/s):
+
+         # sysctl dev.raid.speed_limit_min
+
+         dev.raid.speed_limit_min = 1000
+
+         # sysctl dev.raid.speed_limit_max
+
+         dev.raid.speed_limit_max = 200000
+
+       Set a new maximum speed of raid resyncing operations using sysctl:
+
+         # sysctl -w dev.raid.speed_limit_min=600000
+         # sysctl -w dev.raid.speed_limit_max=600000
+
+       Then check out the syncing speed and estimated finish time.
+
+         # cat /proc/mdstat
+
+          Personalities : [raid10]
+          md127 : active raid10 sdd1[3] sdc1[2] sdb1[1] sda1[0]
+              31251490816 blocks super 1.2 512K chunks 2 far-copies [4/4] [UUUU]
+              [=>...................]  resync =  5.3% (1657016448/31251490816) finish=1234.9min speed=399407K/sec
+              bitmap: 221/233 pages [884KB], 65536KB chunk
+
+       RAID5 PERFORMANCE
+
+       To improve RAID5 performance for fast storage (e.g. NVMe), increase /sys/block/mdx/md/group_thread_cnt to more threads. For example, to use 8 threads to operate on a RAID5 device:
+
+         # echo 8 > /sys/block/md0/md/group_thread_cnt
+
+       See git kernel commit 851c30c9badf.
+
+       UPDATE RAID SUPERBLOCK
+
+       To update the RAID superblock, you need to first unmount the array and then stop the array with the following command:
+
+         # mdadm --stop /dev/md0
+
+       Then you can update certain parameters by reassembling the array. For example, to update the homehost:
+
+         # mdadm --assemble --update=homehost --homehost=NAS /dev/md0 /dev/sda1 /dev/sdb1
+
+       See the arguments of --update for details.
+
+       MONITORING
+
+       A simple one-liner that prints out the status of the RAID devices:
+
+         # awk '/^md/ {printf "%s: ", $1}; /blocks/ {print $NF}' </proc/mdstat
+
+         md1: [UU]
+         md0: [UU]
+
+       WATCH MDSTAT
+
+         # watch -t 'cat /proc/mdstat'
+
+       Or preferably using tmux:
+
+         # tmux split-window -l 12 "watch -t 'cat /proc/mdstat'"
+
+       TRACK IO WITH IOTOP
+
+       The iotop package displays the input/output stats for processes. Use this command to view the IO for raid threads.
+
+         # iotop -a $(sed 's/^/-p /g' <<<`pgrep "_raid|_resync|jbd2"`)
+
+       TRACK IO WITH IOSTAT
+
+       The iostat utility from sysstat package displays the input/output statistics for devices and partitions.
+
+         # iostat -dmy 1 /dev/md0
+         # iostat -dmy 1 # all
+
+       MDADM VIA SYSTEMD
+
+       mdadm provides the systemd service mdmonitor.service which can be useful for monitoring the health of your raid arrays and notifying you if anything goes wrong.
+
+       This service is special in that it cannot be manually activated like a regular service; mdadm will take care of activating it via udev upon assembling your arrays on system startup, but it will only do so if an email address and/or program has been configured for its notifications (see below).
+
+       EMAIL NOTIFICATIONS
+
+       Warning Failure to configure an email address will result in the monitoring service silently failing to start.
+
+       Note In order to send emails, a properly configured mail transfer agent is required.
+
+       To enable this functionality, edit /etc/mdadm.conf and define the email address:
+
+         MAILADDR user@domain
+
+       Then, to verify that everything is working as it should, run the following command:
+
+         # mdadm --monitor --scan --oneshot --test
+
+       If the test is successful and the email is delivered, then you are done; the next time your arrays are reassembled, mdmonitor.service will begin monitoring them for errors.
+
+       PROGRAM NOTIFICATIONS
+
+       Like Email notification above, edit /etc/mdadm.conf and edit the line:
+
+         PROGRAM /usr/sbin/handle-mdadm-events
+
+       The argument for PROGRAM is the script you want to run for any event. Which then interact with proper network monitoring agents. Or even IM clients or push notification services like ntfy.sh for home users.
+
+       Test in the same way as for email notification above.
+
+       TROUBLESHOOTING
+
+       If you are getting error when you reboot about "invalid raid superblock magic" and you have additional hard drives other than the ones you installed to, check that your hard drive order is correct. During installation, your RAID devices may be hdd, hde and hdf, but during boot they may be hda, hdb and hdc. Adjust your kernel line accordingly. This is what happened to me anyway.
+
+       SYSTEM LOCKUP DUE TO MISSING RAID FILESYSTEMS
+
+       It's more of a preemptive measure, but if you use filesystems with RAID backend and RAID fails to assemble at boot, it may force recovery mode. If those filesystems are not system-critical (i.e. are used for documents), consider adding nofail option in fstab to those partitions. This way in case of RAID assembly failure system would remain operational in multi-user mode (so remote acces i.e. with ssh would still be a viable option).
+
+       MISSING ARRAY, CANNOT START IT MANUALLY
+
+       Check if module md_mod is present:
+
+         $ lsmod|grep md_mod
+
+       If not, load it manually:
+
+         $ modprobe md_mod
+
+       And than, reassemble your RAID:
+
+         $ mdadm --assemble --scan
+
+       If this solves problem, you could make it permanent by forcing automatic loading of md_mod, either with systemd:
+
+         /etc/modules-load.d/md_mod.conf
+
+         # Load md_mod.ko at boot
+         md_mod
+
+       Or load it early i.e. if using mkinitcpio, by adding it to list of modules:
+
+         /etc/mkinitcpio.conf
+
+         MODULES=(... md_mod ...)
+
+       Don't forget to rebuild your mkinitcpio.
+
+       ERROR: KERNEL: ATAX.00: REVALIDATION FAILED
+
+       If you suddenly (after reboot, changed BIOS settings) experience Error messages like:
+
+         Feb  9 08:15:46 hostserver kernel: ata8.00: revalidation failed (errno=-5)
+
+       It does not necessarily mean that a drive is broken. You often find panic links on the web which go for the worst. In two words, No Panic. Maybe you just changed APIC or ACPI settings within your BIOS or Kernel parameters somehow. Change them back and you should be fine. Ordinarily, turning ACPI and/or ACPI off should help.
+
+       START ARRAYS READ-ONLY
+
+       When an md array is started, the superblock will be written, and resync may begin. To start read-only set the kernel module md_mod parameter start_ro. When this is set, new arrays get an 'auto-ro' mode, which disables all internal io (superblock updates, resync, recovery) and is automatically switched to 'rw' when the first write request arrives.
+
+       Note The array can be set to true 'ro' mode using mdadm --readonly before the first write request, or resync can be started without a write using mdadm --readwrite.
+
+       To set the parameter at boot, add md_mod.start_ro=1 to your kernel line.
+
+       Or set it at module load time by Kernel module#Using modprobe.d or from directly from /sys/:
+
+         # echo 1 > /sys/module/md_mod/parameters/start_ro
+
+       RECOVERING FROM A BROKEN OR MISSING DRIVE IN THE RAID
+
+       You might get the above mentioned error also when one of the drives breaks for whatever reason. In that case you will have to force the raid to still turn on even with one disk short. Type this (change where needed):
+
+         # mdadm --manage /dev/md0 --run
+
+       Now you should be able to mount it again with something like this (if you had it in fstab):
+
+         # mount /dev/md0
+
+       Now the raid should be working again and available to use, however with one disk short. So, to add that one disc partition it the way like described above in #Prepare the devices. Once that is done you can add the new disk to the raid by doing:
+
+         # mdadm --manage --add /dev/md0 /dev/sdd1
+
+       If you type:
+
+         # cat /proc/mdstat
+
+       you probably see that the raid is now active and rebuilding.
+
+       You also might want to update your configuration (see: #Update configuration file).
+
+       BENCHMARKING
+
+       There are several tools for benchmarking a RAID. The most notable improvement is the speed increase when multiple threads are reading from the same RAID volume.
+
+       bonnie++ tests database type access to one or more files, and creation, reading, and deleting of small files which can simulate the usage of programs such as Squid, INN, or Maildir format e-mail. The enclosed ZCAV program tests the performance of different zones of a hard drive without writing any data to the disk.
+
+       hdparm should not be used to benchmark a RAID, because it provides very inconsistent results.
+
+       SEE ALSO
+
+        * Linux kernel RAID documentation
+        * Linux Software RAID (thomas-krenn.com)
+        * Linux RAID wiki entry in The Linux kernel archives
+        * How Bitmaps Work
+        * Chapter 19. Managing RAID of Red Hat Enterprise Linux 9 documentation
+        * Linux-RAID FAQ on the Linux documentation project
+        * BAARF(Archive.org) including Why should I not use RAID 5?(Archive.org) by Art S. Kagel
+        * Introduction to RAID, Nested-RAID: RAID-5 and RAID-6 Based Configurations, Intro to Nested-RAID: RAID-01 and RAID-10, and Nested-RAID: The Triple Lindy in Linux Magazine
+        * HowTo: Speed Up Linux Software Raid Building And Re-syncing
+        * Wikipedia:Non-RAID drive architectures
+       mailing list
+
+        * Kernel Linux-Raid mailing list
+       mdadm
+
+        * mdadm source code
+        * Software RAID on Linux with mdadm in Linux Magazine
+        * Wikipedia - mdadm
+       Forum threads
+
+        * Raid Performance Improvements with bitmaps
+        * GRUB and GRUB2
+        * Can't install grub2 on software RAID
+        * Use RAID metadata 1.2 in boot and root partition
+
+ArchWiki manual                         bundled documentation

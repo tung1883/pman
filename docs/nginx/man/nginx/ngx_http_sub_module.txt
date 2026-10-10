@@ -1,0 +1,64 @@
+NGINX.NGX_HTTP_SUB_MODULE(1)     Sandbox manual     NGINX.NGX_HTTP_SUB_MODULE(1)
+
+       MODULE NGX_HTTP_SUB_MODULE
+
+         Example Configuration Directives  sub_filter  sub_filter_last_modified  sub_filter_once  sub_filter_types
+       The ngx_http_sub_module module is a filter that modifies a response by replacing one specified string by another.
+
+       This module is not built by default, it should be enabled with the --with-http_sub_module configuration parameter.
+
+       EXAMPLE CONFIGURATION
+
+         location / {
+             sub_filter '<a href="http://127.0.0.1:8080/'  '<a href="https://$host/';
+             sub_filter '<img src="http://127.0.0.1:8080/' '<img src="https://$host/';
+             sub_filter_once on;
+         }
+
+       DIRECTIVES
+
+       SUB_FILTER
+
+         Syntax: | sub_filter string replacement;
+         Default: | —
+         Context: | http, server, location
+       Sets a string to replace and a replacement string. The string to replace is matched ignoring the case. The string to replace (1.9.4) and replacement string can contain variables. Several sub_filter directives can be specified on the same configuration level (1.9.4). These directives are inherited from the previous configuration level if and only if there are no sub_filter directives defined on the current level.
+
+       SUB_FILTER_LAST_MODIFIED
+
+         Syntax: | sub_filter_last_modified on | off;
+
+         sub_filter_last_modified off;
+
+       Default:
+
+         Context: | http, server, location
+       This directive appeared in version 1.5.1.
+
+       Allows preserving the “Last-Modified” header field from the original response during replacement to facilitate response caching.
+
+       By default, the header field is removed as contents of the response are modified during processing.
+
+       SUB_FILTER_ONCE
+
+         Syntax: | sub_filter_once on | off;
+
+         sub_filter_once on;
+
+       Default:
+
+         Context: | http, server, location
+       Indicates whether to look for each string to replace once or repeatedly.
+
+       SUB_FILTER_TYPES
+
+         Syntax: | sub_filter_types mime-type ...;
+
+         sub_filter_types text/html;
+
+       Default:
+
+         Context: | http, server, location
+       Enables string replacement in responses with the specified MIME types in addition to “text/html”. The special value “*” matches any MIME type (0.8.29).
+
+nginx manual                            bundled documentation

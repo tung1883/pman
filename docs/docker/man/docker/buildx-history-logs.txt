@@ -1,0 +1,62 @@
+DOCKER.BUILDX-HISTORY-LOGS(1)    Sandbox manual    DOCKER.BUILDX-HISTORY-LOGS(1)
+
+       NAME
+
+       docker buildx history logs - Print the logs of a build record
+
+       DOCKER BUILDX HISTORY LOGS
+
+       Print the logs of a build record
+
+       USAGE
+
+         docker buildx history logs [OPTIONS] [REF]
+
+       DESCRIPTION
+
+       Print the logs for a completed build. The output appears in the same format as --progress=plain, showing the full logs for each step.
+
+       By default, this shows logs for the most recent build on the current builder.
+
+       You can also specify an earlier build using an offset. For example:
+
+        * ^1 shows logs for the build before the most recent
+        * ^2 shows logs for the build two steps back
+
+       OPTIONS
+
+        * --progress (string): Set type of progress output (plain, rawjson, tty) [default: plain]
+
+       EXAMPLES
+
+       PRINT LOGS FOR THE MOST RECENT BUILD
+
+         $ docker buildx history logs
+         #1 [internal] load build definition from Dockerfile
+         #1 transferring dockerfile: 31B done
+         #1 DONE 0.0s
+         #2 [internal] load .dockerignore
+         #2 transferring context: 2B done
+         #2 DONE 0.0s
+         ...
+
+       By default, this shows logs for the most recent build on the current builder.
+
+       PRINT LOGS FOR A SPECIFIC BUILD
+
+       To print logs for a specific build, use a build ID or offset:
+
+         # Using a build ID
+         docker buildx history logs qu2gsuo8ejqrwdfii23xkkckt
+
+         # Or using a relative offset
+         docker buildx history logs ^1
+
+       SET TYPE OF PROGRESS OUTPUT (--PROGRESS) #PROGRESS
+
+         $ docker buildx history logs ^1 --progress rawjson
+         {"id":"buildx_step_1","status":"START","timestamp":"2024-05-01T12:34:56.789Z","detail":"[internal] load build definition from Dockerfile"}
+         {"id":"buildx_step_1","status":"COMPLETE","timestamp":"2024-05-01T12:34:57.001Z","duration":212000000}
+         ...
+
+Docker manual                           from the official documentation

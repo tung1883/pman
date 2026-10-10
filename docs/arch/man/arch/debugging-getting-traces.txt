@@ -1,0 +1,243 @@
+ARCH.DEBUGGING-GETTING-TRACES(1) Sandbox manual ARCH.DEBUGGING-GETTING-TRACES(1)
+
+       This article aims to help debugging software by providing traces and debug information. This information can then be used for the bug report to the (upstream) software developers or package maintainers.
+
+       INTRODUCTION
+
+       Usually, executable files are stripped of human readable context to make them smaller. Obtaining traces without debugging information available drastically reduces their usefulness. For example, a trace from a gdb session where debugging information is not available may look as follows:
+
+         [...]
+         Backtrace was generated from '/usr/bin/epiphany'
+
+         (no debugging symbols found)
+         Using host libthread_db library "/lib/libthread_db.so.1".
+         (no debugging symbols found)
+         [Thread debugging using libthread_db enabled]
+         [New Thread -1241265952 (LWP 12630)]
+         (no debugging symbols found)
+         0xb7f25410 in __kernel_vsyscall ()
+         #0  0xb7f25410 in __kernel_vsyscall ()
+         #1  0xb741b45b in ?? () from /lib/libpthread.so.0
+         [...]
+
+       ?? shows where debugging info is missing, as well as the name of library or executable which called the function. Similarly, when (no debugging symbols found) appears, you should look for the stated file names.
+
+       To obtain a proper trace that is useful to the program developers, follow the next sections. Separate debug files are available for most official Arch packages and can be downloaded with Debuginfod (see #Getting the trace). When enhanced debugging information was not added to the executable in the first place, one has to rebuild the package with debugging symbols enabled.
+
+       Use the complete stack trace to inform developers of a bug you have discovered before. This will be highly appreciated by them and will help to improve your favorite program.
+
+       GETTING THE TRACE
+
+       The actual backtrace (or stack trace) can be obtained via gdb, the GNU Debugger. It can be used in several ways, depending on whether it should start a new instance of a program, attach to an existing process, or examine a previous crash.
+
+       STARTING A NEW INSTANCE OF A PROGRAM
+
+       Start gdb with an executable program that can be found in $PATH (or a full path):
+
+         $ gdb application
+
+       gdb automatically tries to download debug information and symbols for packages in the official repositories. When gdb asks whether Debuginfod should be enabled in the debugging session, answer y:
+
+         This GDB supports auto-downloading debuginfo from the following URLs:
+           <https://debuginfod.archlinux.org>
+         Enable debuginfod for this session? (y or [n]) y
+         Debuginfod has been enabled.
+         To make this setting permanent, add 'set debuginfod enabled on' to .gdbinit.
+         Downloading separate debug info for /usr/bin/application
+         Reading symbols from /home/user/.cache/debuginfod_client/fbaee841e2ed2c11ecbbda26f39eeec1da23d6c3/debuginfo...
+
+       Then, within gdb, type run followed by any arguments you wish the program to start with:
+
+         (gdb) run arguments
+
+       Tip Alternatively, you can pass arguments when starting gdb using gdb --args application arguments... and then use only run without arguments within gdb. For example, to debug an application written in Python, run gdb --args /usr/bin/python /path/to/application.
+
+       Now do whatever is necessary to evoke the bug. gdb will automatically halt the application when it crashes and prompt for commands. In case of freezes or similar issues, press Ctrl+c and you will be returned to the command prompt, too.
+
+       Then enable logging to a file:
+
+         (gdb) set logging enabled on
+
+       Tip The default file name is gdb.txt. An alternate file name can be specified with set logging file trace.log within gdb.
+
+       And finally have the backtrace written to the specified file in the current working directory:
+
+         (gdb) thread apply all backtrace full
+
+       ATTACHING TO AN EXISTING PROCESS
+
+       If the program you want to debug is already running, you need to first find its process ID. Tools such as pidof(1) or pgrep(1) are available. For example:
+
+         $ pidof python3
+
+         907171 491909
+
+       When the output does not give a unique ID, you can try more filtering or look at the output of ps aux or pstree --show-pids.
+
+       Attaching as regular user does not work by default due to restricted ptrace scope. The restriction can be lowered temporarily with echo 0 > /proc/sys/kernel/yama/ptrace_scope or you can run gdb as a privileged user, e.g. using sudo.
+
+       Start gdb attaching it to the process:
+
+         $ gdb --pid=PID
+
+       gdb will ask if Debuginfod should be enabled in this debugging session, to which you should answer y.
+
+       Note that attaching to a process has stopped it and it needs to be explicitly continued. This replaces the run command from the workflow in the #Starting a new instance of a program section:
+
+         (gdb) continue
+
+       Now do whatever is necessary to evoke the bug in the attached process. Then proceed with enabling logging and obtaining the trace same as in #Starting a new instance of a program.
+
+       EXAMINING A PREVIOUS CRASH
+
+       To debug an application that has already crashed, you will want to invoke gdb on its core dump. See Core dump#Analyzing a core dump for details.
+
+       If debugging information for the crashed program is not available and a proper backtrace was not obtained, you may need to rebuild the package and reproduce the crash again.
+
+       MANUALLY GETTING DEBUG INFO
+
+       The first thing to do is to obtain the names of the packages which require rebuilding or the install of a debug package.
+
+         [...]
+         Backtrace was generated from '/usr/bin/epiphany'
+
+         (no debugging symbols found)
+         Using host libthread_db library "/lib/libthread_db.so.1".
+         (no debugging symbols found)
+         [...]
+
+       For example for the above extract from a trace, the package name for the associated package can be obtained with pacman:
+
+         $ pacman -Qo /lib/libthread_db.so.1
+
+         /lib/libthread_db.so.1 is owned by glibc 2.5-8
+
+       The package is called glibc in version 2.5-8. Repeat this step for every package that needs debugging information.
+
+       INSTALLING DEBUG PACKAGES
+
+       Note Debug packages are not archived by Arch Linux on Arch Linux Archive.
+
+       A few mirrors currently distribute debug packages in accessible repositories. These are sponsored mirrors controlled by Arch Linux and are given access to the debug repositories.
+
+        * https://geo.mirror.pkgbuild.com (GeoDNS mirror)
+       To install a package you can install it directly from the repository. For example:
+
+         # pacman -U https://geo.mirror.pkgbuild.com/core-debug/os/x86_64/zstd-debug-1.5.2-2-x86_64.pkg.tar.zst
+
+       Warning Debug packages from one mirror are not compatible with regular packages from another mirror, if both mirrors are not in sync, and thus have mismatching builds. In this case, avoid mixing packages from different mirrors (this would result in a partial upgrade), but point all repositories to the debug mirror.
+
+       Another option is to add the repositories to your pacman configuration.
+
+         /etc/pacman.conf
+
+         # Testing Repositories
+
+         [core-testing-debug]
+         Include = /etc/pacman.d/mirrorlist
+
+         [extra-testing-debug]
+         Include = /etc/pacman.d/mirrorlist
+
+         [multilib-testing-debug]
+         Include = /etc/pacman.d/mirrorlist
+
+         # Stable repositories
+
+         [core-debug]
+         Include = /etc/pacman.d/mirrorlist
+
+         [extra-debug]
+         Include = /etc/pacman.d/mirrorlist
+
+         [multilib-debug]
+         Include = /etc/pacman.d/mirrorlist
+
+       Place a mirror with debug packages as the first one in the mirrorlist file:
+
+         /etc/pacman.d/mirrorlist
+
+         Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
+         ...
+
+       REBUILDING PACKAGES
+
+       If debug information is not exposed through debuginfod (for example, when the package originates from the AUR), then it can be rebuilt from source. See ABS for packages in the official repositories, or AUR#Acquire build files for packages in the AUR.
+
+       To set the required #Compilation options, you can modify the makepkg configuration if you will only use makepkg for debug purposes. In other cases, you should modify package's PKGBUILD file only for each package you would like to rebuild.
+
+       COMPILATION OPTIONS
+
+       As of pacman 4.1, makepkg.conf(5) has debug compilation flags in DEBUG_CFLAGS and DEBUG_CXXFLAGS. To use them, enable the debug makepkg option, and disable strip.
+
+       These settings will force compilation with debug symbols and will disable their stripping from executables.
+
+         /etc/makepkg.conf
+
+         OPTIONS+=(debug !strip)
+
+       To apply this setting to a single package, modify the PKGBUILD:
+
+         PKGBUILD
+
+         options=(debug !strip)
+
+       Alternatively you can put the debug information in a separate package by enabling both debug and strip, debug symbols will then be stripped from the main package and placed, together with source files to aid in stepping through the debugger, in a separate pkgbase-debug package. This is advantageous if the package contains very large binaries (e.g. over a GB with debug symbols included) as it might cause freezing and other strange, unwanted behavior occurring.
+
+       Note It is insufficient to simply install the newly compiled debug package, because the debugger will check that the file containing the debug symbols is from the same build as the associated library and executable. You must install both of the recompiled packages. In Arch, the debug symbol files are installed under /usr/lib/debug/, and source files are installed under /usr/src/debug. See the GDB documentation for more information about debug packages.
+
+       GLIBC
+
+       Certain packages such as glibc are stripped regardless. Check the PKGBUILD for sections such as:
+
+         strip $STRIP_BINARIES usr/bin/{gencat,getconf,getent,iconv,iconvconfig} \
+                               usr/bin/{ldconfig,locale,localedef,makedb} \
+                               usr/bin/{pcprofiledump,pldd,rpcgen,sln,sprof} \
+                               usr/lib/getconf/*
+
+         strip $STRIP_STATIC usr/lib/*.a
+
+         strip $STRIP_SHARED usr/lib/{libanl,libBrokenLocale,libcidn,libcrypt}-*.so \
+                             usr/lib/libnss_{compat,db,dns,files,hesiod,nis,nisplus}-*.so \
+                             usr/lib/{libdl,libm,libnsl,libresolv,librt,libutil}-*.so \
+                             usr/lib/{libmemusage,libpcprofile,libSegFault}.so \
+                             usr/lib/{audit,gconv}/*.so
+
+       And remove them where appropriate.
+
+       CLANG
+
+       Packages using Clang as the compiler will not build with the debug option due to the debug flag -fvar-tracking-assignments' not being handled (e.g. the previous js78 PKGBUILD).
+
+       Add the following at the top of the build() function to only remove the flag for the affected package:
+
+         build() {
+           CFLAGS=${CFLAGS/-fvar-tracking-assignments}
+           CXXFLAGS=${CXXFLAGS/-fvar-tracking-assignments}
+         [...]
+
+       LTO
+
+       Using Link-time optimization (LTO) will, both during compiling and in a debugger, use more memory[1][2]. Depending on the application, especially if it is a large one like Firefox or Qt, it might exceed the available memory. Build the application without LTO if this happens.
+
+       All packages in the official repositories are generally built with LTO.
+
+       BUILDING AND INSTALLING THE PACKAGE
+
+       Build the package from source using makepkg while in the PKGBUILD's directory. This could take some time:
+
+         $ makepkg
+
+       Then install the built package:
+
+         # pacman -U glibc-2.26-1-x86_64.pkg.tar.gz
+
+       SEE ALSO
+
+        * Debian:HowToGetABacktrace
+        * Gentoo:Project:Quality Assurance/Backtraces
+        * Fedora:StackTraces
+        * GNOME - Getting Stack Traces
+        * gdb mini intro
+
+ArchWiki manual                         bundled documentation

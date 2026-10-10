@@ -1,0 +1,101 @@
+WEBAPI.AUDIOCONTEXT-SETSINKID(1) Sandbox manual WEBAPI.AUDIOCONTEXT-SETSINKID(1)
+
+       NAME
+
+       AudioContext: setSinkId() method - The setSinkId() method of the AudioContext interface sets the output audio device for the AudioContext. If a sink ID is not explicitly set, 
+
+       AUDIOCONTEXT: SETSINKID() METHOD
+
+       The setSinkId() method of the AudioContext interface sets the output audio device for the AudioContext. If a sink ID is not explicitly set, the default system audio output device will be used.
+
+       To set the audio device to a device different than the default one, the developer needs permission to access to audio devices. If required, the user can be prompted to grant the required permission via a MediaDevices.getUserMedia() call.
+
+       In addition, this feature may be blocked by a speaker-selection Permissions Policy.
+
+       SYNTAX
+
+         setSinkId(sinkId)
+
+       PARAMETERS
+
+        * sinkId
+          * : The sink ID of the device you want to set as the output audio device. This can take one of the following value types:
+            * String
+              * : A string representing the sink ID, retrieved for example via the deviceId property of the MediaDeviceInfo objects returned by MediaDevices.enumerateDevices().
+            * AudioSinkOptions
+              * : An object representing different options for a sink ID. Currently this takes a single property, type, with a value of none. Setting this parameter causes the audio to be processed without being played through any audio output device. This is a useful option to minimize power consumption when you don't need playback along with processing.
+
+       RETURN VALUE
+
+       A Promise that fulfills with a value of undefined.
+
+       Attempting to set the sink ID to its existing value (i.e., returned by AudioContext.sinkId), throws no errors, but it aborts the process immediately.
+
+       EXCEPTIONS
+
+        * InvalidAccessError DOMException
+          * : Thrown if accessing the selected audio output device failed.
+        * NotAllowedError DOMException
+          * : Thrown if the browser does not have permission to access audio devices.
+        * NotFoundError DOMException
+          * : Thrown if the passed sinkId does not match any audio device found on the system.
+
+       EXAMPLES
+
+       In our SetSinkId test example (check out the source code), we create an audio graph that generates a three-second burst of white noise via an AudioBufferSourceNode, which we also run through a GainNode to quiet things down a bit.
+
+         mediaDeviceBtn.addEventListener("click", async () => {
+           if ("setSinkId" in AudioContext.prototype) {
+             selectDiv.textContent = "";
+
+             const stream = await navigator.mediaDevices.getUserMedia({
+               audio: true,
+             });
+             const devices = await navigator.mediaDevices.enumerateDevices();
+
+             // Most of the DOM scripting to generate the dropdown cut out for brevity
+
+             const audioOutputs = devices.filter(
+               (device) =>
+                 device.kind === "audiooutput" && device.deviceId !== "default",
+             );
+
+             audioOutputs.forEach((device) => {
+               const option = document.createElement("option");
+               option.value = device.deviceId;
+               option.textContent = device.label;
+               select.appendChild(option);
+             });
+
+             const option = document.createElement("option");
+             option.value = "none";
+             option.textContent = "None";
+             select.appendChild(option);
+
+             select.addEventListener("change", async () => {
+               if (select.value === "none") {
+                 await audioCtx.setSinkId({ type: "none" });
+               } else {
+                 await audioCtx.setSinkId(select.value);
+               }
+             });
+           }
+         });
+
+       We also provide the user with a dropdown menu to allow them to change the audio output device on the fly. To do this, we:
+
+        1. Provide a button to populate the dropdown menu. We first invoke MediaDevices.getUserMedia() to trigger the permissions prompt we need to allow device enumeration, then use MediaDevices.enumerateDevices() to get all the available devices. We loop through the different devices and make each one available as an option in a element. We also create a "None" option for the case where you don't want to play your audio in any output.
+        2. Add a change event listener to the element to change the sink ID and therefore the audio output device when a new value is selected. If "None" is selected in the dropdown, we invoke setSinkId() with the { type : 'none' } object parameter to select no audio device, otherwise we run it with the audio device ID contained in the element value attribute as the parameter.
+       The output device can be changed during audio playback, as well as before, or between plays.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Change the destination output device in Web Audio
+        * AudioContext.sinkId
+        * sinkchange
+
+Web APIs manual                         from the official documentation

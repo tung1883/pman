@@ -1,0 +1,40 @@
+SHELLCHECK.SC2261(1)             Sandbox manual             SHELLCHECK.SC2261(1)
+
+       NAME
+
+       Multiple redirections compete for stdout. Use cat, tee, or pass filenames instead. - (or stdin, or stderr, or FD 3)
+
+       MULTIPLE REDIRECTIONS COMPETE FOR STDOUT. USE CAT, TEE, OR PASS FILENA
+
+       MULTIPLE REDIRECTIONS COMPETE FOR STDOUT. USE CAT, TEE, OR PASS FILENA
+
+       (or stdin, or stderr, or FD 3)
+
+       PROBLEMATIC CODE
+
+         grep foo < input1 < input2 > output1 > output2 > output3
+
+       CORRECT CODE
+
+         cat input1 input2 | grep foo | tee output1 output2 > output3
+
+         # Pass inputs as filenames, write outputs individually
+         grep foo input1 input2 | tee output1 output2 > output3
+
+       RATIONALE
+
+       A file descriptor, whether stdin, stdout, stderr, or non-standard ones, can only point to a single file/pipe.
+
+       For input, many commands support processing multiple filenames. In these cases you can just specify the filenames instead of redirecting. Alternatively, you can use cat to merge multiple filenames into a single stream.
+
+       For output, you can use tee to write to multiple output sinks in parallel.
+
+       EXCEPTIONS
+
+       Zsh will automatically cat inputs and tee outputs, but none of the shells supported by ShellCheck do.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

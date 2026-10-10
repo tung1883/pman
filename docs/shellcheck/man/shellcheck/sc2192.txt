@@ -1,0 +1,33 @@
+SHELLCHECK.SC2192(1)             Sandbox manual             SHELLCHECK.SC2192(1)
+
+       NAME
+
+       This array element has no value. Remove spaces after = or use "" for empty string. - array=([1]=one [2]= two)
+
+       THIS ARRAY ELEMENT HAS NO VALUE. REMOVE SPACES AFTER OR USE FOR EMPTY
+
+       THIS ARRAY ELEMENT HAS NO VALUE. REMOVE SPACES AFTER OR USE FOR EMPTY
+
+       PROBLEMATIC CODE
+
+         array=([1]=one [2]= two)
+
+       CORRECT CODE
+
+         array=([1]=one [2]=two)
+
+       RATIONALE
+
+       You have an array element on the form [index]=. The shell will interpret this as an independent element with index index and value .
+
+       This may happen as part of the expression [index]= value, where the space is not allowed and causes the shell to interpret it as [index]="" [index+1]=value.
+
+       If you wanted the element to have a value, remove the spaces after =, e.g. [index]=value.
+
+       If you wanted to assign an empty string, explicitly use empty quotes: [index]="". This makes no difference to the shell, but will make your intention clear to shellcheck and other humans.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

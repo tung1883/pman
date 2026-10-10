@@ -1,0 +1,70 @@
+WEBAPI.EDITCONTEXT-UPDATECONTROLBOUNDS(1) Sandbox manual WEBAPI.EDITCONTEXT-UPDATECONTROLBOUNDS(1)
+
+       NAME
+
+       EditContext: updateControlBounds() method - The EditContext.updateControlBounds() method of the EditContext interface is used to inform the operating system about the position and size
+
+       EDITCONTEXT: UPDATECONTROLBOUNDS() METHOD
+
+       The EditContext.updateControlBounds() method of the EditContext interface is used to inform the operating system about the position and size of the editable text region of the EditContext object.
+
+       Call this method to tell the operating system the bounds of the current editable region. You should call it when initializing the EditContext, and whenever the editable region's bounds change such as when the webpage is resized. These bounds are used to position platform-specific editing-related UI surfaces such as an Input Method Editor (IME) window.
+
+       SYNTAX
+
+         updateControlBounds(controlBounds)
+
+       PARAMETERS
+
+        * controlBounds
+          * : A DOMRect object representing the new control bounds.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the method is called with no arguments or if the provided argument is not a DOMRect object.
+
+       EXAMPLES
+
+       UPDATING THE CONTROL BOUNDS WHEN THE EDITOR IS INITIALIZED AND ON WIND
+
+       This example shows how to use the updateControlBounds() method to tell the platform where the editable region is at all times.
+
+         #editor {
+           border: 1px solid black;
+           height: 50vw;
+           width: 50vh;
+         }
+
+         <div id="editor"></div>
+
+         const editorEl = document.getElementById("editor");
+         const editContext = new EditContext();
+         editorEl.editContext = editContext;
+
+         function updateControlBounds() {
+           const editorBounds = editorEl.getBoundingClientRect();
+           editContext.updateControlBounds(editorBounds);
+           console.log(
+             `Updated control bounds to ${editorBounds.x}, ${editorBounds.y}, ${editorBounds.width}, ${editorBounds.height}`,
+           );
+         }
+
+         // Update the control bounds now.
+         updateControlBounds();
+         // And when the page is resized.
+         window.addEventListener("resize", updateControlBounds);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The EditContext interface it belongs to.
+
+Web APIs manual                         from the official documentation

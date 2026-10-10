@@ -1,0 +1,67 @@
+WEBAPI.CONTACTSMANAGER-GETPROPERTIES(1) Sandbox manual WEBAPI.CONTACTSMANAGER-GETPROPERTIES(1)
+
+       NAME
+
+       ContactsManager: getProperties() method - The getProperties() method of the
+
+       CONTACTSMANAGER: GETPROPERTIES() METHOD
+
+       The getProperties() method of the ContactsManager interface returns a Promise which resolves with an Array of strings indicating which contact properties are available.
+
+       SYNTAX
+
+         getProperties()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       Returns a Promise that resolves with an Array of strings naming the contact properties that can be returned by the current system.
+
+       Properties can include the following:
+
+        * 'name': The contact's name.
+        * 'tel': The telephone number(s) of the contact.
+        * 'email': The email address of the contact.
+        * 'address': The contact's postal address.
+        * 'icon': The avatar of the contact.
+
+       EXCEPTIONS
+
+       No exceptions are thrown.
+
+       EXAMPLES
+
+       VERIFY PROPERTY SUPPORT
+
+       The following asynchronous function uses the getProperties() method to check whether the current system supports the icon property.
+
+         async function checkProperties() {
+           const supportedProperties = await navigator.contacts.getProperties();
+           if (!supportedProperties.includes("icon")) {
+             console.log("Your system does not support getting icons.");
+           }
+         }
+
+       SELECT USING ONLY SUPPORTED PROPERTIES
+
+       The following example is similar to one for the select() method. Instead of hard-coding the properties passed to select(), it uses getProperties() to ensure that only supported properties are passed. Otherwise, select() might throw a TypeError. handleResults() is a developer defined function.
+
+         const supportedProperties = await navigator.contacts.getProperties();
+
+         async function getContacts() {
+           try {
+             const contacts = await navigator.contacts.select(supportedProperties);
+             handleResults(contacts);
+           } catch (ex) {
+             // Handle any errors here.
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

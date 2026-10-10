@@ -1,0 +1,63 @@
+WEBAPI.HTMLELEMENT-COMMAND-EVENT(1) Sandbox manual WEBAPI.HTMLELEMENT-COMMAND-EVENT(1)
+
+       NAME
+
+       HTMLElement: command event - The command event of the HTMLElement interface fires on an element that is controlled via a button with valid commandForElement and command 
+
+       HTMLELEMENT: COMMAND EVENT
+
+       The command event of the HTMLElement interface fires on an element that is controlled via a button with valid commandForElement and command values, whenever the button is interacted with (e.g., it is clicked).
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("command", (event) => { })
+
+         oncommand = (event) => { }
+
+       EVENT TYPE
+
+       A CommandEvent. Inherits from Event.
+
+       CommandEvent
+
+       EXAMPLES
+
+       BASIC EXAMPLE
+
+         const popover = document.getElementById("mypopover");
+
+         // …
+
+         popover.addEventListener("command", (event) => {
+           if (event.command === "show-popover") {
+             console.log("Popover is about to be shown");
+           }
+         });
+
+       EVENT DISPATCH AND CANCELLATION
+
+       It is worth pointing out that command events fire on the element being invoked. If the button is clicked, it will first dispatch a click event which, if canceled, then the command event will not fire and the default behavior will not be run. In addition to canceling the click event on the button, it is also possible to cancel the command event.
+
+       For example:
+
+         button.addEventListener("click", (event) => {
+           event.preventDefault(); // the `command` event will never fire
+         });
+
+         element.addEventListener("command", (event) => {
+           event.preventDefault(); // the `command` event fires but the default behavior is canceled
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Invoker Commands API
+        * HTMLButtonElement.command
+        * HTMLButtonElement.commandForElement
+
+Web APIs manual                         from the official documentation

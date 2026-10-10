@@ -1,0 +1,101 @@
+WEBAPI.AUDIOBUFFERSOURCENODE-LOOPEND(1) Sandbox manual WEBAPI.AUDIOBUFFERSOURCENODE-LOOPEND(1)
+
+       NAME
+
+       AudioBufferSourceNode: loopEnd property - The loopEnd property of the AudioBufferSourceNode
+
+       AUDIOBUFFERSOURCENODE: LOOPEND PROPERTY
+
+       The loopEnd property of the AudioBufferSourceNode interface specifies is a floating point number specifying, in seconds, at what offset into playing the AudioBuffer playback should loop back to the time indicated by the loopStart property. This is only used if the loop property is true.
+
+       VALUE
+
+       A floating-point number indicating the offset, in seconds, into the audio buffer at which each loop will loop return to the beginning of the loop (that is, the current play time gets reset to AudioBufferSourceNode.loopStart). This property is only used if the loop property is true.
+
+       The default value is 0.
+
+       EXAMPLES
+
+       SETTING LOOPEND
+
+       In this example, when the user presses "Play", we load an audio track, decode it, and put it into an AudioBufferSourceNode.
+
+       The example then sets the loop property to true, so the track loops, and plays the track.
+
+       The user can set the loopStart and loopEnd properties using range controls.
+
+       > You can run the full example live (or view the source.)
+
+         let audioCtx;
+         let buffer;
+         let source;
+
+         const play = document.getElementById("play");
+         const stop = document.getElementById("stop");
+
+         const loopstartControl = document.getElementById("loopstart-control");
+         const loopstartValue = document.getElementById("loopstart-value");
+
+         const loopendControl = document.getElementById("loopend-control");
+         const loopendValue = document.getElementById("loopend-value");
+
+         async function loadAudio() {
+           try {
+             // Load an audio file
+             const response = await fetch("rnb-lofi-melody-loop.wav");
+             // Decode it
+             buffer = await audioCtx.decodeAudioData(await response.arrayBuffer());
+             const max = Math.floor(buffer.duration);
+             loopstartControl.setAttribute("max", max);
+             loopendControl.setAttribute("max", max);
+           } catch (err) {
+             console.error(`Unable to fetch the audio file. Error: ${err.message}`);
+           }
+         }
+
+         play.addEventListener("click", async () => {
+           if (!audioCtx) {
+             audioCtx = new AudioContext();
+             await loadAudio();
+           }
+           source = audioCtx.createBufferSource();
+           source.buffer = buffer;
+           source.connect(audioCtx.destination);
+           source.loop = true;
+           source.loopStart = loopstartControl.value;
+           source.loopEnd = loopendControl.value;
+           source.start();
+           play.disabled = true;
+           stop.disabled = false;
+           loopstartControl.disabled = false;
+           loopendControl.disabled = false;
+         });
+
+         stop.addEventListener("click", () => {
+           source.stop();
+           play.disabled = false;
+           stop.disabled = true;
+           loopstartControl.disabled = true;
+           loopendControl.disabled = true;
+         });
+
+         loopstartControl.addEventListener("input", () => {
+           source.loopStart = loopstartControl.value;
+           loopstartValue.textContent = loopstartControl.value;
+         });
+
+         loopendControl.addEventListener("input", () => {
+           source.loopEnd = loopendControl.value;
+           loopendValue.textContent = loopendControl.value;
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+        * Web Audio API
+
+Web APIs manual                         from the official documentation

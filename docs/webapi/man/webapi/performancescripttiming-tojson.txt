@@ -1,0 +1,66 @@
+WEBAPI.PERFORMANCESCRIPTTIMING-TOJSON(1) Sandbox manual WEBAPI.PERFORMANCESCRIPTTIMING-TOJSON(1)
+
+       NAME
+
+       PerformanceScriptTiming: toJSON() method - The toJSON() method of the PerformanceScriptTiming interface is a serializer; it returns a JSON representation of the PerformanceScriptTimin
+
+       PERFORMANCESCRIPTTIMING: TOJSON() METHOD
+
+       The toJSON() method of the PerformanceScriptTiming interface is a serializer; it returns a JSON representation of the PerformanceScriptTiming object.
+
+       SYNTAX
+
+         toJSON()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A JSON object that is the serialization of the PerformanceScriptTiming object.
+
+       EXAMPLES
+
+       USING THE TOJSON METHOD
+
+       In this example, calling entry.toJSON() returns a JSON representation of the first PerformanceScriptTiming object available in an observed long animation frame.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             console.log(entry.scripts[0].toJSON());
+           });
+         });
+
+         observer.observe({ type: "long-animation-frame", buffered: true });
+
+       This would log an object like so:
+
+         ({
+           duration: 45,
+           entryType: "script",
+           executionStart: 11803.199999999255,
+           forcedStyleAndLayoutDuration: 0,
+           invoker: "DOMWindow.onclick",
+           invokerType: "event-listener",
+           name: "script",
+           pauseDuration: 0,
+           sourceURL: "https://web.dev/js/index-ffde4443.js",
+           sourceFunctionName: "myClickHandler",
+           sourceCharPosition: 17796,
+           startTime: 11803.199999999255,
+           windowAttribution: "self",
+         });
+
+       To get a JSON string, you can use JSON.stringify(entry) directly; it will call toJSON() automatically.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Long animation frame timing
+        * JSON
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,68 @@
+WEBAPI.PERFORMANCE-API-NAVIGATION-TIMING(1) Sandbox manual WEBAPI.PERFORMANCE-API-NAVIGATION-TIMING(1)
+
+       NAME
+
+       Navigation timing - Navigation Timing is part of the Performance API and provides metrics associated with navigating from one page to another. For example, you 
+
+       NAVIGATION TIMING
+
+       Navigation Timing is part of the Performance API and provides metrics associated with navigating from one page to another. For example, you can determine how much time it takes to load or unload a document, or log the time it took until DOM construction has finished and interaction with the DOM is possible.
+
+       Only the current document is included, so usually there is only one PerformanceNavigationTiming object to observe. It extends the PerformanceEntry interface with the entryType of "navigation" and also inherits from PerformanceResourceTiming, so all of the timestamps from the process of fetching the document are available as well.
+
+       PerformanceNavigationTiming
+
+       NAVIGATION TIMESTAMPS
+
+       Figure 1. Navigation timestamps (source).
+
+       The document navigation timestamps (in addition to those from Resource Timing) are:
+
+        1. startTime: Always 0.
+        2. unloadEventStart: (if there is a previous document) the timestamp immediately before the current document's unload event handler starts.
+        3. unloadEventEnd: (if there is a previous document) the timestamp immediately after the current document's unload event handler completes.
+        4. domInteractive: timestamp when DOM construction is finished and interaction with it from JavaScript is possible.
+        5. domContentLoadedEventStart: timestamp immediately before the current document's DOMContentLoaded event handler starts.
+        6. domContentLoadedEventEnd: timestamp immediately after the current document's DOMContentLoaded event handler completes.
+        7. domComplete: timestamp when the document and all sub-resources have finished loading.
+        8. loadEventStart: timestamp immediately before the current document's load event handler starts.
+        9. loadEventEnd: timestamp immediately after the current document's load event handler completes.
+
+       PERFORMANCE TIMING CONFIDENCE
+
+       The PerformanceNavigationTiming.confidence property returns a PerformanceTimingConfidence object containing information that indicates whether a performance record reflects typical application performance, or is likely affected by external factors.
+
+       For example, if a website has loaded after a browser "cold start" or session restore, its pages may load more slowly as a result. In such cases, a low confidence value would be returned for an associated performance record. On the other hand, if the browser determines a returned performance record to be representative of typical application performance, a high confidence value is returned.
+
+       This confidence measure is useful for developers when trying to determine whether a performance issue is a legitimate concern, or an outlier being caused by external factors. See PerformanceTimingConfidence for more information.
+
+       OTHER PROPERTIES
+
+       The PerformanceNavigationTiming interface provides additional properties such as redirectCount returning the number of redirects and type indicating the type of navigation.
+
+       EXAMPLE
+
+       The domContentLoadedEventEnd and domContentLoadedEventStart timestamps can be used to measure how long it takes to process the DOMContentLoaded event handler.
+
+       This example uses a PerformanceObserver, which notifies the caller about new navigation performance entries as they are recorded in the browser's performance timeline. The example uses the buffered option to access entries that were recorded before the observer was created.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             const domContentLoadedTime =
+               entry.domContentLoadedEventEnd - entry.domContentLoadedEventStart;
+             console.log(
+               `${entry.name}: DOMContentLoaded processing time: ${domContentLoadedTime}ms`,
+             );
+           });
+         });
+
+         observer.observe({ type: "navigation", buffered: true });
+
+       For more examples, see the property pages in the PerformanceNavigationTiming reference documentation.
+
+       SEE ALSO
+
+        * PerformanceNavigationTiming
+        * PerformanceResourceTiming
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,150 @@
+HTTP.HEADER-CROSS-ORIGIN-EMBEDDER-POLICY(1) Sandbox manual HTTP.HEADER-CROSS-ORIGIN-EMBEDDER-POLICY(1)
+
+       NAME
+
+       Cross-Origin-Embedder-Policy (COEP) header - The HTTP Cross-Origin-Embedder-Policy (COEP) response header configures the current document's policy for loading and embedding cross-origin
+
+       CROSS-ORIGIN-EMBEDDER-POLICY (COEP) HEADER
+
+       The HTTP Cross-Origin-Embedder-Policy (COEP) response header configures the current document's policy for loading and embedding cross-origin resources that are requested in no-cors mode.
+
+       Note that the embedding policy for requests made in cors mode are controlled by CORS.
+
+       Header type Response header
+
+       SYNTAX
+
+         Cross-Origin-Embedder-Policy: <token>; <parameter>
+
+       DIRECTIVES
+
+       The header should only be set with just one token and an optional report-to endpoint. Setting the header more than once or with multiple tokens is equivalent to setting unsafe-none.
+
+       The value can be one of:
+
+        * unsafe-none
+          * : Allows the document to load cross-origin resources requested in no-cors mode without giving explicit permission through the Cross-Origin-Resource-Policy header.
+       This is the default value.
+
+        * require-corp
+          * : A document can only load resources requested in no-cors mode from the same origin, or resources that have explicitly set the Cross-Origin-Resource-Policy header to a value that allows it to be embedded.
+       Cross-origin resource loading will be blocked by COEP unless:
+
+            * The resource is requested in no-cors mode and the response includes a Cross-Origin-Resource-Policy header that allows it to be loaded into the document origin.
+            * The resource is requested in cors mode; for example, in HTML using the crossorigin attribute, or in JavaScript by making a request with {mode="cors"}.
+       Note that requests made in cors mode won't be blocked by COEP or trigger COEP violations, but must still be permitted by CORS.
+
+        * credentialless
+          * : A document can load cross-origin resources that are requested in no-cors mode without an explicit permission via the Cross-Origin-Resource-Policy header.
+       In this case requests are sent without credentials: cookies are omitted in the request, and ignored in the response.
+
+       The cross-origin loading behavior for other request modes is the same as for require-corp. For example, a cross-origin resource requested in cors mode must support (and be permitted by) CORS.
+
+       The is optional, and can be one of:
+
+        * report-to (optional)
+          * : The is the name of the endpoint to which policy violations will be sent.
+       The mapping between the name and a particular endpoint is defined separately in the Reporting-Endpoints HTTP header.
+
+       DESCRIPTION
+
+       The policy for whether a particular resource is embeddable cross-site may be defined for that resource using the Cross-Origin-Resource-Policy (CORP) header in a response to a no-cors fetch, or using CORS. If neither of these policies are set, then by default, resources can be loaded or embedded into a document as though they had a CORP value of cross-origin (meaning that they _can_ be loaded cross origin).
+
+       The Cross-Origin-Embedder-Policy allows you to require that CORP headers be set, in responses to no-cors requests, in order to load cross-site resources into the current document. You can also set the policy to keep the default behavior, or to allow the resources to be loaded, but strip any credentials that might otherwise be sent. The policy applies to loaded resources, and resources in s and nested frames.
+
+       > The Cross-Origin-Embedder-Policy doesn't override or affect the embedding behavior for a resource for which CORP or CORS has been set.
+       > If CORP restricts a resource to being embedded only same-origin, it won't be loaded cross-origin into a resource — irrespective of the COEP value.
+
+       CROSS-ORIGIN ISOLATION
+
+       COEP and CORS together ensure that the browser process only contains resources that have consented to be shared, or that contain no private data. This is one of the conditions needed for a document to be cross-origin isolated.
+
+       VIOLATION REPORTS
+
+       Violations of the policy may be reported using the Reporting API. Reports can be observed in the page for which the policy is being set using a ReportingObserver, and sent to server endpoints defined in a Reporting-Endpoints HTTP response header and selected using the report-to parameter. For more information see COEPViolationReport.
+
+       EXAMPLES
+
+       BLOCKING AND REPORTING WHEN RESOURCES DON'T SET CORP HEADERS
+
+       This example shows a document that blocks loading of resources requested in no-cors mode that don't set an appropriate CORP header.
+
+       The document is an HTML file hosted on the origin https://example.com, and includes in its body an element that sets as its source the (cross-origin) resource some-image.png. Since the element does not have the cross-origin attribute, it will be requested in no-cors mode:
+
+         <img src="https://another-example.com/some-image.png" />
+
+       The response header for the document sets the Cross-Origin-Embedder-Policy and Reporting-Endpoints headers as shown below. Since the require-corp directive is set, all cross-origin resources requested in no-cors mode must be served with the CORP header. The report-to parameter specifies the name "coep-endpoint" as the name of the endpoint where reports should be sent, and Reporting-Endpoints specifies how that name maps to a particular URL.
+
+         Reporting-Endpoints: coep-endpoint="https://some-example.com/coep"
+         Cross-Origin-Embedder-Policy: require-corp; report-to="coep-endpoint"
+
+       In order for the some-image.png to be loaded without triggering a violation, it would need to set Cross-Origin-Resource-Policy to cross-origin. If we omit the header or don't include it as cross-origin, a violation will occur.
+
+       The report sent in the report POST request will be similar to the JSON object shown below:
+
+         [
+           {
+             "age": 717139,
+             "body": {
+               "blockedURL": "https://another-example.com/some-image.png",
+               "destination": "image",
+               "disposition": "enforce",
+               "type": "corp"
+             },
+             "type": "coep",
+             "url": "https://example.com",
+             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+           }
+         ]
+
+       The type of the report is coep, and the url is the document in which the violation occurred. The body of the report provides the URL of the blocked resource (blockedURL), its destination (image), the type of violation (corp), and that the report was for an enforced violation (disposition).
+
+       FEATURES THAT DEPEND ON CROSS-ORIGIN ISOLATION
+
+       Certain features, such as access to SharedArrayBuffer objects or using Performance.now() with unthrottled timers, are only available if your document is cross-origin isolated.
+
+       To use these features in a document, you will need to set the COEP header with a value of require-corp or credentialless, and the Cross-Origin-Opener-Policy header to same-origin. In addition the feature must not be blocked by Permissions-Policy: cross-origin-isolated.
+
+         Cross-Origin-Opener-Policy: same-origin
+         Cross-Origin-Embedder-Policy: require-corp
+
+       You can use the Window.crossOriginIsolated and WorkerGlobalScope.crossOriginIsolated properties to check if the features are restricted in window and worker contexts, respectively:
+
+         const myWorker = new Worker("worker.js");
+
+         if (crossOriginIsolated) {
+           const buffer = new SharedArrayBuffer(16);
+           myWorker.postMessage(buffer);
+         } else {
+           const buffer = new ArrayBuffer(16);
+           myWorker.postMessage(buffer);
+         }
+
+       AVOIDING COEP BLOCKAGE WITH CORS
+
+       If you enable COEP using require-corp and want to embed a cross-origin resource that supports CORS, you will need to explicitly specify that it is requested in cors mode.
+
+       For example, to fetch an image declared in HTML from a third-party site that supports CORS, you can use the crossorigin attribute so that it is requested in cors mode:
+
+         <img src="https://thirdparty.com/img.png" crossorigin />
+
+       You can similarly use the HTMLScriptElement.crossOrigin attribute or fetch with { mode: 'cors' } to request a file in CORS mode using JavaScript.
+
+       If CORS is not supported for some images, a COEP value of credentialless can be used as an alternative to load the image without any explicit opt-in from the cross-origin server, at the cost of requesting it without cookies.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Cross-Origin-Embedder-Policy-Report-Only
+        * Cross-Origin-Opener-Policy
+        * Window.crossOriginIsolated and WorkerGlobalScope.crossOriginIsolated
+        * ReportingObserver
+        * COEPViolationReport
+        * Reporting API
+        * Cross Origin Opener Policy in _Why you need "cross-origin isolated" for powerful features_ on web.dev (2020)
+        * COOP and COEP explained: Artur Janc, Charlie Reis, Anne van Kesteren (2020)
+
+HTTP manual                             from the official documentation

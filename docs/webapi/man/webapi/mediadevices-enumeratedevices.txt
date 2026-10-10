@@ -1,0 +1,82 @@
+WEBAPI.MEDIADEVICES-ENUMERATEDEVICES(1) Sandbox manual WEBAPI.MEDIADEVICES-ENUMERATEDEVICES(1)
+
+       NAME
+
+       MediaDevices: enumerateDevices() method - The enumerateDevices() method of the MediaDevices interface requests a list of the currently available media input and output devices, such 
+
+       MEDIADEVICES: ENUMERATEDEVICES() METHOD
+
+       The enumerateDevices() method of the MediaDevices interface requests a list of the currently available media input and output devices, such as microphones, cameras, headsets, and so forth. The returned Promise is resolved with an array of MediaDeviceInfo objects describing the devices.
+
+       The returned list will omit any devices that are blocked by the document Permission Policy: microphone, camera, speaker-selection (for output devices), and so on. Access to particular non-default devices is also gated by the Permissions API, and the list will omit devices for which the user has not granted explicit permission.
+
+       SYNTAX
+
+         enumerateDevices()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that is fulfilled with an array of MediaDeviceInfo objects. Each object in the array describes one of the available media input and output devices. The order is significant — the default capture devices will be listed first.
+
+       Other than default devices, only devices for which permission has been granted are "available".
+
+       If the media device is an input device, an InputDeviceInfo object will be returned instead.
+
+       If enumeration fails, the promise is rejected.
+
+       SECURITY REQUIREMENTS
+
+       Access to the API is subject to the following constraints:
+
+        * The method must be called in a secure context.
+        * The document must be fully active and its visibility must be "visible".
+
+       EXAMPLES
+
+       Here's an example of using enumerateDevices(). It outputs a list of the device IDs, with their labels if available.
+
+         if (!navigator.mediaDevices?.enumerateDevices) {
+           console.log("enumerateDevices() not supported.");
+         } else {
+           // List cameras and microphones.
+           navigator.mediaDevices
+             .enumerateDevices()
+             .then((devices) => {
+               devices.forEach((device) => {
+                 console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`);
+               });
+             })
+             .catch((err) => {
+               console.error(`${err.name}: ${err.message}`);
+             });
+         }
+
+       This might produce:
+
+         videoinput: id = csO9c0YpAf274OuCPUA53CNE0YHlIr2yXCi+SqfBZZ8=
+         audioinput: id = RKxXByjnabbADGQNNZqLVLdmXlS0YkETYCIbg+XxnvM=
+         audioinput: id = r2/xw1xUPIyZunfV1lGrKOma5wTOvCkWfZ368XCndm0=
+
+       or if one or more MediaStreams are active or persistent permissions are granted:
+
+         videoinput: FaceTime HD Camera (Built-in) id=csO9c0YpAf274OuCPUA53CNE0YHlIr2yXCi+SqfBZZ8=
+         audioinput: default (Built-in Microphone) id=RKxXByjnabbADGQNNZqLVLdmXlS0YkETYCIbg+XxnvM=
+         audioinput: Built-in Microphone id=r2/xw1xUPIyZunfV1lGrKOma5wTOvCkWfZ368XCndm0=
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * MediaDevices.getUserMedia
+        * WebRTC - the introductory page to the API
+        * Media Capture and Streams API - the API for the media stream objects
+        * Taking webcam photos - a
+       tutorial on using getUserMedia() for taking photos rather than video.
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,59 @@
+WEBAPI.INPUTDEVICEINFO-GETCAPABILITIES(1) Sandbox manual WEBAPI.INPUTDEVICEINFO-GETCAPABILITIES(1)
+
+       NAME
+
+       InputDeviceInfo: getCapabilities() method - The getCapabilities() method of the InputDeviceInfo interface returns a MediaTrackCapabilities object describing the primary audio or video 
+
+       INPUTDEVICEINFO: GETCAPABILITIES() METHOD
+
+       The getCapabilities() method of the InputDeviceInfo interface returns a MediaTrackCapabilities object describing the primary audio or video track of the device's MediaStream.
+
+       SYNTAX
+
+         getCapabilities()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A MediaTrackCapabilities object which specifies the value or range of values which are supported for each of the user agent's supported constrainable properties. It is required to return identical information as returned by calling getCapabilities() on the first MediaStreamTrack of the same kind as this device (video or audio) in the MediaStream returned by getUserMedia({ deviceId: deviceInfo.deviceId }).
+
+       See MediaStreamTrack.getCapabilities() for a list of commonly supported properties and their types.
+
+       > If the user has not granted permission to access the input device an empty object will be returned.
+
+       EXAMPLES
+
+       In the following example we ask for permission to access audio and video devices with mediaDevices.getUserMedia(), as to use getCapabilities() we need permission to access the devices.
+
+       If device is an InputDeviceInfo object, then getCapabilities() will return an object with members representing its capabilities. A video stream will not include auto properties such as noiseSuppression, for example.
+
+         // Get permission to access audio or video devices
+         navigator.mediaDevices
+           .getUserMedia({ audio: true, video: true })
+           // Enumerate media devices
+           .then(() => navigator.mediaDevices.enumerateDevices())
+           .then((devices) => {
+             devices.forEach((device) => {
+               if (typeof device.getCapabilities === "function") {
+                 console.log("Capabilities:", device.getCapabilities()); // A MediaTrackCapabilities object.
+               } else {
+                 console.log("Device does not support getCapabilities:", device);
+               }
+             });
+           })
+           .catch((mediaError) => {
+             console.error("Error accessing media devices:", mediaError);
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * MediaStreamTrack.getCapabilities(), which also return a MediaTrackCapabilities object.
+
+Web APIs manual                         from the official documentation

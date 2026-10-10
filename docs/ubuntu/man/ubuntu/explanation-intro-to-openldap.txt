@@ -1,0 +1,70 @@
+UBUNTU.EXPLANATION-INTRO-TO-OPENLDAP(1) Sandbox manual UBUNTU.EXPLANATION-INTRO-TO-OPENLDAP(1)
+
+       NAME
+
+       Introduction to OpenLDAP - OpenLDAP is the open-source implementation of LDAP used in Ubuntu.
+
+       INTRODUCTION TO OPENLDAP
+
+       Lightweight Directory Access Protocol (LDAP) is a protocol used for managing hierarchical data. OpenLDAP is the open-source implementation of LDAP used in Ubuntu.
+
+       It offers an LDAP server that provides directory services, a client for managing them, and client libraries used by hundreds of applications. OpenLDAP contains some terminology and concepts that new users may want to familiarise themselves with before attempting to set it up. Thanks to its high configurability and flexibility, OpenLDAP can be tailored to suit various needs and is a pertinent choice for those with specific requirements.
+
+       LDAP is a protocol for querying and modifying an X.500-based directory service running over TCP/IP. The current LDAP version is LDAPv3, as defined in RFC 4510.
+
+       The LDAP protocol accesses directories. It's common to refer to a directory as an LDAP directory or LDAP database as a shorthand -- although technically incorrect, this shorthand is so widely used that it's understood as such.
+
+       KEY CONCEPTS AND TERMS
+
+        * A directory is a tree of data entries that is hierarchical in nature; it is called the Directory Information Tree (DIT).
+        * An entry consists of a set of attributes.
+        * An attribute has a key (a name or description) and one or more values. Every attribute must be defined in at least one objectClass.
+        * Attributes and objectClasses are defined in schemas (an objectClass is considered a special kind of attribute).
+        * Each entry has a unique identifier: its Distinguished Name (DN). This, in turn, consists of a Relative Distinguished Name (RDN) followed by the parent entry's DN.
+        * The entry's DN is not an attribute. It is not considered part of the entry itself.
+       > Note: The terms object, container, and node have certain connotations but they all essentially mean the same thing as entry (the technically correct term).
+       For example, below we have a single entry consisting of 11 attributes where the following is true:
+
+        * DN is cn=John Doe,dc=example,dc=com
+        * RDN is cn=John Doe
+        * Parent DN is dc=example,dc=com
+
+          dn: cn=John Doe,dc=example,dc=com
+          cn: John Doe
+          givenName: John
+          sn: Doe
+          telephoneNumber: +1 888 555 6789
+          telephoneNumber: +1 888 555 1232
+          mail: john@example.com
+          manager: cn=Larry Smith,dc=example,dc=com
+          objectClass: inetOrgPerson
+          objectClass: organizationalPerson
+          objectClass: person
+          objectClass: top
+
+       The above entry is in LDAP Data Interchange Format format (LDIF). Any information that you feed into your DIT must also be in such a format. It is defined in RFC 2849.
+
+       A directory accessed via LDAP is good for anything that involves a large number of access requests to a mostly-read, attribute-based (name:value) backend, and that can benefit from a hierarchical structure. Examples include an address book, company directory, a list of email addresses, and a mail server's configuration.
+
+       OUR OPENLDAP GUIDE
+
+       For users who want to set up OpenLDAP, we recommend following our series of guides in this order:
+
+        * Install and configure LDAP
+        * LDAP Access Control
+        * LDAP users and groups
+        * SSL/TLS
+        * Replication
+        * Backup and restore
+
+       FURTHER READING
+
+        * The OpenLDAP administrators guide
+        * RFC 4515: LDAP string representation of search filters
+        * {spellexception}Zytrax's LDAP for Rocket Scientists; a less pedantic but comprehensive treatment of LDAP
+       Older references that might still be useful:
+
+        * {spellexception}O'Reilly's LDAP System Administration (textbook; 2003)
+        * {spellexception}Packt's Mastering OpenLDAP (textbook; 2007)
+
+Ubuntu Server manual                    from the official documentation

@@ -1,0 +1,188 @@
+CSHARP.ITERATION-STATEMENTS(1)   Sandbox manual   CSHARP.ITERATION-STATEMENTS(1)
+
+       NAME
+
+       Iteration statements - `for`, `foreach`, `do`, and `while` - C# iteration statements (for, foreach, do, and while) repeatedly execute a block of code. You use those statements to create loops or iterat
+
+       ITERATION STATEMENTS - FOR, FOREACH, DO, AND WHILE
+
+       Use iteration statements to repeatedly execute a statement or a block of statements. The for statement executes its body while a specified Boolean expression evaluates to true. The foreach statement enumerates the elements of a collection and executes its body for each element of the collection. The do statement conditionally executes its body one or more times. The while statement conditionally executes its body zero or more times.
+
+       At any point within the body of an iteration statement, you can exit the loop by using the break statement. You can step to the next iteration in the loop by using the continue statement.
+
+       THE FOR STATEMENT
+
+       The for statement executes a statement or a block of statements while a specified Boolean expression evaluates to true. The following example shows the for statement that executes its body while an integer counter is less than three:
+
+         for (int i = 0; i < 3; i++)
+         {
+             Console.Write(i);
+         }
+         // Output:
+         // 012
+
+       The preceding example shows the elements of the for statement:
+
+        * The initializer section that executes only once, before entering the loop. Typically, you declare and initialize a local loop variable in that section. You can't access the declared variable from outside the for statement.
+       The initializer section in the preceding example declares and initializes an integer counter variable:
+
+           int i = 0
+
+        * The condition section that determines if the next iteration in the loop should run. If it evaluates to true or isn't present, the next iteration runs. Otherwise, the loop exits. The condition section must be a Boolean expression.
+       The condition section in the preceding example checks if a counter value is less than three:
+
+           i < 3
+
+        * The iterator section that defines what happens after each execution of the body of the loop.
+       The iterator section in the preceding example increments the counter:
+
+           i++
+
+        * The body of the loop, which must be a statement or a block of statements.
+       The iterator section can contain zero or more of the following statement expressions, separated by commas:
+
+        * prefix or postfix increment expression, such as ++i or i++
+        * prefix or postfix decrement expression, such as --i or i--
+        * assignment
+        * invocation of a method
+        * await expression
+        * creation of an object by using the new operator
+       If you don't declare a loop variable in the initializer section, you can use zero or more of the expressions from the preceding list in the initializer section as well. The following example shows several less common usages of the initializer and iterator sections: assigning a value to an external variable in the initializer section, invoking a method in both the initializer and the iterator sections, and changing the values of two variables in the iterator section:
+
+         int i;
+         int j = 3;
+         for (i = 0, Console.WriteLine($"Start: i={i}, j={j}"); i < j; i++, j--, Console.WriteLine($"Step: i={i}, j={j}"))
+         {
+             //...
+         }
+         // Output:
+         // Start: i=0, j=3
+         // Step: i=1, j=2
+         // Step: i=2, j=1
+
+       All the sections of the for statement are optional. For example, the following code defines the infinite for loop:
+
+         for ( ; ; )
+         {
+             //...
+         }
+
+       THE FOREACH STATEMENT
+
+       The foreach statement executes a statement or a block of statements for each element in an instance of the type that implements the IEnumerable or IEnumerable1 interface, as the following example shows:
+
+         List<int> fibNumbers = new() { 0, 1, 1, 2, 3, 5, 8, 13 };
+         foreach (int element in fibNumbers)
+         {
+             Console.Write($"{element} ");
+         }
+         // Output:
+         // 0 1 1 2 3 5 8 13
+
+       The foreach statement isn't limited to those types. You can use it with an instance of any type that satisfies the following conditions:
+
+        * A type has the public parameterless GetEnumerator method. The GetEnumerator method can be an extension method.
+        * The return type of the GetEnumerator method has the public Current property and the public parameterless MoveNext method whose return type is bool.
+       The following example uses the foreach statement with an instance of the Span1 type, which doesn't implement any interfaces:
+
+         Span<int> numbers = [3, 14, 15, 92, 6];
+         foreach (int number in numbers)
+         {
+             Console.Write($"{number} ");
+         }
+         // Output:
+         // 3 14 15 92 6
+
+       If the enumerator's Current property returns a reference return value (ref T where T is the type of a collection element), you can declare an iteration variable with the ref or ref readonly modifier, as the following example shows:
+
+         Span<int> storage = stackalloc int[10];
+         int num = 0;
+         foreach (ref int item in storage)
+         {
+             item = num++;
+         }
+         foreach (ref readonly var item in storage)
+         {
+             Console.Write($"{item} ");
+         }
+         // Output:
+         // 0 1 2 3 4 5 6 7 8 9
+
+       If the source collection of the foreach statement is empty, the foreach statement's body isn't executed and skipped. If the foreach statement is applied to null, a NullReferenceException is thrown.
+
+       AWAIT FOREACH
+
+       Use the await foreach statement to consume an asynchronous stream of data, that is, a collection type that implements the IAsyncEnumerable1 interface. Each iteration of the loop can suspend while the next element is retrieved asynchronously. The following example shows how to use the await foreach statement:
+
+         await foreach (var item in GenerateSequenceAsync())
+         {
+             Console.WriteLine(item);
+         }
+
+       You can also use the await foreach statement with an instance of any type that satisfies the following conditions:
+
+        * A type has the public parameterless GetAsyncEnumerator method. This method can be an extension member.
+        * The return type of the GetAsyncEnumerator method has the public Current property and the public parameterless MoveNextAsync method whose return type is Task, ValueTask, or any other awaitable type whose awaiter's GetResult method returns a bool value.
+       By default, the await foreach statement processes stream elements in the captured context. If you want to disable capturing of the context, use the ConfigureAwait* extension method. For more information about synchronization contexts and capturing the current context, see Consuming the Task-based asynchronous pattern. For more information about asynchronous streams, see the Asynchronous streams tutorial.
+
+       TYPE OF AN ITERATION VARIABLE
+
+       Use the var keyword to let the compiler infer the type of an iteration variable in the foreach statement, as the following code shows:
+
+         foreach (var item in collection) { }
+
+       > The compiler can infer the type of a var declaration as a nullable reference type, depending on whether the nullable aware context is enabled and whether the type of an initialization expression is a reference type.
+       > For more information, see Implicitly-typed local variables.
+       You can also explicitly specify the type of an iteration variable, as the following code shows:
+
+         IEnumerable<T> collection = new T[5];
+         foreach (V item in collection) { }
+
+       In the preceding form, type T of a collection element must be implicitly or explicitly convertible to type V of an iteration variable. If an explicit conversion from T to V fails at run time, the foreach statement throws an InvalidCastException. For example, if T is a non-sealed class type, V can be any interface type, even the one that T doesn't implement. At run time, the type of a collection element can be the one that derives from T and actually implements V. If that's not the case, an InvalidCastException is thrown.
+
+       THE DO STATEMENT
+
+       The do statement executes a statement or a block of statements while a specified Boolean expression evaluates to true. Because the loop evaluates that expression after each execution, a do loop executes one or more times. The do loop differs from the while loop, which executes zero or more times.
+
+       The following example shows the usage of the do statement:
+
+         int n = 0;
+         do
+         {
+             Console.Write(n);
+             n++;
+         } while (n < 5);
+         // Output:
+         // 01234
+
+       THE WHILE STATEMENT
+
+       The while statement executes a statement or a block of statements while a specified Boolean expression evaluates to true. Because the loop evaluates that expression before each execution, a while loop executes zero or more times. The while loop differs from the do loop, which executes one or more times.
+
+       The following example shows the usage of the while statement:
+
+         int n = 0;
+         while (n < 5)
+         {
+             Console.Write(n);
+             n++;
+         }
+         // Output:
+         // 01234
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information, see the following sections of the [C# language specification]:
+
+        * [The for statement]
+        * [The foreach statement]
+        * [The do statement]
+        * [The while statement]
+        * [Extension GetEnumerator support for foreach loops]
+
+       SEE ALSO
+
+        * Declarations
+        * Iterators
+
+C# manual                               from the official documentation

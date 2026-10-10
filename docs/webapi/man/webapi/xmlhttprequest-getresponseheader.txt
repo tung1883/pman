@@ -1,0 +1,61 @@
+WEBAPI.XMLHTTPREQUEST-GETRESPONSEHEADER(1) Sandbox manual WEBAPI.XMLHTTPREQUEST-GETRESPONSEHEADER(1)
+
+       NAME
+
+       XMLHttpRequest: getResponseHeader() method - windowandworkerexceptservice
+
+       XMLHTTPREQUEST: GETRESPONSEHEADER() METHOD
+
+       window_and_worker_except_service
+
+       The XMLHttpRequest method getResponseHeader() returns the string containing the text of a particular header's value.
+
+       If there are multiple response headers with the same name, then their values are returned as a single concatenated string, where each value is separated from the previous one by a pair of comma and space. The getResponseHeader() method returns the value as a UTF byte sequence.
+
+       > The search for the header name is case-insensitive.
+       If you need to get the raw string of all of the headers, use the getAllResponseHeaders() method, which returns the entire raw header string.
+
+       SYNTAX
+
+         getResponseHeader(headerName)
+
+       PARAMETERS
+
+        * headerName
+          * : A string indicating the name of the header you want to return the
+       text value of.
+
+       RETURN VALUE
+
+       A string representing the header's text value, or null if either the response has not yet been received or the header doesn't exist in the response.
+
+       EXAMPLES
+
+       In this example, a request is created and sent, and a readystatechange handler is established to look for the readyState to indicate that the headers have been received; when that is the case, the value of the Content-Type header is fetched. If the Content-Type isn't the desired value, the XMLHttpRequest is canceled by calling abort().
+
+         const client = new XMLHttpRequest();
+         client.open("GET", "unicorns-are-awesome.txt", true);
+         client.send();
+
+         client.onreadystatechange = () => {
+           if (client.readyState === client.HEADERS_RECEIVED) {
+             const contentType = client.getResponseHeader("Content-Type");
+             if (contentType !== myExpectedType) {
+               client.abort();
+             }
+           }
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using XMLHttpRequest
+        * HTTP headers
+        * getAllResponseHeaders()
+        * response
+        * Setting request headers: setRequestHeader()
+
+Web APIs manual                         from the official documentation

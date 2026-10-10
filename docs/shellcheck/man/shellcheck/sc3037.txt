@@ -1,0 +1,37 @@
+SHELLCHECK.SC3037(1)             Sandbox manual             SHELLCHECK.SC3037(1)
+
+       NAME
+
+       In POSIX sh, echo flags are undefined. - echo -ne 'Foo:\tBar'
+
+       IN POSIX SH, ECHO FLAGS ARE UNDEFINED
+
+       IN POSIX SH, ECHO FLAGS ARE UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         echo -ne 'Foo:\tBar'
+
+       CORRECT CODE
+
+       Rewrite in terms of the more robust and standardized printf:
+
+         #!/bin/sh
+         printf 'Foo:\tBar'
+
+       RATIONALE
+
+       echo has historically behaved differently on different systems. Use printf instead to ensure compatibility between shells.
+
+       EXCEPTIONS
+
+       If you only intend to target systems that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,69 @@
+WEBAPI.PUSHMANAGER-REGISTRATIONS(1) Sandbox manual WEBAPI.PUSHMANAGER-REGISTRATIONS(1)
+
+       NAME
+
+       PushManager: registrations() method - The registrations method is used to ask the system about
+
+       PUSHMANAGER: REGISTRATIONS() METHOD
+
+       {{non-standard_header}}
+
+       The registrations method is used to ask the system about existing push endpoint registrations.
+
+       > This method has been superseded by the PushManager.getSubscription() method.
+
+       SYNTAX
+
+         registrations()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A DOMRequest object to handle the success or failure of the method call.
+
+       If the method call is successful, the request's result will be an array of PushRegistration objects.
+
+       PUSHREGISTRATION
+
+       Those objects are anonymous JavaScript objects with the following properties:
+
+        * pushEndpoint
+          * : A string representing the URL of the endpoint.
+        * version
+          * : The current version that the push endpoint is at.
+
+       EXAMPLES
+
+         const req = navigator.push.registrations();
+
+         req.onsuccess = (e) => {
+           if (req.result.length > 0) {
+             req.result.forEach((result) => {
+               console.log(
+                 `Existing registration ${result.pushEndpoint} ${result.version}`,
+               );
+             });
+             // Reuse existing endpoints.
+           } else {
+             // Register for a new endpoint.
+             const register = navigator.push.register();
+             register.onsuccess = (e) => {
+               console.log(`Registered new endpoint: ${register.result}`);
+             };
+           }
+         };
+
+       SPECIFICATIONS
+
+       This feature is not part of any specification anymore. It is no longer on track to become a standard.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * PushManager
+
+Web APIs manual                         from the official documentation

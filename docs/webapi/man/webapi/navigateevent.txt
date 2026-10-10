@@ -1,0 +1,113 @@
+WEBAPI.NAVIGATEEVENT(1)          Sandbox manual          WEBAPI.NAVIGATEEVENT(1)
+
+       NAME
+
+       NavigateEvent - The NavigateEvent interface of the Navigation API is the event object for the navigate event, which fires when any type of navigation is ini
+
+       NAVIGATEEVENT
+
+       The NavigateEvent interface of the Navigation API is the event object for the navigate event, which fires when any type of navigation is initiated (this includes usage of History API features like History.go()). NavigateEvent provides access to information about that navigation, and allows developers to intercept and control the navigation handling.
+
+       CONSTRUCTOR
+
+        * NavigateEvent()
+          * : Creates a new NavigateEvent object instance.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, Event._
+
+        * canIntercept (read-only)
+          * : Returns true if the navigation can be intercepted, or false otherwise (e.g., you can't intercept a cross-origin navigation).
+        * destination (read-only)
+          * : Returns a NavigationDestination object representing the destination being navigated to.
+        * downloadRequest (read-only)
+          * : Returns the filename of the file requested for download, in the case of a download navigation (e.g., an or element with a download attribute), or null otherwise.
+        * formData (read-only)
+          * : Returns the FormData object representing the submitted data in the case of a POST form submission, or null otherwise.
+        * hashChange (read-only)
+          * : Returns true if the navigation is a fragment navigation (i.e., to a fragment identifier in the same document), or false otherwise.
+        * hasUAVisualTransition (read-only)
+          * : Returns true if the user agent performed a visual transition for this navigation before dispatching this event, or false otherwise.
+        * info (read-only)
+          * : Returns the info data value passed by the initiating navigation operation (e.g., Navigation.back(), or Navigation.navigate()), or undefined if no info data was passed.
+        * navigationType (read-only)
+          * : Returns the type of the navigation — push, reload, replace, or traverse.
+        * signal (read-only)
+          * : Returns an AbortSignal, which will become aborted if the navigation is canceled (e.g., by the user pressing the browser's "Stop" button, or another navigation starting and thus canceling the ongoing one).
+        * sourceElement (read-only)
+          * : When the navigation was initiated by an element (for example clicking a link), returns an Element object representing the initiating element.
+        * userInitiated (read-only)
+          * : Returns true if the navigation was initiated by the user (e.g., by clicking a link, submitting a form, or pressing the browser's "Back"/"Forward" buttons), or false otherwise.
+
+       INSTANCE METHODS
+
+       _Inherits methods from its parent, Event._
+
+        * intercept()
+          * : Intercepts this navigation, turning it into a same-document navigation to the destination URL. It can accept handler functions that define what the navigation handling behavior should be, plus focusReset and scroll options to enable or disable the browser's default focus and scrolling behavior as desired.
+        * scroll()
+          * : Can be called to manually trigger the browser-driven scrolling behavior that occurs in response to the navigation, if you want it to happen before the navigation handling has completed.
+
+       EXAMPLES
+
+       HANDLING A NAVIGATION USING INTERCEPT()
+
+         navigation.addEventListener("navigate", (event) => {
+           // Exit early if this navigation shouldn't be intercepted,
+           // e.g. if the navigation is cross-origin, or a download request
+           if (shouldNotIntercept(event)) return;
+
+           const url = new URL(event.destination.url);
+
+           if (url.pathname.startsWith("/articles/")) {
+             event.intercept({
+               async handler() {
+                 // The URL has already changed, so show a placeholder while
+                 // fetching the new content, such as a spinner or loading page
+                 renderArticlePagePlaceholder();
+
+                 // Fetch the new content and display when ready
+                 const articleContent = await getArticleContent(url.pathname);
+                 renderArticlePage(articleContent);
+               },
+             });
+           }
+         });
+
+       > Before the Navigation API was available, to do something similar you'd have to listen for all click events on links, run e.preventDefault(), perform the appropriate History.pushState() call, then set up the page view based on the new URL. And this wouldn't handle all navigations — only user-initiated link clicks.
+
+       HANDLING SCROLLING USING SCROLL()
+
+       In this example of intercepting a navigation, the handler() function starts by fetching and rendering some article content, but then fetches and renders some secondary content afterwards. It makes sense to scroll the page to the main article content as soon as it is available so the user can interact with it, rather than waiting until the secondary content is also rendered. To achieve this, we have added a scroll() call between the two.
+
+         navigation.addEventListener("navigate", (event) => {
+           if (shouldNotIntercept(event)) return;
+           const url = new URL(event.destination.url);
+
+           if (url.pathname.startsWith("/articles/")) {
+             event.intercept({
+               async handler() {
+                 const articleContent = await getArticleContent(url.pathname);
+                 renderArticlePage(articleContent);
+
+                 event.scroll();
+
+                 const secondaryContent = await getSecondaryContent(url.pathname);
+                 addSecondaryContent(secondaryContent);
+               },
+             });
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+        * Navigation API live demo (view demo source)
+
+Web APIs manual                         from the official documentation

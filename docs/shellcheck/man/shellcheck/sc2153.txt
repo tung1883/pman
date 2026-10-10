@@ -1,0 +1,31 @@
+SHELLCHECK.SC2153(1)             Sandbox manual             SHELLCHECK.SC2153(1)
+
+       NAME
+
+       Possible Misspelling: MYVARIABLE may not be assigned. Did you mean MYVARIABLE? - MYVARIABLE="hello world"
+
+       POSSIBLE MISSPELLING: MYVARIABLE MAY NOT BE ASSIGNED. DID YOU MEAN MYV
+
+       POSSIBLE MISSPELLING: MYVARIABLE MAY NOT BE ASSIGNED. DID YOU MEAN MY_
+
+       PROBLEMATIC CODE
+
+         MY_VARIABLE="hello world"
+         echo "$MYVARIABLE"
+
+       CORRECT CODE
+
+         MY_VARIABLE="hello world"
+         echo "$MY_VARIABLE"
+
+       RATIONALE
+
+       ShellCheck has noticed that you reference a variable that is not assigned in the script, but which has a name similar to another known variable. You should verify that the variable name is spelled correctly.
+
+       Note: This error only triggers for environment variables (all uppercase variables), and only when they have names similar to another known variable in the script. If the variable is script-local, it should by convention have a lowercase name, and will in that case be caught by [[SC2154]] whether or not it resembles another name.
+
+       EXCEPTIONS
+
+       If you've double checked and ensured that you did not intend to reference the specified variable, you can disable this message with a [[directive]]. The message will also not appear for guarded references like ${ENVVAR:-default} or ${ENVVAR:?Unset error message here}.
+
+ShellCheck manual                       from the official documentation

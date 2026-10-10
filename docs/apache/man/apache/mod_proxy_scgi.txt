@@ -1,0 +1,80 @@
+APACHE.MOD_PROXY_SCGI(1)         Sandbox manual         APACHE.MOD_PROXY_SCGI(1)
+
+       EXAMPLES
+
+       Remember, in order to make the following examples work, you have to enable mod_proxy and mod_proxy_scgi.
+
+       SIMPLE GATEWAY
+
+         ProxyPass "/scgi-bin/" "scgi://localhost:4000/"
+
+       The balanced gateway needs mod_proxy_balancer and at least one load balancer algorithm module, such as mod_lbmethod_byrequests, in addition to the proxy modules listed above. mod_lbmethod_byrequests is the default, and will be used for this example configuration.
+
+       BALANCED GATEWAY
+
+         ProxyPass "/scgi-bin/" "balancer://somecluster/"
+         <Proxy "balancer://somecluster">
+             BalancerMember "scgi://localhost:4000"
+             BalancerMember "scgi://localhost:4001"
+         </Proxy>
+
+       ENVIRONMENT VARIABLES
+
+       In addition to the configuration directives that control the behavior of mod_proxy, an environment variable may also control the SCGI protocol provider:
+
+         proxy-scgi-pathinfo
+       By default mod_proxy_scgi will neither create nor export the PATH_INFO environment variable. This allows the backend SCGI server to correctly determine SCRIPT_NAME and Script-URI and be compliant with RFC 3875 section 3.3. If instead you need mod_proxy_scgi to generate a "best guess" for PATH_INFO, set this env-var. The variable must be set before SetEnv is effective. SetEnvIf can be used instead: SetEnvIf Request_URI . proxy-scgi-pathinfo
+
+       PROXYSCGIINTERNALREDIRECT DIRECTIVE
+
+         Description: | Enable or disable internal redirect responses from the backend
+         Syntax: | ProxySCGIInternalRedirect On|Off|Headername
+         Default: | ProxySCGIInternalRedirect On
+         Context: | server config, virtual host, directory
+         Status: | Extension
+         Module: | mod_proxy_scgi
+         Compatibility: | The Headername feature is available in version 2.4.13 and later
+       The ProxySCGIInternalRedirect enables the backend to internally redirect the gateway to a different URL. This feature originates in mod_cgi, which internally redirects the response if the response status is OK (200) and the response contains a Location (or configured alternate header) and its value starts with a slash (/). This value is interpreted as a new local URL that Apache httpd internally redirects to.
+
+       mod_proxy_scgi does the same as mod_cgi in this regard, except that you can turn off the feature or specify the use of a header other than Location.
+
+       EXAMPLE
+
+             ProxySCGIInternalRedirect Off
+
+         # Django and some other frameworks will fully qualify "local URLs"
+         # set by the application, so an alternate header must be used.
+         <Location /django-app/>
+             ProxySCGIInternalRedirect X-Location
+         </Location>
+
+       PROXYSCGISENDFILE DIRECTIVE
+
+         Description: | Enable evaluation of X-Sendfile pseudo response header
+         Syntax: | ProxySCGISendfile On|Off|Headername
+         Default: | ProxySCGISendfile Off
+         Context: | server config, virtual host, directory
+         Status: | Extension
+         Module: | mod_proxy_scgi
+       The ProxySCGISendfile directive enables the SCGI backend to let files be served directly by the gateway. This is useful for performance purposes — httpd can use sendfile or other optimizations, which are not possible if the file comes over the backend socket. Additionally, the file contents are not transmitted twice.
+
+       The ProxySCGISendfile argument determines the gateway behavior:
+
+         Off
+       No special handling takes place.
+
+         On
+       The gateway looks for a backend response header called X-Sendfile and interprets the value as the filename to serve. The header is removed from the final response headers. This is equivalent to ProxySCGISendfile X-Sendfile.
+
+         anything else
+       Similar to On, but instead of the hardcoded header name X-Sendfile, the argument is used as the header name.
+
+       EXAMPLE
+
+         # Use the default header (X-Sendfile)
+         ProxySCGISendfile On
+
+         # Use a different header
+         ProxySCGISendfile X-Send-Static
+
+Apache HTTP Server manual               bundled documentation

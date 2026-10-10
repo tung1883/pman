@@ -1,0 +1,55 @@
+DOCKER.VOLUME-INSPECT(1)         Sandbox manual         DOCKER.VOLUME-INSPECT(1)
+
+       NAME
+
+       docker volume inspect - Display detailed information on one or more volumes
+
+       DOCKER VOLUME INSPECT
+
+       Display detailed information on one or more volumes
+
+       USAGE
+
+         docker volume inspect [OPTIONS] VOLUME [VOLUME...]
+
+       DESCRIPTION
+
+       Returns information about a volume. By default, this command renders all results in a JSON array. You can specify an alternate format to execute a given template for each result. Go's text/template package describes all the details of the format.
+
+       OPTIONS
+
+        * --format, -f (string): Format output using a custom template: 'json': Print in JSON format 'TEMPLATE': Print output using the given Go template. Refer to https://docs.docker.com/go/formatting/ for more information about formatting output with templates
+
+       EXAMPLES
+
+         $ docker volume create myvolume
+
+         myvolume
+
+       Use the docker volume inspect comment to inspect the configuration of the volume:
+
+         $ docker volume inspect myvolume
+
+       The output is in JSON format, for example:
+
+         [
+           {
+             "CreatedAt": "2020-04-19T11:00:21Z",
+             "Driver": "local",
+             "Labels": {},
+             "Mountpoint": "/var/lib/docker/volumes/8140a838303144125b4f54653b47ede0486282c623c3551fbc7f390cdc3e9cf5/_data",
+             "Name": "myvolume",
+             "Options": {},
+             "Scope": "local"
+           }
+         ]
+
+       FORMAT THE OUTPUT (--FORMAT) #FORMAT
+
+       Use the --format flag to format the output using a Go template, for example, to print the Mountpoint property:
+
+         $ docker volume inspect --format '{{ .Mountpoint }}' myvolume
+
+         /var/lib/docker/volumes/myvolume/_data
+
+Docker manual                           from the official documentation

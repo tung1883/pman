@@ -1,0 +1,865 @@
+ARCH.NGINX(1)                    Sandbox manual                    ARCH.NGINX(1)
+
+       nginx (pronounced "engine X"), is a free, open-source, high-performance HTTP web server and reverse proxy, as well as an IMAP/POP3 proxy server, written by Igor Sysoev in 2005. nginx is well known for its stability, rich feature set, simple configuration, and low resource consumption.
+
+       This article describes how to set up nginx and how to optionally integrate it with PHP via #FastCGI.
+
+       INSTALLATION
+
+       Install nginx-mainline or nginx.
+
+       Using the mainline branch is recommended. The main reason to use the stable branch is that you are concerned about possible impacts of new features, such as incompatibility with third-party modules or the inadvertent introduction of bugs in new features.
+
+       Note All nginx modules available in the official repositories require the nginx package (as opposed to nginx-mainline) as a dependency. It may be wise to review the list of modules for any you might need/want before making the nginx vs nginx-mainline decision. Modules for nginx-mainline can be found in the Arch User Repository.
+
+       For a chroot-based installation for additional security, see #Installation in a chroot.
+
+       Tip There are two popular drop-in forks: angieAUR and freenginx-mainlineAUR.
+
+       RUNNING
+
+       Start/enable nginx.service or angie.service if you use Angie.
+
+       The default page served at http://127.0.0.1 is /usr/share/nginx/html/index.html.
+
+       CONFIGURATION
+
+       First steps with nginx are described in the Beginner’s Guide. You can modify the configuration by editing the files in /etc/nginx/ The main configuration file is located at /etc/nginx/nginx.conf.
+
+       More details and examples can be found in the official documentation.
+
+       The examples below cover the most common use cases. It is assumed that you use the default location for documents (/usr/share/nginx/html). If that is not the case, substitute your path instead.
+
+       Tip Nginx configuraton tools have been provided by Digital Ocean and Mozilla.
+
+       CONFIGURATION EXAMPLE
+
+         /etc/nginx/nginx.conf
+
+         user http;
+         worker_processes auto;
+         worker_cpu_affinity auto;
+
+         events {
+             worker_connections 1024;
+         }
+
+         http {
+             charset utf-8;
+             sendfile on;
+             tcp_nopush on;
+             tcp_nodelay on;
+             server_tokens off;
+             log_not_found off;
+             types_hash_max_size 4096;
+             client_max_body_size 16M;
+
+             # MIME
+             include mime.types;
+             default_type application/octet-stream;
+
+             # logging
+             access_log /var/log/nginx/access.log;
+             error_log /var/log/nginx/error.log warn;
+
+             # load configs
+             include /etc/nginx/conf.d/*.conf;
+             include /etc/nginx/sites-enabled/*;
+         }
+
+       GENERAL CONFIGURATION
+
+       PROCESSES AND CONNECTIONS
+
+       You should choose a fitting value for worker_processes. This setting ultimately defines how many connections nginx will accept and how many processors it will be able to make use of. Generally, making it the number of hardware threads in your system is a good start. Alternatively, worker_processes accepts the auto value since versions 1.3.8 and 1.2.5, which will try to autodetect the optimal value (source).
+
+       The maximum connections nginx will accept is given by max_clients = worker_processes * worker_connections.
+
+       RUNNING UNDER DIFFERENT USER
+
+       By default, nginx runs the master process as root and worker processes as user http. To run worker processes as another user, change the user directive in nginx.conf:
+
+         /etc/nginx/nginx.conf
+
+         user user [group];
+
+       If the group is omitted, a group whose name equals that of user is used.
+
+       Tip It is also possible to run nginx without anything running as root using systemd. See #Running unprivileged using systemd and #Running user service using systemd.
+
+       SERVER BLOCKS
+
+       It is possible to serve multiple domains using server blocks. These are comparable to "VirtualHosts" in Apache HTTP Server. Also see the upstream examples.
+
+       In the example below the server listens for incoming connections on IPv4 and IPv6 ports 80 for two domains, domainname1.tld and domainname2.tld:
+
+         /etc/nginx/nginx.conf
+
+         ...
+         server {
+             listen 80;
+             listen [::]:80;
+             server_name domainname1.tld;
+             root /usr/share/nginx/domainname1.tld/html;
+             location / {
+                 index index.php index.html index.htm;
+             }
+         }
+
+         server {
+             listen 80;
+             listen [::]:80;
+             server_name domainname2.tld;
+             root /usr/share/nginx/domainname2.tld/html;
+             ...
+         }
+
+       Restart nginx.service to apply any changes.
+
+       Note Make sure the hostnames are resolvable by setting up a DNS-server like BIND or dnsmasq, or have a look at Network configuration#Local network hostname resolution.
+
+       MANAGING SERVER ENTRIES
+
+       It is possible to put different server blocks in different files. This allows you to easily enable or disable certain sites.
+
+       For using the sites-enabled and sites-available approach, create the following directories:
+
+         # mkdir /etc/nginx/sites-available
+         # mkdir /etc/nginx/sites-enabled
+
+       Create a file inside the sites-available directory that contains one or more server blocks:
+
+         /etc/nginx/sites-available/example.conf
+
+         server {
+             listen 443 ssl;
+             listen [::]:443 ssl;
+             http2 on;
+
+             ...
+         }
+
+       Append include sites-enabled/*; to the end of the http block:
+
+         /etc/nginx/nginx.conf
+
+         http {
+             ...
+             include sites-enabled/*;
+         }
+
+       To enable a site, simply create a symlink:
+
+         # ln -s /etc/nginx/sites-available/example.conf /etc/nginx/sites-enabled/example.conf
+
+       To disable a site, unlink the active symlink:
+
+         # unlink /etc/nginx/sites-enabled/example.conf
+
+       Reload/restart nginx.service to enable changes to the site's configuration.
+
+       TLS
+
+       OpenSSL provides TLS support and is installed by default on Arch installations.
+
+       Tip
+
+        * You may want to read the ngx_http_ssl_module documentation first before configuring SSL.
+        * Let’s Encrypt is a free, automated, and open certificate authority. A plugin is available to request valid SSL certificates straight from the command line and automatic configuration.
+        * Mozilla has a useful TLS article as well as an automated tool to help create a more secure configuration.
+       Warning If you plan on implementing TLS, know that some variations and implementations are still vulnerable to attack[1]. For details on these current vulnerabilities within TLS and how to apply appropriate changes to nginx, visit https://weakdh.org/sysadmin.html
+
+       Create a private key and self-signed certificate. This is adequate for most installations that do not require a CSR:
+
+         # mkdir /etc/nginx/ssl
+         # cd /etc/nginx/ssl
+         # openssl req -new -x509 -nodes -newkey rsa:4096 -keyout server.key -out server.crt -days 1095
+         # chmod 400 server.key
+         # chmod 444 server.crt
+
+       Note The -days switch is optional and RSA keysize can be as low as 2048 (default).
+
+       If you need to create a CSR, follow these instructions instead of the above:
+
+         # mkdir /etc/nginx/ssl
+         # cd /etc/nginx/ssl
+         # openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out server.key
+         # chmod 400 server.key
+         # openssl req -new -sha256 -key server.key -out server.csr
+         # openssl x509 -req -days 1095 -in server.csr -signkey server.key -out server.crt
+
+       Note For more openssl options, read its man page openssl(1ssl) or peruse its extensive documentation.
+
+       A starting point for a /etc/nginx/nginx.conf with TLS is Mozilla's SSL Configuration Generator.
+
+       Restart nginx.service to apply any changes.
+
+       PER-USER DIRECTORIES
+
+       To replicate Apache-style ~user URLs to users' ~/public_html directories, try the following. (Note: if both rules are used, below, the more-specific PHP rule must come first.)
+
+         /etc/nginx/nginx.conf
+
+         ...
+         server {
+             ...
+             # PHP in user directories, e.g. http://example.com/~user/test.php
+             location ~ ^/~(.+?)(/.+\.php)$ {
+                 alias          /home/$1/public_html$2;
+                 fastcgi_pass   unix:/run/php-fpm/php-fpm.sock;
+                 fastcgi_index  index.php;
+                 include        fastcgi.conf;
+             }
+
+             # User directories, e.g. http://example.com/~user/
+             location ~ ^/~(.+?)(/.*)?$ {
+                 alias     /home/$1/public_html$2;
+                 index     index.html index.htm;
+                 autoindex on;
+             }
+             ...
+         }
+         ...
+
+       See #PHP implementation for more information on PHP configuration with nginx.
+
+       Restart nginx.service to enable the new configuration.
+
+       FASTCGI
+
+       FastCGI, also FCGI, is a protocol for interfacing interactive programs with a web server. FastCGI is a variation on the earlier Common Gateway Interface (CGI); FastCGI's main aim is to reduce the overhead associated with interfacing the web server and CGI programs, allowing servers to handle more web page requests at once.
+
+       FastCGI technology is introduced into nginx to work with many external tools, e.g. Perl, PHP and Python.
+
+       PHP IMPLEMENTATION
+
+       PHP-FPM is the recommended solution to run as FastCGI server for PHP.
+
+       Install php-fpm and make sure PHP has been installed and configured correctly. The main configuration file of PHP-FPM is /etc/php/php-fpm.conf. For basic usage the default configuration should be sufficient.
+
+       Finally, start/enable php-fpm.service.
+
+       You can also use php-legacy-fpm instead, see #Using php-legacy.
+
+       Note
+
+        * If you run nginx under a different user, make sure that the PHP-FPM socket file is accessible by this user, or use a TCP socket.
+        * If you run nginx in chrooted environment (chroot is /srv/nginx-jail, web pages are served at /srv/nginx-jail/www), you must modify the file /etc/php/php-fpm.conf to include the chroot = /srv/nginx-jail and listen = /srv/nginx-jail/run/php-fpm/php-fpm.sock directives within the pool section (a default one is [www]). Create the directory for the socket file, if missing. Moreover, for modules that are dynamically linked to dependencies, you will need to copy those dependencies to the chroot (e.g. for php-imagick, you will need to copy the ImageMagick libraries to the chroot, but not imagick.so itself).
+
+       NGINX CONFIGURATION
+
+       When serving a PHP web-application, a location for PHP-FPM should to be included in each server block [2], e.g.:
+
+         /etc/nginx/sites-available/example.conf
+
+         server {
+             root /usr/share/nginx/html;
+
+             location / {
+                 index index.html index.htm index.php;
+             }
+
+             location ~ \.php$ {
+                 # 404
+                 try_files $fastcgi_script_name =404;
+
+                 # default fastcgi_params
+                 include fastcgi_params;
+
+                 # fastcgi settings
+                 fastcgi_pass			unix:/run/php-fpm/php-fpm.sock;
+                 fastcgi_index			index.php;
+                 fastcgi_buffers			8 16k;
+                 fastcgi_buffer_size		32k;
+
+                 # fastcgi params
+                 fastcgi_param DOCUMENT_ROOT	$realpath_root;
+                 fastcgi_param SCRIPT_FILENAME	$realpath_root$fastcgi_script_name;
+                 #fastcgi_param PHP_ADMIN_VALUE	"open_basedir=$base/:/usr/lib/php/:/tmp/";
+             }
+         }
+
+       If it is needed to process other extensions with PHP (e.g. .html and .htm):
+
+         location ~ [^/]\.(php|html|htm)(/|$) {
+             ...
+         }
+
+       Non .php extension processing in PHP-FPM should also be explicitly added in /etc/php/php-fpm.d/www.conf:
+
+         security.limit_extensions = .php .html .htm
+
+       Note Pay attention to the fastcgi_pass argument, as it must be the TCP or Unix socket defined by the chosen FastCGI server in its configuration file. The default (Unix) socket for php-fpm is:
+
+         fastcgi_pass unix:/run/php-fpm/php-fpm.sock;
+
+       You might use the common TCP socket, not default,
+
+         fastcgi_pass 127.0.0.1:9000;
+
+       Unix domain sockets should however be faster.
+
+       Tip To allow multiple server blocks using the same PHP-FPM configuration, a php_fastcgi.conf configuration file may be used to ease management:
+
+         /etc/nginx/php_fastcgi.conf
+
+         location ~ \.php$ {
+             # 404
+             try_files $fastcgi_script_name =404;
+
+             # default fastcgi_params
+             include fastcgi_params;
+
+             # fastcgi settings
+             ...
+         }
+
+       To enable PHP support for a particular server, simply include the php_fastcgi.conf configuration file:
+
+         /etc/nginx/sites-available/example.conf
+
+         server {
+             server_name example.com;
+             ...
+
+             include /etc/nginx/php_fastcgi.conf;
+         }
+
+       TEST CONFIGURATION
+
+       You need to restart the php-fpm.service and nginx.service units if the configuration has been changed in order to apply changes.
+
+       To test the FastCGI implementation, create a new PHP file inside the root folder containing:
+
+         <?php phpinfo(); ?>
+
+       Navigate this file inside a browser and you should see the informational page with the current PHP configuration.
+
+       CGI IMPLEMENTATION
+
+       This implementation is needed for CGI applications.
+
+       FCGIWRAP
+
+       Install fcgiwrap. The configuration is done by editing fcgiwrap.socket. Enable and start fcgiwrap.socket.
+
+       MULTIPLE WORKER THREADS
+
+       If you want to spawn multiple worker threads, it is recommended that you use multiwatchAUR, which will take care of restarting crashed children. You will need to use spawn-fcgi to create the Unix socket, as multiwatch seems unable to handle the systemd-created socket, even though fcgiwrap itself does not have any trouble if invoked directly in the unit file.
+
+       Override the unit fcgiwrap.service (and the fcgiwrap.socket unit, if present), and modify the ExecStart line to suit your needs. Here is a unit file that uses multiwatchAUR. Make sure fcgiwrap.socket is not started or enabled, because it will conflict with this unit:
+
+         /etc/systemd/system/fcgiwrap.service
+
+         [Unit]
+         Description=Simple CGI Server
+         After=nss-user-lookup.target
+
+         [Service]
+         ExecStartPre=/bin/rm -f /run/fcgiwrap.socket
+         ExecStart=/usr/bin/spawn-fcgi -u http -g http -s /run/fcgiwrap.sock -n -- /usr/bin/multiwatch -f 10 -- /usr/sbin/fcgiwrap
+         ExecStartPost=/usr/bin/chmod 660 /run/fcgiwrap.sock
+         PrivateTmp=true
+         Restart=on-failure
+
+         [Install]
+         WantedBy=multi-user.target
+
+       Tweak -f 10 to change the number of children that are spawned.
+
+       Warning The ExecStartPost line is required because of strange behaviour I'm seeing when I use the -M 660 option for spawn-fcgi. The wrong mode is set. This may be a bug?
+
+       NGINX CONFIGURATION
+
+       In /etc/nginx, copy the file fastcgi_params to fcgiwrap_params. In fcgiwrap_params, comment or delete the lines which set SCRIPT_NAME and DOCUMENT_ROOT.
+
+       Inside each server block serving a CGI web application should appear a location block similar to:
+
+         location ~ \.cgi$ {
+              include       fcgiwrap_params;
+              fastcgi_param DOCUMENT_ROOT /srv/www/cgi-bin/;
+              fastcgi_param SCRIPT_NAME   myscript.cgi;
+              fastcgi_pass  unix:/run/fcgiwrap.sock;
+         }
+
+       The default socket file for fcgiwrap is /run/fcgiwrap.sock.
+
+       Using fastcgi_param SCRIPT_FILENAME /srv/www/cgi-bin/myscript.cgi is a shortcut alternative to setting DOCUMENT_ROOT and SCRIPT_NAME. If you use SCRIPT_FILENAME, you also will not need to copy fastcgi_params to fcgiwrap_params and comment out the DOCUMENT_ROOT and SCRIPT_NAME lines.
+
+       Warning If SCRIPT_NAME and DOCUMENT_ROOT are used, fcgiwrap will discard any other fastcgi_params set in nginx. You must use SCRIPT_FILENAME in order for other params (like PATH_INFO) to be settable through the Nginx configuration. See this GitHub issue.
+
+       If you keep getting a 502 - bad Gateway error, you should check if your CGI-application first announces the mime-type of the following content. For HTML this needs to be Content-type: text/html.
+
+       If you get 403 errors, make sure that the CGI executable is readable and executable by the http user and that every parent folder is readable by the http user.
+
+       INSTALLATION IN A CHROOT
+
+       Installing nginx in a chroot adds an additional layer of security. For maximum security the chroot should include only the files needed to run the nginx server and all files should have the most restrictive permissions possible, e.g., as much as possible should be owned by root, directories such as /usr/bin should be unreadable and unwritable, etc.
+
+       Arch comes with an http user and group by default which will run the server. The chroot will be in /srv/http.
+
+       A Perl script to create this jail is available at jail.pl gist. You can either use that or follow the instructions in this article. It expects to be run as root. You will need to uncomment a line before it makes any changes.
+
+       CREATE NECESSARY DEVICES
+
+       nginx needs /dev/null, /dev/random, and /dev/urandom. To install these in the chroot create the /dev/ directory and add the devices with mknod. Avoid mounting all of /dev/ to ensure that, even if the chroot is compromised, an attacker must break out of the chroot to access important devices like /dev/sda1.
+
+       Tip
+
+        * Be sure that /srv/http is mounted without the nodev option
+        * See mknod(1) and ls -l /dev/{null,random,urandom} to better understand the mknod options.
+
+         # export JAIL=/srv/http
+         # mkdir $JAIL/dev
+         # mknod -m 0666 $JAIL/dev/null c 1 3
+         # mknod -m 0666 $JAIL/dev/random c 1 8
+         # mknod -m 0444 $JAIL/dev/urandom c 1 9
+
+       CREATE NECESSARY DIRECTORIES
+
+       nginx requires a bunch of files to run properly. Before copying them over, create the folders to store them. This assumes your nginx document root will be /srv/http/www.
+
+         # mkdir -p $JAIL/etc/nginx/logs
+         # mkdir -p $JAIL/usr/{lib,bin}
+         # mkdir -p $JAIL/usr/share/nginx
+         # mkdir -p $JAIL/var/{log,lib}/nginx
+         # mkdir -p $JAIL/www/cgi-bin
+         # mkdir -p $JAIL/{run,tmp}
+         # cd $JAIL; ln -s usr/lib lib
+         # cd $JAIL; ln -s usr/lib lib64
+         # cd $JAIL/usr; ln -s lib lib64
+
+       Then mount $JAIL/tmp and $JAIL/run as tmpfs's. The size should be limited to ensure an attacker cannot eat all the RAM.
+
+         # mount -t tmpfs none $JAIL/run -o 'noexec,size=1M'
+         # mount -t tmpfs none $JAIL/tmp -o 'noexec,size=100M'
+
+       In order to preserve the mounts across reboots, the following entries should be added to /etc/fstab:
+
+         /etc/fstab
+
+         tmpfs   /srv/http/run   tmpfs   rw,noexec,relatime,size=1024k   0       0
+         tmpfs   /srv/http/tmp   tmpfs   rw,noexec,relatime,size=102400k 0       0
+
+       POPULATE THE CHROOT
+
+       First copy over the easy files.
+
+         # cp -r /usr/share/nginx/* $JAIL/usr/share/nginx
+         # cp -r /usr/share/nginx/html/* $JAIL/www
+         # cp /usr/bin/nginx $JAIL/usr/bin/
+         # cp -r /var/lib/nginx $JAIL/var/lib/nginx
+
+       Now copy over required libraries. Use ldd to list them and then copy them all to the correct location. Copying is preferred over hardlinks to ensure that even if an attacker gains write access to the files they cannot destroy or alter the true system files.
+
+         $ ldd /usr/bin/nginx
+
+         linux-vdso.so.1 (0x00007fffc41fe000)
+         libpthread.so.0 => /usr/lib/libpthread.so.0 (0x00007f57ec3e8000)
+         libcrypt.so.1 => /usr/lib/libcrypt.so.1 (0x00007f57ec1b1000)
+         libstdc++.so.6 => /usr/lib/libstdc++.so.6 (0x00007f57ebead000)
+         libm.so.6 => /usr/lib/libm.so.6 (0x00007f57ebbaf000)
+         libpcre.so.1 => /usr/lib/libpcre.so.1 (0x00007f57eb94c000)
+         libssl.so.1.0.0 => /usr/lib/libssl.so.1.0.0 (0x00007f57eb6e0000)
+         libcrypto.so.1.0.0 => /usr/lib/libcrypto.so.1.0.0 (0x00007f57eb2d6000)
+         libdl.so.2 => /usr/lib/libdl.so.2 (0x00007f57eb0d2000)
+         libz.so.1 => /usr/lib/libz.so.1 (0x00007f57eaebc000)
+         libGeoIP.so.1 => /usr/lib/libGeoIP.so.1 (0x00007f57eac8d000)
+         libgcc_s.so.1 => /usr/lib/libgcc_s.so.1 (0x00007f57eaa77000)
+         libc.so.6 => /usr/lib/libc.so.6 (0x00007f57ea6ca000)
+         /lib64/ld-linux-x86-64.so.2 (0x00007f57ec604000)
+
+       For files residing in /usr/lib you may try the following one-liner:
+
+         # cp $(ldd /usr/bin/nginx | grep /usr/lib/ | sed -sre 's/(.+)(\/usr\/lib\/\S+).+/\2/g') $JAIL/usr/lib
+
+       And the following for ld-linux-x86-64.so:
+
+         # cp /lib64/ld-linux-x86-64.so.2 $JAIL/lib
+
+       Note Do not try to copy linux-vdso.so: it is not a real library and does not exist in /usr/lib.
+
+       Copy over some miscellaneous but necessary libraries and system files.
+
+         # cp /usr/lib/libnss_* $JAIL/usr/lib
+         # cp -rfvL /etc/{services,localtime,nsswitch.conf,nscd.conf,protocols,hosts,ld.so.cache,ld.so.conf,resolv.conf,host.conf,nginx} $JAIL/etc
+
+       Create restricted user/group files for the chroot. This way only the users needed for the chroot to function exist as far as the chroot knows, and none of the system users/groups are leaked to attackers should they gain access to the chroot.
+
+         $JAIL/etc/group
+
+         http:x:33:
+         nobody:x:99:
+
+         $JAIL/etc/passwd
+
+         http:x:33:33:http:/:/bin/false
+         nobody:x:99:99:nobody:/:/bin/false
+
+         $JAIL/etc/shadow
+
+         http:x:14871::::::
+         nobody:x:14871::::::
+
+         $JAIL/etc/gshadow
+
+         http:::
+         nobody:::
+
+         # touch $JAIL/etc/shells
+         # touch $JAIL/run/nginx.pid
+
+       Finally, make set very restrictive permissions. As much as possible should be owned by root and set unwritable.
+
+         # chown -R root:root $JAIL/
+
+         # chown -R http:http $JAIL/www
+         # chown -R http:http $JAIL/etc/nginx
+         # chown -R http:http $JAIL/var/{log,lib}/nginx
+         # chown http:http $JAIL/run/nginx.pid
+
+         # find $JAIL/ -gid 0 -uid 0 -type d -print | xargs chmod -rw
+         # find $JAIL/ -gid 0 -uid 0 -type d -print | xargs chmod +x
+         # find $JAIL/etc -gid 0 -uid 0 -type f -print | xargs chmod -x
+         # find $JAIL/usr/bin -type f -print | xargs chmod ug+rx
+         # find $JAIL/ -group http -user http -print | xargs chmod o-rwx
+         # chmod +rw $JAIL/tmp
+         # chmod +rw $JAIL/run
+
+       If your server will bind port 80 (or any other port in range [1-1023]), give the chrooted executable permission to bind these ports without root.
+
+         # setcap 'cap_net_bind_service=+ep' $JAIL/usr/bin/nginx
+
+       MODIFY NGINX.SERVICE TO START CHROOT
+
+       Override the unit nginx.service. Upgrading nginx will not modify your custom .service file.
+
+       The systemd unit must be changed to start up nginx in the chroot, as the http user, and store the PID file in the chroot.
+
+       Note I'm not sure if the pid file needs to be stored in the chroot jail.
+
+         /etc/systemd/system/nginx.service
+
+         [Unit]
+         Description=A high performance web server and a reverse proxy server
+         After=network.target
+
+         [Service]
+         Type=forking
+         PIDFile=/srv/http/run/nginx.pid
+         ExecStartPre=/usr/bin/chroot --userspec=http:http /srv/http /usr/bin/nginx -t -q -g 'pid /run/nginx.pid; daemon on; master_process on;'
+         ExecStart=/usr/bin/chroot --userspec=http:http /srv/http /usr/bin/nginx -g 'pid /run/nginx.pid; daemon on; master_process on;'
+         ExecReload=/usr/bin/chroot --userspec=http:http /srv/http /usr/bin/nginx -g 'pid /run/nginx.pid; daemon on; master_process on;' -s reload
+         ExecStop=/usr/bin/chroot --userspec=http:http /srv/http /usr/bin/nginx -g 'pid /run/nginx.pid;' -s quit
+
+         [Install]
+         WantedBy=multi-user.target
+
+       Note Upgrading nginx with pacman will not upgrade the chrooted nginx installation. You have to take care of the updates manually by repeating some of the steps above. Do not forget to also update the libraries it links against.
+
+       You can now safely get rid of the non-chrooted nginx installation.
+
+         # pacman -Rsc nginx
+
+       If you do not remove the non-chrooted nginx installation, you may want to make sure that the running nginx process is in fact the chrooted one. You can do so by checking where /proc/PID/root symlinks to. It should link to /srv/http instead of /.
+
+         # ps -C nginx | awk '{print $1}' | sed 1d | while read -r PID; do ls -l /proc/$PID/root; done
+
+       TIPS AND TRICKS
+
+       RUNNING UNPRIVILEGED USING SYSTEMD
+
+       Use a drop-in unit file for nginx.service and set the User and optionally Group options under [Service]:
+
+         /etc/systemd/system/nginx.service.d/user.conf
+
+         [Service]
+         User=user
+         Group=group
+
+       We can harden the service against ever elevating privileges:
+
+         /etc/systemd/system/nginx.service.d/user.conf
+
+         [Service]
+         ...
+         NoNewPrivileges=yes
+
+       Tip See systemd.exec(5) for more options of confinement.
+
+       Then we need to ensure that user has access to everything it needs. Follow the subsections below and then start nginx.
+
+       Tip The same setup may be desirable for your FastCGI server as well.
+
+       PORT
+
+       Linux does not permit non-root processes to bind to ports below 1024 by default. A port above 1024 can be used:
+
+         /etc/nginx/nginx.conf
+
+         server {
+                 listen 8080;
+         }
+
+       Tip If you want nginx accessible on port 80 or 443, configure your firewall to redirect requests from 80 or 443 to the ports nginx listens to.
+
+       Or you may grant the nginx process the CAP_NET_BIND_SERVICE capability which allows it to bind to ports below 1024:
+
+         /etc/systemd/system/nginx.service.d/user.conf
+
+         [Service]
+         ...
+         CapabilityBoundingSet=
+         CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+         AmbientCapabilities=
+         AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+       Alternatively, you can use systemd socket activation. In this case, systemd will listen on the ports and, when a connection is made, spawn nginx passing the socket as a file descriptor. This means nginx requires no special capabilities as the socket already exists when it is started. This relies on an internal environment variable that nginx uses for passing sockets [3] and is therefore not officially supported. Instead of setting CapabilityBoundingSet and AmbientCapabilities, edit the service override to set the NGINX environment variable to tell nginx which file descriptors the sockets will be passed as:
+
+         /etc/systemd/system/nginx.service.d/user.conf
+
+         [Service]
+         ...
+         Environment=NGINX=3:4;
+
+       There will be one socket per listening port starting at file descriptor 3, so in this example we are telling nginx to expect two sockets. Now create an nginx.socket unit specifying what ports to listen on:
+
+         /etc/systemd/system/nginx.socket
+
+         [Socket]
+         ListenStream=0.0.0.0:80
+         ListenStream=0.0.0.0:443
+         After=network.target
+         Requires=network.target
+
+         [Install]
+         WantedBy=sockets.target
+
+       The sockets will be passed in the order defined in this unit, so port 80 will be file descriptor 3 and port 443 will be file descriptor 4. If you previously enabled or started the service, you should now stop it, and enable nginx.socket instead. When your system starts, nginx will not be running, but will be started when you access the website in a browser. With this you can harden the service further; for example, in many cases you can now set PrivateNetwork=True in the service file, blocking nginx from the external network, since the socket created by systemd is sufficient to serve the website over. Note that this will print a warning in the logs of the nginx service: 2020/08/29 19:33:20 [notice] 254#254: using inherited sockets from "3:4;"
+
+       PID FILE
+
+       nginx is compiled to use /run/nginx.pid by default, which user cannot write to. We can create a directory that user can write to and place the PID file there. This can for example be done with RuntimeDirectory (systemd.exec(5)).
+
+       Edit nginx.service to configure the PID file:
+
+         /etc/systemd/system/nginx.service.d/user.conf
+
+         [Service]
+         ...
+         RuntimeDirectory=nginx
+         PIDFile=/run/nginx/nginx.pid
+         ExecStart=
+         ExecStart=/usr/bin/nginx -g 'pid /run/nginx/nginx.pid; error_log stderr;'
+         ExecReload=
+         ExecReload=/usr/bin/nginx -s reload -g 'pid /run/nginx/nginx.pid; error_log stderr;'
+
+       VAR/LIB/NGINX
+
+       nginx is compiled to store temp files in /var/lib/nginx by default.
+
+       Tip See all compiled-in options by running $ nginx -V
+
+       You can give user write access to this directory by for example using StateDirectory (systemd.exec(5)):
+
+         /etc/systemd/system/nginx.service.d/user.conf
+
+         [Service]
+         ...
+         StateDirectory=nginx
+
+       VAR/LOG/NGINX
+
+       nginx is compiled to store access logs in /var/log/nginx by default.
+
+       You can give user write access to this directory by for example using LogsDirectory (systemd.exec(5)):
+
+         /etc/systemd/system/nginx.service.d/user.conf
+
+         [Service]
+         ...
+         LogsDirectory=nginx
+
+       RUNNING USER SERVICE USING SYSTEMD
+
+       If you want to run a server instance fully controlled and configurable by unprivileged user, here is an example of a systemd user service.
+
+         ~/.config/systemd/user/nginx.service
+
+         [Unit]
+         Description=A high performance web server and a reverse proxy server
+
+         [Service]
+         Type=forking
+         PIDFile=nginx.pid
+         SyslogLevel=err
+
+         ExecStart=nginx -g 'pid "%t/nginx.pid"; error_log stderr;' -c '%E/nginx/nginx.conf' -p '%D/nginx'
+         ExecReload=nginx -g 'pid "%t/nginx.pid"; error_log stderr;' -s reload
+         KillMode=mixed
+
+         [Install]
+         WantedBy=default.target
+
+       It reads config from $XDG_CONFIG_HOME/nginx/nginx.conf and uses $XDG_DATA_HOME/nginx as a working directory.
+
+       ALTERNATIVE SCRIPT FOR SYSTEMD
+
+       On pure systemd you can get advantages of chroot + systemd. [4] Based on set user group and pid with:
+
+         /etc/nginx/nginx.conf
+
+         user http;
+         pid /run/nginx.pid;
+
+       the absolute path of the file is /srv/http/etc/nginx/nginx.conf.
+
+         /etc/systemd/system/nginx.service
+
+         [Unit]
+         Description=nginx (Chroot)
+         After=network.target
+
+         [Service]
+         Type=forking
+         PIDFile=/srv/http/run/nginx.pid
+         RootDirectory=/srv/http
+         ExecStartPre=/usr/bin/nginx -t -c /etc/nginx/nginx.conf
+         ExecStart=/usr/bin/nginx -c /etc/nginx/nginx.conf
+         ExecReload=/usr/bin/nginx -c /etc/nginx/nginx.conf -s reload
+         ExecStop=/usr/bin/nginx -c /etc/nginx/nginx.conf -s stop
+
+         [Install]
+         WantedBy=multi-user.target
+
+       It is not necessary to set the default location, nginx loads at default  -c /etc/nginx/nginx.conf, but it is a good idea.
+
+       Alternatively you can run only ExecStart as chroot with parameter RootDirectoryStartOnly set as yes (see systemd.service(5)) or start it before mount point as effective or a systemd path (see systemd.path(5)) is available.
+
+         /etc/systemd/system/nginx.path
+
+         [Unit]
+         Description=nginx (Chroot) path
+         [Path]
+         PathExists=/srv/http/site/Public_html
+         [Install]
+         WantedBy=default.target
+
+       Enable the created nginx.path and change the WantedBy=default.target to WantedBy=nginx.path in /etc/systemd/system/nginx.service.
+
+       The PIDFile in unit file allows systemd to monitor process (absolute path required). If it is undesired, you can change to default one-shot type, and delete the reference from the unit file.
+
+       NGINX BEAUTIFIER
+
+       nginxbeautifierAUR is a commandline tool used to beautify and format nginx configuration files.
+
+       GIXY STATIC CONFIG ANALYZER
+
+       gixy-nextAUR is a fork of stale Yandex Gixy — security and performance issues analyzer of Nginx configuration. By default it reads /etc/nginx/nginx.conf only. Full config can be obtained and analyzed with following commands:
+
+         # nginx -T > nginx_full.conf
+         $ gixy nginx_full.conf
+
+       BETTER HEADERS MANAGEMENT
+
+       Nginx has a rather unintuitive header management system where headers can only be defined in one context, any other headers are ignored. To remedy this we can install the headers-more-nginx module.
+
+       Install the package nginx-mod-headers-more package. This will install the module to /usr/lib/nginx/modules directory.
+
+       To load the module add the following to the top of your main nginx configuration file.
+
+         /etc/nginx/nginx.conf
+
+         load_module "/usr/lib/nginx/modules/ngx_http_headers_more_filter_module.so";
+         ...
+
+       BASIC AUTHENTICATION
+
+       Basic authentication requires creation of a password file. The password file can be managed using htpasswd program provided by the apache package or using nginx_passwdAUR which provides nginx-passwd - details available on GitHub source
+
+       USING PHP-LEGACY
+
+       Install php-legacy-fpm instead of php-fpm and make sure PHP has been installed and configured correctly.
+
+       The main configuration file of PHP-LEGACY-FPM is /etc/php-legacy/php-fpm.conf. For basic usage the default configuration should be sufficient.
+
+       The Unix socket for the fastcgi_pass argument also needs to be adjusted, usually it is:
+
+         fastcgi_pass unix:/run/php-fpm-legacy/php-fpm.sock;
+
+       Then start/enable php-legacy-fpm.service.
+
+       TROUBLESHOOTING
+
+       CONFIGURATION VALIDATION
+
+         # nginx -t
+
+         nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+         nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+       ERROR: THE PAGE YOU ARE LOOKING FOR IS TEMPORARILY UNAVAILABLE. PLEASE
+
+       This is because the FastCGI server has not been started, or the socket used has wrong permissions.
+
+       Try out this answer to fix the 502 error.
+
+       In Arch Linux, the configuration file mentioned in above link is /etc/php/php-fpm.conf.
+
+       ERROR: NO INPUT FILE SPECIFIED
+
+       1. Verify that variable open_basedir in /etc/php/php.ini contains the correct path specified as root argument in nginx.conf (usually /usr/share/nginx/). When using PHP-FPM as FastCGI server for PHP, you may add fastcgi_param PHP_ADMIN_VALUE "open_basedir=$document_root/:/tmp/:/proc/"; in the location block which aims for processing PHP file in nginx.conf.
+
+       2. Another occasion is that, wrong root argument in the location ~ \.php$ section in nginx.conf. Make sure the root points to the same directory as it in location / in the same server. Or you may just set root as global, do not define it in any location section.
+
+       3. Check permissions: e.g. http for user/group, 755 for directories and 644 for files. Remember the entire path to the html directory should have the correct permissions. See File permissions and attributes#Bulk chmod to bulk modify a directory tree.
+
+       4. You do not have the SCRIPT_FILENAME containing the full path to your scripts. If the configuration of nginx (fastcgi_param SCRIPT_FILENAME) is correct, this kind of error means PHP failed to load the requested script. Usually it is simply a permissions issue, you can just run php-cgi as root:
+
+         # spawn-fcgi -a 127.0.0.1 -p 9000 -f /usr/bin/php-cgi
+
+       or you should create a group and user to start the php-cgi:
+
+         # groupadd www
+         # useradd -g www www
+         # chmod +w /srv/www/nginx/html
+         # chown -R www:www /srv/www/nginx/html
+         # spawn-fcgi -a 127.0.0.1 -p 9000 -u www -g www -f /usr/bin/php-cgi
+
+       5. If you are running php-fpm with chrooted nginx ensure chroot is set correctly within /etc/php-fpm/php-fpm.d/www.conf (or /etc/php-fpm/php-fpm.conf if working on older version)
+
+       WARNING: COULD NOT BUILD OPTIMAL TYPES_HASH
+
+       When starting the nginx.service, the process might log the message:
+
+         [warn] 18872#18872: could not build optimal types_hash, you should increase either types_hash_max_size: 1024 or types_hash_bucket_size: 64; ignoring types_hash_bucket_size
+
+       To fix this warning, increase the values for these keys inside the http block [5] [6]:
+
+         /etc/nginx/nginx.conf
+
+         http {
+             types_hash_max_size 4096;
+             server_names_hash_bucket_size 128;
+             ...
+         }
+
+       CANNOT ASSIGN REQUESTED ADDRESS
+
+       The full error from nginx.service unit status is
+
+         [emerg] 460#460: bind() to A.B.C.D:443 failed (99: Cannot assign requested address)
+
+       Even if your nginx unit-file is configured to run after network.target with systemd, nginx may attempt to listen at an address that is configured but not added to any interface yet. Verify that this the case by manually running start for nginx (thereby showing the IP address is configured properly). Configuring nginx to listen to any address will resolve this issue. Now if your use case requires listening to a specific address, one possible solution is to reconfigure systemd.
+
+       To start nginx after all configured network devices are up and assigned an IP address, append network-online.target to After= within nginx.service and start/enable systemd-networkd-wait-online.service.
+
+       SEE ALSO
+
+        * WebDAV with nginx
+        * nginx configuration pitfalls
+        * Very good in-depth 2014 look at nginx security and Reverse Proxying
+        * Installing LEMP (nginx, PHP, MySQL with MariaDB engine and PhpMyAdmin) in Arch Linux
+        * Using SSL certificates generated with Let's Encrypt
+
+ArchWiki manual                         bundled documentation

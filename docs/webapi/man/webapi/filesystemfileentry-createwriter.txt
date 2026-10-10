@@ -1,0 +1,61 @@
+WEBAPI.FILESYSTEMFILEENTRY-CREATEWRITER(1) Sandbox manual WEBAPI.FILESYSTEMFILEENTRY-CREATEWRITER(1)
+
+       NAME
+
+       FileSystemFileEntry: createWriter() method - The FileSystemFileEntry interface's method
+
+       FILESYSTEMFILEENTRY: CREATEWRITER() METHOD
+
+       {{Non-standard_header}}
+
+       The FileSystemFileEntry interface's method createWriter() returns a FileWriter object which can be used to write data into the file represented by the directory entry.
+
+       SYNTAX
+
+         createWriter(successCallback)
+         createWriter(successCallback, errorCallback)
+
+       PARAMETERS
+
+        * successCallback
+          * : A callback function which is called when the FileWriter has been
+       created successfully; the FileWriter is passed into the callback as the only parameter.
+
+        * errorCallback (optional)
+          * : If provided, this must be a method which is called when an error occurs while trying
+       to create the FileWriter. This callback receives as input a DOMException object describing the error.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       This example establishes a method, writeToFileEntry(), which outputs a text string to the file corresponding to the passed-in directory entry.
+
+         function writeToFileEntry(entry, text) {
+           entry.createWriter(
+             (fileWriter) => {
+               let data = Blob([text], { type: "text/plain" });
+
+               fileWriter.write(data);
+             },
+             (error) => {
+               /* do whatever to handle the error */
+             },
+           );
+         }
+
+       The success callback for the createWriter() call takes the text which was passed in and creates a new Blob object of type text/plain that contains the passed text. This blob is then output to the FileWriter object to be written to the file.
+
+       SPECIFICATIONS
+
+       This feature is not part of any specification anymore. It is no longer on track to become a standard.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File and Directory Entries API
+
+Web APIs manual                         from the official documentation

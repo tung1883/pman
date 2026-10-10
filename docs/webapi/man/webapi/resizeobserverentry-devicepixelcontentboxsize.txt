@@ -1,0 +1,43 @@
+WEBAPI.RESIZEOBSERVERENTRY-DEVICEPIXELCONTENTBOXSIZE(1) Sandbox manual WEBAPI.RESIZEOBSERVERENTRY-DEVICEPIXELCONTENTBOXSIZE(1)
+
+       NAME
+
+       ResizeObserverEntry: devicePixelContentBoxSize property - The devicePixelContentBoxSize read-only property of
+
+       RESIZEOBSERVERENTRY: DEVICEPIXELCONTENTBOXSIZE PROPERTY
+
+       The devicePixelContentBoxSize read-only property of the ResizeObserverEntry interface returns an array containing the size in device pixels of the observed element when the callback is run.
+
+       VALUE
+
+       An array containing objects with the new size of the observed element in device pixels. The array is necessary to support elements that have multiple fragments, which occur in multi-column scenarios. Each object in the array contains two properties:
+
+        * blockSize
+          * : The size of the content-box, in device pixels, of the block dimension of the observed element. For boxes
+       with a horizontal writing-mode, this is the vertical dimension, or height; if the writing-mode is vertical, this is the horizontal dimension, or width.
+
+        * inlineSize
+          * : The size of the content box, in device pixels, of the inline direction of the observed element. For boxes
+       with a horizontal writing-mode, this is the horizontal dimension, or width; if the writing-mode is vertical, this is the vertical dimension, or height.
+
+       > For more information about writing modes and block and inline
+       > dimensions, read Handling different text directions.
+
+       EXAMPLES
+
+       The following example is taken from the article Pixel-perfect rendering with devicePixelContentBox. As the callback function of a ResizeObserver is called after layout but before paint. This provides an opportunity to log the exact size in physical pixels to ensure a one-to-one mapping of canvas pixels to physical pixels.
+
+         const observer = new ResizeObserver((entries) => {
+           const entry = entries.find((entry) => entry.target === canvas);
+           canvas.width = entry.devicePixelContentBoxSize[0].inlineSize;
+           canvas.height = entry.devicePixelContentBoxSize[0].blockSize;
+
+           /* … render to canvas … */
+         });
+         observer.observe(canvas, { box: "device-pixel-content-box" });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

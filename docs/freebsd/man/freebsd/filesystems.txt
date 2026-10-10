@@ -1,0 +1,125 @@
+FREEBSD.FILESYSTEMS(1)           Sandbox manual           FREEBSD.FILESYSTEMS(1)
+
+       NAME
+
+       Other File Systems - This chapter shows the other filesystems supported by FreeBSD
+
+       OTHER FILE SYSTEMS
+
+       SYNOPSIS
+
+       File systems are a fundamental component of any operating system. They enable users to store, manage, and access data, making storage devices like hard drives, flash drives, and USB storage devices practical for everyday use. Different operating systems use different file systems natively.
+
+       FreeBSD has traditionally used the Unix File System (UFS), with the modernized UFS2 as its primary native file system. FreeBSD also uses the Z File System (ZFS), known for its advanced features, robustness, and reliability. See The Z File System (ZFS) for more details.
+
+       In addition to its native file systems, FreeBSD supports a broad range of file systems from other operating systems. Support for these file systems varies, some require loading kernel modules, while others need additional userland tools.
+
+       Before reading this chapter:
+
+        * Be familiar with UNIX(R) concepts and FreeBSD basics.
+        * Feel comfortable installing software in FreeBSD.
+        * Have some understanding of disks, storage devices, and FreeBSD's naming conventions for devices.
+       Read this chapter to:
+
+        * Understand the differences between native and supported file systems.
+        * Know which file systems are supported by FreeBSD and the level of support available.
+        * Learn how to enable, configure, access, and work with non-native file systems.
+
+       LINUX(R) FILE SYSTEMS
+
+       FreeBSD provides built-in support for several Linux(R) file systems. This section demonstrates how to load support for and how to mount the supported Linux(R) file systems.
+
+       EXTENDED FILE SYSTEM (EXT)
+
+       Kernel support for Extended File System (EXT) file systems has been available since FreeBSD 2.2. The ext2fs(4) driver allows the FreeBSD kernel to both read and write to ext2, ext3, and ext4 file systems.
+
+       > Warning:
+       Journalling and encryption are not supported yet.
+
+       To access an ext file system, mount the ext volume by specifying its FreeBSD partition name and an existing mount point. This example mounts /dev/ada1s1 on /mnt:
+
+         # mount -t ext2fs /dev/ada1s1 /mnt
+
+       WINDOWS(R) FILE SYSTEMS
+
+       FreeBSD supports FAT, exFAT, and NTFS file systems, enabling access to Windows-formatted storage.
+
+       FAT FILE SYSTEM
+
+       The FAT file system is a simple and robust file system. Although it lacks the performance, reliability, and scalability of modern alternatives, its availability on many different operating systems makes it a common choice for data exchange between devices.
+
+       To access a FAT file system, mount the FAT volume by specifying its FreeBSD partition name and an existing mount point. This example mounts /dev/ada0s1 on /mnt:
+
+         # mount -t msdosfs /dev/ada0s1 /mnt
+
+       EXFAT FILE SYSTEM
+
+       exFAT (Extended File Allocation Table) is a lightweight file system optimized for flash storage devices, such as USB drives and SD cards. It supports large file sizes and is widely used across various platforms, making it ideal for external storage.
+
+       To use exFAT on FreeBSD, install the filesystems/exfat package, load the FUSE kernel module, and mount the file system as shown below:
+
+       Install the exFAT package:
+
+         # pkg install fusefs-exfat
+
+       Before using a FUSE file system, load the fusefs(4) kernel module:
+
+         # kldload fusefs
+
+       Use sysrc(8) to load the module at startup:
+
+         # sysrc kld_list+=fusefs
+
+       Mount the exFAT volume by specifying its FreeBSD partition name and an existing mount point. This example mounts /dev/ada0s1 on /mnt:
+
+         # mount.exfat /dev/ada0s1 /mnt
+
+       NTFS FILE SYSTEM
+
+       NTFS is a robust file system developed by Microsoft(R) and commonly used in Windows operating systems. FreeBSD provides full read and write support for NTFS through the filesystems/ntfs package, making it easy to access and modify NTFS-formatted storage devices.
+
+       To use NTFS on FreeBSD, install the filesystems/ntfs package, load the FUSE kernel module, and mount the file system as shown below:
+
+       Install the NTFS package:
+
+         # pkg install fusefs-ntfs
+
+       Before using a FUSE file system, load the fusefs(4) kernel module:
+
+         # kldload fusefs
+
+       Use sysrc(8) to load the module at startup:
+
+         # sysrc kld_list+=fusefs
+
+       Mount the NTFS volume by specifying its FreeBSD partition name and an existing mount point. This example mounts /dev/ada0s1 on /mnt:
+
+         # ntfs-3g /dev/ada0s1 /mnt
+
+       MACOS(R) FILE SYSTEMS
+
+       FreeBSD provides support for MacOS(R) file systems, including HFS/HFS+, allowing access to storage devices formatted for Apple(R) systems.
+
+       HFS/HFS+ FILE SYSTEM
+
+       HFS/HFS+ was the primary file system for MacOS prior to APFS, commonly used on older Mac devices and external drives. FreeBSD provides read-only support for HFS/HFS+ through the filesystems/hfsfuse package.
+
+       To use HFS/HFS+ on FreeBSD, install the filesystems/hfsfuse package, load the FUSE kernel module, and mount the file system as shown below:
+
+       Install the HFS/HFS+ package:
+
+         # pkg install fusefs-hfsfuse
+
+       Before using a FUSE file system, load the fusefs(4) kernel module:
+
+         # kldload fusefs
+
+       Use sysrc(8) to load the module at startup:
+
+         # sysrc kld_list+=fusefs
+
+       Mount the HFS/HFS+ volume by specifying its FreeBSD partition name and an existing mount point. This example mounts /dev/ada0s1 on /mnt:
+
+         # hfsfuse /dev/ada0s1 /mnt
+
+FreeBSD Handbook manual                 from the official documentation

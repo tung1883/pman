@@ -1,0 +1,95 @@
+WEBAPI.TASKSIGNAL-ANY-STATIC(1)  Sandbox manual  WEBAPI.TASKSIGNAL-ANY-STATIC(1)
+
+       NAME
+
+       TaskSignal: any() static method - The TaskSignal.any() static method takes an iterable of AbortSignal objects and returns a TaskSignal. The returned task signal is aborted wh
+
+       TASKSIGNAL: ANY() STATIC METHOD
+
+       The TaskSignal.any() static method takes an iterable of AbortSignal objects and returns a TaskSignal. The returned task signal is aborted when any of the abort signals is aborted.
+
+       When the task signal is aborted, its reason property will be set to the reason of the first signal that is aborted.
+
+       SYNTAX
+
+         TaskSignal.any(signals)
+         TaskSignal.any(signals, init)
+
+       PARAMETERS
+
+        * signals
+          * : An iterable (such as an Array) of abort signals.
+        * init (optional)
+          * : Contains optional configuration parameters. Currently only one property is defined:
+            * priority (optional)
+              * : One of the following:
+                * A priority string which is one of user-blocking, user-visible and background.
+                * A TaskSignal.
+
+       RETURN VALUE
+
+       A TaskSignal instance. It will be aborted when the first signal passed into signals is aborted. When this happens:
+
+        * Its reason property will be set to the reason of the signal that caused this signal to abort.
+        * Its priority property will be determined by the priority parameter:
+          * If the priority parameter was a string, it will be the value of the string.
+          * If the priority parameter was a TaskSignal, it will be the value of that signal's priority.
+
+       DESCRIPTION
+
+       The abort-signal cleanup considerations described for AbortSignal.any() also apply to TaskSignal.any(). There is no method to unsubscribe the returned signal from its input signals, and aborting it does not abort the other input signals or cancel their timeouts.
+
+       If init.priority is a signal with a changeable priority, the returned signal is also kept alive while it has a priority source and either prioritychange listeners or internal priority change steps registered by an API. Remove listeners added by your code when they are no longer needed. Aborting the signal does not remove its prioritychange listeners or stop it from following priority changes.
+
+       EXAMPLES
+
+       USING TASKSIGNAL.ANY()
+
+       This example demonstrates combining both a signal from a TaskController, and a timeout signal from TaskSignal.timeout().
+
+         const cancelDownloadButton = document.getElementById("cancelDownloadButton");
+
+         const userCancelController = new TaskController({
+           priority: "user-visible",
+         });
+
+         cancelDownloadButton.addEventListener("click", () => {
+           userCancelController.abort();
+         });
+
+         // Timeout after 5 minutes
+         const timeoutSignal = TaskSignal.timeout(1_000 * 60 * 5);
+
+         // This signal will abort when either the user clicks the cancel button or 5 minutes is up whichever is sooner
+         const combinedSignal = TaskSignal.any([
+           userCancelController.signal,
+           timeoutSignal,
+         ]);
+
+         try {
+           const res = await fetch(someUrlToDownload, {
+             // Stop the fetch when any of the
+             signal: combinedSignal,
+           });
+           const body = await res.blob();
+           // Do something with downloaded content
+           // …
+         } catch (e) {
+           if (e.name === "AbortError") {
+             // Canceled by the user
+           } else if (e.name === "TimeoutError") {
+             // Show user that download timed out
+           } else {
+             // Other error, e.g. network error
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * AbortSignal.any()
+
+Web APIs manual                         from the official documentation

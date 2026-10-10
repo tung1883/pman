@@ -1,0 +1,113 @@
+WEBAPI.VIEWTRANSITION(1)         Sandbox manual         WEBAPI.VIEWTRANSITION(1)
+
+       NAME
+
+       ViewTransition - The ViewTransition interface of the View Transition API represents an active view transition, and provides functionality to react to the tra
+
+       VIEWTRANSITION
+
+       The ViewTransition interface of the View Transition API represents an active view transition, and provides functionality to react to the transition reaching different states (e.g., ready to run the animation, or animation finished) or skip the transition altogether.
+
+       This object type is made available in the following ways:
+
+        * Via the Document.activeViewTransition property. This provides a consistent way to access the active view transition in any context, without having to worry about saving it for easy access later on.
+        * In the case of same-document (SPA) transitions, it is also returned by the document.startViewTransition() method.
+        * In the case of cross-document (MPA) transitions, it is also made available:
+          * In the outgoing page via the pageswap event object's PageSwapEvent.viewTransition property.
+          * In the inbound page via the pagereveal event object's PageRevealEvent.viewTransition property.
+       When a view transition is triggered by a startViewTransition() call (or a page navigation in the case of MPA transitions), a sequence of steps is followed as explained in The view transition process. This also explains when the different promises fulfill.
+
+       INSTANCE PROPERTIES
+
+        * ViewTransition.finished (read-only)
+          * : A Promise that fulfills once the transition animation is finished, and the new page view is visible and interactive to the user.
+        * ViewTransition.ready (read-only)
+          * : A Promise that fulfills once the pseudo-element tree is created and the transition animation is about to start.
+        * ViewTransition.transitionRoot (read-only) (experimental)
+          * : A reference to the root Element of the view transition scope.
+        * ViewTransition.types (read-only)
+          * : A ViewTransitionTypeSet that allows the types set on the view transition to be accessed and modified.
+        * ViewTransition.updateCallbackDone (read-only)
+          * : A Promise that fulfills when the promise returned by the document.startViewTransition() method's callback fulfills.
+
+       INSTANCE METHODS
+
+        * skipTransition()
+          * : Skips the animation part of the view transition, but doesn't skip running the document.startViewTransition() callback that updates the DOM.
+        * waitUntil() (experimental)
+          * : Delays finishing the view transition and the destruction of the associated pseudo-element tree until a Promise passed into the method has resolved.
+
+       EXAMPLES
+
+       In the following SPA example, the ViewTransition.ready promise is used to trigger a custom circular reveal view transition emanating from the position of the user's cursor on click, with animation provided by the Web Animations API.
+
+         // Store the last click event
+         let lastClick;
+         addEventListener("click", (event) => (lastClick = event));
+
+         function spaNavigate(data) {
+           // Fallback for browsers that don't support this API:
+           if (!document.startViewTransition) {
+             updateTheDOMSomehow(data);
+             return;
+           }
+
+           // Get the click position, or fallback to the middle of the screen
+           const x = lastClick?.clientX ?? innerWidth / 2;
+           const y = lastClick?.clientY ?? innerHeight / 2;
+           // Get the distance to the furthest corner
+           const endRadius = Math.hypot(
+             Math.max(x, innerWidth - x),
+             Math.max(y, innerHeight - y),
+           );
+
+           // Create a transition:
+           const transition = document.startViewTransition(() => {
+             updateTheDOMSomehow(data);
+           });
+
+           // Wait for the pseudo-elements to be created:
+           transition.ready.then(() => {
+             // Animate the root's new view
+             document.documentElement.animate(
+               {
+                 clipPath: [
+                   `circle(0 at ${x}px ${y}px)`,
+                   `circle(${endRadius}px at ${x}px ${y}px)`,
+                 ],
+               },
+               {
+                 duration: 500,
+                 easing: "ease-in",
+                 // Specify which pseudo-element to animate
+                 pseudoElement: "::view-transition-new(root)",
+               },
+             );
+           });
+         }
+
+       This animation also requires the following CSS, to turn off the default CSS animation and stop the old and new view states from blending in any way (the new state "wipes" right over the top of the old state, rather than transitioning in):
+
+         ::view-transition-image-pair(root) {
+           isolation: auto;
+         }
+
+         ::view-transition-old(root),
+         ::view-transition-new(root) {
+           animation: none;
+           mix-blend-mode: normal;
+           display: block;
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * View Transition API
+        * Using the View Transition API
+        * Using view transition types
+        * Smooth transitions with the View Transition API
+
+Web APIs manual                         from the official documentation

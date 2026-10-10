@@ -1,0 +1,36 @@
+APACHE.MOD_STATUS(1)             Sandbox manual             APACHE.MOD_STATUS(1)
+
+       ENABLING STATUS SUPPORT
+
+       To enable status reports only for browsers from the example.com domain add this code to your httpd.conf configuration file
+
+         <Location "/server-status">
+             SetHandler server-status
+             Require host example.com
+         </Location>
+
+       You can now access server statistics by using a Web browser to access the page http://your.server.name/server-status
+
+       AUTOMATIC UPDATES
+
+       You can get the status page to update itself automatically if you have a browser that supports "refresh". Access the page http://your.server.name/server-status?refresh=N to refresh the page every N seconds.
+
+       MACHINE READABLE STATUS FILE
+
+       A machine-readable version of the status file is available by accessing the page http://your.server.name/server-status?auto. This is useful when automatically run, see the Perl program log_server_status, which you will find in the /support directory of your Apache HTTP Server installation.
+
+       It should be noted that if mod_status is loaded into the server, its handler capability is available in all configuration files, including per-directory files (e.g., .htaccess). This may have security-related ramifications for your site.
+
+       USING SERVER-STATUS TO TROUBLESHOOT
+
+       The server-status page may be used as a starting place for troubleshooting a situation where your server is consuming all available resources (CPU or memory), and you wish to identify which requests or clients are causing the problem.
+
+       First, ensure that you have ExtendedStatus set on, so that you can see the full request and client information for each child or thread.
+
+       Now look in your process list (using top, or similar process viewing utility) to identify the specific processes that are the main culprits. Order the output of top by CPU usage, or memory usage, depending on what problem you're trying to address.
+
+       Reload the server-status page, and look for those process ids, and you'll be able to see what request is being served by that process, for what client. Requests are transient, so you may need to try several times before you catch it in the act, so to speak.
+
+       This process should give you some idea what client, or what type of requests, are primarily responsible for your load problems. Often you will identify a particular web application that is misbehaving, or a particular client that is attacking your site.
+
+Apache HTTP Server manual               bundled documentation

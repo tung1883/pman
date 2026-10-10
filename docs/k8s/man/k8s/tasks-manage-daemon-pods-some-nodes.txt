@@ -1,0 +1,69 @@
+K8S.TASKS-MANAGE-DAEMON-PODS-SOME-NODES(1) Sandbox manual K8S.TASKS-MANAGE-DAEMON-PODS-SOME-NODES(1)
+
+       NAME
+
+       Running Pods on Only Some Nodes - This page demonstrates how can you run Pods on only some Nodes as part of a DaemonSet
+
+       RUNNING PODS ON ONLY SOME NODES
+
+       This page demonstrates how can you run Pods on only some Nodes as part of a DaemonSet
+
+       ## PREREQUISITES
+
+       RUNNING PODS ON ONLY SOME NODES
+
+       Imagine that you want to run a DaemonSet, but you only need to run those daemon pods on nodes that have local solid state (SSD) storage. For example, the Pod might provide cache service to the node, and the cache is only useful when low-latency local storage is available.
+
+       STEP 1: ADD LABELS TO YOUR NODES
+
+       Add the label ssd=true to the nodes which have SSDs.
+
+         kubectl label nodes example-node-1 example-node-2 ssd=true
+
+       STEP 2: CREATE THE MANIFEST
+
+       Let's create a DaemonSet which will provision the daemon pods on the SSD labeled nodes only.
+
+       Next, use a nodeSelector to ensure that the DaemonSet only runs Pods on nodes with the ssd label set to "true".
+
+         apiVersion: apps/v1
+         kind: DaemonSet
+         metadata:
+           name: ssd-driver
+           labels:
+             app: nginx
+         spec:
+           selector:
+             matchLabels:
+               app: ssd-driver-pod
+           template:
+             metadata:
+               labels:
+                 app: ssd-driver-pod
+             spec:
+               nodeSelector:
+                 ssd: "true"
+               containers:
+                 - name: example-container
+                   image: example-image
+
+       STEP 3: CREATE THE DAEMONSET
+
+       Create the DaemonSet from the manifest by using kubectl create or kubectl apply
+
+       Let's label another node as ssd=true.
+
+         kubectl label nodes example-node-3 ssd=true
+
+       Labelling the node automatically triggers the control plane (specifically, the DaemonSet controller) to run a new daemon pod on that node.
+
+         kubectl get pods -o wide
+
+       The output is similar to:
+
+         NAME                              READY     STATUS    RESTARTS   AGE    IP      NODE
+         <daemonset-name><some-hash-01>    1/1       Running   0          13s    .....   example-node-1
+         <daemonset-name><some-hash-02>    1/1       Running   0          13s    .....   example-node-2
+         <daemonset-name><some-hash-03>    1/1       Running   0          5s     .....   example-node-3
+
+Kubernetes manual                       from the official documentation

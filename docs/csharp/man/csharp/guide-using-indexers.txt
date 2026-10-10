@@ -1,0 +1,186 @@
+CSHARP.GUIDE-USING-INDEXERS(1)   Sandbox manual   CSHARP.GUIDE-USING-INDEXERS(1)
+
+       NAME
+
+       Using indexers (C# Programming Guide) - Learn how to declare and use an indexer for a class, struct, or interface in C#. This article includes example code.
+
+       USING INDEXERS (C# PROGRAMMING GUIDE)
+
+       Indexers are a syntactic convenience that enables you to create a class, struct, or interface that client applications can access as an array. The compiler generates an Item property (or an alternatively named property if IndexerNameAttribute is present), and the appropriate accessor methods. Indexers are most frequently implemented in types whose primary purpose is to encapsulate an internal collection or array. For example, suppose you have a class TempRecord that represents the temperature in Fahrenheit as recorded at 10 different times during a 24-hour period. The class contains a temps array of type float[] to store the temperature values. By implementing an indexer in this class, clients can access the temperatures in a TempRecord instance as float temp = tempRecord[4] instead of as float temp = tempRecord.temps[4]. The indexer notation not only simplifies the syntax for client applications; it also makes the class, and its purpose more intuitive for other developers to understand.
+
+       To declare an indexer on a class or struct, use the this keyword, as the following example shows:
+
+         // Indexer declaration
+         public int this[int index]
+         {
+             // get and set accessors
+         }
+
+       > Declaring an indexer will automatically generate a property named Item on the object. The Item property is not directly accessible from the instance member access expression. Additionally, if you add your own Item property to an object with an indexer, you'll get a CS0102 compiler error. To avoid this error, use the IndexerNameAttribute rename the indexer as detailed later in this article.
+
+       REMARKS
+
+       The type of an indexer and the type of its parameters must be at least as accessible as the indexer itself. For more information about accessibility levels, see Access Modifiers.
+
+       For more information about how to use indexers with an interface, see Interface Indexers.
+
+       The signature of an indexer consists of the number and types of its formal parameters. It doesn't include the indexer type or the names of the formal parameters. If you declare more than one indexer in the same class, they must have different signatures.
+
+       An indexer isn't classified as a variable; therefore, an indexer value can't be passed by reference (as a ref or out parameter) unless its value is a reference (that is, it returns by reference.)
+
+       To provide the indexer with a name that other languages can use, use IndexerNameAttribute, as the following example shows:
+
+         // Indexer declaration
+         [System.Runtime.CompilerServices.IndexerName("TheItem")]
+         public int this[int index]
+         {
+             // get and set accessors
+         }
+
+       This indexer has the name TheItem, as it's overridden by the indexer name attribute. By default, the indexer name is Item.
+
+       EXAMPLE 1
+
+       The following example shows how to declare a private array field, temps, and an indexer. The indexer enables direct access to the instance tempRecord[i]. The alternative to using the indexer is to declare the array as a public member and access its members, tempRecord.temps[i], directly.
+
+         ﻿public class TempRecord
+         {
+             // Array of temperature values
+             float[] temps =
+             [
+                 56.2F, 56.7F, 56.5F, 56.9F, 58.8F,
+                 61.3F, 65.9F, 62.1F, 59.2F, 57.5F
+             ];
+
+             // To enable client code to validate input
+             // when accessing your indexer.
+             public int Length => temps.Length;
+
+             // Indexer declaration.
+             // If index is out of range, the temps array will throw the exception.
+             public float this[int index]
+             {
+                 get => temps[index];
+                 set => temps[index] = value;
+             }
+         }
+
+       Notice that when an indexer's access is evaluated, for example, in a Console.Write statement, the get accessor is invoked. Therefore, if no get accessor exists, a compile-time error occurs.
+
+         ﻿var tempRecord = new TempRecord();
+
+         // Use the indexer's set accessor
+         tempRecord[3] = 58.3F;
+         tempRecord[5] = 60.1F;
+
+         // Use the indexer's get accessor
+         for (int i = 0; i < 10; i++)
+         {
+             Console.WriteLine($"Element #{i} = {tempRecord[i]}");
+         }
+
+       INDEXING USING OTHER VALUES
+
+       C# doesn't limit the indexer parameter type to integer. For example, it can be useful to use a string with an indexer. Such an indexer might be implemented by searching for the string in the collection, and returning the appropriate value. As accessors can be overloaded, the string and integer versions can coexist.
+
+       EXAMPLE 2
+
+       The following example declares a class that stores the days of the week. A get accessor takes a string, the name of a day, and returns the corresponding integer. For example, "Sunday" returns 0, "Monday" returns 1, and so on.
+
+         ﻿// Using a string as an indexer value
+         class DayCollection
+         {
+             string[] days = ["Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"];
+
+             // Indexer with only a get accessor with the expression-bodied definition:
+             public int this[string day] => FindDayIndex(day);
+
+             private int FindDayIndex(string day)
+             {
+                 for (int j = 0; j < days.Length; j++)
+                 {
+                     if (days[j] == day)
+                     {
+                         return j;
+                     }
+                 }
+
+                 throw new ArgumentOutOfRangeException(
+                     nameof(day),
+                     $"Day {day} is not supported.\nDay input must be in the form \"Sun\", \"Mon\", etc");
+             }
+         }
+
+       CONSUMING EXAMPLE 2
+
+         ﻿var week = new DayCollection();
+         Console.WriteLine(week["Fri"]);
+
+         try
+         {
+             Console.WriteLine(week["Made-up day"]);
+         }
+         catch (ArgumentOutOfRangeException e)
+         {
+             Console.WriteLine($"Not supported input: {e.Message}");
+         }
+
+       EXAMPLE 3
+
+       The following example declares a class that stores the days of the week using the DayOfWeek enum. A get accessor takes a DayOfWeek, the value of a day, and returns the corresponding integer. For example, DayOfWeek.Sunday returns 0, DayOfWeek.Monday returns 1, and so on.
+
+         ﻿using Day = System.DayOfWeek;
+
+         class DayOfWeekCollection
+         {
+             Day[] days =
+             [
+                 Day.Sunday, Day.Monday, Day.Tuesday, Day.Wednesday,
+                 Day.Thursday, Day.Friday, Day.Saturday
+             ];
+
+             // Indexer with only a get accessor with the expression-bodied definition:
+             public int this[Day day] => FindDayIndex(day);
+
+             private int FindDayIndex(Day day)
+             {
+                 for (int j = 0; j < days.Length; j++)
+                 {
+                     if (days[j] == day)
+                     {
+                         return j;
+                     }
+                 }
+                 throw new ArgumentOutOfRangeException(
+                     nameof(day),
+                     $"Day {day} is not supported.\nDay input must be a defined System.DayOfWeek value.");
+             }
+         }
+
+       CONSUMING EXAMPLE 3
+
+         ﻿var week = new DayOfWeekCollection();
+         Console.WriteLine(week[DayOfWeek.Friday]);
+
+         try
+         {
+             Console.WriteLine(week[(DayOfWeek)43]);
+         }
+         catch (ArgumentOutOfRangeException e)
+         {
+             Console.WriteLine($"Not supported input: {e.Message}");
+         }
+
+       ROBUST PROGRAMMING
+
+       There are two main ways in which the security and reliability of indexers can be improved:
+
+        * Be sure to incorporate some type of error-handling strategy to handle the chance of client code passing in an invalid index value. In the first example earlier in this article, the TempRecord class provides a Length property that enables the client code to verify the input before passing it to the indexer. You can also put the error handling code inside the indexer itself. Be sure to document for users any exceptions that you throw inside an indexer accessor.
+        * Set the accessibility of the get and set accessors to be as restrictive as is reasonable. This is important for the set accessor in particular. For more information, see Restricting Accessor Accessibility.
+
+       SEE ALSO
+
+        * Indexers
+        * Properties
+
+C# manual                               from the official documentation

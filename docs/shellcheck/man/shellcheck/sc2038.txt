@@ -1,0 +1,30 @@
+SHELLCHECK.SC2038(1)             Sandbox manual             SHELLCHECK.SC2038(1)
+
+       NAME
+
+       Use -print0/-0 or find -exec + to allow for non-alphanumeric filenames. - find . -type f | xargs md5sum
+
+       USE -PRINT0/-0 OR FIND -EXEC + TO ALLOW FOR NON-ALPHANUMERIC FILENAMES
+
+       USE -PRINT0/-0 OR FIND -EXEC + TO ALLOW FOR NON-ALPHANUMERIC FILENAMES
+
+       PROBLEMATIC CODE
+
+         find . -type f | xargs md5sum
+
+       CORRECT CODE
+
+         find . -type f -print0 | xargs -0 md5sum
+         find . -type f -exec md5sum {} +
+
+       RATIONALE
+
+       By default, xargs interprets spaces and quotes in an unsafe and unexpected way. Whenever it's used, it should be used with -0 or --null to split on \0 bytes, and find should be made to output \0 separated filenames.
+
+       POSIX does not require find or xargs to support null terminators, so you can also use find -exec +.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

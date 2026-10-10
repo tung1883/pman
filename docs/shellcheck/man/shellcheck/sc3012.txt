@@ -1,0 +1,50 @@
+SHELLCHECK.SC3012(1)             Sandbox manual             SHELLCHECK.SC3012(1)
+
+       NAME
+
+       In POSIX sh, lexicographical \< is undefined. - x="aardvark"
+
+       IN POSIX SH, LEXICOGRAPHICAL IS UNDEFINED
+
+       IN POSIX SH, LEXICOGRAPHICAL IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         x="aardvark"
+         y="zebra"
+         if [ $x \< $y ]
+         then
+           echo "$x comes before $y in the dictionary"
+         fi
+
+       CORRECT CODE
+
+       First, make sure you wanted a lexicographical comparison (aka dictionary order), and not a numerical comparison.
+
+       Then to compare as string, you can use expr and make sure that the strings are not interpreted numerically by adding some non-numerical data to them. Here, an apostrophe is prepended:
+
+         #!/bin/sh
+         x="aardvark"
+         y="zebra"
+         if expr "'$x" \< "'$y" > /dev/null
+         then
+           echo "$x comes before $y in the dictionary"
+         fi
+
+       RATIONALE
+
+       The test binary operators >, \>, <, and \< are not part of POSIX and not guaranteed to be supported in scripts targeting sh.
+
+       The expr functionality is specified by POSIX.
+
+       EXCEPTIONS
+
+       If you know your sh will be e.g. dash, consider explicitly using #!/bin/dash.
+
+       RELATED RESOURCES
+
+        * Greg's Wiki - Bashism - Conditionals
+        * POSIX: test, expr
+
+ShellCheck manual                       from the official documentation

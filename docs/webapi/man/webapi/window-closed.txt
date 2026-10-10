@@ -1,0 +1,51 @@
+WEBAPI.WINDOW-CLOSED(1)          Sandbox manual          WEBAPI.WINDOW-CLOSED(1)
+
+       NAME
+
+       Window: closed property - The Window.closed read-only property indicates whether
+
+       WINDOW: CLOSED PROPERTY
+
+       The Window.closed read-only property indicates whether the referenced window is closed or not.
+
+       VALUE
+
+       A boolean value. Possible values:
+
+        * true: The window has been closed.
+        * false: The window is open.
+
+       EXAMPLES
+
+       CHANGE THE URL OF A WINDOW FROM A POPUP
+
+       The following example demonstrates how a popup window can change the URL of the window that opened it. Before attempting to change the URL, it checks that the current window has an opener using the window.opener property and that the opener isn't closed:
+
+         // Check that an opener exists and is not closed
+         if (window.opener && !window.opener.closed) {
+           window.opener.location.href = "https://www.mozilla.org";
+         }
+
+       Note that popups can only access the window that opened them.
+
+       REFRESHING A PREVIOUSLY OPENED POPUP
+
+       In this example the function refreshPopupWindow() calls the reload() method of the popup's location object to refresh its data. If the popup hasn't been opened yet or the user has closed it a new window is opened.
+
+         let popupWindow = null;
+
+         function refreshPopupWindow() {
+           if (popupWindow && !popupWindow.closed) {
+             // popupWindow is open, refresh it
+             popupWindow.location.reload(true);
+           } else {
+             // Open a new popup window
+             popupWindow = window.open("popup.html", "dataWindow");
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,803 @@
+ARCH.TOR(1)                      Sandbox manual                      ARCH.TOR(1)
+
+       The Tor Project (The onion routing) is an open source implementation of onion routing that provides free access to an anonymous proxy network. Its primary goal is to enable online anonymity by protecting against traffic analysis attacks.
+
+       Users of the Tor network run an onion proxy software on their machines, which presents a SOCKS interface to its clients. This software connects out to Tor, periodically negotiating a virtual circuit through the Tor network. Tor employs cryptography in a layered manner (hence the 'onion' analogy), ensuring forward secrecy between routers.
+
+       Through this process the onion proxy manages networking traffic for end-user anonymity. It keeps a user anonymous by encrypting traffic, sending it through other nodes of the Tor network, and decrypting it at the last node to receive your traffic before forwarding it to the server you specified. One trade off is that using Tor can be considerably slower than a regular direct connection, due to the large amount of traffic re-routing. Additionally, although Tor provides protection against traffic analysis it cannot prevent traffic confirmation at the boundaries of the Tor network (i.e. the traffic entering and exiting the network). See Wikipedia:Tor (anonymity network) for more information.
+
+       Note Tor by itself is not all you need to maintain anonymity. There are several major pitfalls to watch out for. See Tor Browser best practices.
+
+       INSTALLATION
+
+       Install the torbrowser-launcher package to use the Tor Browser, which is the only supported way to browse the web anonymously using Tor.
+
+       Users intending to manually use Tor with other software, run relays, or host onion services should install the tor package. The majority of this article covers this usage.
+
+       Nyx is a command line monitor for Tor, it provides bandwidth usage, connection details and on-the-fly configuration editing. To use it, install the nyx package.
+
+       USAGE
+
+       Start/enable tor.service. Alternatively, launch it manually as the tor user:
+
+         [tor]$ /usr/bin/tor
+
+       Tip Tor Browser runs its own Tor instance, so there is no need to enable tor.service to use it.
+
+       To use a program over Tor, configure it to use 127.0.0.1 or localhost as a SOCKS5 proxy, with port 9050 for plain Tor with standard settings.
+
+       Tip If multiple entries are present, Tor will perform stream isolation between listeners by default.
+
+       The proxy supports remote DNS resolution: use socks5h://localhost:9050 for DNS resolution from the exit node (instead of socks5 for a local DNS resolution).
+
+       To check if Tor is functioning properly, visit https://check.torproject.org/ with Tor Browser or CURL:
+
+         $ curl -x socks5h://localhost:9050 -s https://check.torproject.org
+
+       CONFIGURATION
+
+       Tor reads its configurations from the file /etc/tor/torrc by default, or if the latter is not found, from $HOME/.torrc. The configuration options are explained in tor(1).
+
+       Drop-in files are supported by enabling:
+
+         /etc/tor/torrc
+
+         %include /etc/torrc.d/*.conf
+
+       To reload the configuration after a change, reload tor.service.
+
+       TOR CONTROLPORT
+
+       Some programs may require access to your Tor ControlPort to gain low-level control over your Tor node.
+
+       The ControlPort allows other programs to monitor and modify your Tor node's configuration while it is running, or get details about the status of the Tor network and its circuits.
+
+       To enable it, add to your torrc:
+
+         ControlPort 9051
+
+       From The Tor Control Protocol:
+
+       For security, the stream (Tor Control) should not be accessible by untrusted parties.
+
+       To enhance security, restrict access to the ControlPort using a cookie file, control password, or both.
+
+       Warning Only grant the password or cookie access to trusted processes and users, as they can be used to modify any configuration options of the service.
+
+       NYX
+
+       Assuming the ControlPort 9051 is set in torrc, you can start nyx by running:
+
+         $ nyx
+
+       To watch Tor connections in nyx [1], add to your torrc:
+
+         DisableDebuggerAttachment 0
+
+       Note It is not recommended to run nyx unrestricted. Follow #Set a Tor Control cookie file and/or #Set a Tor Control password.
+
+       SET A TOR CONTROL COOKIE FILE
+
+       Add to your torrc:
+
+         CookieAuthentication 1
+         CookieAuthFile /var/lib/tor/control_auth_cookie
+         CookieAuthFileGroupReadable 1
+         DataDirectoryGroupReadable 1
+
+       Restart tor.service to apply the change.
+
+       Enabling CookieAuthentication restricts access to the ControlPort by enforcing file permissions on the Tor cookie file and the Tor data directory.
+
+       Add users to the tor user group to give them access to the Tor cookie file.
+
+       You can use this command to check the permissions:
+
+         $ stat -c%a /var/lib/tor /var/lib/tor/control_auth_cookie
+
+         750
+         640
+
+       SET A TOR CONTROL PASSWORD
+
+       Convert your password from plaintext to hash:
+
+         $ set +o history # unset bash history
+         $ tor --hash-password 'your_password'
+         $ set -o history # set bash history
+
+       Add the generated hash to your torrc:
+
+         HashedControlPassword your_hash
+
+       Note The bash history commands prevent your cleartext password from being written to your bash $HISTFILE.
+
+       OPEN TOR CONTROLSOCKET
+
+       If a program requires access to your Tor ControlSocket, such as a Unix domain Socket, add the following to your torrc:
+
+         ControlSocket /var/lib/tor/control_socket
+         ControlSocketsGroupWritable 1
+         DataDirectoryGroupReadable 1
+
+       Add the user who will run the program to the tor user group.
+
+       Restart tor.service and relaunch the program.
+
+       To verify the ControlSocket permissions:
+
+         $ stat -c%a /var/lib/tor /var/lib/tor/control_socket
+
+         750
+         660
+
+       TESTING
+
+       To test your ControlPort, run openbsd-netcat with:
+
+         $ echo -e 'PROTOCOLINFO\r\n' | nc 127.0.0.1 9051
+
+       To test your ControlSocket, run socat with:
+
+         $ echo -e 'PROTOCOLINFO\r\n' | socat - UNIX-CLIENT:/var/lib/tor/control_socket
+
+       Both commands should print:
+
+         250-PROTOCOLINFO 1
+         250-AUTH METHODS=COOKIE,SAFECOOKIE,HASHEDPASSWORD COOKIEFILE="/var/lib/tor/control_auth_cookie"
+         250-VERSION Tor="0.4.8.12"
+         250 OK
+         514 Authentication required.
+
+       See The Tor Control Protocol for more commands.
+
+       WEB BROWSING
+
+       The only way to browse anonymously is with the supported Tor Browser, which uses a patched version of Firefox. It can be installed with the torbrowser-launcher package and launched from the terminal by the torbrowser-launcher command.
+
+       Note While Tor can be used with regular browsers, it is not recommended. Even in "private browsing" mode, factors such as fingerprinting, plugins, and DNS leaks may reveal your IP address or identity. [2]
+
+       HTTP PROXY
+
+       Tor offers a built-in tunneled HTTP proxy and can also be used with an HTTP proxy like Privoxy; however, using the SOCKS5 library is generally recommended.
+
+       TOR
+
+       Add following line to your torrc file to set port 8118 on your localhost as HTTP proxy:
+
+         HTTPTunnelPort 127.0.0.1:8118
+
+       Refer to Tor manual for further information.
+
+       FIREFOX
+
+       The SmartProxy or FoxyProxy add-ons allow you to specify multiple proxies for different URLs or for all your browsing. After restarting Firefox manually set Firefox to port 8118 on localhost, which is where Privoxy are running. These settings can be access under Add > Standard proxy type. Select a proxy label (e.g Tor) and enter the port and host into the HTTP Proxy and SSL Proxy fields. To check if Tor is functioning properly visit the Tor Check website and toggle Tor.
+
+       PRIVOXY
+
+       You can also use this setup in other applications like messaging (e.g. Jabber, IRC clients). Applications that support HTTP proxies you can connect to Privoxy (i.e. 127.0.0.1:8118). To use SOCKS proxy directly, you can point your application at Tor (i.e. 127.0.0.1:9050). A problem with this method though is that applications doing DNS resolves by themselves may leak information. Consider using Socks4A (e.g. with Privoxy) instead.
+
+       INSTANT MESSAGING
+
+       In order to use an instant messaging client with tor, we do not need an HTTP proxy like privoxy. We will be using tor's daemon directly which listens to port 9050 by default.
+
+       PIDGIN
+
+       You can set up Pidgin to use Tor globally, or per account. To use Tor globally, go to Tools -> Preferences -> Proxy. To use Tor for specific accounts, go to Accounts > Manage Accounts, select the desired account, click Modify, then go to the Proxy tab. The proxy settings are as follows:
+
+         Proxy type: SOCKS 5
+         Host: 127.0.0.1
+         Port: 9050
+
+       PACMAN
+
+       Pacman download operations (repository databases, packages, and public keys) can be done using the Tor network.
+
+       Advantages:
+
+        * Attackers monitoring your Internet connection and specifically targeting your machine can no longer observe its updates. This makes it difficult for them to deduce which packages you have installed, their versions, or your update frequency. However, they can still learn the software and versions you use by other means, such as watching packets from your HTTP server or probing the machine, which reveals the installed HTTP server and its version.
+        * If a mirror is not an onion service, a malicious exit relay in your Tor circuit may watch your updates and decide to attack you, but it is unlikely to deanonymize you.
+        * Attackers trying to prevent your machine from getting security fixes by making it believe there are no new updates will have a harder time, as they cannot target your machine specifically.
+       Disadvantages:
+
+        * Longer update times due to longer latency and lower throughput. This can pose a big security risk if updates need to be applied as quickly as possible, especially on machines directly connected to the Internet. That is the case when there is a major security flaw that is easy to probe and exploit, and attackers have already begun targeting as many systems as they can before those systems are updated.
+       Reliability with Tor:
+
+        * You no longer need a working DNS.
+        * You depend on the Tor network and the exit nodes not blocking the updates.
+        * You rely on the Tor daemon to work properly. The Tor daemon may not work if there is insufficient disk space available. "Reserved blocks gid:" in ext4, quotas, or other means can fix that.
+        * If you are in a country where Tor is blocked, or if there are very few or no Tor users, you should use bridges.
+       Note on GPG: On stock Arch, pacman only trust keys which are either signed by you (that can be done with pacman-key --lsign-key) or signed by 3 of 5 Arch master keys. If a malicious exit node replaces packages with ones signed by its key, pacman will not let the user install the package.
+
+       Note This might not be true for other distributions derived from Arch, for non-official repositories, and for AUR.
+
+         /etc/pacman.conf
+
+         ...
+         XferCommand = /usr/bin/curl --socks5-hostname localhost:9050 --location --continue-at - --fail --output %o %u
+         ...
+
+       Note Due to work in progress for database signatures, you might get a 404 error for the signatures. Depending on your Pacman/Package signing#Configuring pacman, it should be harmless.
+
+       RUNNING A TOR RELAY
+
+       The Tor network is reliant on people contributing bandwidth and setting up services. There are several ways to contribute to the network.
+
+       A usual Tor circuit consists of:
+
+         Tor User -> Guard Relay -> Middle Relay -> Exit Relay -> Destination (i.e. example.com)
+
+       See the official documentation and Expectations for Relay Operators for more information.
+
+       RUNNING A MIDDLE/GUARD RELAY
+
+       Also known as non-exit relays: A guard relay is the first hop in a Tor circuit, while a middle relay acts as the second hop.
+
+       This means that your machine will act as an entry node or forwarding relay and, unlike a bridge, it will be listed in the public Tor directory. Your IP address will be publicly visible in the Tor directory but the relay will only forward to other relays or Tor exit nodes, not directly to the internet.
+
+       To setup a non-exit relay, see [3] and [4].
+
+       RUNNING A TOR BRIDGE
+
+       A Tor bridge is a Tor relay that is not listed in the public Tor directory, thus making it possible for people to connect to the Tor network when governments or ISPs block all public Tor relays. Visit https://bridges.torproject.org/ for more information and instructions on how to get bridge addresses.
+
+       To setup a Tor bridge, see [5] and [6].
+
+       RUNNING A TOR EXIT RELAY
+
+       Any requests from a Tor user to the regular internet must exit the Tor network at some point, and exit relays provide this essential service. To the destination host, these requests will appear to originate from your machine. This means that running an exit relay is typically viewed as more legally burdensome than running other types of Tor relays.
+
+       Before becoming an exit relay, it is strongly recommended to read Legal resources and tips for running an exit node.
+
+       To setup an exit relay, see [7] and [8].
+
+       CONFIGURATION
+
+       Using the torrc, you can configure which services you wish to allow through your exit relay.
+
+       Make the relay an exit relay:
+
+         ExitRelay 1
+
+       Allow all traffic:
+
+         ExitPolicy accept *:*
+
+       Allow only IRC ports 6660-6667 but nothing else to exit from relay:
+
+         ExitPolicy accept *:6660-6667,reject *:*
+
+       By default, Tor will block certain ports. You can use the torrc to override this, for example accepting NNTP:
+
+         ExitPolicy accept *:119
+
+       +100MBPS EXIT RELAY CONFIGURATION EXAMPLE
+
+       If you run a fast exit relay (+100Mbps) with ORPort 443 and DirPort 80, the following configuration changes might serve as inspiration to setup Tor alongside iptables firewall and pdnsd as DNS cache. It is important to first read Relay Post-install and good practices.
+
+       Note See #Running Tor in a systemd-nspawn container with a virtual network interface for instructions to install Tor in a systemd-nspawn container.
+
+       TOR
+
+       RAISE MAXIMUM NUMBER OF OPEN FILE DESCRIPTORS
+
+       To handle more than 32768 connections, LimitNOFILE can be raised [11]:
+
+         /etc/systemd/system/tor.service.d/increase-file-limits.conf
+
+         [Service]
+         LimitNOFILE=65536
+
+       To successfully raise nofile limit, you may also have to append the following:
+
+         /etc/security/limits.conf
+
+         ...
+         tor     soft    nofile    65536
+         tor     hard    nofile    65536
+         @tor    soft    nofile    65536
+         @tor    hard    nofile    65536
+
+       Check if the nofile (filedescriptor) limit is successfully raised with ulimit -Hn as the tor user.
+
+       START TOR.SERVICE AS ROOT TO BIND TOR TO PRIVILEGED PORTS
+
+       To bind Tor to privileged ports the service must be started as root. Please specify User tor option in /etc/tor/torrc.
+
+       TOR CONFIGURATION
+
+       An example configuration:
+
+         /etc/tor/torrc
+
+         SOCKSPort 0                                       ## Pure relay configuration without local socks proxy
+
+         Log notice stdout                                 ## Default Tor behavior
+
+         ControlPort 9051                                  ## For nyx connection
+         CookieAuthentication 1                            ## For nyx connection
+
+         ORPort 443                                        ## Service must be started as root
+
+         Address $IP                                       ## IP or FQDN
+         Nickname $NICKNAME                                ## Nickname displayed in Tor Relay Search
+
+         RelayBandwidthRate 500 Mbits                      ## bytes/KBytes/MBytes/GBytes/KBits/MBits/GBits
+         RelayBandwidthBurst 1000 MBits                    ## bytes/KBytes/MBytes/GBytes/KBits/MBits/GBits
+
+         ContactInfo $E-MAIL                               ## Tor Relay good practices suggests an email
+
+         DirPort 80                                        ## Service must be started as root
+         DirPortFrontPage /etc/tor/tor-exit-notice.html    ## Original
+
+         MyFamily $($KEYID),$($KEYID)...                   ## Remember $ in front of keyid(s) ;)
+
+         ExitPolicy reject XXX.XXX.XXX.XXX/XX:*            ## Block domain of public IP in addition to std. exit policy
+
+         User tor                                          ## Return to tor user after service started as root
+
+         DisableDebuggerAttachment 0                       ## For nyx connection
+
+         ### Performance related options ###
+         AvoidDiskWrites 1                                 ## Reduce wear on SSD
+         DisableAllSwap 1                                  ## Service must be started as root
+         HardwareAccel 1                                   ## Look for OpenSSL hardware cryptographic support
+         NumCPUs 2                                         ## Only start two threads
+
+       See tor(1) for details.
+
+       Tor opens a socks proxy on port 9050 by default — even if you do not configure one. Set SOCKSPort 0 if you plan to run Tor only as a relay, and not make any local application connections yourself.
+
+       Log notice stdout changes logging to stdout, which is also the Tor default.
+
+       ControlPort 9051, CookieAuthentication 1 and DisableDebuggerAttachment 0 enables nyx to connect to Tor and display connections.
+
+       ORPort 443 and DirPort 80 lets Tor listen on port 443 and 80.
+
+       DirPortFrontPage displays tor-exit-notice.html on port 80.
+
+       ExitPolicy reject XXX.XXX.XXX.XXX/XX:* should reflect your public IP and netmask, which can be obtained with the command ip addr, so exit connections cannot connect to the host or neighboring machines public IP and circumvent firewalls.
+
+       AvoidDiskWrites 1 reduces disk writes and wear on SSD.
+
+       DisableAllSwap 1 "will attempt to lock all current and future memory pages, so that memory cannot be paged out".
+
+       If grep aes /proc/cpuinfo returns that your CPU supports AES instructions and lsmod | grep aes returns that the module is loaded, you can specify HardwareAccel 1 which tries "to use built-in (static) crypto hardware acceleration when available", see https://www.torservers.net/wiki/setup/server#aes-ni_crypto_acceleration.
+
+       ORPort 443, DirPort 80 and DisableAllSwap 1 require that you start the Tor service as root as described in #Start tor.service as root to bind Tor to privileged ports.
+
+       Use the User tor option to properly reduce Tor’s privileges.
+
+       IPTABLES
+
+       Setup and learn to use iptables. Instead of being a Simple stateful firewall where connection tracking would have to track thousands of connections on a tor exit relay this firewall configuration is stateless.
+
+         /etc/iptables/iptables.rules
+
+         *raw
+         -A PREROUTING -j NOTRACK
+         -A OUTPUT -j NOTRACK
+         COMMIT
+
+         *filter
+         :INPUT DROP [0:0]
+         :FORWARD DROP [0:0]
+         :OUTPUT ACCEPT [0:0]
+         -A INPUT -p tcp ! --syn -j ACCEPT
+         -A INPUT -p udp -j ACCEPT
+         -A INPUT -p icmp -j ACCEPT
+         -A INPUT -p tcp --dport 443 -j ACCEPT
+         -A INPUT -p tcp --dport 80 -j ACCEPT
+         -A INPUT -i lo -j ACCEPT
+         COMMIT
+
+       -A PREROUTING -j NOTRACK and -A OUTPUT -j NOTRACK disables connection tracking in the raw table.
+
+       :INPUT DROP [0:0] is the default INPUT target and drops input traffic we do not specifically ACCEPT.
+
+       :FORWARD DROP [0:0] is the default FORWARD target and only relevant if the host is a normal router, not when the host is an onion router.
+
+       :OUTPUT ACCEPT [0:0] is the default OUTPUT target and allows all outgoing connections.
+
+       -A INPUT -p tcp ! --syn -j ACCEPT allow already established incoming TCP connections per the rules below and TCP connections established from the exit node.
+
+       -A INPUT -p udp -j ACCEPT allow all incoming UDP connections because we do not use connection tracking.
+
+       -A INPUT -p icmp -j ACCEPT allow ICMP.
+
+       -A INPUT -p tcp --dport 443 -j ACCEPT allow incoming connections to the ORPort.
+
+       -A INPUT -p tcp --dport 80 -j ACCEPT allow incoming connections to the DirPort.
+
+       -A INPUT -i lo -j ACCEPT allows all connections on the loopback interface.
+
+       PDNSD
+
+       Warning This configuration assumes your network DNS resolver is trusted (uncensored).
+
+       You can use pdnsd to cache DNS queries locally, so the exit relay can resolve DNS faster and the exit relay does not forward all DNS queries to an external DNS recursor.
+
+         /etc/pdnsd.conf
+
+         ...
+         perm_cache=102400                       ## (Default value)*100 = 1MB * 100 = 100MB
+         ...
+         server {
+             label= "resolvconf";
+             file = "/etc/pdnsd-resolv.conf";    ## Preferably do not use /etc/resolv.conf
+             timeout=4;                          ## Server timeout, this may be much shorter than the global timeout option.
+             uptest=query;                       ## Test availability using empty DNS queries.
+             query_test_name=".";                ## To be used if remote servers ignore empty queries.
+             interval=10m;                       ## Test every 10 minutes.
+             purge_cache=off;                    ## Ignore TTL.
+             edns_query=yes;                     ## Use EDNS for outgoing queries to allow UDP messages larger than 512 bytes. May cause trouble with some legacy systems.
+             preset=off;                         ## Assume server is down before uptest.
+          }
+         ...
+
+       This configuration stub shows how to cache queries to your normal DNS recursor locally and increase pdnsd cache size to 100MB.
+
+       UNCENSORED DNS
+
+       If your local DNS recursor is in some way censored or interferes with DNS queries, see Alternative DNS services for alternatives and add them in a separate server-section in /etc/pdnsd.conf as per Pdnsd#DNS servers.
+
+       ENSURING RELAY IS WORKING
+
+       To verify the function of your tor relay, check that tor.service started correctly with the journal or the unit status. If there are no errors, run nyx to ensure your relay is making connections. Do not be concerned if your new relay is slow at first; this is normal. After approximately 3 hours, your relay should be published and searchable on Relay Search.
+
+       TOR DNS
+
+       DNS queries can be performed through the command-line interface by using tor-resolve. For example:
+
+         $ tor-resolve archlinux.org
+
+         66.211.214.131
+
+       The tor 0.2.x series also provides a built-in DNS forwarder. To enable it, add the following lines to the Tor configuration file and restart the daemon:
+
+         /etc/tor/torrc
+
+         DNSPort 9053
+         AutomapHostsOnResolve 1
+         AutomapHostsSuffixes .exit,.onion
+
+       This will allow tor to accept DNS requests (listening on port 9053) like a regular DNS server, and resolve the domain via the Tor network.
+
+       A downside of both methods is that they are only able to resolve DNS queries for A, AAAA and PTR records; MX and NS queries are never answered. For more information see this Debian-based introduction.
+
+       Tip See [12] to check if an application is leaking DNS requests.
+
+       USING TOR DNS SYSTEMWIDE
+
+       It is possible to configure your system to use Tor DNS for any A, AAAA, and PTR queries your system makes, regardless of whether you eventually use Tor to connect to your final destination. To do this, configure your system to use 127.0.0.1 as its DNS server and edit the DNSPort line in /etc/tor/torrc to show:
+
+         DNSPort 53
+
+       Alternatively, you can use a local caching DNS server, such as dnsmasq or pdnsd, which will also compensate for Tor DNS being a little slower than traditional DNS servers. The following instructions will show how to set up dnsmasq for this purpose. Note, if you are using NetworkManager you will need to add your configuration file to the location outlined in NetworkManager#dnsmasq.
+
+       Change the tor setting to listen for the DNS request in port 9053 and install dnsmasq.
+
+       Modify its configuration file so that it contains:
+
+         /etc/dnsmasq.conf
+
+         no-resolv
+         port=53
+         server=127.0.0.1#9053
+         listen-address=127.0.0.1
+
+       These configurations set dnsmasq to listen only for requests from the local computer, and to use Tor DNS at its sole upstream provider. It is now necessary to edit /etc/resolv.conf so that your system will query only the dnsmasq server:
+
+         /etc/resolv.conf
+
+         nameserver 127.0.0.1
+
+       Start the dnsmasq.service.
+
+       Finally, if you use dhcpcd you need to change its settings so that it does not alter the resolv.conf file. Add this line in the configuration file:
+
+         /etc/dhcpcd.conf
+
+         nohook resolv.conf
+
+       If you already have an nohook line, add resolv.conf separated by a comma.
+
+       TORSOCKS
+
+       torsocks allows you to use an application through the Tor network without requiring any configuration changes to the application itself. From torsocks(1):
+
+       torsocks is a wrapper between the torsocks library and the application in order to make every Internet communication go through the Tor network.
+
+       For a comparison of torsocks with its predecessor, see [13].
+
+       Note The wrapper deliberately and verbosely fails for certain system calls, which cause some applications to not fully work with it. See torsocks-and-unsupported-syscalls.
+
+       Usage example:
+
+         $ torsocks elinks checkip.dyndns.org
+         $ torsocks wget -qO- https://check.torproject.org/ | grep -i congratulations
+
+       TRANSPARENT TORIFICATION
+
+       In some cases it is more secure and often easier to transparently torify an entire system instead of configuring individual applications to use Tor's socks port, not to mention preventing DNS leaks. Transparent torification can be done with iptables in such a way that all outbound packets are redirected through Tor's TransPort, except the Tor traffic itself. Once in place, applications do not need to be configured to use Tor, though Tor's SOCKSPort will still work. This also works for DNS via Tor's DNSPort, but realize that Tor only supports TCP, thus UDP packets other than DNS cannot be sent through Tor and therefore must be blocked entirely to prevent leaks.
+
+       Using iptables to transparently torify a system affords comparatively strong leak protection, but it is not a substitute for virtualized torification applications such as Whonix, or TorVM [15]. Transparent torification also will not protect against fingerprinting attacks on its own, so it is recommended to use an amnesic solution like Tails instead. Applications can still learn your computer's hostname, MAC address, serial number, timezone, etc. and those with root privileges can disable the firewall entirely. In other words, transparent torification with iptables protects against accidental connections and DNS leaks by misconfigured software, it is not sufficient to protect against malware or software with serious security vulnerabilities.
+
+       When a transparent proxy is used, it is possible to start a Tor session from the client as well as from the transparent proxy, creating a "Tor over Tor" scenario. Doing so produces undefined and potentially unsafe behavior. In theory, the user could get six hops instead of three in the Tor network. However, it is not guaranteed that the three additional hops received are different; the user could end up with the same hops, possibly in reverse or mixed order. The Tor Project opinion is that this is unsafe [16][dead link 2025-11-17—HTTP 404] [17].
+
+       To enable transparent torification, use the following file for iptables-restore and ip6tables-restore (internally used by systemd's iptables.service and ip6tables.service).
+
+       Note This file uses the NAT table to force outgoing connections through the TransPort or DNSPort, and blocks anything it cannot torrify. By enabling AutomapHostsOnResolve, Tor will return a virtual IP address from the VirtualAddrNetworkIPv4 range. This feature allows applications that resolve addresses to connect seamlessly to .onion addresses.
+
+        * Now using --ipv6 and --ipv4 for protocol specific changes. iptables-restore and ip6tables-restore can now use the same file.
+        * Where --ipv6 or --ipv4 is explicitly defined, iptables-restore will ignore the rule if it is not for the correct protocol.
+        * ip6tables does not support --reject-with.
+       Make sure your torrc contains the following lines:
+
+         VirtualAddrNetworkIPv4 10.192.0.0/10
+         AutomapHostsOnResolve 1
+         TransPort 9040 IsolateClientAddr IsolateClientProtocol IsolateDestAddr IsolateDestPort
+         DNSPort 5353
+
+       See iptables(8).
+
+       Note If you get this error: iptables-restore: unable to initialize table 'nat', you have to load the appropriate kernel modules:
+
+         # modprobe ip_tables iptable_nat ip_conntrack iptable-filter ipt_state
+
+         /etc/iptables/iptables.rules
+
+         *nat
+         :PREROUTING ACCEPT [6:2126]
+         :INPUT ACCEPT [0:0]
+         :OUTPUT ACCEPT [17:6239]
+         :POSTROUTING ACCEPT [6:408]
+
+         -A OUTPUT -d 10.192.0.0/10 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j REDIRECT --to-ports 9040
+         -A OUTPUT -d 127.0.0.1/32 -p udp -m udp --dport 53 -j REDIRECT --to-ports 5353
+         -A OUTPUT -o lo -j RETURN
+         --ipv4 -A OUTPUT -d 192.168.0.0/16 -j RETURN
+         --ipv4 -A OUTPUT -d 172.16.0.0/12 -j RETURN
+         --ipv4 -A OUTPUT -d 10.0.0.0/8 -j RETURN
+         -A OUTPUT -m owner --uid-owner "tor" -j RETURN
+         -A OUTPUT -p udp -m udp --dport 53 -j REDIRECT --to-ports 5353
+         -A OUTPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j REDIRECT --to-ports 9040
+         COMMIT
+
+         *filter
+         :INPUT DROP [0:0]
+         :FORWARD DROP [0:0]
+         :OUTPUT DROP [0:0]
+
+         -A INPUT -i lo -j ACCEPT
+         -A INPUT -p icmp -j ACCEPT
+         -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+         --ipv4 -A INPUT -p tcp -j REJECT --reject-with tcp-reset
+         --ipv4 -A INPUT -p udp -j REJECT --reject-with icmp-port-unreachable
+         --ipv4 -A INPUT -j REJECT --reject-with icmp-proto-unreachable
+         --ipv6 -A INPUT -j REJECT
+         --ipv4 -A OUTPUT -d 127.0.0.0/8 -j ACCEPT
+         --ipv4 -A OUTPUT -d 192.168.0.0/16 -j ACCEPT
+         --ipv4 -A OUTPUT -d 172.16.0.0/12 -j ACCEPT
+         --ipv4 -A OUTPUT -d 10.0.0.0/8 -j ACCEPT
+         --ipv6 -A OUTPUT -d ::1/8 -j ACCEPT
+         -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+         -A OUTPUT -m owner --uid-owner "tor" -j ACCEPT
+         --ipv4 -A OUTPUT -j REJECT --reject-with icmp-port-unreachable
+         --ipv6 -A OUTPUT -j REJECT
+         COMMIT
+
+       This file also works for ip6tables-restore, so you may symlink it:
+
+         # ln -s /etc/iptables/iptables.rules /etc/iptables/ip6tables.rules
+
+       Then make sure Tor is running, and start/enable the iptables and ip6tables systemd units.
+
+       You may want to add Requires=iptables.service and Requires=ip6tables.service to whatever systemd unit logs your user in (most likely a display manager), to prevent any user processes from being started before the firewall up. See systemd.
+
+       TIPS AND TRICKS
+
+       KERNEL CAPABILITIES
+
+       To run tor as a non-root user and use a port lower than 1024, you can use kernel capabilities to allow it to bind to privileged ports:
+
+         # setcap CAP_NET_BIND_SERVICE=+eip /usr/bin/tor
+
+       Note Any upgrade to the tor package will reset the permissions. Consider using pacman#Hooks to automatically set the permissions after upgrades.
+
+       If you use tor.service, it is also possible to use systemd to grant tor the appropriate permissions. This has the benefit that permissions do not need to be reapplied after every tor upgrade:
+
+         /etc/systemd/system/tor.service.d/netcap.conf
+
+         [Service]
+         CapabilityBoundingSet=
+         CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+         AmbientCapabilities=
+         AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+       Refer to superuser.com for further explanations.
+
+       USING SYSTEM TOR IN TOR BROWSER
+
+       When using the Tor Browser, it is possible to use the running tor.service instead of establishing a second connection to the Tor network. Instructions are provided in the starter file for the browser, which by default is located at  ~/.local/share/torbrowser/tbb/x86_64/tor-browser/Browser/start-tor-browser.
+
+       As of version 0.3.7, you can follow these steps:
+
+        * In /etc/tor/torrc, look for the option #SOCKSPort and copy down the address and port there. If no address is given, it is 127.0.0.1 by default, and if not port is given it is 9050 by default.
+        * Follow the steps in #Tor ControlPort and #Set a Tor Control password, and copy down both the password and control port you have set.
+        * In the Tor Browser, navigate to about:config and set the following preferences:
+
+         # SETTING NAME                             VALUE
+         # network.proxy.socks                      <SocksAddress>
+         # network.proxy.socks_port                 <SocksPort>
+         # extensions.torbutton.inserted_button     true
+         # extensions.torbutton.launch_warning      false
+         # extensions.torbutton.loglevel            2
+         # extensions.torbutton.logmethod           0
+         # extensions.torlauncher.control_port      <ControlPort>
+         # extensions.torlauncher.loglevel          2
+         # extensions.torlauncher.logmethod         0
+         # extensions.torlauncher.prompt_at_startup false
+         # extensions.torlauncher.start_tor         false
+
+        * Edit the start file of the Tor Browser, which by default is ~/.local/share/torbrowser/tbb/x86_64/tor-browser/Browser/start-tor-browser. Replace secret with the control password in the following line:
+
+         setControlPortPasswd ${TOR_CONTROL_PASSWD:='"secret"'}
+
+       Warning Do not modify the set of two quotes around secret.
+
+        * Restart the Tor Browser. If successful, there should be a message on the startup page explaining that the connection is not managed by the Tor Browser, and tor.service should log a line saying New control connection opened from <SocksAddress>.
+
+       RUNNING TOR IN A CHROOT
+
+       Note Connecting with telnet to the local ControlPort seems to be broken while running Tor in a chroot
+
+       For security purposes, it may be desirable to run Tor in a chroot. The following script will create an appropriate chroot in /opt/torchroot:
+
+         ~/torchroot-setup.sh
+
+         #!/bin/sh
+         export TORCHROOT=/opt/torchroot
+
+         mkdir -p $TORCHROOT
+         mkdir -p $TORCHROOT/etc/tor
+         mkdir -p $TORCHROOT/dev
+         mkdir -p $TORCHROOT/usr/bin
+         mkdir -p $TORCHROOT/usr/lib
+         mkdir -p $TORCHROOT/usr/share/tor
+         mkdir -p $TORCHROOT/var/lib
+         mkdir -p $TORCHROOT/var/log/tor/
+
+         ln -s /usr/lib  $TORCHROOT/lib
+         cp /etc/hosts           $TORCHROOT/etc/
+         cp /etc/host.conf       $TORCHROOT/etc/
+         cp /etc/localtime       $TORCHROOT/etc/
+         cp /etc/nsswitch.conf   $TORCHROOT/etc/
+         cp /etc/resolv.conf     $TORCHROOT/etc/
+
+         cp /usr/bin/tor         $TORCHROOT/usr/bin/
+         cp /usr/share/tor/geoip* $TORCHROOT/usr/share/tor/
+         cp /lib/libnss* /lib/libnsl* /lib/ld-linux-*.so* /lib/libresolv* /lib/libgcc_s.so* $TORCHROOT/usr/lib/
+         cp $(ldd /usr/bin/tor | awk '{print $3}'|grep --color=never "^/") $TORCHROOT/usr/lib/
+
+         ### /var/log/tor/notices.log is only needed if you run hidden services
+         # cp /var/log/tor/notices.log $TORCHROOT/var/log/tor/
+
+         cp -r /var/lib/tor      $TORCHROOT/var/lib/
+         cp /etc/tor/torrc       $TORCHROOT/etc/tor/
+
+         chown tor:tor $TORCHROOT
+         chmod 700 $TORCHROOT
+         chown -R tor:tor $TORCHROOT/var/lib/tor
+         chown -R tor:tor $TORCHROOT/var/log/tor
+
+         sh -c "grep --color=never ^tor /etc/passwd > $TORCHROOT/etc/passwd"
+         sh -c "grep --color=never ^tor /etc/group > $TORCHROOT/etc/group"
+
+         mknod -m 644 $TORCHROOT/dev/random c 1 8
+         mknod -m 644 $TORCHROOT/dev/urandom c 1 9
+         mknod -m 666 $TORCHROOT/dev/null c 1 3
+
+         if [ "$(uname -m)" = "x86_64" ]; then
+           cp /usr/lib/ld-linux-x86-64.so* $TORCHROOT/usr/lib/.
+           ln -sr /usr/lib64 $TORCHROOT/lib64
+           ln -s $TORCHROOT/usr/lib ${TORCHROOT}/usr/lib64
+         fi
+
+       After running the script as root, Tor can be launched in the chroot with the command:
+
+         # chroot --userspec=tor:tor /opt/torchroot /usr/bin/tor
+
+       or, if you use systemd, overload the service:
+
+         /etc/systemd/system/tor.service.d/chroot.conf
+
+         [Service]
+         User=root
+         ExecStart=
+         ExecStart=/usr/bin/sh -c "chroot --userspec=tor:tor /opt/torchroot /usr/bin/tor -f /etc/tor/torrc"
+         KillSignal=SIGINT
+
+       RUNNING TOR IN A SYSTEMD-NSPAWN CONTAINER WITH A VIRTUAL NETWORK INTER
+
+       In this example we will create a systemd-nspawn container named tor-exit with a virtual macvlan network interface.
+
+       See systemd-nspawn and systemd-networkd for full documentation.
+
+       HOST INSTALLATION AND CONFIGURATION
+
+       In this example the container will reside in /srv/container:
+
+         # mkdir -p /srv/container/tor-exit
+
+       Install the arch-install-scripts.
+
+       Install base, tor and nyx as per systemd-nspawn#Create and boot a minimal Arch Linux container:
+
+         # pacstrap -K -ci /srv/container/tor-exit base tor nyx
+
+       Symlink to register the container on the host, as per systemd-nspawn#Management:
+
+         # ln -s /srv/container/tor-exit/ /var/lib/machines/
+
+       VIRTUAL NETWORK INTERFACE
+
+       Create a drop-in configuration file for the container:
+
+         /etc/systemd/nspawn/tor-exit.nspawn
+
+         [Network]
+         MACVLAN=interface
+
+         [Exec]
+         LimitNOFILE=65536
+
+       MACVLAN=interface creates a "macvlan" interface named mv-interface and assigns it to the container, see systemd-nspawn#Use a "macvlan" or "ipvlan" interface for details. This is advisable for security as it will allow you to give a private IP to the container, and it will not know what your machine's IP is. This can help obscure DNS requests.
+
+       LimitNOFILE=65536 per #Raise maximum number of open file descriptors.
+
+       Set up systemd-networkd according to your network in /srv/container/tor-exit/etc/systemd/network/mv-interface.network.
+
+       START AND ENABLE SYSTEMD-NSPAWN
+
+       Start/enable systemd-nspawn@tor-exit.service.
+
+       CONTAINER CONFIGURATION
+
+       Login to the container (see systemd-nspawn#machinectl):
+
+         # machinectl shell root@tor-exit
+
+       START AND ENABLE SYSTEMD-NETWORKD
+
+       Start and enable systemd-networkd.service. networkctl displays if systemd-networkd is correctly configured.
+
+       CONFIGURE TOR
+
+       See #Running a Tor relay.
+
+       Tip It is easier to edit files in the container from the host with your normal editor.
+
+       JAVA
+
+       One can ensure a java application proxies its connections through Tor by defining its environment variable:
+
+         JAVA_OPTIONS="$JAVA_OPTIONS -DsocksProxyHost=localhost -DsocksProxyPort=9050"
+
+       TROUBLESHOOTING
+
+       TOR BROWSER PROXY PROBLEMS
+
+       Tor Browser typically works without significant customization. If the bundled proxy fails with proxy server is refusing connections for any website, consider reinstallation by removing the ~/.local/share/torbrowser/ directory (make sure to back up important files).
+
+       SEE ALSO
+
+        * Who uses Tor?
+        * Tor Abuse FAQ
+        * Using pluggable transports to circumvent censorship
+        * Set up Your Onion Service
+        * Tor Metrics
+        * Tor's archived wiki
+        * Whonix — Tor Myths and Misconceptions
+
+ArchWiki manual                         bundled documentation

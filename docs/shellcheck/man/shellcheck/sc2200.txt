@@ -1,0 +1,34 @@
+SHELLCHECK.SC2200(1)             Sandbox manual             SHELLCHECK.SC2200(1)
+
+       NAME
+
+       Brace expansions don't work as operands in [ ]. Use a loop. - for main in index.{htm,html,php}
+
+       BRACE EXPANSIONS DON'T WORK AS OPERANDS IN . USE A LOOP
+
+       BRACE EXPANSIONS DON'T WORK AS OPERANDS IN . USE A LOOP
+
+       PROBLEMATIC CODE
+
+         [ "$file" = index.{htm,html,php} ] && echo "This is the main file"
+
+       CORRECT CODE
+
+         for main in index.{htm,html,php}
+         do
+           [ "$file" = "$main" ] && echo "This is the main file"
+         done
+
+       RATIONALE
+
+       Brace expansions in [ ] will expand to a sequence of words. Operators work on single words.
+
+       The problematic code is equivalent to [ "$file" = index.htm index.html index.php ], which is invalid syntax. A typical error message is bash: [: too many arguments or dash: somefile: unexpected operator.
+
+       Instead, use a for loop to iterate over values, and apply your condition to each.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

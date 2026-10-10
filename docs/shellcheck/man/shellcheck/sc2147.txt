@@ -1,0 +1,33 @@
+SHELLCHECK.SC2147(1)             Sandbox manual             SHELLCHECK.SC2147(1)
+
+       NAME
+
+       Literal tilde in PATH works poorly across programs. - PATH="$PATH:~/bin"
+
+       LITERAL TILDE IN PATH WORKS POORLY ACROSS PROGRAMS
+
+       LITERAL TILDE IN PATH WORKS POORLY ACROSS PROGRAMS
+
+       PROBLEMATIC CODE
+
+         PATH="$PATH:~/bin"
+
+       CORRECT CODE
+
+         PATH="$PATH:$HOME/bin"
+
+       RATIONALE
+
+       Having literal ~ in PATH is a bad idea. Bash handles it, but nothing else does.
+
+       This means that even if you're always using Bash, you should avoid it because any invoked program that relies on PATH will effectively ignore those entries.
+
+       For example, make may say foo: Command not found even though foo works fine from the shell and Make and Bash both use the same PATH. You'll get similar messages from any non-bash scripts invoked, and whereis will come up empty.
+
+       Use $HOME or full path instead.
+
+       EXCEPTIONS
+
+       If your directory name actually contains a literal tilde, you can ignore this message.
+
+ShellCheck manual                       from the official documentation

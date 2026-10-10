@@ -1,0 +1,60 @@
+WEBAPI.NAMEDNODEMAP-REMOVENAMEDITEMNS(1) Sandbox manual WEBAPI.NAMEDNODEMAP-REMOVENAMEDITEMNS(1)
+
+       NAME
+
+       NamedNodeMap: removeNamedItemNS() method - The removeNamedItemNS() method of the NamedNodeMap interface
+
+       NAMEDNODEMAP: REMOVENAMEDITEMNS() METHOD
+
+       The removeNamedItemNS() method of the NamedNodeMap interface removes the Attr corresponding to the given namespace and local name from the map.
+
+       SYNTAX
+
+         removeNamedItemNS(namespace, localName)
+
+       PARAMETERS
+
+        * namespace
+          * : The namespace of the attribute to remove from the map
+       > namespace is the URI of the namespace, not the prefix.
+        * localName
+          * : The local name of the attribute to remove from the map.
+
+       RETURN VALUE
+
+       The removed Attr.
+
+       EXCEPTIONS
+
+        * NotFoundError DOMException
+          * : Thrown if there is no attribute with the given namespace and local name.
+
+       EXAMPLE
+
+         <pre></pre>
+
+         const parser = new DOMParser();
+         const xmlString =
+           '<warning ob:one="test" xmlns:ob="http://www.example.com/ob">Beware!</warning>';
+         const doc = parser.parseFromString(xmlString, "application/xml");
+
+         const pre = document.querySelector("pre");
+         const warning = doc.querySelector("warning");
+         const attrMap = warning.attributes;
+
+         let result = `The 'ob:one' attribute initially contains '${attrMap["ob:one"].value}'.\n`;
+
+         result += "We remove it.\n\n";
+         attrMap.removeNamedItemNS("http://www.example.com/ob", "one");
+
+         result += attrMap["ob:one"]
+           ? "And 'ob:one' still exists."
+           : "And 'ob:one' is no more to be found.";
+
+         pre.textContent = result;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

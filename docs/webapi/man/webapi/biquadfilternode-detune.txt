@@ -1,0 +1,55 @@
+WEBAPI.BIQUADFILTERNODE-DETUNE(1) Sandbox manual WEBAPI.BIQUADFILTERNODE-DETUNE(1)
+
+       NAME
+
+       BiquadFilterNode: detune property - The detune property of the BiquadFilterNode interface is an a-rate AudioParam representing detuning of the frequency in cents.
+
+       BIQUADFILTERNODE: DETUNE PROPERTY
+
+       The detune property of the BiquadFilterNode interface is an a-rate AudioParam representing detuning of the frequency in cents.
+
+       VALUE
+
+       An a-rate AudioParam.
+
+       > Though the AudioParam returned is read-only, the value it represents is not.
+
+       EXAMPLES
+
+       The following example shows basic usage of an AudioContext to create a Biquad filter node. For more complete applied examples/information, check out our Voice-change-O-matic demo (see app.js lines 108–193 for relevant code).
+
+         const audioCtx = new AudioContext();
+
+         // Set up the different audio nodes we will use for the app
+         const analyser = audioCtx.createAnalyser();
+         const distortion = audioCtx.createWaveShaper();
+         const gainNode = audioCtx.createGain();
+         const biquadFilter = audioCtx.createBiquadFilter();
+         const convolver = audioCtx.createConvolver();
+
+         // Connect the nodes together
+
+         source = audioCtx.createMediaStreamSource(stream);
+         source.connect(analyser);
+         analyser.connect(distortion);
+         distortion.connect(biquadFilter);
+         biquadFilter.connect(convolver);
+         convolver.connect(gainNode);
+         gainNode.connect(audioCtx.destination);
+
+         // Manipulate the Biquad filter
+
+         biquadFilter.type = "lowshelf";
+         biquadFilter.frequency.value = 1000;
+         biquadFilter.gain.value = 25;
+         biquadFilter.detune.value = 100;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

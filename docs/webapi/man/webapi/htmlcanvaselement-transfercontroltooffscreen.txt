@@ -1,0 +1,55 @@
+WEBAPI.HTMLCANVASELEMENT-TRANSFERCONTROLTOOFFSCREEN(1) Sandbox manual WEBAPI.HTMLCANVASELEMENT-TRANSFERCONTROLTOOFFSCREEN(1)
+
+       NAME
+
+       HTMLCanvasElement: transferControlToOffscreen() method - The HTMLCanvasElement.transferControlToOffscreen() method transfers control to an OffscreenCanvas object, either on the main thread or on a 
+
+       HTMLCANVASELEMENT: TRANSFERCONTROLTOOFFSCREEN() METHOD
+
+       The HTMLCanvasElement.transferControlToOffscreen() method transfers control to an OffscreenCanvas object, either on the main thread or on a worker.
+
+       SYNTAX
+
+         transferControlToOffscreen()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       An OffscreenCanvas object.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Throws if:
+            * the canvas has been set a context mode by calling HTMLCanvasElement.getContext()
+            * the canvas has already transferred its control to offscreen.
+
+       EXAMPLES
+
+       The following example shows how to transfer control to an OffscreenCanvas object on the main thread.
+
+         const htmlCanvas = document.createElement("canvas");
+         const offscreen = htmlCanvas.transferControlToOffscreen();
+         const gl = offscreen.getContext("webgl");
+
+         // Some drawing using the gl context…
+
+       The following example shows how to transfer control to an OffscreenCanvas object on a worker.
+
+         const offscreen = document.querySelector("canvas").transferControlToOffscreen();
+         const worker = new Worker("my-worker-url.js");
+         worker.postMessage({ canvas: offscreen }, [offscreen]);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The interface defining this method, HTMLCanvasElement
+        * OffscreenCanvas
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,77 @@
+WEBAPI.CSSFONTFACERULE-STYLE(1)  Sandbox manual  WEBAPI.CSSFONTFACERULE-STYLE(1)
+
+       NAME
+
+       CSSFontFaceRule: style property - The read-only style property of the CSSFontFaceRule interface returns a CSSFontFaceDescriptors object representing the descriptors available
+
+       CSSFONTFACERULE: STYLE PROPERTY
+
+       The read-only style property of the CSSFontFaceRule interface returns a CSSFontFaceDescriptors object representing the descriptors available in the @font-face rule's body.
+
+       VALUE
+
+       A CSSFontFaceDescriptors object.
+
+       Although the style property itself is read-only in the sense that you can't replace the CSSFontFaceDescriptors object, you can still assign to the style property directly, which is equivalent to assigning to its cssText property. You can also modify the CSSFontFaceDescriptors object using the setProperty() and removeProperty() methods.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       This example defines a @font-face rule and then uses CSSFontFaceDescriptors to read back the descriptor values.
+
+       CSS
+
+         @font-face {
+           font-family: "MyHelvetica";
+           src:
+             local("Helvetica Neue Bold"),
+             local("HelveticaNeue-Bold"),
+             url("MgOpenModernaBold.woff2") format("woff2");
+           font-weight: bold;
+           font-style: normal;
+           font-display: swap;
+         }
+
+         #log {
+           height: 200px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         <pre id="log"></pre>
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+       JAVASCRIPT
+
+         const myRules = document.getElementById("css-output").sheet.cssRules;
+         for (const rule of myRules) {
+           if (rule instanceof CSSFontFaceRule) {
+             const descriptors = rule.style;
+             if (descriptors instanceof CSSStyleDeclaration) {
+               log(`rule.style is a CSSStyleDeclaration.`);
+             } else {
+               log(`rule.style is a CSSFontFaceDescriptors.`);
+             }
+             log("Descriptors:");
+             log(` font-family: ${descriptors.fontFamily}`);
+             log(` src: ${descriptors.src}`);
+             log(` font-weight: ${descriptors["font-weight"]}`);
+             log(` font-style: ${descriptors.fontStyle}`);
+             log(` font-display: ${descriptors["font-display"]}`);
+           }
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

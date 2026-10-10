@@ -1,0 +1,66 @@
+SHELLCHECK.SC2034(1)             Sandbox manual             SHELLCHECK.SC2034(1)
+
+       NAME
+
+       foo appears unused. Verify it or export it. - foo=42
+
+       FOO APPEARS UNUSED. VERIFY IT OR EXPORT IT
+
+       PROBLEMATIC CODE
+
+         foo=42
+         echo "$FOO"
+
+       CORRECT CODE
+
+         foo=42
+         echo "$foo"
+
+       RATIONALE
+
+       Variables not used for anything are often associated with bugs, so ShellCheck warns about them.
+
+       Also note that something like local let foo=42 does not make a let statement local -- it instead declares an additional local variable named let.
+
+       EXCEPTIONS
+
+       This warning may be falsely emitted when a variable is only referenced indirectly, and for variables that are intentionally unused.
+
+       INDIRECTION
+
+       It's ShellCheck's intended behavior to emit this warning for any variable that is only referenced though indirection:
+
+         # foo generates a warning, even though it has five indirect references
+         foo=42
+         name=foo
+         echo "${!name} $((name))"
+         export "$name"; eval "echo $name"
+         declare -n name; echo "$name"
+
+       This is an intentional design decision and not a bug. If you have variables that will not have direct references, consider using an associative array in bash, or just [[ignore]] the warning.
+
+       Tracking indirect references is a common problem for compilers and static analysis tools, and it is known to be unsolvable in the most general case. There are two ways to handle unresolved indirections (which in a realistic program will essentially be all of them):
+
+        * Avoid false positives by assuming all variables may potentially be used (disable all unused variable warnings)
+        * Keep true positives by allowing some false positives (emit unused variable warnings that may be incorrect)
+       Compilers are forced to do the former, but static analysis tools generally do the latter. This includes pylint, jshint and shellcheck itself. This is a design decision meant to make the tools more helpful at the expense of some noise. For consistency and to avoid giving the impression that it should work more generally, ShellCheck does not attempt to resolve even trivial indirections.
+
+       INTENTIONALLY UNUSED VARIABLES
+
+       For throwaway variables, consider using _ as a dummy:
+
+         read _ last _ zip _ _ <<< "$str"
+         echo "$last, $zip"
+
+       Or optionally as a prefix for dummy variables (ShellCheck >0.7.2).
+
+         read _first last _email zip _lat _lng <<< "$str"
+         echo "$last, $zip"
+
+       For versions <= 0.7.2, the message can optionally be [[ignore]]d with a directive:
+
+         # shellcheck disable=SC2034  # Unused variables left for readability
+         read first last email zip lat lng <<< "$str"
+         echo "$last, $zip"
+
+ShellCheck manual                       from the official documentation

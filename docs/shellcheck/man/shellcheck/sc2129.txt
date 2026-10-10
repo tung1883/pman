@@ -1,0 +1,39 @@
+SHELLCHECK.SC2129(1)             Sandbox manual             SHELLCHECK.SC2129(1)
+
+       NAME
+
+       Consider using { cmd1; cmd2; } >> file instead of individual redirects. - echo foo >> file
+
+       CONSIDER USING CMD1 CMD2 FILE INSTEAD OF INDIVIDUAL REDIRECTS
+
+       CONSIDER USING CMD1 CMD2 FILE INSTEAD OF INDIVIDUAL REDIRECTS
+
+       PROBLEMATIC CODE
+
+         echo foo >> file
+         date >> file
+         cat stuff  >> file
+
+       CORRECT CODE
+
+         {
+           echo foo
+           date
+           cat stuff
+         } >> file
+
+       RATIONALE
+
+       Rather than adding >> something after every single line, you can simply group the relevant commands and redirect the group. So the file has to be opened and closed only once and it means a performance gain.
+
+       EXCEPTIONS
+
+       This is mainly a stylistic issue, and can freely be ignored.
+
+       Note: shell traps which would ordinarily emit output to stdout or stderr on catching their condition will have output swallowed into the redirect when the trap is triggered from within the grouping.
+
+       RELATED RESOURCES
+
+        * BashFaq: How can I redirect the output of multiple commands at once?
+
+ShellCheck manual                       from the official documentation

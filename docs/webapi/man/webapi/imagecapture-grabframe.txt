@@ -1,0 +1,58 @@
+WEBAPI.IMAGECAPTURE-GRABFRAME(1) Sandbox manual WEBAPI.IMAGECAPTURE-GRABFRAME(1)
+
+       NAME
+
+       ImageCapture: grabFrame() method - The grabFrame() method of the
+
+       IMAGECAPTURE: GRABFRAME() METHOD
+
+       The grabFrame() method of the ImageCapture interface takes a snapshot of the live video in a MediaStreamTrack and returns a Promise that resolves with an ImageBitmap containing the snapshot.
+
+       SYNTAX
+
+         grabFrame()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that resolves to an ImageBitmap object.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if readyState property of the MediaStreamTrack passing in the constructor is not live.
+        * UnknownError DOMException
+          * : Thrown if the operation can't complete for any reason.
+
+       EXAMPLES
+
+       This example is extracted from this Simple Image Capture demo. It shows how to use the Promise returned by grabFrame() to copy the returned frame to a element. For simplicity it does not show how to instantiate the ImageCapture object.
+
+         let grabFrameButton = document.querySelector("button#grabFrame");
+         let canvas = document.querySelector("canvas");
+
+         grabFrameButton.onclick = grabFrame;
+
+         function grabFrame() {
+           imageCapture
+             .grabFrame()
+             .then((imageBitmap) => {
+               console.log("Grabbed frame:", imageBitmap);
+               canvas.width = imageBitmap.width;
+               canvas.height = imageBitmap.height;
+               canvas.getContext("2d").drawImage(imageBitmap, 0, 0);
+               canvas.classList.remove("hidden");
+             })
+             .catch((error) => {
+               console.error("grabFrame() error: ", error);
+             });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

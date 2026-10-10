@@ -1,0 +1,71 @@
+WEBAPI.CLIPBOARDITEM-CLIPBOARDITEM(1) Sandbox manual WEBAPI.CLIPBOARDITEM-CLIPBOARDITEM(1)
+
+       NAME
+
+       ClipboardItem: ClipboardItem() constructor - The ClipboardItem() constructor creates a new ClipboardItem object, which represents data to be stored or retrieved via the Clipboard API cl
+
+       CLIPBOARDITEM: CLIPBOARDITEM() CONSTRUCTOR
+
+       The ClipboardItem() constructor creates a new ClipboardItem object, which represents data to be stored or retrieved via the Clipboard API clipboard.write() and clipboard.read() methods, respectively.
+
+       > The read() and write() methods can be used to work with text strings and arbitrary data items represented by Blob instances. However, if you are solely working with text, it is more convenient to use the Clipboard.readText() and Clipboard.writeText() methods.
+       > Image format support varies by browser. See the browser compatibility table for the Clipboard interface.
+
+       SYNTAX
+
+         new ClipboardItem(data)
+         new ClipboardItem(data, options)
+
+       PARAMETERS
+
+        * data
+          * : An Object with the MIME type as the key and data as the value.
+       The data can be represented as one of the following:
+
+            * a Blob
+            * a string
+            * a Promise that resolves to either a Blob or string.
+        * options (optional)
+          * : An object with the following properties:
+            * presentationStyle (optional)
+              * : One of the three strings: unspecified, inline or attachment.
+       The default is unspecified.
+
+       inline signifies to apps that receive the paste that the ClipboardItem should be inserted inline at the point of paste. attachment signifies to apps that receive the paste that the ClipboardItem should be added as an attachment. unspecified doesn't signify any information to apps that receive the paste.
+
+       EXAMPLES
+
+       The below example requests a PNG image using fetch(), and in turn, the Response.blob() method, to create a new ClipboardItem. This item is then written to the clipboard, using the Clipboard.write() method.
+
+       > You can only pass in one clipboard item at a time.
+
+         async function writeClipImg() {
+           try {
+             if (ClipboardItem.supports("image/png")) {
+               const imgURL = "/my-image.png";
+               const data = await fetch(imgURL);
+               const blob = await data.blob();
+               await navigator.clipboard.write([
+                 new ClipboardItem({
+                   [blob.type]: blob,
+                 }),
+               ]);
+               console.log("Fetched image copied.");
+             } else {
+               console.log("image png is not supported");
+             }
+           } catch (err) {
+             console.error(err.name, err.message);
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Clipboard API
+        * Image support for Async Clipboard article
+
+Web APIs manual                         from the official documentation

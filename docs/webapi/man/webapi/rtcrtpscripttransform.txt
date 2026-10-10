@@ -1,0 +1,85 @@
+WEBAPI.RTCRTPSCRIPTTRANSFORM(1)  Sandbox manual  WEBAPI.RTCRTPSCRIPTTRANSFORM(1)
+
+       NAME
+
+       RTCRtpScriptTransform - The RTCRtpScriptTransform interface of the WebRTC API is used to insert a WebRTC Encoded Transform (a TransformStream running in a worker th
+
+       RTCRTPSCRIPTTRANSFORM
+
+       The RTCRtpScriptTransform interface of the WebRTC API is used to insert a WebRTC Encoded Transform (a TransformStream running in a worker thread) into the WebRTC sender and receiver pipelines.
+
+       CONSTRUCTOR
+
+        * RTCRtpScriptTransform()
+          * : Creates a new instance of the RTCRtpScriptTransform object.
+
+       INSTANCE PROPERTIES
+
+       None.
+
+       INSTANCE METHODS
+
+       None.
+
+       DESCRIPTION
+
+       RTCRtpScriptTransform instances are constructed with a Worker, in which the transform stream code will run, along with an (optional) options object and array of transferrable object that will be passed to the worker. They are then added into incoming and outgoing RTC pipelines by assigning them to RTCRtpReceiver.transform and RTCRtpSender.transform, respectively.
+
+       On construction of this object, and whenever an encoded frame arrives, the rtctransform event is fired on the worker global object. The event's transformer property is a RTCRtpScriptTransformer, the worker-side counterpart to the main-thread RTCRtpScriptTransform. This has readable (ReadableStream) and writable (WritableStream) properties that have been shared from the main thread RTCRtpScriptTransform — where they are not public. If the corresponding RTCRtpScriptTransform is used with an RTCRtpReceiver, then the readable queues incoming encoded audio or video frames from the packetizer. If it is used with RTCRtpSender then readable contains frames coming from a codec.
+
+       The worker thread rtctransform event handler defines a pipe chain. This pipes encoded frames from event.transformer.readable, through a TransformStream which defines the transformation function, through to event.transformer.writable. The event.transformer also has the options object passed from the RTCRtpScriptTransform constructor (if defined) that can be used to determine the source of the event, and hence the specific TransformStream to add to the chain.
+
+       EXAMPLES
+
+       Note that these examples show how RTCRtpScriptTransform is defined and used. Worker thread transform code is covered as part of the more complete example in Using WebRTC Encoded Transforms.
+
+       ADDING A TRANSFORM FOR OUTGOING FRAMES
+
+       This example shows how you might stream video from a user's webcam over WebRTC, adding a WebRTC encoded transform to modify the outgoing streams. The code assumes that there is an RTCPeerConnection called peerConnection that is already connected to a remote peer.
+
+       First we gets a MediaStreamTrack, using getUserMedia() to get a video MediaStream from a media device, and then the MediaStream.getTracks() method to get the first MediaStreamTrack in the stream.
+
+       The track is added to the peer connection using addTrack() and sent. The addTrack() method returns the RTCRtpSender that is being used to send the track.
+
+         // Get Video stream and MediaTrack
+         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+         const [track] = stream.getTracks();
+         const videoSender = peerConnection.addTrack(track, stream);
+
+       An RTCRtpScriptTransform is then constructed taking a worker script, which defines the transform, and an optional object that can be used to pass arbitrary messages to the worker (in this case we've used a name property with value "senderTransform" to tell the worker that this transform will be added to the outbound stream). We then add the transform to the sender by assigning it to the RTCRtpSender.transform property.
+
+         // Create a worker containing a TransformStream
+         const worker = new Worker("worker.js");
+         videoSender.transform = new RTCRtpScriptTransform(worker, {
+           name: "senderTransform",
+         });
+
+       Note that you can add the transform at any time. However by adding it immediately after calling addTrack() the transform will get the first encoded frame that is sent.
+
+       ADDING A TRANSFORM FOR INCOMING FRAMES
+
+       This example shows how you add a WebRTC encoded transform to modify an incoming stream. The code assumes that there is an RTCPeerConnection called peerConnection that is already connected to a remote peer.
+
+       First we add an RTCPeerConnection track event handler to catch the event when a new track is streamed. Within the handler we construct an RTCRtpScriptTransform and add it to event.receiver.transform (event.receiver is a RTCRtpReceiver). As in the previous example, the constructor takes an object with name property: but here we use receiverTransform as the value to tell the worker that frames are incoming from the packetizer.
+
+         peerConnection.ontrack = (event) => {
+           const worker = new Worker("worker.js");
+           event.receiver.transform = new RTCRtpScriptTransform(worker, {
+             name: "receiverTransform",
+           });
+           receivedVideo.srcObject = event.streams[0];
+         };
+
+       Note again that you can add the transform stream at any time. However by adding it in the track event handler ensures that the transform stream will get the first encoded frame for the track.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using WebRTC Encoded Transforms
+        * TransformStream
+        * RTCRtpScriptTransformer
+
+Web APIs manual                         from the official documentation

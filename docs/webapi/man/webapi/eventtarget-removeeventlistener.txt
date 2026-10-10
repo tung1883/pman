@@ -1,0 +1,110 @@
+WEBAPI.EVENTTARGET-REMOVEEVENTLISTENER(1) Sandbox manual WEBAPI.EVENTTARGET-REMOVEEVENTLISTENER(1)
+
+       NAME
+
+       EventTarget: removeEventListener() method - The removeEventListener() method of the EventTarget interface
+
+       EVENTTARGET: REMOVEEVENTLISTENER() METHOD
+
+       The removeEventListener() method of the EventTarget interface removes an event listener previously registered with EventTarget.addEventListener() from the target. The event listener to be removed is identified using a combination of the event type, the event listener function itself, and various optional options that may affect the matching process; see Matching event listeners for removal.
+
+       Calling removeEventListener() with arguments that do not identify any currently registered event listener on the EventTarget has no effect.
+
+       If an event listener is removed from an EventTarget while another listener of the target is processing an event, it will not be triggered by the event. However, it can be reattached.
+
+       > If a listener is registered twice, one with the _capture_ flag set and one without, you must remove each one separately. Removal of a capturing listener does not affect a non-capturing version of the same listener, and vice versa.
+       Event listeners can also be removed by passing an AbortSignal to an addEventListener() and then later calling abort() on the controller owning the signal.
+
+       SYNTAX
+
+         removeEventListener(type, listener)
+         removeEventListener(type, listener, options)
+         removeEventListener(type, listener, useCapture)
+
+       PARAMETERS
+
+        * type
+          * : A string which specifies the type of event for which to remove an event listener.
+        * listener
+          * : The event listener function of the event handler to remove from the
+       event target.
+
+        * options (optional)
+          * : An options object that specifies characteristics about the event listener.
+       The available options are:
+
+            * capture: A boolean value that specifies whether the event listener to be removed is registered as a capturing listener or not. If this parameter is absent, the default value false is assumed.
+        * useCapture (optional)
+          * : A boolean value that specifies whether the event listener to be removed is registered as a
+       capturing listener or not. If this parameter is absent, the default value false is assumed.
+
+       RETURN VALUE
+
+       None.
+
+       MATCHING EVENT LISTENERS FOR REMOVAL
+
+       Given an event listener previously added by calling addEventListener(), you may eventually come to a point at which you need to remove it. Obviously, you need to specify the same type and listener parameters to removeEventListener(). But what about the options or useCapture parameters?
+
+       While addEventListener() will let you add the same listener more than once for the same type if the options are different, the only option removeEventListener() checks is the capture/useCapture flag. Its value must match for removeEventListener() to match, but the other values don't.
+
+       For example, consider this call to addEventListener():
+
+         element.addEventListener("mousedown", handleMouseDown, true);
+
+       Now consider each of these two calls to removeEventListener():
+
+         element.removeEventListener("mousedown", handleMouseDown, false); // Fails
+         element.removeEventListener("mousedown", handleMouseDown, true); // Succeeds
+
+       The first call fails because the value of useCapture doesn't match. The second succeeds, since useCapture matches up.
+
+       Now consider this:
+
+         element.addEventListener("mousedown", handleMouseDown, { passive: true });
+
+       Here, we specify an options object in which passive is set to true, while the other options are left to the default value of false.
+
+       Now look at each of these calls to removeEventListener() in turn. Any of them in which capture or useCapture is true fail; all others succeed.
+
+       Only the capture setting matters to removeEventListener().
+
+         element.removeEventListener("mousedown", handleMouseDown, { passive: true }); // Succeeds
+         element.removeEventListener("mousedown", handleMouseDown, { capture: false }); // Succeeds
+         element.removeEventListener("mousedown", handleMouseDown, { capture: true }); // Fails
+         element.removeEventListener("mousedown", handleMouseDown, { passive: false }); // Succeeds
+         element.removeEventListener("mousedown", handleMouseDown, false); // Succeeds
+         element.removeEventListener("mousedown", handleMouseDown, true); // Fails
+
+       It's worth noting that some browser releases have been inconsistent on this, and unless you have specific reasons otherwise, it's probably wise to use the same values used for the call to addEventListener() when calling removeEventListener().
+
+       EXAMPLE
+
+       This example shows how to add a mouseover-based event listener that removes a click-based event listener.
+
+         const body = document.querySelector("body");
+         const clickTarget = document.getElementById("click-target");
+         const mouseOverTarget = document.getElementById("mouse-over-target");
+
+         let toggle = false;
+         function makeBackgroundYellow() {
+           body.style.backgroundColor = toggle ? "white" : "yellow";
+
+           toggle = !toggle;
+         }
+
+         clickTarget.addEventListener("click", makeBackgroundYellow);
+
+         mouseOverTarget.addEventListener("mouseover", () => {
+           clickTarget.removeEventListener("click", makeBackgroundYellow);
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * EventTarget.addEventListener()
+
+Web APIs manual                         from the official documentation

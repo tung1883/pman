@@ -1,0 +1,103 @@
+HTTP.HEADER-X-FRAME-OPTIONS(1)   Sandbox manual   HTTP.HEADER-X-FRAME-OPTIONS(1)
+
+       NAME
+
+       X-Frame-Options header - > [!NOTE]
+
+       X-FRAME-OPTIONS HEADER
+
+       > For more comprehensive options than offered by this header, see the frame-ancestors directive in a Content-Security-Policy header.
+       The HTTP X-Frame-Options response header can be used to indicate whether a browser should be allowed to render the document in a , , or . Sites can use this to avoid clickjacking attacks and some cross-site leaks, by ensuring that their content is not embedded into other sites.
+
+       If this header is not sent, and the website has not implemented any other mechanisms to restrict embedding (such as the frame-ancestors CSP directive), then the browser will allow other sites to embed this document.
+
+       Header type Response header
+
+       SYNTAX
+
+         X-Frame-Options: DENY
+         X-Frame-Options: SAMEORIGIN
+
+       DIRECTIVES
+
+        * DENY
+          * : The document cannot be loaded in any frame, regardless of origin (both same- and cross-origin embedding is blocked).
+        * SAMEORIGIN
+          * : The document can only be embedded if all ancestor frames have the same origin as the page itself.
+        * ALLOW-FROM origin (deprecated)
+          * : This is an obsolete directive. Modern browsers that encounter response headers with this directive will ignore the header completely. The Content-Security-Policy HTTP header has a frame-ancestors directive which you should use instead.
+
+       EXAMPLES
+
+       > Setting X-Frame-Options inside the element (e.g., ) has no effect. X-Frame-Options is only enforced via HTTP headers, as shown in the examples below.
+
+       CONFIGURING APACHE
+
+       To configure Apache to send the X-Frame-Options header for all pages, add this to your site's configuration:
+
+         Header always set X-Frame-Options "SAMEORIGIN"
+
+       To configure Apache to set X-Frame-Options to DENY, add this to your site's configuration:
+
+         Header set X-Frame-Options "DENY"
+
+       CONFIGURING NGINX
+
+       To configure Nginx to send the X-Frame-Options header, add this either to your http, server or location configuration:
+
+         add_header X-Frame-Options SAMEORIGIN always;
+
+       You can set the X-Frame-Options header to DENY using:
+
+         add_header X-Frame-Options DENY always;
+
+       CONFIGURING IIS
+
+       To configure IIS to send the X-Frame-Options header, add this to your site's Web.config file:
+
+         <system.webServer>
+           …
+           <httpProtocol>
+             <customHeaders>
+               <add name="X-Frame-Options" value="SAMEORIGIN" />
+             </customHeaders>
+           </httpProtocol>
+           …
+         </system.webServer>
+
+       For more information, see the Microsoft support article on setting this configuration using the IIS Manager user interface.
+
+       CONFIGURING HAPROXY
+
+       To configure HAProxy to send the X-Frame-Options header, add this to your front-end, listen, or backend configuration:
+
+         rspadd X-Frame-Options:\ SAMEORIGIN
+
+       Alternatively, in newer versions:
+
+         http-response set-header X-Frame-Options SAMEORIGIN
+
+       CONFIGURING EXPRESS
+
+       To set X-Frame-Options to SAMEORIGIN using Helmet add the following to your server configuration:
+
+         import helmet from "helmet";
+
+         const app = express();
+         app.use(
+           helmet({
+             xFrameOptions: { action: "sameorigin" },
+           }),
+         );
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Content-Security-Policy directive frame-ancestors
+        * ClickJacking Defenses - IEBlog
+        * Combating ClickJacking with X-Frame-Options - IEInternals
+
+HTTP manual                             from the official documentation

@@ -1,0 +1,305 @@
+ARCH.RUST(1)                     Sandbox manual                     ARCH.RUST(1)
+
+       From Wikipedia:
+
+       Rust is a multi-paradigm, general-purpose programming language that emphasizes performance, type safety, and concurrency. It enforces memory safety—meaning that all references point to valid memory—without a garbage collector. To simultaneously enforce memory safety and prevent data races, its "borrow checker" tracks the object lifetime of all references in a program during compilation. Rust was influenced by ideas from functional programming, including immutability, higher-order functions, and algebraic data types. It is popular for systems programming.
+
+       CORE LANGUAGE
+
+       RUST CORE LIBRARY
+
+       The Rust Core Library is the dependency-free foundation of the Rust Standard Library. It interfaces directly with LLVM primitives, which allows Rust to be platform and hardware-agnostic. It is this integration with LLVM that allows Rust to obtain greater performance than equivalent C applications compiled with Clang, making Rust software designed with libcore lower level than C. It contains only basic platform-independent types such as Option, Result, and Iterator. Developers looking to target software for embedded platforms may forego the standard library with #![no_std] to exclusively use the no-batteries-included core library for smaller binary sizes and improved performance. However, using #![no_std] limits the amount of software support that you can get from the larger Rust community as a majority of libraries require the standard library.
+
+       RUST STANDARD LIBRARY
+
+       The Rust Standard Library provides the convenient high level abstractions by which a majority of portable Rust software is created with. It includes the Vec and String types; a vast amount of methods for language primitives; a large number of standard macros; I/O and multithreading support; heap allocations with Box; and many more high level features not available in the core library.
+
+       RELEASE CYCLE
+
+       Rust follows a regular six-week release cycle, similar to the release cycle of Firefox. With each new release, the core and standard libraries are improved to support more platforms, improve performance, and stabilize new features for use with stable Rust.
+
+       INSTALLATION
+
+       The two main ways to install Rust are:
+
+        * The Native installation, recommended if you only use Rust for building or installing software made with Rust
+        * The rustup installation, recommended if you intend to program anything in Rust
+
+       NATIVE INSTALLATION
+
+       To install the latest stable version of Rust from the official Arch Linux software repository, install the rust package. This will install the rustc compiler and Cargo.
+
+       RUSTUP
+
+       The official and recommended method of installing Rust for the purpose of developing software is to use the rustup toolchain manager, written in Rust.
+
+       The benefit of using the rustup toolchain manager instead of the standalone prepackaged Rust in the software repository is the ability to install multiple toolchains (stable, beta, nightly) for multiple targets (windows, mac, android) and architectures (x86, x86_64, arm). It should be noted that installing rustup does not automatically install a Rust toolchain with it, nor does updating rustup through any method automatically provide the latest toolchain release of Rust. See #Usage or rustup toolchain documentation for more on toolchains.
+
+       There are two choices for a rustup installation, one is supported by Arch Linux via pacman, while the other is officially supported by Rust via their installation script.
+
+       ARCH LINUX PACKAGE
+
+       rustup is available on the Arch Linux software repository. Note that rustup self update will not work when installed this way, the package needs to be updated by pacman. However, this change does not extend to other rustup functionality, such as rustup update for updating Rust toolchains.
+
+       This package has the advantage that the various Rust executables live in /usr/bin, instead of ~/.cargo/bin, removing the need to add another directory to your PATH.
+
+       Note The rustup package does not install a toolchain by default. It provides instead symlinks between /usr/bin/rustup to the common binaries such as /usr/bin/rustc and /usr/bin/cargo. As stated above, the user still needs to install a toolchain manually for these Rust commands to do anything.
+
+       In order to install the toolchain, you need to tell rustup which version to use, between stable and nightly:
+
+         $ rustup default stable
+
+       BUILDING RUST AGAINST A NEW VERSION OF LLVM
+
+       Since Rust builds using a bootstrap strategy, a functional Rust package is required. In the case of building a version of llvm which is newer than the version in the official repos, users will encounter the need to have a shared object from a previous version of llvm-libs (one which was used to build the repo version of Rust) in order to build against the newer version of LLVM.
+
+       Example: the official repos offer llvm-18.1.8 and the goal is to build llvm-19.1.6.
+
+       The bootstrap step requires /usr/lib/libLLVM.so.18.1 from llvm-libs-18.1.8. This file can be manually placed in the build root or placed by a package such as llvm18-libs.
+
+       UPSTREAM INSTALLATION SCRIPT
+
+       rustup is also available to download and install manually via rustup's official web page.
+
+       Download the file with curl --proto '=https' --tlsv1.3 -sSf https://sh.rustup.rs -o rust.sh, view it: less ./rust.sh, and run the script ./rust.sh to start rustup installation. The script makes PATH changes only to login shell configuration files. You need to source ~/.cargo/env until you logout and login back into the system. To update rustup afterwards, run rustup self update.
+
+       The script installs and activates the default toolchain by default (the one used by the rust package), so there is no need to manually install it to start using Rust.
+
+       Warning Running curl some-url | sh, as the Rust documentation suggests, is considered a security risk, because it executes unknown code, that might even be corrupted during the download. Therefore it is recommended to manually download the script and check it, before executing it.
+
+       Note Please make sure that ~/.cargo/bin is in your PATH when you run rustup.
+
+       USAGE
+
+       You might need to manually install a toolchain, e.g. stable, beta, nightly or 1.58.0. You also need to do this if you want to use/test another toolchain.
+
+         $ rustup toolchain install toolchain
+
+       You can now run the Rust commands by running, rustup run toolchain command. However, to use these commands directly, you need to activate the toolchain:
+
+         $ rustup default toolchain
+
+       Note
+
+        * Rust does not call the linker directly, instead doing so through cc by default (provided by its optional dependency gcc). Without it, attempting to build a binary (e.g. cargo build --bin foo) will generate the error error: linker `cc` not found.
+        * rustup does not automatically update provided toolchains. If users are wishing to use the latest releases of Rust, crates, and other relevant packages, they may occasionally wish to update their toolchains with rustup update. See Official rustup documentation for more.
+
+       TEST YOUR INSTALLATION
+
+       Check the installed Rust version using rustc -V:
+
+         $ rustc -V
+
+         rustc 1.94.0 (4a4ef493e 2026-03-02)
+
+       Check that Rust is installed correctly by building a simple program, as follows:
+
+         ~/hello.rs
+
+         fn main() {
+             println!("Hello, World!");
+         }
+
+       You can compile it with rustc, then run it:
+
+         $ rustc hello.rs && ./hello
+
+         Hello, World!
+
+       CROSS COMPILING
+
+       SETUP
+
+       Cross-compiling Rust requires installing the appropriate standard library (a separate compiler is not necessary), but also downloading the appropriate low-level tools (most often, a C compiler). For example, for cross-compiling to Windows, the i686-pc-windows-gnu (32-bit) and/or x86_64-pc-windows-gnu (64-bit) Rust target triple(s) must be set up, and mingw-w64-gcc must be installed.
+
+       Note Strictly speaking, mingw-w64-binutils is sufficient, as that's the package providing the linker itself, but it is strongly advised to use the GCC program as a wrapper to automatically pass some necessary options to the linker.
+
+       USING RUSTUP
+
+       rustup is the recommended way to cross-compile Rust. The documentation explains the steps involved, how to list targets, etc.
+
+       Note
+
+       As explained in the documentation, rustup “only installs the Rust standard library for a given target. There are typically other tools necessary to cross-compile, particularly a linker.”
+
+       Let's take cross-compiling to 64-bit Windows as an example:
+
+        * Install the mingw-w64-gcc package
+        * Run rustup target add x86_64-pc-windows-gnu to install the Rust standard library and compiler for your architecture.
+        * Tell Cargo where to find MinGW's GCC by adding the following to its configuration:
+
+         [target.x86_64-pc-windows-gnu]
+         linker = "/usr/bin/x86_64-w64-mingw32-gcc"
+
+        * Finally, you can cross compile for Windows by passing the --target x86_64-pc-windows-gnu flag to cargo:
+
+         cargo build --release --target x86_64-pc-windows-gnu
+
+       Tip Cross-compiling to 32-bit Windows can be set up by following the above but replacing x86_64 with i686.
+
+       ARCH PACKAGES
+
+       Some packages can be installed on top of the Arch-provided rust, such as rust-aarch64-gnu; they take care of installing the necessary compiler toolchains also.
+
+       The unofficial repository archlinuxcn provides the Rust standard library for some targets as rust-std-nightly-* packages. Some of them have optional dependencies on the necessary compiler toolchains, but others will require you to e.g. find an ARM toolchain by yourself.
+
+       RUNNING CROSS-COMPILED PROGRAMS
+
+       cargo run and friends can be configured to execute the built binaries using a runner. For example, to use Wine to run 64-bit Windows programs, add the following to Cargo's configuration:
+
+         [target.x86_64-pc-windows-gnu]
+         runner = "wine"
+
+       CARGO
+
+       Cargo, Rust's package manager, is part of the rust package. If you use rustup, it already includes cargo.
+
+       Cargo is a tool that allows Rust projects to declare their various dependencies, and ensure that you will always get a repeatable build. You are encouraged to read the official guide.
+
+       USAGE
+
+       To create a new project using Cargo:
+
+         $ cargo new hello_world
+
+       This creates a directory with a default Cargo.toml file, set to build an executable.
+
+       Note Cargo uses this Cargo.toml as a manifest containing all of the metadata required to compile your project.
+
+         Cargo.toml
+
+         [package]
+         name = "hello_world"
+         version = "0.1.0"
+         edition = "2021"
+
+         [dependencies]
+
+       OPTIMIZING FOR NATIVE CPU PLATFORM
+
+       In order to instruct Cargo to always compile optimal code for your CPU platform, you can achieve this by adding a flag to ~/.cargo/config.toml. Please be aware that the resulting binaries can not be distributed for use on other computers, and might even fail on your own system if you decide to change your CPU in the future.
+
+       Find out which target platform is used by default on your installation:
+
+         $ rustup toolchain list
+
+         stable-x86_64-unknown-linux-gnu (default)
+
+       In this example, we are using stable Rust on the x86_64-unknown-linux-gnu platform.
+
+       Instruct Cargo to always compile code optimized for the native CPU platform:
+
+         ~/.cargo/config.toml
+
+         [target.x86_64-unknown-linux-gnu]
+         rustflags = ["-C", "target-cpu=native"]
+
+       SCCACHE
+
+       Compilation times can be greatly reduced by using sccache (sccache package). This will maintain a local cache of compiler artifacts, eliminating the need to recompile code that has not changed since the last time it was compiled.
+
+       To enable sccache, you can use RUSTC_WRAPPER environment variable:
+
+         $ export RUSTC_WRAPPER=sccache
+         $ cargo build
+
+       or
+
+         $ RUSTC_WRAPPER=sccache cargo build
+
+       Alternatively, add the following configuration to ~/.cargo/config.toml:
+
+         ~/.cargo/config.toml
+
+         [build]
+         rustc-wrapper = "sccache"
+
+       IDE SUPPORT
+
+       TOOLS
+
+       See https://www.rust-lang.org/tools for the recommended tools of the Rust project.
+
+       RUST-ANALYZER
+
+       rust-analyzer is the official Language Server Protocol implementation for Rust which has replaced RLS.
+
+       It is available as the rust-analyzer package, and the latest Git version is available as rust-analyzer-gitAUR. Alternatively, if you have rustup installed, you can install rust-analyzer with:
+
+         $ rustup component add rust-analyzer
+
+       rust-analyzer needs the source code of the standard library. If it is not present, rust-analyzer will attempt to install it automatically using rustup. To install the source code manually using rustup, run the following command:
+
+         $ rustup component add rust-src
+
+       CLIPPY
+
+       Clippy takes advantage of compiler plugin support to provide a large number of additional lints for detecting and warning about a larger variety of errors and non-idiomatic Rust.
+
+       Clippy is included in the rust package. To install it with rustup use:
+
+         $ rustup component add clippy
+
+       RUSTFMT
+
+       Rustfmt is a tool to format Rust code according to the official style guidelines.
+
+       Rustfmt is included in the rust package. To install it with rustup use:
+
+         $ rustup component add rustfmt
+
+       EDITORS
+
+       EMACS
+
+       Emacs support for Rust can be obtained via the official rust-mode plugin.
+
+       GNOME BUILDER
+
+       GNOME Builder support for Rust is achieved using Language Server Protocol. It uses rust-analyzer by default; all you need to do is install it along with the Rust source.
+
+       HELIX
+
+       Helix editor is written in Rust and has the Rust language server protocol included. Helix is inspired by Neovim and Kakoune.
+
+       KATE
+
+       Kate support for Rust is achieved using Language Server Protocol. It uses rust-analyzer by default; all you need to do is install it along with the Rust source.
+
+       INTELLIJ IDEA
+
+       IntelliJ IDEA has a Rust plugin. The same plugin also works with CLion.
+
+       If using rustup, use rustup to download the source (rustup component add rust-src), and then select ~/.rustup/toolchains/<your toolchain>/bin as the toolchain location.
+
+       If using Rust from the official Arch Linux software repository, select /usr/bin as the toolchain location and /usr/lib/rustlib/src/rust/library/ as the stdlib sources location.
+
+       JETBRAINS RUSTROVER
+
+       Jetbrains is also working on a special Editor just for Rust. It can be found and downloaded under their official Website or in the AUR under rustroverAUR and rustrover-eapAUR.
+
+       VISUAL STUDIO CODE
+
+       Visual Studio Code support for Rust can be obtained via rust-analyzer with the rust-lang.rust-analyzer extension.
+
+       VIM
+
+       Vim support for Rust can be obtained via the official rust.vim plugin, which provides file detection, syntax highlighting, formatting and support for the Syntastic syntax checking plugin. Many completion engines have Rust support, like coc (via the coc-rust-analyzer plugin) and YouCompleteMe.
+
+       SEE ALSO
+
+        * Official website of the Rust Programming Language
+        * Rust Documentation
+        * Official Rust Book
+        * Standard Library API Lookup
+        * Examples with small descriptions
+        * Page listing of Rust tutorials
+        * Libraries(crates) available through Cargo
+        * This Week in Rust
+        * The Rust Programming Language Blog
+        * The Rust Users Forum
+        * The Rust Internals Forum
+        * Awesome Rust: A curated list of Rust libraries and resources
+        * Wikipedia:Rust (programming language)
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,69 @@
+WEBAPI.WRITABLESTREAM(1)         Sandbox manual         WEBAPI.WRITABLESTREAM(1)
+
+       NAME
+
+       WritableStream - The WritableStream interface of the Streams API provides a standard abstraction for writing streaming data to a destination, known as a sink
+
+       WRITABLESTREAM
+
+       The WritableStream interface of the Streams API provides a standard abstraction for writing streaming data to a destination, known as a sink. This object comes with built-in backpressure and queuing.
+
+       WritableStream is a transferable object.
+
+       CONSTRUCTOR
+
+        * WritableStream()
+          * : Creates a new WritableStream object.
+
+       INSTANCE PROPERTIES
+
+        * WritableStream.locked (read-only)
+          * : A boolean indicating whether the WritableStream is locked to a writer.
+
+       INSTANCE METHODS
+
+        * WritableStream.abort()
+          * : Aborts the stream, signaling that the producer can no longer successfully write to the stream and it is to be immediately moved to an error state, with any queued writes discarded.
+        * WritableStream.close()
+          * : Closes the stream.
+        * WritableStream.getWriter()
+          * : Returns a new instance of WritableStreamDefaultWriter and locks the stream to that instance. While the stream is locked, no other writer can be acquired until this one is released.
+
+       EXAMPLES
+
+       The following example illustrates several features of this interface. It creates the WritableStream with a custom sink. It then calls the stream's getWriter() method, which returns an instance of WritableStreamDefaultWriter. Next, several strings are written to the stream. Finally, close() returns a promise that resolves when all the writes have successfully completed.
+
+         const writableStream = new WritableStream(
+           // Implement the sink
+           {
+             write(chunk) {
+               const textElement = document.getElementById("text-output");
+               textElement.textContent += chunk;
+             },
+           },
+         );
+
+         const writer = writableStream.getWriter();
+
+         try {
+           writer.write("Hello, ");
+           writer.write("world!\n");
+           writer.write("This has been a demo!\n");
+
+           await writer.close(); // wait for all chunks to be written
+           console.log("All chunks written");
+         } catch (error) {
+           console.error("Stream error: ", error);
+         }
+
+       This example does not support the backpressure feature of Streams.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Streams—The Definitive Guide
+
+Web APIs manual                         from the official documentation

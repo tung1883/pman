@@ -1,0 +1,51 @@
+WEBAPI.WINDOW-CRYPTO(1)          Sandbox manual          WEBAPI.WINDOW-CRYPTO(1)
+
+       NAME
+
+       Window: crypto property - The crypto read-only property of the Window interface returns the Crypto object for this window's scope. This object gives web pages access 
+
+       WINDOW: CRYPTO PROPERTY
+
+       The crypto read-only property of the Window interface returns the Crypto object for this window's scope. This object gives web pages access to certain cryptographic related services.
+
+       Although the property itself is read-only, all of its methods (and the methods of its child object, SubtleCrypto) are not read-only, and therefore vulnerable to attack by polyfill.
+
+       Although crypto is available on all windows, the returned Crypto object only has one usable feature in insecure contexts: the getRandomValues() method. In general, you should use this API only in secure contexts.
+
+       VALUE
+
+       An instance of the Crypto interface, providing access to general-purpose cryptography and a strong random-number generator.
+
+       EXAMPLES
+
+       This example uses the crypto property to access the getRandomValues() method.
+
+       HTML
+
+         <p id="myRandText">The random numbers are:</p>
+         <button type="button">Generate 10 random numbers</button>
+
+       JAVASCRIPT
+
+         function genRandomNumbers() {
+           const array = new Uint32Array(10);
+           globalThis.crypto.getRandomValues(array);
+
+           const randText = document.getElementById("myRandText");
+           randText.textContent = `The random numbers are: ${array.join(" ")}`;
+         }
+
+         document.querySelector("button").addEventListener("click", genRandomNumbers);
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The Crypto interface
+        * WorkerGlobalScope.crypto
+
+Web APIs manual                         from the official documentation

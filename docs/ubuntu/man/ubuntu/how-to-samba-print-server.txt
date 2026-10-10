@@ -1,0 +1,50 @@
+UBUNTU.HOW-TO-SAMBA-PRINT-SERVER(1) Sandbox manual UBUNTU.HOW-TO-SAMBA-PRINT-SERVER(1)
+
+       NAME
+
+       Set up Samba as a print server - Another common way to network Ubuntu and Windows computers is to configure Samba as a print server. This will allow it to share printers ins
+
+       SET UP SAMBA AS A PRINT SERVER
+
+       Another common way to network Ubuntu and Windows computers is to configure Samba as a print server. This will allow it to share printers installed on an Ubuntu server, whether locally or over the network.
+
+       Just as we did in using Samba as a file server, this section will configure Samba to allow any client on the local network to use the installed printers without prompting for a username and password.
+
+       If your environment requires stricter Access Controls see share-access-controls.
+
+       INSTALL AND CONFIGURE CUPS
+
+       Before installing and configuring Samba as a print server, it is best to already have a working CUPS installation. See our guide on CUPS for details.
+
+       INSTALL SAMBA
+
+       To install the samba package, run the following command in your terminal:
+
+         sudo apt install samba
+
+       CONFIGURE SAMBA
+
+       After installing samba, edit /etc/samba/smb.conf. Change the workgroup attribute to what is appropriate for your network:
+
+         workgroup = EXAMPLE
+
+       In the [printers] section, change the guest ok option to 'yes':
+
+         browsable = yes
+         guest ok = yes
+
+       After editing smb.conf, restart Samba:
+
+         sudo systemctl restart smbd.service nmbd.service
+
+       The default Samba configuration will automatically share any printers installed. Now all you need to do is install the printer locally on your Windows clients.
+
+       FURTHER READING
+
+        * For in-depth Samba configurations see the Samba HOWTO Collection.
+        * The guide is also available in printed format.
+        * O'Reilly's Using Samba is another good reference.
+        * Also, see the CUPS Website for more information on configuring CUPS.
+        * The Ubuntu Wiki Samba page.
+
+Ubuntu Server manual                    from the official documentation

@@ -1,0 +1,47 @@
+SHELLCHECK.SC2235(1)             Sandbox manual             SHELLCHECK.SC2235(1)
+
+       NAME
+
+       Use { ..; } instead of (..) to avoid subshell overhead. - ([ "$x" ] || [ "$y" ]) && [ "$z" ]
+
+       USE .. INSTEAD OF (..) TO AVOID SUBSHELL OVERHEAD
+
+       USE .. INSTEAD OF (..) TO AVOID SUBSHELL OVERHEAD
+
+       PROBLEMATIC CODE
+
+         ([ "$x" ] || [ "$y" ]) && [ "$z" ]
+
+       CORRECT CODE
+
+         { [ "$x" ] || [ "$y" ]; } && [ "$z" ]
+
+       RATIONALE
+
+       You appear to be using (..) to group test commands. This creates a subshell, making it unnecessarily slow. Avoid this by using { ..; } to group.
+
+       Be careful to note that unlike (..), this requires both a space after the { and a semicolon before the }.
+
+       For example, (cmd), (cmd;) and ( cmd ) are all valid, but {cmd}, {cmd;} and { cmd } are all syntax errors because they lack either or both of the spaces and semicolon. The correct form is { cmd; }
+
+       Here's a small benchmark showing that the subshell version is more than 100x slower:
+
+         $ i=0; time for i in {1..10000}; do ([ "$x" ] || [ "$y" ]) && [ "$z" ]; done
+         real    0m7.122s
+         user    0m4.204s
+         sys     0m2.825s
+
+         $ i=0; time for i in {1..10000}; do { [ "$x" ] || [ "$y" ]; } && [ "$z" ]; done
+         real    0m0.055s
+         user    0m0.055s
+         sys     0m0.000s
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

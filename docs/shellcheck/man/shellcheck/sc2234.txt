@@ -1,0 +1,43 @@
+SHELLCHECK.SC2234(1)             Sandbox manual             SHELLCHECK.SC2234(1)
+
+       NAME
+
+       Remove superfluous (..) around test command to avoid subshell overhead. - ([ "$x" -gt 0 ]) && foo
+
+       REMOVE SUPERFLUOUS (..) AROUND TEST COMMAND TO AVOID SUBSHELL OVERHEAD
+
+       REMOVE SUPERFLUOUS (..) AROUND TEST COMMAND TO AVOID SUBSHELL OVERHEAD
+
+       PROBLEMATIC CODE
+
+         ([ "$x" -gt 0 ]) && foo
+
+       CORRECT CODE
+
+         [ "$x" -gt 0 ] && foo
+
+       RATIONALE
+
+       You are wrapping a single test command in (..), creating an unnecessary subshell. This serves no purpose, but is significantly slower:
+
+         $ i=0; time while ( [ "$i" -lt 10000 ] ); do i=$((i+1)); done
+         real    0m6.998s
+         user    0m3.453s
+         sys     0m3.464s
+
+         $ i=0; time while [ "$i" -lt 10000 ]; do i=$((i+1)); done
+         real    0m0.055s
+         user    0m0.054s
+         sys     0m0.001s
+
+       Just delete the surrounding (..) since they serve no purpose and only slows the script down.
+
+       EXCEPTIONS
+
+       This issue only affects performance, not correctness, and can be [[ignore]]d for stylistic reasons.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

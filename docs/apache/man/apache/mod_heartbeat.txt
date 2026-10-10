@@ -1,0 +1,25 @@
+APACHE.MOD_HEARTBEAT(1)          Sandbox manual          APACHE.MOD_HEARTBEAT(1)
+
+       CONSUMING MOD_HEARTBEAT OUTPUT
+
+       Every 1 second, this module generates a single multicast UDP packet, containing the number of busy and idle workers. The packet is a simple ASCII format, similar to GET query parameters in HTTP.
+
+       AN EXAMPLE PACKET
+
+       v=1&ready=75&busy=0
+
+       Consumers should handle new variables besides busy and ready, separated by '&', being added in the future.
+
+       HEARTBEATADDRESS DIRECTIVE
+
+         Description: | Multicast address for heartbeat packets
+         Syntax: | HeartbeatAddress addr:port
+         Default: | disabled
+         Context: | server config
+         Status: | Experimental
+         Module: | mod_heartbeat
+       The HeartbeatAddress directive specifies the multicast address to which mod_heartbeat will send status information. This address will usually correspond to a configured HeartbeatListen on a frontend proxy system.
+
+         HeartbeatAddress 239.0.0.1:27999
+
+Apache HTTP Server manual               bundled documentation

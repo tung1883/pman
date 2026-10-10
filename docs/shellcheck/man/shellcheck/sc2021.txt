@@ -1,0 +1,35 @@
+SHELLCHECK.SC2021(1)             Sandbox manual             SHELLCHECK.SC2021(1)
+
+       NAME
+
+       Don't use [] around ranges in tr, it replaces literal square brackets. - tr -cd '[a-z]'
+
+       DON'T USE AROUND RANGES IN TR, IT REPLACES LITERAL SQUARE BRACKETS
+
+       DON'T USE AROUND RANGES IN TR, IT REPLACES LITERAL SQUARE BRACKETS
+
+       PROBLEMATIC CODE
+
+         tr -cd '[a-z]'
+
+       CORRECT CODE
+
+         tr -cd 'a-z'
+
+       RATIONALE
+
+       Ancient System V tr required brackets around operands, but modern implementations including POSIX, GNU, OS X and *BSD instead treat them as literals.
+
+       Unless you want to operate on literal square brackets, don't include them.
+
+       EXCEPTIONS
+
+       If you do want to replace literal square brackets, reorder the expression (e.g. a-z[] to make it clear that the brackets are not special).
+
+       ShellCheck does not warn about correct usage of [..] in character and equivalence classes like [:lower:] and [=e=].
+
+       NOTE
+
+       Busybox requires CONFIG_FEATURE_TR_CLASSES for this to work. If busybox was compiled without this feature, character classes will obviously not be available, and the correct usage is to use a-z, not [a-z].
+
+ShellCheck manual                       from the official documentation

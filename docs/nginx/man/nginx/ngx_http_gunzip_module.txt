@@ -1,0 +1,41 @@
+NGINX.NGX_HTTP_GUNZIP_MODULE(1)  Sandbox manual  NGINX.NGX_HTTP_GUNZIP_MODULE(1)
+
+       MODULE NGX_HTTP_GUNZIP_MODULE
+
+         Example Configuration Directives  gunzip  gunzip_buffers
+       The ngx_http_gunzip_module module is a filter that decompresses responses with “Content-Encoding: gzip” for clients that do not support “gzip” encoding method. The module will be useful when it is desirable to store data compressed to save space and reduce I/O costs.
+
+       This module is not built by default, it should be enabled with the --with-http_gunzip_module configuration parameter.
+
+       EXAMPLE CONFIGURATION
+
+         location /storage/ {
+             gunzip on;
+             ...
+         }
+
+       DIRECTIVES
+
+       GUNZIP
+
+         Syntax: | gunzip on | off;
+
+         gunzip off;
+
+       Default:
+
+         Context: | http, server, location
+       Enables or disables decompression of gzipped responses for clients that lack gzip support. If enabled, the following directives are also taken into account when determining if clients support gzip: gzip_http_version, gzip_proxied, and gzip_disable. See also the gzip_vary directive.
+
+       GUNZIP_BUFFERS
+
+         Syntax: | gunzip_buffers number size;
+
+         gunzip_buffers 32 4k|16 8k;
+
+       Default:
+
+         Context: | http, server, location
+       Sets the number and size of buffers used to decompress a response. By default, the buffer size is equal to one memory page. This is either 4K or 8K, depending on a platform.
+
+nginx manual                            bundled documentation

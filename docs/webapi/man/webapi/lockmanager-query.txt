@@ -1,0 +1,59 @@
+WEBAPI.LOCKMANAGER-QUERY(1)      Sandbox manual      WEBAPI.LOCKMANAGER-QUERY(1)
+
+       NAME
+
+       LockManager: query() method - The query() method of the LockManager interface returns a Promise that resolves with an object containing information about held and pending
+
+       LOCKMANAGER: QUERY() METHOD
+
+       The query() method of the LockManager interface returns a Promise that resolves with an object containing information about held and pending locks.
+
+       SYNTAX
+
+         query()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that resolves with an object containing a snapshot of the LockManager state. The object has the following properties:
+
+        * held
+          * : An array of LockInfo objects for held locks.
+        * pending
+          * : An array of LockInfo objects for pending lock requests.
+       The LockInfo object can have the following properties:
+
+        * name
+          * : The name passed to LockManager.request() when the lock was requested.
+        * mode
+          * : The access mode passed to LockManager.request() when the lock was requested. The mode is either "exclusive" or "shared".
+        * clientId
+          * : The unique identity of the context where LockManager.request() is called. This is the same value as Client.id.
+
+       EXCEPTIONS
+
+       This method may return a promise rejected with a DOMException of one of the following types:
+
+        * InvalidStateError DOMException
+          * : Thrown if the environments document is not fully active.
+        * SecurityError DOMException
+          * : Thrown if a lock manager cannot be obtained for the current environment.
+
+       EXAMPLES
+
+         const state = await navigator.locks.query();
+         for (const lock of state.held) {
+           console.log(`held lock: name ${lock.name}, mode ${lock.mode}`);
+         }
+         for (const request of state.pending) {
+           console.log(`requested lock: name ${request.name}, mode ${request.mode}`);
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

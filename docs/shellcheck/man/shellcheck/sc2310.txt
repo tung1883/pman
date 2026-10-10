@@ -1,0 +1,69 @@
+SHELLCHECK.SC2310(1)             Sandbox manual             SHELLCHECK.SC2310(1)
+
+       NAME
+
+       This function is invoked in an 'if' condition so set -e will be disabled. Invoke separately if failures should cause the script to exit. - This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for mor
+
+       THIS FUNCTION IS INVOKED IN AN 'IF' CONDITION SO SET -E WILL BE DISABL
+
+       THIS FUNCTION IS INVOKED IN AN 'IF' CONDITION SO SET -E WILL BE DISABL
+
+       OPTIONAL - CHECK-SET-E-SUPPRESSED
+
+       This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for more details. In short, you have to enable it with the long name instead of the "SC" code like you would with a normal rule:
+
+       SHELLCHECKRC
+
+         enable=check-set-e-suppressed # SC2310
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         #shellcheck enable=check-set-e-suppressed
+
+         set -e
+
+         backup() {
+           cp *.txt /backup
+           rm *.txt            # Runs even if copy fails!
+         }
+
+         if backup
+         then
+             echo "Backup successful"
+         fi
+
+       CORRECT CODE
+
+         #!/bin/sh
+         #shellcheck enable=check-set-e-suppressed
+
+         set -e
+
+         backup() {
+           cp *.txt /backup
+           rm *.txt
+         }
+
+         backup
+         echo "Backup successful"
+
+       RATIONALE
+
+       ShellCheck found a function used as a condition in a script where set -e is enabled. This means that the function will run without set -e, and will power through any errors.
+
+       This applies to if, while, and until statements, commands negated with !, as well as the left-hand side of || and &&. It does not matter how deeply the command is nested in such a structure.
+
+       In the problematic example, the intent was that an error like cp: error writing '/backup/important.txt': No space left on device would cause the script to abort. Instead, since the function is invoked in an if statement, the script will proceed to delete all the files even though it failed to back them up.
+
+       The fix is to call it outside of an if statement. There is no point in checking whether the command succeeded, since the script would abort if it didn't. You may also want to consider replacing set -e with explicit || exit after every relevant command to avoid such surprises.
+
+       EXCEPTIONS
+
+       If you don't care that the function runs without set -e, you can disable this warning.
+
+       RELATED RESOURCES
+
+        * BashFaq #105: Why doesn't set -e (or set -o errexit, or trap ERR) do what I expected?
+
+ShellCheck manual                       from the official documentation

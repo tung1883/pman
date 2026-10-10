@@ -1,0 +1,64 @@
+CSHARP.NULL-COALESCING-OPERATOR(1) Sandbox manual CSHARP.NULL-COALESCING-OPERATOR(1)
+
+       NAME
+
+       `??` and `??=` operators - the null-coalescing operators - The `??` and `??=` operators are the C# null-coalescing operators. They return the value of the left-hand operand if it isn't null. Otherwis
+
+       AND OPERATORS - THE NULL-COALESCING OPERATORS
+
+       The null-coalescing operator ?? returns the value of its left-hand operand if it's not null. Otherwise, it evaluates the right-hand operand and returns its result. The ?? operator doesn't evaluate its right-hand operand if the left-hand operand evaluates to non-null. The null-coalescing assignment operator ??= assigns the value of its right-hand operand to its left-hand operand only if the left-hand operand evaluates to null. The ??= operator doesn't evaluate its right-hand operand if the left-hand operand evaluates to non-null.
+
+       The left-hand operand of the ??= operator must be a variable, a property, or an indexer element.
+
+       The type of the left-hand operand of the ?? and ??= operators can't be a non-nullable value type. In particular, you can use the null-coalescing operators with unconstrained type parameters:
+
+       The null-coalescing operators are right-associative. That is, expressions of the form
+
+         a ?? b ?? c
+         d ??= e ??= f
+
+       are evaluated as
+
+         a ?? (b ?? c)
+         d ??= (e ??= f)
+
+       EXAMPLES
+
+       The ?? and ??= operators are useful in the following scenarios:
+
+        * In expressions that use the [null-conditional operators ?. and ?[]](member-access-operators.md#null-conditional-operators--and-), use the ?? operator to provide an alternative expression to evaluate if the result of the expression with null-conditional operations is null:
+        * When you work with nullable value types and need to provide a value of an underlying value type, use the ?? operator to specify the value to provide if a nullable type value is null:
+       Use the GetValueOrDefault method if the value to use when a nullable type value is null should be the default value of the underlying value type.
+
+        * To make the argument-checking code more concise, use a throw expression as the right-hand operand of the ?? operator:
+       The preceding example also demonstrates how to use expression-bodied members to define a property.
+
+        * Use the ??= operator to replace code of the following form:
+
+           if (variable is null)
+           {
+               variable = expression;
+           }
+
+       Use the following code:
+
+           variable ??= expression;
+
+       OPERATOR OVERLOADABILITY
+
+       You can't overload the ?? and ??= operators.
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information about the ?? operator, see [The null coalescing operator] section of the [C# language specification].
+
+       For more information about the ??= operator, see the [Compound assignment] section of the C# language specification.
+
+       SEE ALSO
+
+        * Null check can be simplified (IDE0029, IDE0030, and IDE0270)
+        * C# operators and expressions
+        * [?. and ?[] operators](member-access-operators.md#null-conditional-operators--and-)
+        * ?: operator
+
+C# manual                               from the official documentation

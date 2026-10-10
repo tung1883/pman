@@ -1,0 +1,71 @@
+WEBAPI.XMLHTTPREQUEST-SETATTRIBUTIONREPORTING(1) Sandbox manual WEBAPI.XMLHTTPREQUEST-SETATTRIBUTIONREPORTING(1)
+
+       NAME
+
+       XMLHttpRequest: setAttributionReporting() method - The setAttributionReporting() method of the
+
+       XMLHTTPREQUEST: SETATTRIBUTIONREPORTING() METHOD
+
+       {{non-standard_header}}
+
+       The setAttributionReporting() method of the XMLHttpRequest interface indicates that you want the request's response to be able to register a JavaScript-based attribution source or attribution trigger.
+
+       See the Attribution Reporting API for more details.
+
+       SYNTAX
+
+         setAttributionReporting(options)
+
+       PARAMETERS
+
+        * options
+          * : An object providing attribution reporting options, which includes the following properties:
+            * eventSourceEligible
+              * : A boolean. If set to true, the request's response is eligible to register an attribution source. If set to false, it isn't.
+            * triggerEligible
+              * : A boolean. If set to true, the request's response is eligible to register an attribution trigger. If set to false, it isn't.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the associated XMLHttpRequest has not yet been opened, or has already been sent.
+        * TypeError DOMException
+          * : Thrown if use of the Attribution Reporting API is blocked by an attribution-reporting Permissions-Policy.
+
+       EXAMPLES
+
+         const attributionReporting = {
+           eventSourceEligible: true,
+           triggerEligible: false,
+         };
+
+         function triggerSourceInteraction() {
+           const req = new XMLHttpRequest();
+           req.open("GET", "https://shop.example/endpoint");
+           // Check availability of setAttributionReporting() before calling
+           if (typeof req.setAttributionReporting === "function") {
+             req.setAttributionReporting(attributionReporting);
+             req.send();
+           } else {
+             throw new Error("Attribution reporting not available");
+             // Include recovery code here as appropriate
+           }
+         }
+
+         // Associate the interaction trigger with whatever
+         // element and event makes sense for your code
+         elem.addEventListener("click", triggerSourceInteraction);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Attribution Reporting API
+
+Web APIs manual                         from the official documentation

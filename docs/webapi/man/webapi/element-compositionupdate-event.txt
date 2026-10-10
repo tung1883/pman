@@ -1,0 +1,121 @@
+WEBAPI.ELEMENT-COMPOSITIONUPDATE-EVENT(1) Sandbox manual WEBAPI.ELEMENT-COMPOSITIONUPDATE-EVENT(1)
+
+       NAME
+
+       Element: compositionupdate event - The compositionupdate event is fired when a new character is received in the context of a text composition session controlled by a text comp
+
+       ELEMENT: COMPOSITIONUPDATE EVENT
+
+       The compositionupdate event is fired when a new character is received in the context of a text composition session controlled by a text composition system such as an input method editor.
+
+       For example, this event could be fired while a user enters a Chinese character using a Pinyin Input method editor.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("compositionupdate", (event) => { })
+
+         oncompositionupdate = (event) => { }
+
+       EVENT TYPE
+
+       A CompositionEvent. Inherits from UIEvent and Event.
+
+       CompositionEvent
+
+       EXAMPLES
+
+         const inputElement = document.querySelector('input[type="text"]');
+
+         inputElement.addEventListener("compositionupdate", (event) => {
+           console.log(`generated characters were: ${event.data}`);
+         });
+
+       LIVE EXAMPLE
+
+       HTML
+
+         <div class="control">
+           <p>First select textbox, then to open IME:</p>
+           <ul>
+             <li>on macOS type <kbd>option</kbd> + <kbd>`</kbd></li>
+             <li>on Windows type <kbd>windows</kbd> + <kbd>.</kbd></li>
+           </ul>
+           <label for="example">Example input</label>
+           <input type="text" id="example" name="example" />
+         </div>
+
+         <div class="event-log">
+           <label for="eventLog">Event log:</label>
+           <textarea
+             readonly
+             class="event-log-contents"
+             rows="8"
+             cols="25"
+             id="eventLog"></textarea>
+           <button class="clear-log">Clear</button>
+         </div>
+
+         body {
+           padding: 0.2rem;
+           display: grid;
+           grid-template-areas: "control log";
+         }
+
+         .control {
+           grid-area: control;
+         }
+
+         .event-log {
+           grid-area: log;
+         }
+
+         .event-log-contents {
+           resize: none;
+         }
+
+         label,
+         button {
+           display: block;
+         }
+
+         input[type="text"] {
+           margin: 0.5rem 0;
+         }
+
+         kbd {
+           border-radius: 3px;
+           padding: 1px 2px 0;
+           border: 1px solid black;
+         }
+
+       JAVASCRIPT
+
+         const inputElement = document.querySelector('input[type="text"]');
+         const log = document.querySelector(".event-log-contents");
+         const clearLog = document.querySelector(".clear-log");
+
+         clearLog.addEventListener("click", () => {
+           log.textContent = "";
+         });
+
+         function handleEvent(event) {
+           log.textContent += `${event.type}: ${event.data}\n`;
+         }
+
+         inputElement.addEventListener("compositionstart", handleEvent);
+         inputElement.addEventListener("compositionupdate", handleEvent);
+         inputElement.addEventListener("compositionend", handleEvent);
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Related events: compositionstart, compositionend.
+
+Web APIs manual                         from the official documentation

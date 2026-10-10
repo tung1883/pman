@@ -1,0 +1,140 @@
+APACHE.APXS(1)                   Sandbox manual                   APACHE.APXS(1)
+
+       SYNOPSIS
+
+       apxs -g [ -S name=value ] -n modname
+
+       apxs -q [ -v ] [ -S name=value ] query ...
+
+       apxs -c [ -S name=value ] [ -o dsofile ] [ -I incdir ] [ -D name=value ] [ -L libdir ] [ -l libname ] [ -Wc,compiler-flags ] [ -Wl,linker-flags ] files ...
+
+       apxs -i [ -S name=value ] [ -n modname ] [ -a ] [ -A ] dso-file ...
+
+       apxs -e [ -S name=value ] [ -n modname ] [ -a ] [ -A ] dso-file ...
+
+       OPTIONS
+
+       COMMON OPTIONS
+
+         -n modname
+       This explicitly sets the module name for the -i (install) and -g (template generation) option. Use this to explicitly specify the module name. For option -g this is required, for option -i the apxs tool tries to determine the name from the source or (as a fallback) at least by guessing it from the filename.
+
+       QUERY OPTIONS
+
+         -q
+       Performs a query for variables and environment settings used to build httpd. When invoked without query parameters, it prints all known variables and their values. The optional -v parameter formats the list output.  Use this to manually determine settings used to build the httpd that will load your module. For instance use
+
+         INC=-I`apxs -q INCLUDEDIR`
+
+       inside your own Makefiles if you need manual access to Apache's C header files.
+
+       CONFIGURATION OPTIONS
+
+         -S name=value
+       This option changes the apxs settings described above.
+
+       TEMPLATE GENERATION OPTIONS
+
+         -g
+       This generates a subdirectory name (see option -n) and there two files: A sample module source file named mod_name.c which can be used as a template for creating your own modules or as a quick start for playing with the apxs mechanism. And a corresponding Makefile for even easier build and installing of this module.
+
+       DSO COMPILATION OPTIONS
+
+         -c
+       This indicates the compilation operation. It first compiles the C source files (.c) of files into corresponding object files (.o) and then builds a dynamically shared object in dsofile by linking these object files plus the remaining object files (.o and .a) of files. If no -o option is specified the output file is guessed from the first filename in files and thus usually defaults to mod_name.so.
+
+         -o dsofile
+       Explicitly specifies the filename of the created dynamically shared object. If not specified and the name cannot be guessed from the files list, the fallback name mod_unknown.so is used.
+
+         -D name=value
+       This option is directly passed through to the compilation command(s). Use this to add your own defines to the build process.
+
+         -I incdir
+       This option is directly passed through to the compilation command(s). Use this to add your own include directories to search to the build process.
+
+         -L libdir
+       This option is directly passed through to the linker command. Use this to add your own library directories to search to the build process.
+
+         -l libname
+       This option is directly passed through to the linker command. Use this to add your own libraries to search to the build process.
+
+         -Wc,compiler-flags
+       This option passes compiler-flags as additional flags to the libtool --mode=compile command. Use this to add local compiler-specific options.
+
+         -Wl,linker-flags
+       This option passes linker-flags as additional flags to the libtool --mode=link command. Use this to add local linker-specific options.
+
+         -p
+       This option causes apxs to link against the apr/apr-util libraries. This is useful when compiling helper programs that use the apr/apr-util libraries.
+
+       DSO INSTALLATION AND CONFIGURATION OPTIONS
+
+         -i
+       This indicates the installation operation and installs one or more dynamically shared objects into the server's modules directory.
+
+         -a
+       This activates the module by automatically adding a corresponding LoadModule line to Apache's httpd.conf configuration file, or by enabling it if it already exists.
+
+         -A
+       Same as option -a but the created LoadModule directive is prefixed with a hash sign (#), i.e., the module is just prepared for later activation but initially disabled.
+
+         -e
+       This indicates the editing operation, which can be used with the -a and -A options similarly to the -i operation to edit Apache's httpd.conf configuration file without attempting to install the module.
+
+       EXAMPLES
+
+       Assume you have an Apache module named mod_foo.c available which should extend Apache's server functionality. To accomplish this you first have to compile the C source into a shared object suitable for loading into the Apache server under runtime via the following command:
+
+         $ apxs -c mod_foo.c
+         /path/to/libtool --mode=compile gcc ... -c mod_foo.c
+         /path/to/libtool --mode=link gcc ... -o mod_foo.la mod_foo.slo
+         $ _
+
+       Then you have to update the Apache configuration by making sure a LoadModule directive is present to load this shared object. To simplify this step apxs provides an automatic way to install the shared object in its "modules" directory and updating the httpd.conf file accordingly. This can be achieved by running:
+
+         $ apxs -i -a mod_foo.la
+         /path/to/instdso.sh mod_foo.la /path/to/apache/modules
+         /path/to/libtool --mode=install cp mod_foo.la /path/to/apache/modules
+         ...
+         chmod 755 /path/to/apache/modules/mod_foo.so
+         [activating module `foo' in /path/to/apache/conf/httpd.conf]
+         $ _
+
+       This way a line named
+
+         LoadModule foo_module modules/mod_foo.so
+
+       is added to the configuration file if still not present. If you want to have this disabled per default use the -A option, i.e.
+
+         $ apxs -i -A mod_foo.c
+
+       For a quick test of the apxs mechanism you can create a sample Apache module template plus a corresponding Makefile via:
+
+         $ apxs -g -n foo
+         Creating [DIR]  foo
+         Creating [FILE] foo/Makefile
+         Creating [FILE] foo/modules.mk
+         Creating [FILE] foo/mod_foo.c
+         Creating [FILE] foo/.deps
+         $ _
+
+       Then you can immediately compile this sample module into a shared object and load it into the Apache server:
+
+         $ cd foo
+         $ make all reload
+         apxs -c mod_foo.c
+         /path/to/libtool --mode=compile gcc ... -c mod_foo.c
+         /path/to/libtool --mode=link gcc ... -o mod_foo.la mod_foo.slo
+         apxs -i -a -n "foo" mod_foo.la
+         /path/to/instdso.sh mod_foo.la /path/to/apache/modules
+         /path/to/libtool --mode=install cp mod_foo.la /path/to/apache/modules
+         ...
+         chmod 755 /path/to/apache/modules/mod_foo.so
+         [activating module `foo' in /path/to/apache/conf/httpd.conf]
+         apachectl restart
+         /path/to/apache/sbin/apachectl restart: httpd not running, trying to start
+         [Tue Mar 31 11:27:55 1998] [debug] mod_so.c(303): loaded module foo_module
+         /path/to/apache/sbin/apachectl restart: httpd started
+         $ _
+
+Apache HTTP Server manual               bundled documentation

@@ -1,0 +1,35 @@
+SHELLCHECK.SC3052(1)             Sandbox manual             SHELLCHECK.SC3052(1)
+
+       NAME
+
+       In POSIX sh, arithmetic base conversion is undefined - echo "Hex $1 is decimal $((16#$1))"
+
+       IN POSIX SH, ARITHMETIC BASE CONVERSION IS UNDEFINED
+
+       IN POSIX SH, ARITHMETIC BASE CONVERSION IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         echo "Hex $1 is decimal $((16#$1))"
+
+       CORRECT CODE
+
+         #!/bin/sh
+         echo "Hex $1 is decimal $(echo "ibase=16; $1" | bc)"
+
+       RATIONALE
+
+       Your script uses a shell feature not supported by the shebang. Either rewrite the script to be portable, or change the shebang to explicitly require a shell like Bash.
+
+       In this case, using radix specifiers in arithmetic contexts, such as $((16#DEADBEEF)) is not portable. bc ibase/obase can be used instead.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

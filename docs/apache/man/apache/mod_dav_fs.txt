@@ -1,0 +1,33 @@
+APACHE.MOD_DAV_FS(1)             Sandbox manual             APACHE.MOD_DAV_FS(1)
+
+       DAVLOCKDB DIRECTIVE
+
+         Description: | Location of the DAV lock database
+         Syntax: | DavLockDB file-path
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_dav_fs
+       Use the DavLockDB directive to specify the full path to the lock database, excluding an extension. If the path is not absolute, it will be taken relative to ServerRoot. The implementation of mod_dav_fs uses a SDBM database to track user locks.
+
+       EXAMPLE
+
+         DavLockDB "var/DavLock"
+
+       The directory containing the lock database file must be writable by the User and Group under which Apache is running. For security reasons, you should create a directory for this purpose rather than changing the permissions on an existing directory. In the above example, Apache will create files in the var/ directory under the ServerRoot with the base filename DavLock and extension name chosen by the server.
+
+       DAVLOCKDISCOVERY DIRECTIVE
+
+         Description: | Enable lock discovery
+         Syntax: | DavLockDiscovery on|off
+         Default: | DavLockDiscovery on
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_dav_fs
+         Compatibility: | Available from Apache 2.4.55 and later.
+       DavLockDiscovery controls if the lock discovery feature is enabled for PROPFIND method. When disabled, PROPFIND always returns an empty lockdiscovery section. This improves performance if clients use PROPFIND a lot.
+
+       EXAMPLE
+
+         DavLockDiscovery off
+
+Apache HTTP Server manual               bundled documentation

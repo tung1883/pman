@@ -1,0 +1,41 @@
+SHELLCHECK.SC1106(1)             Sandbox manual             SHELLCHECK.SC1106(1)
+
+       NAME
+
+       In arithmetic contexts, use < instead of -lt - Similarly, > instead of -gt, <= instead of -le, >= instead of -ge, == instead of -eq, != instead of -ne.
+
+       IN ARITHMETIC CONTEXTS, USE INSTEAD OF -LT
+
+       IN ARITHMETIC CONTEXTS, USE INSTEAD OF -LT
+
+       Similarly, > instead of -gt, <= instead of -le, >= instead of -ge, == instead of -eq, != instead of -ne.
+
+       PROBLEMATIC CODE
+
+         if (( 2 -lt 3 ))
+         then
+           echo "True"
+         fi
+
+       CORRECT CODE
+
+         if (( 2 < 3 ))
+         then
+           echo "True"
+         fi
+
+       RATIONALE
+
+       The comparators -lt, -ge, -eq and friends are flags for the test command aka [. You are instead using it in an arithmetic context, such as (( .. )) or $(( .. )), where you should be using <, >=, == etc instead.
+
+       In arithmetic contexts, -lt is simply interpreted as "subtract the value of $lt", which is clearly not the intention.
+
+       EXCEPTIONS
+
+       If you do want to subtract $lt you can add a space to make this clear to ShellCheck: echo $((3 - lt))
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

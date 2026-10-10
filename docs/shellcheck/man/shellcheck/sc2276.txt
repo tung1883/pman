@@ -1,0 +1,43 @@
+SHELLCHECK.SC2276(1)             Sandbox manual             SHELLCHECK.SC2276(1)
+
+       NAME
+
+       This is interpreted as a command name containing =. Bad assignment or comparison? - "$var"=42
+
+       THIS IS INTERPRETED AS A COMMAND NAME CONTAINING . BAD ASSIGNMENT OR C
+
+       THIS IS INTERPRETED AS A COMMAND NAME CONTAINING . BAD ASSIGNMENT OR C
+
+       PROBLEMATIC CODE
+
+         "$var"=42
+         if "$var"=42
+         then
+           true
+         fi
+
+       CORRECT CODE
+
+         var=42
+         if [ "$var" = 42 ]
+         then
+           true
+         fi
+
+       RATIONALE
+
+       ShellCheck found a command name containing an unquoted equals sign =. This was likely intended as either a comparison or an assignment.
+
+       To compare two values, use e.g. [ "$var" = "42" ]
+
+       To assign a value, use e.g. var="42"
+
+       EXCEPTIONS
+
+       None, though you can quote the = to make ShellCheck ignore it: "$var=42".
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

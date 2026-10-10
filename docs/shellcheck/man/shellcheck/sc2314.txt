@@ -1,0 +1,48 @@
+SHELLCHECK.SC2314(1)             Sandbox manual             SHELLCHECK.SC2314(1)
+
+       NAME
+
+       In bats, ! does not cause a test failure. - @test "test" {
+
+       IN BATS, DOES NOT CAUSE A TEST FAILURE
+
+       IN BATS, DOES NOT CAUSE A TEST FAILURE
+
+       PROBLEMATIC CODE
+
+         #!/usr/bin/env bats
+
+         @test "test" {
+             # ... code
+             ! test_file_exists
+             # ... more code
+         }
+
+       CORRECT CODE
+
+         #!/usr/bin/env bats
+
+         @test "test" {
+             # ... code
+             run ! test_file_exists
+             # ... more code
+         }
+
+       RATIONALE
+
+       Bats uses set -e and trap ERR to catch test failures as early as possible. Although the return code of a ! negated command is inverted, they will never trigger errexit, due to a bash design decision (see Related Resources). This means that tests which use ! can never fail.
+
+       Starting with bats 1.5.0 you can use ! inside run. If you are still using an older bats version, you can rewrite ! to && exit 1.
+
+       EXCEPTIONS
+
+       The return code of the last command in the test will be the exit code of the test function. This means that you can use ! on the last line of the test and it will still fail appropriately. However, you are encouraged to still use run ! in this case for consistency.
+
+       RELATED RESOURCES
+
+        * SC2251: This ! is not on a condition and skips errexit
+        * Stackoverflow: Why do I need parenthesis In bash set -e and negated return code
+        * bash manpage (look at trap [-lp] [[arg] sigspec ...]):
+       > The ERR trap is not executed [...] if the command's return value is being inverted via !
+
+ShellCheck manual                       from the official documentation

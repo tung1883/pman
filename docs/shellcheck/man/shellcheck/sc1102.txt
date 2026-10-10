@@ -1,0 +1,35 @@
+SHELLCHECK.SC1102(1)             Sandbox manual             SHELLCHECK.SC1102(1)
+
+       NAME
+
+       Shells disambiguate $(( differently or not at all. For $(command substitution), add space after $( . For $((arithmetics)), fix parsing errors. - echo "$((cmd "$@") 2>&1)"
+
+       SHELLS DISAMBIGUATE (( DIFFERENTLY OR NOT AT ALL. FOR (COMMAND SUBSTIT
+
+       SHELLS DISAMBIGUATE (( DIFFERENTLY OR NOT AT ALL. FOR (COMMAND SUBSTIT
+
+       PROBLEMATIC CODE
+
+         echo "$((cmd "$@") 2>&1)"
+
+       CORRECT CODE
+
+         echo "$( (cmd "$@") 2>&1)"
+
+       RATIONALE
+
+       You appear to be using $(( with two (or more) parentheses in a row, where the first $( should open a subshell.
+
+       This is an ill-defined structure that is parsed differently between different shells and shell versions. Prefer adding spaces to make it unambiguous, both to shells and humans.
+
+       Consider the $((( in $(((1)) ):
+
+       Ash, dash and Bash 1 parses it as $(( ( and subsequently fail to find the matching )). Zsh and Bash 2+ looks ahead and parses it as $( ((. Ksh parses it as $( ( (.
+
+       EXCEPTIONS
+
+       Alternatively, you may indeed have correctly spaced your parentheses, but ShellCheck failed to parse $(( as an arithmetic expression while accidentally succeeding in parsing it as $( + (.
+
+       In these cases, double check the syntax to ensure ShellCheck can parse the $((, or ignore this error and hope that it won't affect analysis too severely.
+
+ShellCheck manual                       from the official documentation

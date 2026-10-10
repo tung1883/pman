@@ -1,0 +1,50 @@
+WEBAPI.NAVIGATIONPRELOADMANAGER-SETHEADERVALUE(1) Sandbox manual WEBAPI.NAVIGATIONPRELOADMANAGER-SETHEADERVALUE(1)
+
+       NAME
+
+       NavigationPreloadManager: setHeaderValue() method - The setHeaderValue() method of the NavigationPreloadManager interface sets the value of the Service-Worker-Navigation-Preload header that wi
+
+       NAVIGATIONPRELOADMANAGER: SETHEADERVALUE() METHOD
+
+       The setHeaderValue() method of the NavigationPreloadManager interface sets the value of the Service-Worker-Navigation-Preload header that will be sent with requests resulting from a fetch() operation made during service worker navigation preloading. It returns an empty Promise that resolves with undefined.
+
+       The presence of the Service-Worker-Navigation-Preload header in preloading requests allows servers to configure the returned resource differently for preloading fetch requests than from normal fetch requests. The default directive is set to true: this method allows the possibility of configuring multiple different responses to preload requests.
+
+       > If a different response may result from setting this header, the server must set Vary: Service-Worker-Navigation-Preload to ensure that the different responses are cached.
+
+       SYNTAX
+
+         setHeaderValue(value)
+
+       PARAMETERS
+
+        * value
+          * : An arbitrary string value, which the target server uses to determine what should be returned for the requested resource.
+
+       RETURN VALUE
+
+       A Promise that resolves with undefined.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : There is no active worker associated with the registration to which this NavigationPreloadManager belongs.
+
+       EXAMPLES
+
+       The code below demonstrates how the value might be set.
+
+         navigator.serviceWorker.ready
+           .then((registration) =>
+             registration.navigationPreload.setHeaderValue(newValue),
+           )
+           .then(() => console.log("Done!"))
+           .catch((e) =>
+             console.error(`NavigationPreloadManager not supported: ${e.message}`),
+           );
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

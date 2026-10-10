@@ -1,0 +1,35 @@
+SHELLCHECK.SC2255(1)             Sandbox manual             SHELLCHECK.SC2255(1)
+
+       NAME
+
+       [ ] does not apply arithmetic evaluation. Evaluate with $((..)) for numbers, or use string comparator for strings. - When using [[ .. ]] with numerical comparators (-eq, -lt, etc), the value on either side will be evaluated as an arithmetic expression. This
+
+       DOES NOT APPLY ARITHMETIC EVALUATION. EVALUATE WITH ((..)) FOR NUMBERS
+
+       DOES NOT APPLY ARITHMETIC EVALUATION. EVALUATE WITH ((..)) FOR NUMBERS
+
+       PROBLEMATIC CODE
+
+         [ 2*3 -eq array[i] ]
+
+       CORRECT CODE
+
+         [ $((2*3)) -eq $((array[i])) ]
+
+       RATIONALE
+
+       When using [[ .. ]] with numerical comparators (-eq, -lt, etc), the value on either side will be evaluated as an arithmetic expression. This means that 2*3 will be evaluated to 6, and x will be evaluated to the contents of the variable $x.
+
+       When using [ .. ], this does not happen. 2*3 and x will both be considered invalid numbers. Instead, use e.g. $((2*3)) to evaluate the expression before passing it to [ .. ].
+
+       Alternatively, if the expression should be considered a string, quote the expression and use a string comparison operator like = and !=.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

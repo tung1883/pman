@@ -1,0 +1,185 @@
+SHELLCHECK.DEVGUIDE(1)           Sandbox manual           SHELLCHECK.DEVGUIDE(1)
+
+       NAME
+
+       ShellCheck Dev Guide - Want to write a new test?  (as opposed to an [[Integration]] with an editor or CI system)
+
+       SHELLCHECK DEV GUIDE
+
+       Want to write a new test? (as opposed to an [[Integration]] with an editor or CI system)
+
+       Some familiarity with Haskell helps. Most checks just use pattern matching and function calls. Grokking monads is generally not required, but do notation may come in handy.
+
+       Feel free to skip ahead to ShellCheck in practice.
+
+       SHELLCHECK WIKI POLICY
+
+       The ShellCheck wiki can be edited by anyone with a GitHub account. Feel free to update it with special cases and additional information. If you are making a significant edit and would like someone to double check it, you can file an issue with the title [Wiki] Updated SC1234 to ... (and point to this paragraph since this suggestion is still new).
+
+       SHELLCHECK THEORY
+
+       Here's the basic flow of code through ShellCheck:
+
+        1. Parsing (emits parser warnings (1xxx))
+        2. AST Analysis (emits other warnings (2xxx))
+        3. Formatting and output
+       Of these, AST analysis is the most relevant, and where most of the interesting checks happen.
+
+       PARSING
+
+       The parser turns a string into an AST and zero or more warnings.
+
+       Parser warnings come in two flavors: problems and notes.
+
+       Notes are only emitted when parsing succeeds (they are stored in the Parsec user state). For example, a note is emitted when adding spaces around = in assignments, because if the parser later fails (i.e. it's not actually an assignment), we want to discard the suggestion:
+
+         when (hasLeftSpace || hasRightSpace) $
+             parseNoteAt pos ErrorC 1068 "Don't put spaces around the = in assignments."
+
+       On the other hand, problems are always emitted, even when parsing fails (they are stored in a StateT higher than Parsec in the transformer stack). For example, a problem is emitted if there's an unescaped linefeed in a [ .. ] expression, because the statement is likely malformed or unterminated, and we want to show this warning even if we're unable to parse the whole thing:
+
+         when (single && '\n' `elem` space) $
+             parseProblemAt pos ErrorC 1080 "When breaking lines in [ ], you need \\ before the linefeed."
+
+       So basically, notes are emitted for non-fatal warnings while problems are emitted for fatal ones.
+
+       There's a distinction because often you can emit useful information even when parsing fails (suggestions for how to fix it). Likewise, there's often issues that only make sense in context, and shouldn't be emitted if the result does not end up being used. There are probably better solutions for this.
+
+       Here are the full types of the parser:
+
+         --                            v-- Read real/mocked files  v-- Stores parse problems
+         type SCBase m = Mr.ReaderT (SystemInterface m) (Ms.StateT SystemState m)
+         type SCParser m v = ParsecT String UserState (SCBase m) v
+         --                                 ^-- Stores parse notes and token offsets
+
+       AST ANALYSIS
+
+       AST analysis comes in two primary flavors: checks that run on the root node (sometimes called _"tree checks"_), and checks that run on every node (sometimes called _"node checks"_). Due to poor planning, these can't be distinguished by type because they both just take a Token parameter.
+
+       Here's a simple check designed to run on each node, using pattern matching to find backticks:
+
+         checkBackticks _ (T_Backticked id list) | not (null list) =
+             style id 2006 "Use $(..) instead of legacy `..`."
+         checkBackticks _ _ = return ()
+
+       A lot of checks are just like this, though usually with a bit more matching logic.
+
+       Each check is preceded by some mostly self-explanatory unit tests:
+
+         prop_checkBackticks1 = verify checkBackticks "echo `foo`"
+         prop_checkBackticks2 = verifyNot checkBackticks "echo $(foo)"
+         prop_checkBackticks3 = verifyNot checkBackticks "echo `#inlined comment` foo"
+
+       There are a few specialized test types for efficiency reasons.
+
+       For example, many tests trigger only for certain commands. This could be done by N tests like the above, each matching command nodes and checking that the command name applies (N node patches, N command name extractions, N comparisons). It's more efficient to just have 1 node match, 1 name extraction, and then a map lookup to find one or more command handlers. Such checks just register to handle a command name, and can be found in Checks/Command.hs.
+
+       Similarly, some checks only trigger for a certain shell. This could be done by N tree checks that optionally iterate the tree, or N node checks that match a node and skip emitting for certain shells, but it's more efficient to iterate the tree once with all applicable checks. Such checks just register to handle nodes for a certain shell, and can be found in Checks/ShellSupport.hs.
+
+       FORMATTING
+
+       ShellCheck has multiple output formatters. These take parsing results and outputs them as JSON, XML or human-readable output. They rarely need tweaking. Anyone looking for a different output format should consider transforming one of the existing ones (with XSLT, Python, etc) instead of writing a new formatter.
+
+       SHELLCHECK IN PRACTICE
+
+       Let's say that we have a pet peeve: people who use tmp as a temporary filename. We want to warn about statements like sort file > tmp && mv tmp file, and suggest using mktemp instead.
+
+       To get started, clone the ShellCheck repository and run cabal repl followed by :load ShellCheck.Debug. This is a development module that offers access to a number of convenient methods, helpfully listed in Debug.hs:
+
+         *ShellCheck.AST> :load ShellCheck.Debug
+         [...]
+         [16 of 19] Compiling ShellCheck.Analytics ( src/ShellCheck/Analytics.hs, interpreted )
+         [17 of 19] Compiling ShellCheck.Analyzer ( src/ShellCheck/Analyzer.hs, interpreted )
+         [18 of 19] Compiling ShellCheck.Checker ( src/ShellCheck/Checker.hs, interpreted )
+         [19 of 19] Compiling ShellCheck.Debug ( src/ShellCheck/Debug.hs, interpreted )
+         Ok, 19 modules loaded.
+         *ShellCheck.Debug>
+
+       Now we can look at the AST for our command:
+
+         *ShellCheck.Debug> stringToAst "sort file > tmp"
+         OuterToken (Id 1) (Inner_T_Annotation [] (OuterToken (Id 15) (Inner_T_Script (OuterToken (Id 0) (Inner_T_Literal "")) [OuterToken (Id 14) (Inner_T_Pipeline [] [OuterToken (Id 12) (Inner_T_Redirecting [OuterToken (Id 11) (Inner_T_FdRedirect "" (OuterToken (Id 10) (Inner_T_IoFile (OuterToken (Id 7) Inner_T_Greater) (OuterToken (Id 9) (Inner_T_NormalWord [OuterToken (Id 8) (Inner_T_Literal "tmp")])))))] (OuterToken (Id 13) (Inner_T_SimpleCommand [] [OuterToken (Id 4) (Inner_T_NormalWord [OuterToken (Id 3) (Inner_T_Literal "sort")]),OuterToken (Id 6) (Inner_T_NormalWord [OuterToken (Id 5) (Inner_T_Literal "file")])])))])])))
+
+       (The AST node T_Literal id str is an alias for OuterToken (Id id) (Inner_T_Literal str). GHC outputs the latter, unfortunately making it a bit difficult to read. However, with some effort we can see the part we're interested in:
+
+         (OuterToken (Id 10) (Inner_T_IoFile (OuterToken (Id 7) Inner_T_Greater) (OuterToken (Id 9) (Inner_T_NormalWord [OuterToken (Id 8) (Inner_T_Literal "tmp")]))))
+
+       This would be equivalent to: (TODO: find a way to format it this way automatically)
+
+         (T_IoFile (Id 10) (T_Greater (Id 7)) (T_NormalWord (Id 9) [T_Literal (Id 8) "tmp"]))
+
+       We can compare this with the definition in AST.hs:
+
+         --                v-- Redirection operator (T_Greater)
+             | T_IoFile Id Token Token
+         --                      ^-- Filename (T_NormalWord)
+
+       Let's just add a check to Analytics.hs:
+
+           checkTmpFilename _ token =
+               case token of
+                 T_IoFile id operator filename  ->
+                   warn id 9999 $ "We found this node: " ++ (show token)
+                 _ -> return ()
+
+       and then append checkTmpFilename to the list of node checks at the top of the file:
+
+           nodeChecks :: [Parameters -> Token -> Writer [TokenComment] ()]
+           nodeChecks = [
+               checkUuoc
+               ,checkPipePitfalls
+               ,checkForInQuoted
+               ...
+               ,checkTmpFilename  -- Here
+             ]
+
+       We can now quick-reload the files with :r, and use ShellCheck.Debug's shellcheckString to run all of ShellCheck (minus output formatters):
+
+         *ShellCheck.Debug> :r
+         [...]
+         [17 of 19] Compiling ShellCheck.Analyzer ( src/ShellCheck/Analyzer.hs, interpreted )
+         [18 of 19] Compiling ShellCheck.Checker ( src/ShellCheck/Checker.hs, interpreted )
+         [19 of 19] Compiling ShellCheck.Debug ( src/ShellCheck/Debug.hs, interpreted )
+         *ShellCheck.Debug> shellcheckString "sort file > tmp"
+         CheckResult {crFilename = "", crComments = [PositionedComment {pcStartPos = Position {posFile = "", posLine = 1, posColumn = 1}, pcEndPos = Position {posFile = "", posLine = 1, posColumn = 1}, pcComment = Comment {cSeverity = ErrorC, cCode = 9999, cMessage = "We found this node: (OuterToken (Id 10) (Inner_T_IoFile (OuterToken (Id 7) Inner_T_Greater) (OuterToken (Id 9) (Inner_T_NormalWord [OuterToken (Id 8) (Inner_T_Literal "tmp")]))))"}, pcFix = Nothing}]}
+
+       Or alternatively build and run to see the check apply as it would when invoking shellcheck:
+
+         cabal run shellcheck - <<<  "sort file > tmp"
+
+       Alternatively, we can run it in interpreted mode, which is almost as quick as :r:
+
+         ./quickrun - <<< "sort file > tmp"
+
+       In either case, our warning now shows up:
+
+         In - line 1:
+         sort file > tmp
+         ^-- SC2148: Tips depend on target shell and yours is unknown. Add a shebang.
+                   ^-- SC9999: We found this node: (OuterToken (Id 10) (Inner_T_IoFile (OuterToken (Id 7) Inner_T_Greater) (OuterToken (Id 9) (Inner_T_NormalWord [OuterToken (Id 8) (Inner_T_Literal "tmp")]))))
+
+       Now we can flesh out the check. See ASTLib.hs and AnalyzerLib.hs for convenient functions to work with AST nodes, such as getting the name of an invoked command, getting a list of flags using canonical flag parsing rules, or in this case, getting the literal string of a T_NormalWord so that it doesn't matter if we use > 'tmp', > "tmp" or > "t"'m'p:
+
+           checkTmpFilename _ token =
+               case token of
+                 T_IoFile id operator filename  ->
+                   when (getLiteralString filename == Just "tmp") $
+                     warn (getId filename) 9999 $ "Please use mktemp instead of the filename 'tmp'."
+                 _ -> return ()
+
+       We can also prepend a few unit tests that will automatically be picked up if they start with prop_:
+
+         prop_checkTmpFilename1 = verify checkTmpFilename "sort file > tmp"
+         prop_checkTmpFilename2 = verifyNot checkTmpFilename "sort file > $tmp"
+
+       We can run these tests with cabal test, or in interpreted mode with ./quicktest. If the command exits with success, it's good to go.
+
+       If we wanted to submit this test, we could run ./nextnumber which will output the next unused SC2xxx code, e.g. 2213 as of writing.
+
+       We now have a completely functional test, yay!
+
+       For any questions like "How do I turn a X into a Y?" like "shell string into an AST" or "AST into a CFG" or "AST/CFG/DFA into a GraphViz representation", see Debug.hs. It's very readable, and includes additional useful development information.
+
+       You can also find the ShellCheck author (me) on IRC as koala_man in #haskell@libera.chat
+
+ShellCheck manual                       from the official documentation

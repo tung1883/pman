@@ -1,0 +1,43 @@
+SHELLCHECK.SC2182(1)             Sandbox manual             SHELLCHECK.SC2182(1)
+
+       NAME
+
+       This printf format string has no variables. Other arguments are ignored. - place="world"
+
+       THIS PRINTF FORMAT STRING HAS NO VARIABLES. OTHER ARGUMENTS ARE IGNORE
+
+       THIS PRINTF FORMAT STRING HAS NO VARIABLES. OTHER ARGUMENTS ARE IGNORE
+
+       PROBLEMATIC CODE
+
+         place="world"
+         printf hello $place
+
+       CORRECT CODE
+
+         place="world"
+         printf "hello %s\n" "$place"
+
+       RATIONALE
+
+       ShellCheck has noticed that you're using a printf with multiple arguments, but where the first argument has no %s or equivalent variable placeholders.
+
+       echo accepts zero or more strings to write, e.g. echo hello world.
+
+       printf instead accepts one pattern/template with zero or more %s-style placeholders, and one argument for each placeholder.
+
+       Rewrite your command using the right semantics, otherwise all arguments after the first one will be ignored:
+
+       $ printf hello world\\n hello
+
+       $ printf "hello world\n" hello world
+
+       $ printf "hello %s\n" "world" hello world
+
+       EXCEPTIONS
+
+       If you wanted a no-op, use : instead.
+
+         : ${place=world}
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,200 @@
+ARCH.DISK-CLONING(1)             Sandbox manual             ARCH.DISK-CLONING(1)
+
+       Disk cloning is the process of making an image of a partition or of an entire hard drive. This can be useful for copying the drive to other computers or for backup and recovery purposes.
+
+       Note Disk cloning between drives with different logical sector sizes is not advised.
+
+        * Moving to a drive with a smaller logical sector size (e.g. from 4096 bytes to 512 bytes) will require recreating the partition table since partition boundaries are specified in sector numbers.
+        * Moving to a drive with a larger logical sector size (e.g. from 512 bytes to 4096 bytes) may not be possible at all if a file system's block size is less than target drive's logical sector size or is not divisible by it.
+       Tip Over time file systems get new features and the mkfs utilities change their defaults, but not all new features can be enabled without reformatting. So, when moving data to a new drive, instead of cloning the block devices or file systems, consider creating a new file system and only copy the files (and their attributes, ACLs, extended attributes, etc.) with e.g. rsync.
+
+       BLOCK-LEVEL CLONING
+
+       USING DD
+
+       See dd#Disk cloning and restore and Core utilities#dd alternatives.
+
+       USING DDRESCUE
+
+       If possible, data recovery from disks should be performed using their native interface: SATA or, for older drives, IDE. Results may vary while using USB adapters.
+
+       GNU ddrescue is a data recovery tool capable of ignoring read errors. ddrescue is not related to dd in any way except that both can be used for copying data from one device to another. The key difference is that ddrescue uses a sophisticated algorithm to copy data from failing drives causing them as little additional damage as possible. See the ddrescue manual for details.
+
+       FIRST ROUND
+
+       To clone a faulty or dying drive, run ddrescue twice. For the first round, copy every block without read error and map the errors to rescue.map.
+
+         # ddrescue --force --no-scrape /dev/sdX /dev/sdY rescue.map
+
+         --force
+       This option is used when writing directly to a device (like a disk or partition). Without this flag, ddrescue will refuse to overwrite an existing device to avoid accidental data loss. Using --force allows you to bypass this safety check, so be cautious when using it.
+
+         --no-scrape
+       This option tells ddrescue to skip the "retrying" phase and focus on copying the easily readable data first (the first pass). It avoids retrying failed sectors, which is useful when you want to quickly recover as much data as possible without getting stuck on bad areas.
+
+         /dev/sdX
+       This represents the source device you want to recover data from. Replace /dev/sdX with the actual device name (e.g., /dev/sda). where X is the partition letter of the source and Y of the target block device.
+
+         /dev/sdY
+       This is the destination device or file where the recovered data will be written. In this case, it's another device (e.g., /dev/sdb). Be very careful when specifying this, as the command will overwrite this device. Alternatively, you can create image, just typing path/to/file/image.img
+
+         rescue.map
+       This is the log file used by ddrescue to track recovery progress. The log file is critical because it records which sectors have been successfully recovered and which need further attention. If the recovery process is interrupted, you can resume it later using this log file without starting from scratch.
+
+       This command copies data from one device (/dev/sdX) to another device (/dev/sdY) while prioritizing speed (by skipping retry attempts).
+
+        * The --force option is needed because you are writing directly to a device (/dev/sdY).
+        * The rescue.map file keeps track of progress, allowing you to resume the recovery if it stops.
+
+       SECOND ROUND
+
+       For the second round, copy only the bad blocks and try 3 times to read from the source before giving up.
+
+         # ddrescue --force --idirect --retry-passes=3 /dev/sdX /dev/sdY rescue.map
+
+         --idirect
+       Direct disk access, which can bypass some issues. If mapfile positions and sizes are multiples of the sector size, the kernel may be caching disk accesses. To bypass this and recover more data, consider using direct disc access or reading from a raw device, ensuring the correct sector size is set with --sector-size. Direct disc access can copy arbitrary domains by reading entire sectors and writing only the necessary parts. Start by trying the --idirect option, or use raw devices if direct access is unavailable. Depending on your OS and hardware, direct access may be slower or faster than normal cached reading.
+
+         --retry-passes=3
+       Retry bad sectors up to 3 times.
+
+       This command attempts to read problematic sectors more aggressively.
+
+       if you encounter issue like this:
+
+         ddrescue: /dev/sdX: Unaligned read error. Is sector size correct?
+
+       check sector size of the device:
+
+         # blockdev --getss /dev/sdX
+
+       This will display the sector size in bytes. For example, most CD/DVD drives, the correct sector size is 2048 bytes. and specify sector size manually:
+
+         # ddrescue --sector-size=2048 --force --idirect --retry-passes=3 /dev/sdX /dev/sdY rescue.map
+
+       THIRD ROUND (OPTIONAL)
+
+         # ddrescue --force --idirect --retry-passes=3 --reverse /dev/sdX /dev/sdY rescue.map
+
+       --reverse reads the drive in reverse, which can sometimes bypass issues that prevent forward reads.
+
+       FOURTH ROUND
+
+       For the fourth round, use scraping mode for fine-grained recovery:
+
+         # ddrescue --force --idirect --retry-passes=3 /dev/sdX /dev/sdY rescue.map
+
+       --retry-passes=3 will scrape over the problematic sectors multiple times. It tries to rescue data from the most damaged sectors.
+
+       When to stop: If the drive continues to have read speeds near 0 B/s with no further improvement, the likelihood of recovering more data diminishes. In such cases, professional data recovery services might be the best option. Ultimately, if the process continues to stall without rescuing more data, the drive might be physically failing, and further attempts may yield minimal results..
+
+       In some circumstances the disk controller or a USB adapter may lock, while attempting to read a particular sector. The --input-position option may be used to instruct ddrescue to start reading after that position.
+
+       Now you can check the file system for corruption and mount the new drive.
+
+         # fsck -f /dev/sdY
+
+       FIFTH ROUND (OPTIONAL)
+
+       Once the copy is complete, run a final pass in read-only mode to verify integrity of the rescued image:
+
+         # ddrescue --force --verify /dev/sdX /dev/sdY rescue.map
+
+       or mounting the image, if it's CD/DVD/BD:
+
+         # mount -o loop cd_rescue.iso /mnt/test
+
+       Or run a checksum if you have a reference file.
+
+       FILE SYSTEM CLONING
+
+       USING E2IMAGE
+
+       e2image is a tool included in e2fsprogs for debugging purposes. It can be used to copy ext2, ext3, and ext4 partitions efficiently by only copying the used blocks. Note that this only works for ext2, ext3, and ext4 filesystems, and the unused blocks are not copied so this may not be a useful tool if one is hoping to recover deleted files.
+
+       To clone a partition from physical disk /dev/sda, partition 1, to physical disk /dev/sdb, partition 1 with e2image, run
+
+         # e2image -ra -p /dev/sda1 /dev/sdb1
+
+       Tip GParted uses e2image to efficiently copy ext2/3/4 partitions.
+
+       USING XFS_COPY
+
+       xfs_copy(8) from xfsprogs can be used to copy an XFS file system to one or more block devices in parallel.
+
+       Note By default, xfs_copy will generate new UUIDs for the new file systems. To clone the UUID instead, use the -d option. This will create a duplicate file system suitable for disk replacement.
+
+       Tip To clone XFS to multiple block devices in parallel, simply append them all to the xfs_copy command.
+
+       For example, to clone the file system on /dev/sda1 to /dev/sdb1, run:
+
+         # xfs_copy /dev/sda1 /dev/sdb1
+
+       VERSATILE CLONING SOLUTIONS
+
+       These applications allow easy backup of entire file systems and recovery in case of failure, usually in the form of a Live CD or USB drive. They contain complete system images from one or more specific points in time and are frequently used to record known good configurations. See Wikipedia:Comparison of disk cloning software for their comparison.
+
+       See also Synchronization and backup programs for other applications that can take full system snapshots, among other functionality.
+
+        * Clonezilla — A partition and disk imaging/cloning program which helps with system deployment, bare metal backup and recovery.
+          * Complete backup and recovery solution: able to image and restore entire drives including boot sector, boot loader, partition table... for different operating systems including Windows
+          * Supports BIOS and UEFI, MBR and GPT
+          * Supports most filesystems (ext2-3-4, reiserfs, reiser4, xfs, jfs, btrfs, f2fs, FAT12-16-32, NTFS, HFS+, UFS and others) and LVM2
+          * Free-space aware when using Partclone (default), Partimage (optional), ntfsclone (optional), otherwise falls back to dd for block-level copying (dm-crypt/LUKS containers, unsupported filesystems...)
+          * Supports multi-threaded compression with different formats (including zstd) and levels
+          * Supports encrypting the backup
+          * Multicasting server to restore to many machines at once
+          * Dedicated LiveCD available to boot from CD, USB drive or PXE server
+          * Included on the Arch Linux installation media.
+       https://clonezilla.org/ || clonezilla
+
+        * FSArchiver — A safe and flexible file-system backup/deployment tool
+          * Support for basic and extended file attributes
+          * Support for basic file-system attributes (label, uuid, block-size) for all linux file-systems
+          * Support for multiple file-systems per archive
+          * Support for all major Linux filesystems (extfs, xfs, btrfs, reiserfs, etc) and FAT (in order to backup/restore EFI System Partitions)
+          * Experimental support for cloning ntfs filesystems
+          * Checksumming of everything which is written in the archive (headers, data blocks, whole files)
+          * Ability to restore an archive which is corrupt (it will just skip the current file)
+          * Multi-threaded lzo, lz4, gzip, bzip2, xz/lzma and zstd compression
+          * Support for splitting large archives into several files with a fixed maximum size
+          * Encryption of the archive using a password. Based on blowfish from libgcrypt
+          * Support for restoring to a bigger or smaller partition (as long as there is enough space to store the data)
+          * Support for exclusion patterns to filter what is archived/restored
+          * Works with directories (creating a compressed and checksummed tarball of sorts)
+          * Included on the Arch Linux installation media
+       https://www.fsarchiver.org/ || fsarchiver
+
+        * Mondo Rescue — A disaster recovery solution to create backup media that can be used to redeploy the damaged system.
+          * Image-based backups, supporting Linux/Windows.
+          * Compression rate is adjustable.
+          * Can backup live systems (without having to halt it).
+          * Can split image over many files.
+          * Supports booting to a Live CD to perform a full restore.
+          * Can backup/restore over NFS, from CDs, tape drives and other media.
+          * Can verify backups.
+       http://www.mondorescue.org/ || mondoAUR
+
+        * Partclone — A tool that can be used to back up and restore a partition while considering only used blocks.
+          * Supports ext2, ext3, ext4, hfs+, reiserfs, reiser4, btrfs, vmfs3, vmfs5, xfs, jfs, ufs, ntfs, fat(12/16/32), exfat, f2fs, nilfs
+          * Supports pipe, stdin and stdout to script special features (compression, encryption...)
+          * Rescue mode tries to skip bad blocks and backup only good blocks, option to create GNU Ddrescue domain log file from source device
+          * ncurses interface available
+          * All backed-up blocks are checksummed with crc32
+          * Included on the Arch Linux installation media
+       https://partclone.org/ || partclone
+
+        * Partimage — An ncurses disk cloning utility for Linux/UNIX environments.
+          * Has a Live CD.
+          * Supports the most popular filesystems on Linux, Windows and Mac OS.
+          * Compression.
+          * Saving to multiple CDs or DVDs or across a network using Samba/NFS.
+          * Development stopped in favor of FSArchiver.
+       https://www.partimage.org || partimage
+
+       SEE ALSO
+
+        * Wikipedia:List of disk cloning software
+        * Arch Linux forum thread
+
+ArchWiki manual                         bundled documentation

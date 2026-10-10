@@ -1,0 +1,64 @@
+WEBAPI.DOCUMENT-SCROLL-EVENT(1)  Sandbox manual  WEBAPI.DOCUMENT-SCROLL-EVENT(1)
+
+       NAME
+
+       Document: scroll event - The scroll event fires when the document view has been scrolled.
+
+       DOCUMENT: SCROLL EVENT
+
+       The scroll event fires when the document view has been scrolled. To detect when scrolling has completed, see the scrollend event of Document. For element scrolling, see scroll event of Element.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("scroll", (event) => { })
+
+         onscroll = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       SCROLL EVENT THROTTLING
+
+       Since scroll events can fire at a high rate, the event handler shouldn't execute computationally expensive operations such as DOM modifications. If you notice a jank while fast scrolling, you should consider throttling the event.
+
+       Note that you may see code that throttles the scroll event handler using requestAnimationFrame(). This is _useless_ because animation frame callbacks are fired at the same rate as scroll event handlers. Instead, you must measure the timeout yourself, such as by using setTimeout().
+
+         let lastKnownScrollPosition = 0;
+         let ticking = false;
+
+         function doSomething(scrollPos) {
+           // Do something with the scroll position
+         }
+
+         document.addEventListener("scroll", (event) => {
+           lastKnownScrollPosition = window.scrollY;
+
+           if (!ticking) {
+             // Throttle the event to "do something" every 20ms
+             setTimeout(() => {
+               doSomething(lastKnownScrollPosition);
+               ticking = false;
+             }, 20);
+
+             ticking = true;
+           }
+         });
+
+       Alternatively, consider using IntersectionObserver instead, which allows threshold-based listening.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Document: scrollend event
+        * Element: scroll event
+        * Element: scrollend event
+
+Web APIs manual                         from the official documentation

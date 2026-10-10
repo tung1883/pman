@@ -1,0 +1,69 @@
+WEBAPI.BLOB-TYPE(1)              Sandbox manual              WEBAPI.BLOB-TYPE(1)
+
+       NAME
+
+       Blob: type property - The type read-only property of the Blob interface returns the MIME type of the file.
+
+       BLOB: TYPE PROPERTY
+
+       The type read-only property of the Blob interface returns the MIME type of the file.
+
+       > Based on the current implementation, browsers won't actually read the bytestream of a file to determine its media type.
+       > It is assumed based on the file extension; a PNG image file renamed to .txt would give "_text/plain_" and not "_image/png_". Moreover, blob.type is generally reliable only for common file types like images, HTML documents, audio and video.
+       > Uncommon file extensions would return an empty string.
+       > Client configuration (for instance, the Windows Registry) may result in unexpected values even for common types. Developers are advised not to rely on this property as a sole validation scheme.
+
+       VALUE
+
+       A string containing the file's MIME type, or an empty string if the type could not be determined.
+
+       EXAMPLES
+
+       This example asks the user to select a number of files, then checks each file to make sure it's one of a given set of image file types.
+
+       HTML
+
+         <input type="file" id="input" multiple />
+         <output id="output">Choose image files…</output>
+
+         output {
+           display: block;
+           margin-top: 16px;
+         }
+
+       JAVASCRIPT
+
+         // Our application only allows GIF, PNG, and JPEG images
+         const allowedFileTypes = ["image/png", "image/jpeg", "image/gif"];
+
+         const input = document.getElementById("input");
+         const output = document.getElementById("output");
+
+         input.addEventListener("change", (event) => {
+           const files = event.target.files;
+
+           if (files.length === 0) {
+             output.innerText = "Choose image files…";
+             return;
+           }
+
+           const allAllowed = Array.from(files).every((file) =>
+             allowedFileTypes.includes(file.type),
+           );
+           output.innerText = allAllowed
+             ? "All files clear!"
+             : "Please choose image files only.";
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Blob
+        * Using files from web applications
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,69 @@
+WEBAPI.WINDOWCLIENT(1)           Sandbox manual           WEBAPI.WINDOWCLIENT(1)
+
+       NAME
+
+       WindowClient - service
+
+       WINDOWCLIENT
+
+       service
+
+       The WindowClient interface of the ServiceWorker API represents the scope of a service worker client that is a document in a browsing context, controlled by an active worker. The service worker client independently selects and uses a service worker for its own loading and sub-resources.
+
+       INSTANCE METHODS
+
+       _WindowClient inherits methods from its parent interface, Client._
+
+        * WindowClient.focus()
+          * : Gives user input focus to the current client.
+        * WindowClient.navigate()
+          * : Loads a specified URL into a controlled client page.
+
+       INSTANCE PROPERTIES
+
+       _WindowClient inherits properties from its parent interface, Client._
+
+        * WindowClient.ancestorOrigins (read-only) (experimental)
+          * : An array of strings that indicates the ancestor origins of the browsing context represented by this WindowClient in reverse order.
+        * WindowClient.focused (read-only)
+          * : A boolean that indicates whether the current client has focus.
+        * WindowClient.visibilityState (read-only)
+          * : Indicates the visibility of the current client. This value can be one of "hidden" or "visible".
+
+       EXAMPLE
+
+         self.addEventListener("notificationclick", (event) => {
+           console.log("On notification click: ", event.notification.tag);
+           event.notification.close();
+
+           // This looks to see if the current is already open and
+           // focuses if it is
+           event.waitUntil(
+             clients
+               .matchAll({
+                 type: "window",
+               })
+               .then((clientList) => {
+                 for (const client of clientList) {
+                   if (client.url === "/" && "focus" in client) {
+                     client.focus();
+                     break;
+                   }
+                 }
+                 if (clients.openWindow) return clients.openWindow("/");
+               }),
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Service workers basic code example
+        * Using web workers
+        * Channel Messaging API
+
+Web APIs manual                         from the official documentation

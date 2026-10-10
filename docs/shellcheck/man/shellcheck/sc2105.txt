@@ -1,0 +1,42 @@
+SHELLCHECK.SC2105(1)             Sandbox manual             SHELLCHECK.SC2105(1)
+
+       NAME
+
+       break is only valid in loops - case "$1" in
+
+       BREAK IS ONLY VALID IN LOOPS
+
+       BREAK IS ONLY VALID IN LOOPS
+
+       PROBLEMATIC CODE
+
+         case "$1" in
+             -v)
+                verbose=1
+                break
+                ;;
+             -d)
+                debug=1
+         esac
+
+       CORRECT CODE
+
+         case "$1" in
+             -v)
+                verbose=1
+                ;;
+             -d)
+                debug=1
+         esac
+
+       RATIONALE
+
+       break or continue was found outside a loop. These statements are valid only in loops. In particular, break is not required in case statements as there is no implicit fall-through.
+
+       To return from a function or sourced script, use return. To exit a script, use exit.
+
+       EXCEPTIONS
+
+       It's possible to break/continue in a function without a loop. The call will then affect the loop – if any – that the function is invoked from, but this is obviously not good coding practice.
+
+ShellCheck manual                       from the official documentation

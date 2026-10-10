@@ -1,0 +1,90 @@
+WEBAPI.FULLSCREEN-API-GUIDE(1)   Sandbox manual   WEBAPI.FULLSCREEN-API-GUIDE(1)
+
+       NAME
+
+       Guide to the Fullscreen API - This article demonstrates how to use the Fullscreen API to place a given element into fullscreen mode, as well as how to detect when the bro
+
+       GUIDE TO THE FULLSCREEN API
+
+       This article demonstrates how to use the Fullscreen API to place a given element into fullscreen mode, as well as how to detect when the browser enters or exits fullscreen mode.
+
+       ACTIVATING FULLSCREEN MODE
+
+       Given an element that you'd like to present in fullscreen mode (such as a , for example), you can present it in fullscreen mode by calling its requestFullscreen() method.
+
+       Let's consider this element:
+
+         <video controls id="my-video">
+           <source src="somevideo.webm" />
+           <source src="somevideo.mp4" />
+         </video>
+
+       We can put that video into fullscreen mode as follows:
+
+         const elem = document.getElementById("my-video");
+         if (elem.requestFullscreen) {
+           elem.requestFullscreen();
+         }
+
+       This code checks for the existence of the requestFullscreen() method before calling it.
+
+       Once an element is in fullscreen mode, it is matched by :fullscreen, which gives it some default styles like taking up the entire screen. It is also placed in the top layer.
+
+       If multiple elements are requested to be displayed in fullscreen mode, they all get matched by :fullscreen and are all in the top layer. They stack on top each other, with more recently requested elements on top of older ones. The most recently requested element gets displayed and is returned by Document.fullscreenElement.
+
+       NOTIFICATION
+
+       When fullscreen mode is successfully engaged, the document which contains the element receives a fullscreenchange event. When fullscreen mode is exited, the document again receives a fullscreenchange event. Note that the fullscreenchange event doesn't provide any information itself as to whether the document is entering or exiting fullscreen mode, but if the document has a non null fullscreenElement, you know you're in fullscreen mode.
+
+       WHEN A FULLSCREEN REQUEST FAILS
+
+       It's not guaranteed that you'll be able to switch into fullscreen mode. For example, elements have the allowfullscreen attribute in order to opt-in to allowing their content to be displayed in fullscreen mode. In addition, certain kinds of content, such as windowed plug-ins, cannot be presented in fullscreen mode. Attempting to put an element which can't be displayed in fullscreen mode (or the parent or descendant of such an element) won't work. Instead, the element which requested fullscreen will receive a fullscreenerror event. When a fullscreen request fails, Firefox will log an error message to the Web Console explaining why the request failed. In Chrome and newer versions of Opera however, no such warning is generated.
+
+       > Fullscreen requests need to be called from within an event handler or otherwise they will be denied.
+
+       GETTING OUT OF FULL SCREEN MODE
+
+       The user always has the ability to exit fullscreen mode of their own accord; see Things your users want to know. You can also do so programmatically by calling the Document.exitFullscreen() method.
+
+       If there are multiple elements in fullscreen mode, calling exitFullscreen() only exits the topmost element, revealing the next element below it. Pressing Esc or F11 exits all fullscreen elements.
+
+       OTHER INFORMATION
+
+       The Document provides some additional information that can be useful when developing fullscreen web applications:
+
+        * Document.fullscreenElement / ShadowRoot.fullscreenElement
+          * : The fullscreenElement property tells you the Element that's currently being displayed fullscreen. If this is non-null, the document (or shadow DOM) is in fullscreen mode. If this is null, the document (or shadow DOM) is not in fullscreen mode.
+        * Document.fullscreenEnabled
+          * : The fullscreenEnabled property tells you whether or not the document is currently in a state that would allow fullscreen mode to be requested.
+
+       VIEWPORT SCALING IN MOBILE BROWSERS
+
+       Some mobile browsers while in fullscreen mode ignore viewport meta-tag settings and block user scaling; for example: a "pinch to zoom" gesture may not work on a page presented in fullscreen mode — even if, when not in fullscreen mode, the page can be scaled using pinch to zoom.
+
+       THINGS YOUR USERS WANT TO KNOW
+
+       You'll want to be sure to let your users know that they can press the Esc key (or F11) to exit fullscreen mode.
+
+       In addition, navigating to another page, changing tabs, or switching to another application (using, for example, Alt-Tab) while in fullscreen mode exits fullscreen mode as well.
+
+       EXAMPLE
+
+       The mdn/dom-examples GitHub repo has a complete example of the Fullscreen API.
+
+       Run the example and browse the source code.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using fullscreen mode
+        * Element.requestFullscreen()
+        * Document.exitFullscreen()
+        * Document.fullscreen
+        * Document.fullscreenElement
+        * :fullscreen, ::backdrop
+        * allowfullscreen
+
+Web APIs manual                         from the official documentation

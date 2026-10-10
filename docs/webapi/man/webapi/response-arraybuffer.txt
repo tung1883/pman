@@ -1,0 +1,101 @@
+WEBAPI.RESPONSE-ARRAYBUFFER(1)   Sandbox manual   WEBAPI.RESPONSE-ARRAYBUFFER(1)
+
+       NAME
+
+       Response: arrayBuffer() method - The arrayBuffer() method of the Response interface
+
+       RESPONSE: ARRAYBUFFER() METHOD
+
+       The arrayBuffer() method of the Response interface takes a Response stream and reads it to completion. It returns a promise that resolves with an ArrayBuffer.
+
+       SYNTAX
+
+         arrayBuffer()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A promise that resolves with an ArrayBuffer.
+
+       EXCEPTIONS
+
+        * AbortError DOMException
+          * : The request was aborted.
+        * TypeError
+          * : Thrown for one of the following reasons:
+            * The response body is disturbed or locked.
+            * There was an error decoding the body content (for example, because the Content-Encoding header is incorrect).
+        * RangeError
+          * : Thrown if there is a problem creating the associated ArrayBuffer (for example, if the data size is too large).
+
+       EXAMPLES
+
+       PLAYING MUSIC
+
+       In our fetch array buffer live, we have a Play button. When pressed, the getData() function is run. Note that before playing full audio file will be downloaded. If you need to play ogg during downloading (stream it) - consider HTMLAudioElement:
+
+         new Audio("music.ogg").play();
+
+       In getData() we create a new request using the Request() constructor, then use it to fetch an OGG music track. We also use AudioContext.createBufferSource to create an audio buffer source. When the fetch is successful, we read an ArrayBuffer out of the response using arrayBuffer(), decode the audio data using AudioContext.decodeAudioData(), set the decoded data as the audio buffer source's buffer (source.buffer), then connect the source up to the AudioContext.destination.
+
+       Once getData() has finished running, we start the audio source playing with start(0), then disable the play button so it can't be clicked again when it is already playing (this would cause an error.)
+
+         function getData() {
+           const audioCtx = new AudioContext();
+
+           return fetch("viper.ogg")
+             .then((response) => {
+               if (!response.ok) {
+                 throw new Error(`HTTP error, status = ${response.status}`);
+               }
+               return response.arrayBuffer();
+             })
+             .then((buffer) => audioCtx.decodeAudioData(buffer))
+             .then((decodedData) => {
+               const source = new AudioBufferSourceNode(audioCtx);
+               source.buffer = decodedData;
+               source.connect(audioCtx.destination);
+               return source;
+             });
+         }
+
+         // wire up buttons to stop and play audio
+
+         play.onclick = () => {
+           getData().then((source) => {
+             source.start(0);
+             play.setAttribute("disabled", "disabled");
+           });
+         };
+
+       READING FILES
+
+       The Response() constructor accepts Files and Blobs, so it may be used to read a File into other formats.
+
+         <input type="file" />
+
+         function readFile(file) {
+           return new Response(file).arrayBuffer();
+         }
+
+         document
+           .querySelector("input[type=file]")
+           .addEventListener("change", (event) => {
+             const file = event.target.files[0];
+             const buffer = readFile(file);
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ServiceWorker API
+        * HTTP access control (CORS)
+        * HTTP
+
+Web APIs manual                         from the official documentation

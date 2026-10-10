@@ -1,0 +1,543 @@
+ARCH.IPV6(1)                     Sandbox manual                     ARCH.IPV6(1)
+
+       In Arch Linux, IPv6 is enabled by default.
+
+       The tldp Linux+IPv6-HOWTO (or /usr/share/doc/howto/txt/Linux+IPv6-HOWTO from tldp-howtos-txt) article is older, and less maintained. Yet it attempts to cover many topics that are mentioned in this article, starts from the basics, and advances in a slower pace. It also has many command line examples. Beginners might want to read or skim it before reading this wiki article.
+
+       STATIC CONFIGURATION
+
+       Sometimes, using a static address can improve security. For example, if your local router uses Neighbor Discovery or radvd (RFC 2461), your interface will automatically be assigned an address based on its MAC address (using IPv6's Stateless Autoconfiguration), unless a privacy extension or stable private address is enabled. This may be less than ideal for security since it allows a system to be tracked even if the network portion of the IP address changes.
+
+       SYSTEMD-NETWORKD
+
+       To configure static IPv4 and IPv6 via systemd-networkd, you can do something like this:
+
+         [Match]
+         Name=XXXX (for example ens3)
+
+         [Network]
+         Address=XXX.XX.X.XX/32 (IPv4 address)
+         Gateway=10.0.0.1 (IPv4 gateway)
+         Address=XXXX:XXXX:X:XXX::2/64 (IPv6 address)
+         Gateway=XXXX:XXXX:X:XXX::1 (IPv6 gateway)
+
+       The network parameters will be different for everyone, but should be provided by ISP. Create or edit the file in /etc/systemd/network/example.network. Once it's done, you need to restart networkd service. To check IPv4 and IPv6 connection try ping -c3 google.com and ping -6 -c3 google.com.
+
+       NETCTL
+
+       To assign a static IP address using netctl, look at the example profile in /etc/netctl/examples/ethernet-static. The following lines are important:
+
+         ...
+         # For IPv6 static address configuration
+         IP6=static
+         Address6=('1234:5678:9abc:def::1/64' '1234:3456::123/96')
+         Routes6=('abcd::1234')
+         Gateway6='1234:0:123::abcd'
+
+       Note If you are connected IPv6-only, then you need to determine your IPv6 DNS server. For example:
+
+         DNS=('6666:6666::1' '6666:6666::2')
+
+       If your provider did not give you IPv6 DNS and you are not running your own, you can choose from the resolv.conf article.
+
+       NEIGHBOR DISCOVERY
+
+       Pinging the multicast address ff02::1 results in all hosts in link-local scope responding. An interface has to be specified:
+
+         $ ping ff02::1%eth0
+
+       After that, you can get a list of all the IPv6 neighbors in the local network with:
+
+         $ ip -6 neigh
+
+       With a ping to the multicast address ff02::2 only routers will respond.
+
+       If you add an option -I your-global-ipv6, link-local hosts will respond with their link-global scope addresses. The interface can be omitted in this case:
+
+         $ ping -I 2001:4f8:fff6::21 ff02::1
+
+       To ping everyone on all interfaces, and announce your address to everyone, use a script.
+
+         #!/usr/bin/bash
+         declare -a l_ifs
+         readarray l_ifs < <(/sbin/ip -6 -j address | jq -r '.[] | .ifname ')
+         for l_if in ${l_ifs[@]} ; do
+          echo $l_if
+          declare -a l_addrs
+          readarray l_addrs < <(/sbin/ip -6 -j address show dev "$l_if" | \
+                                 jq -r  '.[0].addr_info[].local')
+          for l_addr in ${l_addrs[@]} ; do
+            echo $l_addr
+            ping -c 4 -6 -I "$l_addr" ff02::1%"$l_if"
+          done
+         done
+
+       STATELESS AUTOCONFIGURATION (SLAAC)
+
+       The easiest way to acquire an IPv6 address as long as your network is configured is through Stateless address autoconfiguration (SLAAC for short). The address is automatically inferred from the prefix that your router advertises and requires neither further configuration nor specialized software such as a DHCP client.
+
+       SLAAC is implemented on top of neighbor discovery. Without any router, a client automatically combine the fe80::/64 link-local prefix with its 64-bit interface-identifier (IID) to form its link-local address. When a client receives a router advertisement (RA) packet containing a /64 prefix, it combines the prefix with the IID to form a global IPv6 address. The IID is derived from the MAC address by default, but this raises privacy concerns, which is addressed by "privacy" variations that use pseudorandom values instead (see below).
+
+       FOR CLIENTS
+
+       If you are using netctl you just need to add the following line to your Ethernet or wireless configuration.
+
+         IP6=stateless
+
+       If you are using NetworkManager then it automatically enables IPv6 addresses if there are advertisements for them in the network.
+
+       Please note that stateless autoconfiguration works on the condition that IPv6 icmp packets are allowed throughout the network. So for the client side the ipv6-icmp packets must be accepted. If you are using the Simple stateful firewall/iptables you only need to add:
+
+         -A INPUT -p ipv6-icmp -j ACCEPT
+
+       If you are using an other firewall frontend (ufw, shorewall, etc) consult their documentation on how to enable the ipv6-icmp packets.
+
+       If your chosen network management solution does not support configuring the DNS resolver with stateless IPv6 (e.g. netctl), then it is possible to use rdnssd(8) from the ndisc6 package for that.
+
+       FOR GATEWAYS
+
+       To properly hand out IPv6s to the network clients we will need to use an advertising daemon. The standard tool for this job is radvd. Configuration of radvd is fairly simple:
+
+         /etc/radvd.conf
+
+         interface LAN {
+           AdvSendAdvert on;
+           MinRtrAdvInterval 3;
+           MaxRtrAdvInterval 10;
+           AdvDefaultLifetime 1800;
+           prefix ::/64 {
+             AdvOnLink on;
+             AdvAutonomous on;
+             AdvRouterAddr on;
+           };
+         };
+
+       The above configuration will tell clients to autoconfigure themselves using addresses from the advertised /64 block. Please note that the above configuration advertises all available prefixes assigned to the LAN facing interface. If you want to limit the advertised prefixes instead of ::/64 use the desired prefix, e.g. 2001:DB8::/64. The prefix block can be repeated many times for more prefixes.
+
+       The configuration setting AdvDefaultLifetime 1800 is required to ensure that Android devices can connect successfully. This specific value prevents connection issues detailed in Google's Issue Tracker (see: [1] and [2]).
+
+       To advertise DNS servers to your LAN clients you can use RDNSS feature. For example, add the following lines to advertise Google's DNS v6 servers:
+
+         /etc/radvd.conf
+
+         RDNSS 2001:4860:4860::8888 2001:4860:4860::8844 {
+          };
+
+       The gateway must also allow the traffic of ipv6-icmp packets on all basic chains. For the Simple stateful firewall/iptables add:
+
+         -A INPUT -p ipv6-icmp -j ACCEPT
+         -A OUTPUT -p ipv6-icmp -j ACCEPT
+         -A FORWARD -p ipv6-icmp -j ACCEPT
+
+       Adjust accordingly for other firewall frontends and do not forget to enable radvd.service.
+
+       PRIVACY EXTENSIONS
+
+       When a client acquires an address through SLAAC its IPv6 address is derived from the advertised prefix and the MAC address of the network interface of the client. This may raise privacy concerns as the MAC address of the computer can be easily derived by the IPv6 address. In order to tackle this problem the IPv6 Privacy Extensions standard (RFC 3041 in kernel; latest version is RFC 8981) has been developed. With privacy extensions the kernel generates a temporary address that is mangled from the original autoconfigured address. Private addresses are preferred when connecting to a remote server so the original address is hidden. To enable Privacy Extensions reproduce the following steps:
+
+       Add the following sysctl parameters:
+
+         /etc/sysctl.d/40-ipv6.conf
+
+         # Enable IPv6 Privacy Extensions
+         net.ipv6.conf.all.use_tempaddr = 2
+         net.ipv6.conf.default.use_tempaddr = 2
+         net.ipv6.conf.nic.use_tempaddr = 2
+
+       Where nic is your Network Interface Card. You can find their names using the instructions in Network configuration#Listing network interfaces. The all.use_tempaddr or default.use_tempaddr parameters are not applied to nic's that already exist when the sysctl settings are executed.
+
+       After a reboot, at the latest, Privacy Extensions should be enabled.
+
+       Privacy extensions sysctls under net.ipv6.conf.{all, default, nic} [3]
+
+         Variable name | Description
+         use_tempaddr | Preference for Privacy Extensions (RFC3041). <= 0: disable; 1: enable, but prefer public addresses over temp addresses; > 1: enable and prefer temp addresses over public addresses.
+         temp_prefered_lft | Preferred temp address lifetime in seconds. Note the wrong spelling has to be used.
+         temp_valid_lft | Maximum temp address lifetime in seconds.
+
+       DHCPCD
+
+       dhcpcd's default configuration includes the option slaac private, which enables "Stable Private IPv6 Addresses instead of hardware based ones", implementing RFC 7217. Therefore, it is not necessary to change anything, except if it is desired to change of IPv6 address more often than each time the system is connected to a new network. Set it to slaac hwaddr for a stable address.
+
+       NETWORKMANAGER
+
+       The use of IPv6 Privacy Extensions in NetworkManager can be controlled with the ipv6.ip6-privacy setting in NetworkManager.conf(5) or in the connection's profile. If it is not set globally nor per-connection, NetworkManager will fall back to reading /proc/sys/net/ipv6/conf/default/use_tempaddr.
+
+       To explicitly enable IPv6 Privacy Extensions by default, add these lines to NetworkManager.conf(5):
+
+         /etc/NetworkManager/conf.d/ip6-privacy.conf
+
+         [connection]
+         ipv6.ip6-privacy=2
+
+       Apply the configuration and reconnect to all active connections.
+
+       To control the use of IPv6 Privacy Extensions for individual NetworkManager-managed connections, edit the desired connection keyfile in /etc/NetworkManager/system-connections/ and append to its [ipv6] section the key-value pair ip6-privacy=2:
+
+         /etc/NetworkManager/system-connections/example_connection.nmconnection
+
+         ...
+         [ipv6]
+         method=auto
+         ip6-privacy=2
+         ...
+
+       Reload the connection and reconnect to it afterwards.
+
+       Note Although it may seem the scope global temporary IPv6 address created by enabling Privacy Extensions never gets renewed (it never shifts to deprecated status at the term of its valid_lft lifetime), it is to be verified over a longer period of time that this address does indeed change.
+
+       SYSTEMD-NETWORKD
+
+       systemd-networkd does not enable IPv6 privacy extensions by default. To enable them set IPv6PrivacyExtensions=yes in the [Network] section in per-connection .network files or globally with a configuration file in /etc/systemd/networkd.conf.d/. E.g.:
+
+         /etc/systemd/networkd.conf.d/ipv6-privacy-extensions.conf
+
+         [Network]
+         IPv6PrivacyExtensions=yes
+
+       systemd-networkd does not honor the sysctl setting net.ipv6.conf.nicN.use_tempaddr unless the IPv6PrivacyExtensions option is set to kernel.
+
+       Other options for the IPv6 Privacy Extensions like net.ipv6.conf.nicN.temp_prefered_lft and net.ipv6.conf.nicN.temp_valid_lft are honored, however.
+
+       See systemd-networkd and systemd.network(5) for details.
+
+       CONNMAN
+
+       Use the following setting in your service file:
+
+         /var/lib/connman/service/settings
+
+         IPv6.privacy=preferred
+
+       See ConnMan for details.
+
+       STABLE PRIVATE ADDRESSES
+
+       Another option is a stable private IP address (RFC 7217). This allows for IPs that are stable within a network without exposing the MAC address of the interface.
+
+       In order to have the kernel generate a key (for wlan0, for example) we can set:
+
+         # sysctl net.ipv6.conf.wlan0.addr_gen_mode=3
+
+       Bring the interface down and up and you should see stable-privacy next to each IPv6 address after running ip addr show dev wlan0. The kernel has generated a 128-bit secret for generating ip addresses for this interface, to see it run sysctl net.ipv6.conf.wlan0.stable_secret. We are going to persist this value so add the following lines to /etc/sysctl.d/40-ipv6.conf:
+
+         # Enable IPv6 stable privacy mode
+         net.ipv6.conf.wlan0.stable_secret = output_from_previous_command
+         net.ipv6.conf.wlan0.addr_gen_mode = 2
+
+       Note If you are using dhcpcd to get the IPv6 address, the stable-privacy flag will not be attributed to this IP address.
+
+       NETWORKMANAGER
+
+       The above settings are not honored by NetworkManager, but NetworkManager uses stable private addresses by default.[4][5]
+
+       SYSTEMD-NETWORKD
+
+       The above settings are not honored by systemd-networkd. To ensure stable private addresses are always used, you can set:
+
+         [IPv6AcceptRA]
+         Token=prefixstable
+
+       The above tells systemd-networkd to use a secret derived from the machine ID. You can also specify a secret yourself or even apply the setting to only specific prefixes appearing in Router Advertisement messages. See systemd.network(5) § [IPV6ACCEPTRA] SECTION OPTIONS for details.
+
+       You can also generate stable private link-local addresses if desired:
+
+         [Network]
+         IPv6LinkLocalAddressGenerationMode=stable-privacy
+
+       IPV6 AND PPPOE
+
+       The standard tool for PPPoE, pppd(8), provides support for IPv6 on PPPoE as long as your ISP and your modem support it. Just add the following to /etc/ppp/options
+
+         +ipv6
+
+       If you are using netctl for PPPoE then just add the following to your netctl configuration instead:
+
+         PPPoEIP6=yes
+
+       PREFIX DELEGATION (DHCPV6-PD)
+
+       Note This section is targeted towards custom gateway configuration, not client machines. For standard market routers please consult the documentation of your router on how to enable prefix delegation.
+
+       Prefix delegation is a common IPv6 deployment technique used by many ISPs. It is a method of assigning a network prefix to a user site (i.e. local network). A router can be configured to assign different network prefixes to various subnetworks. The ISP hands out a network prefix using DHCPv6 (usually a /56 or /64) and a dhcp client assigns the prefixes to the local network. For a simple two interface gateway it practically assigns an IPv6 prefix to the interface connected to the local network from an address acquired through the interface connected to WAN (or a pseudo-interface such as ppp).
+
+       DHCPv6 requires the client to receive incoming connections on port 546 UDP. For an nftables-based firewall, that can be configured with one line in the input chain in /etc/nftables.conf:
+
+         table inet filter {
+           chain input {
+             udp dport dhcpv6-client accept
+             ...
+           }
+         ...
+         }
+
+       WITH DHCPCD
+
+       dhcpcd apart from IPv4 dhcp support also provides a fairly complete implementation of the DHCPv6 client standard which includes DHCPv6-PD. If you are using dhcpcd edit /etc/dhcpcd.conf. You might already be using dhcpcd for IPv4 so just update your existing configuration.
+
+         duid
+         noipv6rs
+         waitip 6
+         # Uncomment this line if you are running dhcpcd for IPv6 only.
+         #ipv6only
+
+         # The following applies to the interface WAN.
+         interface WAN
+             ipv6rs
+             # Assign WAN the iaid 1.
+             iaid 1
+             # Assign a Normal Address to the interface with iaid 1 (i.e. WAN).
+             ia_na 1
+             # Delegate a prefix with wan interface iaid 1 (i.e. WAN) and lan interface LAN.
+             ia_pd 1 LAN
+             #ia_pd 1/::/64 LAN/0/64
+
+       This configuration will ask for a prefix from WAN interface (WAN) and delegate it to the internal interface (LAN). In the event that a /64 range is issued, you will need to use the 2nd ia_pd instruction that is commented out instead. It will also disable router solicitations on all interfaces except for the WAN interface (WAN).
+
+       Tip Also read dhcpcd(8) and dhcpcd.conf(5).
+
+       WITH WIDE-DHCPV6
+
+       WIDE-DHCPv6 is an open-source implementation of Dynamic Host Configuration Protocol for IPv6 (DHCPv6) originally developed by the KAME project. It can be installed with wide-dhcpv6AUR.
+
+       If you are using wide-dhcpv6, edit /etc/wide-dhcpv6/dhcp6c.conf
+
+         # use the interface connected to your WAN
+         interface WAN {
+           send ia-pd 0;
+         };
+
+         id-assoc pd 0 {
+           # use the interface connected to your LAN
+           prefix-interface LAN {
+             sla-id 1;
+             sla-len 8;
+           };
+         };
+
+       Note sla-len should be set so that (WAN-prefix) + (sla-len) = 64. In this case it is set up for a /56 prefix 56+8=64. For a /64 prefix sla-len should be 0.
+
+       The wide-dhcpv6 client can be started/enabled using the dhcp6c@interface.service systemd unit file, where interface is the interface name in the configuration file, e.g. for a interface name "WAN" use dhcp6c@WAN.service.
+
+       Tip Read dhcp6c(8) and dhcp6c.conf(5) for more information.
+
+       SYSTEMD-NETWORKD
+
+       Configure both your upstream (wan) and downstream (lan) interface. This will enable DHCPv6-PD on the interface where the DHCPv6 client is running. The delegated prefixes are distributed by IPv6 Router Advertisement on the downstream network.
+
+         /etc/systemd/network/wan.network
+
+         [Network]
+         # Use 'yes' instead of 'ipv6' for both ipv4 and ipv6.
+         DHCP=ipv6
+
+         /etc/systemd/network/lan.network
+
+         [Network]
+         IPv6SendRA=yes
+         DHCPv6PrefixDelegation=yes
+
+       Tip Also read systemd.network(5) § EXAMPLES.
+
+       OTHER CLIENTS
+
+       dhclient can also request a prefix, but assigning that prefix, or parts of that prefix to interfaces must be done using a dhclient exit script. For example: https://github.com/jaymzh/v6-gw-scripts/blob/master/dhclient-ipv6.
+
+       NAT64
+
+       Wikipedia:NAT64 is the IPv6 transition mechanism where IPv6 only hosts are able to communicate with IPv4 hosts using NAT.
+
+       Linux kernel does not support NAT64 natively but there are several packages to add support for NAT64.
+
+        * Jool — SIIT and NAT64 for Linux
+       https://nicmx.github.io/Jool/ || jool-dkmsAUR, jool-toolsAUR
+
+        * TAYGA — NAT64 daemon
+       https://github.com/apalrd/tayga || taygaAUR
+
+       DISABLE IPV4
+
+       There are very few reasons to disable either IPv4 or the IPv6 address stack on Linux, dual-stacked Linux has worked just fine since 1999. But as global IPv6 adoption grows, IPv6-only networks have become increasingly common. NAT64 and DNS64 are commonly used transition mechanisms for IPv6-only networks to communicate with legacy IPv4-only networks.
+
+       Common reasons to disable IPv4 networking:
+
+        * You know your service provider is an IPv6-only network.
+        * Your ISP does Carrier Grade NAT (CGN or CGNAT) and your IPv4 performance is inferior to native IPv6.
+        * You are a network engineer deploying NAT64 in your Autonomous System (AS).
+
+       DISABLE IPV4 IN SYSTEMD-NETWORKD
+
+       To configure an IPv6-only interface in systemd-networkd, set LinkLocalAddressing=ipv6 in your network configuration, see example below:
+
+         /etc/systemd/network/lan.network
+
+         [Match]
+         Name=eno0
+
+         [Link]
+         RequiredForOnline=routable
+         RequiredFamilyForOnline=ipv6
+
+         [Network]
+         # Enable IPv6 only
+         LinkLocalAddressing=ipv6
+
+         # Enable DHCP
+         DHCP=ipv6
+
+         # Enable SLAAC
+         IPv6AcceptRA=true
+
+       DISABLE IPV6
+
+       Note The Arch kernel has IPv6 support built in directly, therefore a module cannot be blacklisted.
+
+       For some ISPs[6][7], the IPv6 traffic is slower than the IPv4 one: if you can confirm with certainty you are affected by such issues, disabling IPv6 may speed up your network speeds.
+
+       This should not be done blindly: for most users, IPv4-only networking will degrade performance behind Carrier-grade NAT and hamper their usage of P2P or WebRTC applications (e.g. some games). Instead, configuring IPv4 to be preferred over IPv6 is the best of both worlds.
+
+       DISABLE FUNCTIONALITY
+
+       Adding ipv6.disable=1 to the kernel line disables the whole IPv6 stack, which is likely what you want if you are experiencing issues. See Kernel parameters for more information.
+
+       Alternatively, adding ipv6.disable_ipv6=1 instead will keep the IPv6 stack functional but will not assign IPv6 addresses to any of your network devices.
+
+       SYSCTL
+
+       One can disable the IPv6 stack for all or specific network interfaces by adding the following sysctl configuration to /etc/sysctl.d/40-ipv6.conf:
+
+         # Disable IPv6
+         net.ipv6.conf.all.disable_ipv6 = 1
+         net.ipv6.conf.nic0.disable_ipv6 = 1
+         ...
+         net.ipv6.conf.nicN.disable_ipv6 = 1
+
+       This however only works, if one restarts the systemd-sysctl.service after boot, since systemd-sysctl.service starts before the network interfaces are completely configured. On boot one can only set the configuration for lo, default and all, because they are an internal part of the IPv6 stack.
+
+       Tip If the IPv6 stack is not entirely disabled, it is also possible to disable IPv6 for interfaces at runtime to test configuration changes. Executing # sysctl -w net.ipv6.conf.all.disable_ipv6=1 drops assigned IPv6 addresses plus its routes on all network interfaces, and can be reversed.
+
+       Note
+
+        * Most network managers (netplan, systemd-networkd, NetworkManager, etc.) set the IPv6 stack status of configured network interfaces depending on their own configuration, ignoring the configuration set in net.ipv6.conf.default.disable_ipv6.
+        * If disabling IPv6 via sysctl, you should comment out the IPv6 hosts in your /etc/hosts. Otherwise there could be some connection errors because hosts are resolved to their IPv6 address which is not reachable.
+
+       SYSTEMD UNIT
+
+       If one wants to disable the IPv6 stack for all network interfaces on boot, with the ability to easily enable IPv6 later, a systemd unit which runs after the network manager is necessary.
+
+       A unit for systemd-networkd would look like this:
+
+         /etc/systemd/system/enforce_disable_ipv6.service
+
+         [Unit]
+         Description=enforce default disable_ipv6
+         AssertPathExists=/proc/sys/net/ipv6/conf/all/disable_ipv6
+         AssertPathExists=/proc/sys/net/ipv6/conf/default/disable_ipv6
+         After=systemd-networkd.service
+         PartOf=systemd-networkd.service
+
+         [Service]
+         Type=oneshot
+         ExecStart=-/usr/bin/cp --no-preserve=all -T /proc/sys/net/ipv6/conf/default/disable_ipv6 /proc/sys/net/ipv6/conf/all/disable_ipv6
+
+         [Install]
+         WantedBy=systemd-networkd.service
+
+       After enabling this unit, any start or restart of systemd-networkd will enforce the default value of the IPv6 stack status on all network interfaces.
+
+       The default value can be set on boot with #sysctl.
+
+       To adjust this unit for other network manager one needs to replace all occurrences of systemd-networkd.service with the configuration unit of their network manager.
+
+       OTHER PROGRAMS
+
+       Disabling IPv6 functionality in the kernel does not prevent other programs from trying to use IPv6. In most cases, this is completely harmless, but if you find yourself having issues with that program, you should consult the program's manual pages for a way to disable that functionality.
+
+       DHCPCD
+
+       dhcpcd will continue to harmlessly attempt to perform IPv6 router solicitation. To disable this, as stated in the dhcpcd.conf(5) man page, add the following to /etc/dhcpcd.conf:
+
+         noipv6rs
+         noipv6
+
+       NETWORKMANAGER
+
+       To disable IPv6 in NetworkManager, right click the network status icon, and select Edit Connections > Wired > Network name > Edit > IPv6 Settings > Method > Ignore/Disabled. Then click Save.
+
+       This can also be done as:
+
+         # nmcli connection modify ConnectionName ipv6.method "disabled"
+
+       Followed by a restart of the network connection:
+
+         # nmcli connection up ConnectionName
+
+       To confirm the settings have been applied, use ip address show and check no inet6 entry is displayed. Alternatively, /proc/sys/net/ipv6/conf/interface/disable_ipv6 should have the value 1.
+
+       NTPD
+
+       Following advice in systemd#Drop-in files, edit ntpd.service to define how systemd starts it.
+
+       This will create a drop-in snippet that will be run instead of the default ntpd.service. The -4 flag prevents IPv6 from being used by the ntp daemon. Put the following into the drop-in snippet:
+
+         [Service]
+         ExecStart=
+         ExecStart=/usr/bin/ntpd -4 -g -u ntp:ntp
+
+       which first clears the previous ExecStart, and then replaces it with one that includes the -4 flag.
+
+       GNUPG
+
+       Disable IPv6 in the dirmngr's configuration file:
+
+         ~/.gnupg/dirmngr.conf
+
+         disable-ipv6
+
+       Restart the dirmngr.service user unit afterwards.
+
+       SSHD
+
+       Ensure sshd is using IPv4 by adding the following to sshd_config:
+
+         /etc/ssh/sshd_config
+
+         AddressFamily inet
+
+       And restart the sshd.service.
+
+       SYSTEMD-TIMESYNCD
+
+       On occasion systemd-timesyncd will attempt to query an IPv6 timeserver even when IPv6 has been disabled. This can result in the system clock not being updated and the journal showing an error similar to:
+
+         systemd-timesyncd[336]: Failed to set up connection socket: Address family not supported by protocol
+
+       The unit status of systemd-timesyncd will show an attempt to connect with an IPv6 address in its Status entry, similar to:
+
+         Status: "Connecting to time server [2001:19f0:8001:afd:5400:1ff:fe9d:cba]:123 (2.pool.ntp.org)"
+
+       Per FS#59806, only the "2." ntp.org pools serve IPv6. So to prevent this remove 2.arch.pool.ntp.org and 2.pool.ntp.org from the NTP and FallbackNTP entries in /etc/systemd/timesyncd.conf file.
+
+       SYSTEMD-NETWORKD
+
+       networkd supports disabling IPv6 on a per-interface basis. When a network unit's [Network] section has either LinkLocalAddressing=ipv4 or LinkLocalAddressing=no, networkd will not try to configure IPv6 on the matching interfaces.
+
+       Note however that even when using the above option, networkd will still be expecting to receive router advertisements if IPv6 is not disabled globally. If IPv6 traffic is not being received by the interface (e.g. due to sysctl or ip6tables settings), it will remain in the configuring state and potentially cause timeouts for services waiting for the network to be fully configured. To avoid this, the IPv6AcceptRA=no option should also be set in the [Network] section.
+
+       PREFER IPV4 OVER IPV6
+
+       Uncomment the following line in /etc/gai.conf:
+
+         #
+         #    For sites which prefer IPv4 connections change the last line to
+         #
+         precedence ::ffff:0:0/96  100
+
+       SEE ALSO
+
+        * IPv6 — kernel.org documentation
+        * IPv6 temporary addresses — a summary about temporary addresses and privacy extensions
+        * IPv6 prefixes — a summary of prefix types
+        * net.ipv6 options — documentation of kernel parameters
+
+ArchWiki manual                         bundled documentation

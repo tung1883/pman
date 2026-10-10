@@ -1,0 +1,113 @@
+WEBAPI.WORKERGLOBALSCOPE(1)      Sandbox manual      WEBAPI.WORKERGLOBALSCOPE(1)
+
+       NAME
+
+       WorkerGlobalScope - worker
+
+       WORKERGLOBALSCOPE
+
+       worker
+
+       The WorkerGlobalScope interface of the Web Workers API is an interface representing the scope of any worker. Workers have no browsing context; this scope contains the information usually conveyed by Window objects — in this case event handlers, the console or the associated WorkerNavigator object. Each WorkerGlobalScope has its own event loop.
+
+       This interface is usually specialized by each worker type: DedicatedWorkerGlobalScope for dedicated workers, SharedWorkerGlobalScope for shared workers, and ServiceWorkerGlobalScope for ServiceWorker. The self property returns the specialized scope for each context.
+
+       INSTANCE PROPERTIES
+
+       _This interface inherits properties from the EventTarget interface._
+
+        * WorkerGlobalScope.caches (read-only)
+          * : Returns the CacheStorage object associated with the current context. This object enables functionality such as storing assets for offline use, and generating custom responses to requests.
+        * WorkerGlobalScope.crossOriginIsolated (read-only)
+          * : Returns a boolean value that indicates whether the website is in a cross-origin isolation state.
+        * WorkerGlobalScope.crypto (read-only)
+          * : Returns the Crypto object associated to the global object.
+        * WorkerGlobalScope.fonts (read-only)
+          * : Returns the FontFaceSet associated with the worker.
+        * WorkerGlobalScope.indexedDB (read-only)
+          * : Provides a mechanism for workers to asynchronously access capabilities of indexed databases; returns an IDBFactory object.
+        * WorkerGlobalScope.isSecureContext (read-only)
+          * : Returns a boolean indicating whether the current context is secure (true) or not (false).
+        * WorkerGlobalScope.location (read-only)
+          * : Returns the WorkerLocation associated with the worker. It is a specific location object, mostly a subset of the Location for browsing scopes, but adapted to workers.
+        * WorkerGlobalScope.navigator (read-only)
+          * : Returns the WorkerNavigator associated with the worker. It is a specific navigator object, mostly a subset of the Navigator for browsing scopes, but adapted to workers.
+        * WorkerGlobalScope.origin (read-only)
+          * : Returns the global object's origin, serialized as a string.
+        * WorkerGlobalScope.performance (read-only)
+          * : Returns the Performance associated with the worker. Only a subset of the properties and methods of the Performance interface are available to workers.
+        * WorkerGlobalScope.scheduler (read-only)
+          * : Returns the Scheduler object associated with the current context. This is the entry point for using the Prioritized Task Scheduling API.
+        * WorkerGlobalScope.trustedTypes (read-only)
+          * : Returns the TrustedTypePolicyFactory object associated with the global object, providing the entry point for using the Trusted Types API.
+        * WorkerGlobalScope.self (read-only)
+          * : Returns a reference to the WorkerGlobalScope itself. Most of the time it is a specific scope like DedicatedWorkerGlobalScope, SharedWorkerGlobalScope or ServiceWorkerGlobalScope.
+
+       INSTANCE METHODS
+
+       _This interface inherits methods from the EventTarget interface._
+
+        * WorkerGlobalScope.atob()
+          * : Decodes a string of data which has been encoded using base-64 encoding.
+        * WorkerGlobalScope.btoa()
+          * : Creates a base-64 encoded ASCII string from a string of binary data.
+        * WorkerGlobalScope.clearInterval()
+          * : Cancels the repeated execution set using WorkerGlobalScope.setInterval().
+        * WorkerGlobalScope.clearTimeout()
+          * : Cancels the delayed execution set using WorkerGlobalScope.setTimeout().
+        * WorkerGlobalScope.createImageBitmap()
+          * : Accepts a variety of different image sources, and returns a Promise which resolves to an ImageBitmap. Optionally the source is cropped to the rectangle of pixels originating at _(sx, sy)_ with width sw, and height sh.
+        * WorkerGlobalScope.dump() (deprecated) {{non-standard_inline}}
+          * : Allows you to write a message to stdout — i.e., in your terminal. This is the same as Firefox's window.dump, but for workers.
+        * WorkerGlobalScope.fetch()
+          * : Starts the process of fetching a resource from the network.
+        * WorkerGlobalScope.importScripts()
+          * : Imports one or more scripts into the worker's scope. You can specify as many as you'd like, separated by commas. For example: importScripts('foo.js', 'bar.js');.
+        * WorkerGlobalScope.queueMicrotask()
+          * : Queues a microtask to be executed at a safe time prior to control returning to the browser's event loop.
+        * WorkerGlobalScope.setInterval()
+          * : Schedules a function to execute every time a given number of milliseconds elapses.
+        * WorkerGlobalScope.setTimeout()
+          * : Schedules a function to execute in a given amount of time.
+        * WorkerGlobalScope.structuredClone()
+          * : Creates a deep clone of a given value using the structured clone algorithm.
+        * WorkerGlobalScope.reportError()
+          * : Reports an error in a script, emulating an unhandled exception.
+
+       EVENTS
+
+        * error
+          * : Fired when an error occurred.
+        * languagechange
+          * : Fired at the global/worker scope object when the user's preferred languages change.
+        * offline
+          * : Fired when the browser has lost access to the network and the value of navigator.onLine switched to false.
+        * online
+          * : Fired when the browser has gained access to the network and the value of navigator.onLine switched to true.
+        * rejectionhandled
+          * : Fired on handled Promise rejection events.
+        * securitypolicyviolation
+          * : Fired when a Content Security Policy is violated.
+        * unhandledrejection
+          * : Fired on unhandled Promise rejection events.
+
+       EXAMPLE
+
+       You won't access WorkerGlobalScope directly in your code; however, its properties and methods are inherited by more specific global scopes such as DedicatedWorkerGlobalScope and SharedWorkerGlobalScope. For example, you could import another script into the worker and print out the contents of the worker scope's navigator object using the following two lines:
+
+         importScripts("foo.js");
+         console.log(navigator);
+
+       > Since the global scope of the worker script is effectively the global scope of the worker you are running (DedicatedWorkerGlobalScope or whatever) and all worker global scopes inherit methods, properties, etc. from WorkerGlobalScope, you can run lines such as those above without specifying a parent object.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Other global object interface: Window, DedicatedWorkerGlobalScope, SharedWorkerGlobalScope, ServiceWorkerGlobalScope
+        * Other Worker-related interfaces: Worker, WorkerLocation and WorkerNavigator
+        * Using web workers
+
+Web APIs manual                         from the official documentation

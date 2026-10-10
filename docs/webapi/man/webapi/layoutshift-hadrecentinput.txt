@@ -1,0 +1,49 @@
+WEBAPI.LAYOUTSHIFT-HADRECENTINPUT(1) Sandbox manual WEBAPI.LAYOUTSHIFT-HADRECENTINPUT(1)
+
+       NAME
+
+       LayoutShift: hadRecentInput property - The hadRecentInput read-only property of the LayoutShift interface returns true if lastInputTime is less than 500 milliseconds in the past.
+
+       LAYOUTSHIFT: HADRECENTINPUT PROPERTY
+
+       The hadRecentInput read-only property of the LayoutShift interface returns true if lastInputTime is less than 500 milliseconds in the past.
+
+       Layout shifts are only a problem if the user is not expecting them, so layout shifts that are the result of user interactions (such as a user expanding a UI element) are often not considered in layout shift metrics. The hadRecentInput property allows you to exclude these shifts.
+
+       VALUE
+
+       A boolean returning true if lastInputTime is less than 500 milliseconds in the past; false otherwise.
+
+       EXAMPLES
+
+       IGNORING RECENT USER INPUT FOR LAYOUT SHIFT SCORES
+
+       The following example shows how the hadRecentInput property is used to only count layout shifts without recent user input.
+
+         const observer = new PerformanceObserver((list) => {
+           for (const entry of list.getEntries()) {
+             // Count layout shifts without recent user input only
+             if (!entry.hadRecentInput) {
+               console.log("LayoutShift value:", entry.value);
+               if (entry.sources) {
+                 for (const { node, currentRect, previousRect } of entry.sources)
+                   console.log("LayoutShift source:", node, {
+                     currentRect,
+                     previousRect,
+                   });
+               }
+             }
+           }
+         });
+
+         observer.observe({ type: "layout-shift", buffered: true });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * LayoutShift.lastInputTime
+
+Web APIs manual                         from the official documentation

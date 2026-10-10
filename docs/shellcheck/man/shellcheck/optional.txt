@@ -1,0 +1,99 @@
+SHELLCHECK.OPTIONAL(1)           Sandbox manual           SHELLCHECK.OPTIONAL(1)
+
+       NAME
+
+       Optional checks - ShellCheck supports additional checks that are not enabled by default. These are generally subjective or stylistic.
+
+       OPTIONAL CHECKS
+
+       OPTIONAL CHECKS
+
+       ShellCheck supports additional checks that are not enabled by default. These are generally subjective or stylistic.
+
+       ENABLING AN OPTIONAL CHECK
+
+       Checks can be enabled in three ways.
+
+       First, you can use an enable [[directive]] inside of a file:
+
+         #!/bin/sh
+
+         echo "$RANDOM"  # Will emit a suggestion to use `${RANDOM}`
+
+       Second, you can use an enable [[directive]] inside a .shellcheckrc configuration file in the project root (or in your home directory):
+
+         enable=require-variable-braces # SC2250
+
+       Third, you can enable them on the command-line with -o:
+
+         $ shellcheck -o require-variable-braces myscript
+
+       ENABLING ALL CHECKS
+
+       It is a good idea to enable all warnings with -Wall in C, but this is not the case in ShellCheck. Optional checks are more subjective rather than more comprehensive, and may conflict with each other.
+
+       However, if you for debugging or evaluation purposes want to see what's available, you can enable them with -o all or enable=all as above.
+
+       AVAILABLE CHECKS
+
+       To see which optional checks are available in your version of ShellCheck, use the --list flag.
+
+       Optional checks as of version 0.11.0:
+
+         $ shellcheck --list
+         name:    add-default-case
+         desc:    Suggest adding a default case in `case` statements
+         example: case $? in 0) echo 'Success';; esac
+         fix:     case $? in 0) echo 'Success';; *) echo 'Fail' ;; esac
+
+         name:    avoid-negated-conditions
+         desc:    Suggest removing unnecessary comparison negations
+         example: [ ! "$var" -eq 1 ]
+         fix:     [ "$var" -ne 1 ]
+
+         name:    avoid-nullary-conditions
+         desc:    Suggest explicitly using -n in `[ $var ]`
+         example: [ "$var" ]
+         fix:     [ -n "$var" ]
+
+         name:    check-extra-masked-returns
+         desc:    Check for additional cases where exit codes are masked
+         example: rm -r "$(get_chroot_dir)/home"
+         fix:     set -e; dir="$(get_chroot_dir)"; rm -r "$dir/home"
+
+         name:    check-set-e-suppressed
+         desc:    Notify when set -e is suppressed during function invocation
+         example: set -e; func() { cp *.txt ~/backup; rm *.txt; }; func && echo ok
+         fix:     set -e; func() { cp *.txt ~/backup; rm *.txt; }; func; echo ok
+
+         name:    check-unassigned-uppercase
+         desc:    Warn when uppercase variables are unassigned
+         example: echo $VAR
+         fix:     VAR=hello; echo $VAR
+
+         name:    deprecate-which
+         desc:    Suggest 'command -v' instead of 'which'
+         example: which javac
+         fix:     command -v javac
+
+         name:    quote-safe-variables
+         desc:    Suggest quoting variables without metacharacters
+         example: var=hello; echo $var
+         fix:     var=hello; echo "$var"
+
+         name:    require-double-brackets
+         desc:    Require [[ and warn about [ in Bash/Ksh
+         example: [ -e /etc/issue ]
+         fix:     [[ -e /etc/issue ]]
+
+         name:    require-variable-braces
+         desc:    Suggest putting braces around all variable references
+         example: var=hello; echo $var
+         fix:     var=hello; echo ${var}
+
+         name:    useless-use-of-cat
+         desc:    Check for Useless Use Of Cat (UUOC)
+         example: cat foo | grep bar
+         fix:     grep bar foo
+
+ShellCheck manual                       from the official documentation

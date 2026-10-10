@@ -1,0 +1,75 @@
+SHELLCHECK.SC2013(1)             Sandbox manual             SHELLCHECK.SC2013(1)
+
+       NAME
+
+       To read lines rather than words, pipe/redirect to a while read loop. - for line in $(cat file | grep -v '^ #')
+
+       TO READ LINES RATHER THAN WORDS, PIPE/REDIRECT TO A WHILE READ LOOP
+
+       TO READ LINES RATHER THAN WORDS, PIPE/REDIRECT TO A WHILE READ LOOP
+
+       PROBLEMATIC CODE
+
+         for line in $(cat file | grep -v '^ *#')
+         do
+           echo "Line: $line"
+         done
+
+       CORRECT CODE
+
+         grep -v '^ *#' file | while IFS= read -r line
+         do
+           echo "Line: $line"
+         done
+
+       or without a subshell (bash, zsh, ksh):
+
+         while IFS= read -r line
+         do
+           echo "Line: $line"
+         done < <(grep -v '^ *#' file)
+
+       or without a subshell, with a pipe (more portable, but write a file on the filesystem):
+
+         mkfifo mypipe
+         grep -v '^ *#' file > mypipe &
+         while IFS= read -r line
+         do
+           echo "Line: $line"
+         done < mypipe
+         rm mypipe
+
+       NOTE: grep -v '^ *#' is a placeholder example and not needed. To just loop through a file:
+
+         while IFS= read -r line
+         do
+           echo "Line: $line"
+         done < file
+         # or: done <<< "$variable"
+
+       RATIONALE
+
+       For loops by default (subject to $IFS) read word by word. Additionally, glob expansion will occur.
+
+       Given this text file:
+
+         foo *
+         bar
+
+       The for loop will print:
+
+         Line: foo
+         Line: aardwark.jpg
+         Line: bullfrog.jpg
+         ...
+
+       The while loop will print:
+
+         Line: foo *
+         Line: bar
+
+       EXCEPTIONS
+
+       If you do want to read word by word, you can set $IFS appropriately and disable globbing with set -f, and then [[ignore]] this warning. Alternatively, you can pipe through tr ' ' '\n' to turn words into lines, and then use while read. In Bash/Ksh, you can also use a while read -a loop to get an array of words per line.
+
+ShellCheck manual                       from the official documentation

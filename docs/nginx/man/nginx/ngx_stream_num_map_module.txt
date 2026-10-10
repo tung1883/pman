@@ -1,0 +1,47 @@
+NGINX.NGX_STREAM_NUM_MAP_MODULE(1) Sandbox manual NGINX.NGX_STREAM_NUM_MAP_MODULE(1)
+
+       MODULE NGX_STREAM_NUM_MAP_MODULE
+
+         Example Configuration Directives  num_map
+       The ngx_stream_num_map_module module (1.29.3) creates variables whose values depend on numeric values or numeric value ranges.
+
+       > This module is available as part of our commercial subscription.
+
+       EXAMPLE CONFIGURATION
+
+         num_map $remote_port $port_allow {
+             default    0;
+
+             80         1;
+             443        1;
+             <=1023     0;
+             8080-8090  1;
+         }
+
+       DIRECTIVES
+
+       NUM_MAP
+
+         Syntax: | num_map [$number] $variable { ... }
+         Default: | —
+         Context: | stream
+       Describes how the values of the specified variable depend on numeric values or numeric value ranges.
+
+       > Since variables are evaluated only when used, the mere existence of even a large number of declared “num_map” variables does not cause any extra costs for connection processing.
+
+       Parameters inside the num_map block specify a mapping between source and resulting values.
+
+       Source values are specified as numbers or as numeric ranges.
+
+       The following special parameters are also supported:
+
+         default
+       sets the resulting value if the source value matches none of the specified variants. When default is not specified, the default resulting value will be an empty string.
+
+         include
+       includes a file with values. There can be several inclusions.
+
+         volatile
+       indicates that the variable is not cacheable.
+
+nginx manual                            bundled documentation

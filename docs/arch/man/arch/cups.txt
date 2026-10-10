@@ -1,0 +1,382 @@
+ARCH.CUPS(1)                     Sandbox manual                     ARCH.CUPS(1)
+
+       CUPS is the standards-based, open source printing system developed by OpenPrinting for Linux® and other Unix®-like operating systems.
+
+       Arch Linux packages the OpenPrinting CUPS fork, not the Apple CUPS fork.
+
+       INSTALLATION
+
+       Install the cups package.
+
+       Note As drivers are deprecated in CUPS in favor of IPP Everywhere you may need to install cups-pdf to get printing to work. Without this package you may see an error like: client-error-document-format-not-supported. The package is needed because IPP Everywhere sends a PDF directly to the printer, therefore cups-pdf is needed to convert everything you want to print to a PDF first.
+
+       Optionally, install the cups-pdf package if you intend to "print" into a PDF document. By default, PDF files are stored in /var/spool/cups-pdf/username/. The location can be changed in /etc/cups/cups-pdf.conf.
+
+       Then enable and start cups.service or alternatively use socket activation to only start CUPS when a program wants to use the service.
+
+       PRINT STEPS
+
+       It is important to know how CUPS works if wanting to solve related issues:
+
+        * An application sends a PDF file to CUPS when 'print' has been selected (in case the application sends another format, it is converted to PDF first).
+        * CUPS then looks at the printer's PPD file (printer description file) and figures out what filters it needs to use to convert the PDF file to a language that the printer understands (like PJL, PCL, bitmap or native PDF).
+        * The filter converts the PDF file to a format understood by the printer.
+        * Then it is sent to the back-end. For example, if the printer is connected to a USB port, it uses the USB back-end.
+
+       CONNECTION INTERFACES
+
+       Additional steps for printer detection are listed below for various connection interfaces.
+
+       USB
+
+       To see if your USB printer is detected, make sure you have the usbutils package installed, then:
+
+         $ lsusb
+
+         (...)
+         Bus 001 Device 007: ID 03f0:1004 Hewlett-Packard DeskJet 970c/970cse
+
+       PARALLEL PORT
+
+       To use a parallel port printer, the lp, parport and parport_pc kernel modules are required.
+
+         # dmesg | grep -i parport
+
+         parport0: Printer, Hewlett-Packard HP LaserJet 2100 Series
+         lp0: using parport0 (polling)
+
+       NETWORK
+
+       ADDING KNOWN LOCATION PRINTERS
+
+       It is not required to rely on dynamic printer discovery on the network (DNS-SD/mDNS) when the address of the printer is known (e.g. obtained via printers display or other network scanning approaches). A CUPS queue can be directly added to use the printer. Documentation for adding the queue with lpadmin can be found in following sections and official documentation at Setting up printers.
+
+       PRINTER DISCOVERY
+
+       To discover, make use of discovered or share printers using DNS-SD/mDNS, set up .local hostname resolution with Avahi and restart cups.service.
+
+       Note DNS-SD is only supported when using Avahi. CUPS does not support using systemd-resolved for DNS-SD, see libcups issue 81. However, you can use systemd-resolved for domain resolution (works with browsers, unlike Avahi) and have avahi-daemon.service running for SD (Service Discovery) itself.
+
+       To share printers with Samba, e.g. if the system is to be a print server for Windows clients, the samba package will be required.
+
+       PRINTER SUPPORT
+
+       AIRPRINT AND IPP EVERYWHERE
+
+       Most recent printers (2010+) support driverless usage by implementing AirPrint and/or IPP Everywhere. These should be discovered automatically by CUPS without any extra configuration, if the avahi-daemon.service unit is running.
+
+       Installing an IPP Everywhere printer is described in the CUPS README. It can be done with the lpadmin command.
+
+       Example:
+
+         # lpadmin -p MyPrinter -E -v "ipp://11.22.33.44/ipp/print" -m everywhere
+
+       The -p option specifies the printer name. The -E option enables the printer and accepts new print jobs immediately. The -v option specifies the device URI for the printer, which tells CUPS how to communicate with the printer. And the -m option specifies the model (driver) to use, in this case the IPP Everywhere ("everywhere") driver that is used for AirPrint and IPP Everywhere printers as well as shared printers and printers supported through Printer Applications.
+
+       The USB or Network device URI can be found with the lpinfo -v command.
+
+       DRIVERS
+
+       Otherwise, CUPS needs a driver in the form of a PPD file and, for most printers, some filters. For details on how CUPS uses PPDs and filters, see [1].
+
+       The OpenPrinting Printer List provides driver recommendations for many printers. It also supplies PPD files for each printer, but most are available through foomatic or the recommended driver package.
+
+       When a PPD file is provided to CUPS, the CUPS server will regenerate the PPD files and save them in /etc/cups/ppd/.
+
+       To test if they are working before creating a PKGBUILD, PPD files can be manually added to /usr/share/cups/model, the driver should be available after the next restart of the cups service.
+
+       OPENPRINTING CUPS FILTERS
+
+       The Linux Foundation's OpenPrinting workgroup provides cups-filters. Those are backends, filters, and other binaries that were once part of CUPS but have been dropped from the project. They are available in the cups-filters package that is a dependency of cups.
+
+       Non-PDF printers require ghostscript to be installed. For PostScript printers, gsfonts may also be required.
+
+       FOOMATIC
+
+       The Linux Foundation's OpenPrinting workgroup's foomatic provides PPDs for many printer drivers, both free and non-free. For more information about what foomatic does, see Foomatic from the Developer's View.
+
+       To use foomatic, install foomatic-db-engine and at least one of:
+
+        * foomatic-db — a collection of XML files used by foomatic-db-engine to generate PPD files.
+        * foomatic-db-ppds — prebuilt PPD files.
+        * foomatic-db-nonfree — a collection of XML files from printer manufacturers under non-free licenses used by foomatic-db-engine to generate PPD files.
+        * foomatic-db-nonfree-ppds — prebuilt PPD files under non-free licenses.
+       The foomatic PPDs may require additional filters, such as min12xxwAUR.
+
+       GUTENPRINT
+
+       The Gutenprint project provides drivers for Canon, Epson, Lexmark, Sony, Olympus, Brother, HP, Ricoh, PCL printers and some generic printers for use with CUPS and GIMP.
+
+       Install gutenprint and foomatic-db-gutenprint-ppds.
+
+       Note When the Gutenprint packages get updated, the printers using Gutenprint drivers will stop working until you run cups-genppdupdate as root and restart CUPS. cups-genppdupdate will update the PPD files of the configured printers, see cups-genppdupdate(8) for more details.
+
+       MANUFACTURER-SPECIFIC DRIVERS
+
+       Many printer manufacturers supply their own Linux drivers. These are often available in the official Arch repositories or in the AUR.
+
+       Some of those drivers are described in more detail in CUPS/Printer-specific problems.
+
+       PRINTER URI
+
+       Listed below are additional steps to manually generate the URI if required. Some printers or drivers may need a special URI as described in CUPS/Printer-specific problems.
+
+       USB
+
+       CUPS should be able to automatically generate a URI for USB printers, for example usb://HP/DESKJET%20940C?serial=CN16E6C364BH.
+
+       If it does not, see CUPS/Troubleshooting#USB printers for troubleshooting steps.
+
+       PARALLEL PORT
+
+       The URI should be of the form parallel:device. For instance, if the printer is connected on /dev/lp0, use parallel:/dev/lp0. If you are using a USB to parallel port adapter, use parallel:/dev/usb/lp0 as the printer URI.
+
+       NETWORK
+
+       If you have set up Avahi as in #Network, CUPS should detect the printer URI. You can also use avahi-discover to find the name of your printer and its address (for instance, BRN30055C6B4C7A.local/10.10.0.155:631).
+
+       The URI can also be generated manually, without using Avahi. A list of the available URI schemes for networked printers is available in the CUPS documentation. As exact details of the URIs differ between printers, check either the manual of the printer or CUPS/Printer-specific problems.
+
+       The URI for printers on SMB shares is described in the smbspool(8) man page.
+
+       Note Any special characters in the printer URIs need to be appropriately quoted, or, if your Windows printer name or user passwords have spaces, CUPS will throw a lpadmin: Bad device-uri error.
+
+       For example, smb://BEN-DESKTOP/HP Color LaserJet CP1510 series PCL6 becomes smb://BEN-DESKTOP/HP%20Color%20LaserJet%20CP1510%20series%20PCL6.
+
+       This result string can be obtained by running the following command:
+
+         $ python -c 'from urllib.parse import quote; print("smb://" + quote("BEN-DESKTOP/HP Color LaserJet CP1510 series PCL6"))'
+
+       Remote CUPS print servers can be accessed through a URI of the form ipp://hostname:631/printers/queue_name. See CUPS/Printer sharing#Printer sharing for details on setting up the remote print server.
+
+       See CUPS/Troubleshooting#Networking issues for additional issues and solutions.
+
+       Warning Avoid configuring both the server and the client with a printer filter—either the print queue on the client or the server should be 'raw'. This avoids sending a print job through the filters for a printer twice (which can cause problems such as a shared printer working locally but a remote machine fails to print [2]). See #lp* for an example of setting a print queue to 'raw'.
+
+       USAGE
+
+       CUPS can be fully controlled using the lp* and cups* CLI tools. Alternatively, the #Web interface or one of several #GUI applications can be used.
+
+        * The queue name is a short but descriptive name used on the system to identify the queue. This name should not contain spaces or any special characters. For instance, a print queue corresponding to a HP LaserJet 5P could be named "hpljet5p". More than one queue can be associated with each physical printer.
+        * The location is a description of the printer's physical location (for instance "bedroom", or "kitchen"). This is to aid in maintaining several printers.
+        * The description is a full description of the print queue. A common use is a full printer name (like "HP LaserJet 5P").
+
+       CLI TOOLS
+
+       See CUPS local documentation for more tips on the command-line tools.
+
+       Note Command-line switches cannot be grouped.
+
+       Use SNMP to find a URI:
+
+         $ /usr/lib/cups/backend/snmp ip_address
+
+       LP
+
+       Note The lpinfo utility is deprecated. You should use instead the lpstat command.
+
+       The lpinfo command lists the URI of the printers connected to your system with the -v flag, and lists all of the available drivers (or "models", in CUPS parlance) installed on your system with -m.
+
+       The lpadmin utility creates a new queue with -p queue_name. The -E flag added to -p enables and accepts jobs on the printer. The -v flag specifies the device URI. The -m flag specifies the driver (or "model", in CUPS parlance) or PPD file to use.
+
+       You can also use the -x flag to remove a printer (read #cups* beforehand).
+
+       Examples :
+
+         # lpadmin -p HP_DESKJET_940C -E -v "usb://HP/DESKJET%20940C?serial=CN16E6C364BH" -m drv:///HP/hp-deskjet_940c.ppd.gz
+
+       For a driver-less queue (Apple AirPrint or IPP Everywhere):
+
+         # lpadmin -p AirPrint -E -v "ipp://10.0.1.25/ipp/print" -m everywhere
+
+       For a raw queue; no PPD or filter:
+
+         # lpadmin -p SHARED_PRINTER -m raw
+
+       When specifying a PPD instead of a model:
+
+         # lpadmin -p Test_Printer -E -v "ipp://10.0.1.3/ipp/print" -m pxlmono.ppd
+
+       Note
+
+        * When specifying the PPD, use just the file name and not the full path (for instance, pxlmono.ppd instead of /usr/share/ppd/cupsfilters/pxlmono.ppd). Alternatively, the full path can be used with the -P command line switch.
+        * As of 2021, many recent printers support driverless printing setup and when specifying -m everywhere, as in the second example above, the printer will be defined and a .ppd file will be created in /etc/cups/ppd/ by querying the printer on the network.
+       The lpq utility checks the queue. Add the -a flag to check on all queues.
+
+       The lprm utility clears the queue. Add a - to remove all entries instead of only the last one by default.
+
+       The lpr utility prints. Use -# N to print the file N times, use the -p flag to add a header.
+
+       Examples of test prints using lpr:
+
+         $ lpr /usr/share/cups/data/testprint
+         $ echo 'Hello, world!' | lpr -p
+
+       The lpstat utility, used with the -s flag, checks the status. The -p flag allows to specify which queue to check.
+
+       The lpoptions utility uses the same -p queue_name flag as lpadmin shown above. With the -l flag, it lists the options. The -d flag sets the default printer with the argument queue_name. The -o flag sets options to a value:
+
+         $ lpoptions -p HP_DESKJET_940C -o PageSize=A4
+         $ lpoptions -p HP_DESKJET_940C -o cupsIPPSupplies=true -o Duplex=DuplexNoTumble
+
+       CUPS
+
+       The cupsaccept, cupsdisable, cupsenable and cupsreject utilities do as they are called. Respectively: setting the printer to accept jobs, disabling a printer, activating a printer, setting the printer to reject all incoming tasks.
+
+       As an example of their usage, we will cleanly remove a printer:
+
+         # cupsreject queue_name
+         # cupsdisable queue_name
+         # lpadmin -x queue_name
+
+       INK
+
+       Install inkAUR to view the ink levels.
+
+       Note See list of supported printers.
+
+       Add your user to the additional lp user group, log out and log in again.
+
+       For usage information, run ink without options.
+
+       WEB INTERFACE
+
+       The CUPS server can be fully administered through the web interface, available on http://localhost:631/.
+
+       Note If an HTTPS connection to CUPS is used, it may take a very long time before the interface appears the first time it is accessed. This is because the first request triggers the generation of SSL certificates which can be a time-consuming job.
+
+       To perform administrative tasks from the web interface, authentication is required; see #Permissions.
+
+         Add a queue
+       Go to the Administration page. If not explicitly configured otherwise, root and its password could be the credentials requested.
+
+         Modify existing queues
+       Go to the Printers page, and select a queue to modify.
+
+         Test a queue
+       Go to the Printers page, and select a queue.
+
+       GUI APPLICATIONS
+
+       If your user does not have sufficient privileges to administer CUPS, the applications will request the root password when they start. To give users administrative privileges without needing root access, see #Configuration.
+
+        * Deepin Print Manager — Printer configuration interface for Deepin desktop.
+       https://github.com/linuxdeepin/dde-printer || deepin-printer
+
+        * GtkLP — GTK interface for CUPS.
+       https://gtklp.sirtobi.com || gtklpAUR
+
+        * print-manager — Tool for managing print jobs and printers (KDE).
+       https://invent.kde.org/plasma/print-manager || print-manager
+
+        * system-config-printer — GTK printer configuration tool and status applet.
+       https://github.com/OpenPrinting/system-config-printer || system-config-printer
+
+       CONFIGURATION
+
+       The CUPS server configuration is located in /etc/cups/cupsd.conf and /etc/cups/cups-files.conf (see cupsd.conf(5) and cups-files.conf(5)). After editing either file, restart cups.service to apply any changes. The default configuration is sufficient for most users.
+
+       PERMISSIONS
+
+       GROUPS
+
+       User groups with printer administration privileges are defined in SystemGroup in the /etc/cups/cups-files.conf. The sys and root and wheel groups are used by default.
+
+       CUPS helper programs are run as the cups user and group. This allows the helper programs to access printer devices and read configuration files in /etc/cups/, which are owned by the cups group.
+
+       Note Prior to cups 2.2.6-2, the lp group was used instead. After the upgrade, the files in /etc/cups should be owned by the cups group and User 209 and Group 209 set in /etc/cups/cups-files.conf.
+
+       ALLOWING ADMIN AUTHENTICATION THROUGH POLICYKIT
+
+       PolicyKit can be configured to allow users to configure printers using a GUI without the admin password.
+
+       Note If you use system-config-printer, you need to install cups-pk-helper for it to use PolicyKit.
+
+       Here is an example that allows members of the wheel user group to administer printers without a password:
+
+         /etc/polkit-1/rules.d/49-allow-passwordless-printer-admin.rules
+
+         polkit.addRule(function(action, subject) {
+             if (action.id == "org.opensuse.cupspkhelper.mechanism.all-edit" &&
+                 subject.isInGroup("wheel")){
+                 return polkit.Result.YES;
+             }
+         });
+
+       DEFAULT PAPER SIZE
+
+       cups is built with libpaper support and libpaper defaults to the Letter paper size (called PageSize in lpoptions). To avoid having to change the paper size for each print queue you add, edit /etc/papersize and set your system default paper size. See paper(1).
+
+       ARCHIVAL PDF/A
+
+       To save PDF files in the highly compatible format, normally called Archival PDF, or PDF/A, or PDFA, or ISO 19005.
+
+       There is currently no option, so it must be added to the command used by cups to call gs.
+
+         /etc/cups/cups.conf
+
+         # GSCall %s -q -dCompatibilityLevel=%s -dNOPAUSE -dBATCH -dSAFER  -sDEVICE=pdfwrite -sOutputFile="%s" -dAutoRotatePages=/PageByPage -dAutoFilterColorImages=false -dColorImageFilter=/FlateEncode -dPDFSETTINGS=/prepress -c .setpdfwrite -f %s
+
+         # the above line shows the default for the GSCall value. Add -dPDFA before -dNOPAUSE and remove the comment prefix: (do not copy the line from here as it might have changed. use the "default" from your own file)
+         GSCall %s -q -dCompatibilityLevel=%s -dPDFA -dNOPAUSE -dBATCH -dSAFER  -sDEVICE=pdfwrite -sOutputFile="%s" -dAutoRotatePages=/PageByPage -dAutoFilterColorImages=false -dColorImageFilter=/FlateEncode -dPDFSETTINGS=/prepress -c .setpdfwrite -f %s
+
+       LOG FILES
+
+       By default, all logs are sent to files in /var/log/cups/.
+
+       The log level can be changed in /etc/cups/cupsd.conf. See cupsd.conf documentation.
+
+       By changing the values of the AccessLog, ErrorLog, and PageLog directives in /etc/cups/cups-files.conf to syslog, CUPS can be made to log to the systemd journal instead. See Fedora:Changes/CupsJournalLogging for information on the original proposed change.
+
+       CUPS-BROWSED
+
+       CUPS can use Avahi browsing to discover unknown shared printers in your network. This can be useful in large setups where the server is unknown. To use this feature, set up .local hostname resolution, and start both avahi-daemon.service and cups-browsed.service. Jobs are sent directly to the printer without any processing so the created queues may not work, however driverless printers such as those supporting IPP Everywhere or AirPrint should work out of the box.
+
+       Note
+
+        * Searching for network printers may significantly increase the time it takes for your computer to boot.
+        * cups-browsed.service is only needed to dynamically add and remove printers as they appear and disappear from a network. It is not required if you simply want to add a DNS-SD/mDNS supporting network printer to CUPS.
+
+       PRINT SERVERS AND REMOTE ADMINISTRATION
+
+       See CUPS/Printer sharing and CUPS/Printer sharing#Remote administration.
+
+       WITHOUT A LOCAL CUPS SERVER
+
+       CUPS can be configured to directly connect to remote printer servers instead of running a local print server. This requires installation of the libcups package. Some applications will still require the cups package for printing.
+
+       Note Accessing remote printers without a local CUPS server is not recommended by the developers, because it allows applications to submit and forget their printing jobs and rely on the local CUPS server to handle (using cache and retry) for example network interruptions, system going to sleep, application errors. [3]
+
+       To use a remote CUPS server, set the CUPS_SERVER environment variable to printerserver.mydomain:port. For instance, if you want to use a different print server for a single Firefox instance (substitute printserver.mydomain:port with your print server name/port):
+
+         $ CUPS_SERVER=printserver.mydomain:port firefox
+
+       To make this configuration permanent create configuration file /etc/cups/client.conf and add a hostname of the remote CUPS server to it:
+
+         ServerName server
+
+       You can also specify a custom port:
+
+         ServerName server:port
+
+       See [4] for details.
+
+       TROUBLESHOOTING
+
+       See CUPS/Troubleshooting and CUPS/Printer-specific problems.
+
+       SEE ALSO
+
+        * Official CUPS documentation, locally installed
+        * Wikipedia:CUPS
+        * OpenPrinting homepage
+        * OpenSuSE Concepts printing guide - explains the full printing workflow
+        * OpenSuSE CUPS in a Nutshell - a quick CUPS overview
+        * Gentoo:Printing
+        * Debian's Printing portal - detailed technical guides
+        * Debian's printing overview - a basic view of the CUPS printing system
+        * CUPS printing-architecture and printing-users mailing lists
+        * CUPS issues tracker
+        * CUPS issues tracker (Apple fork)
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,929 @@
+ARCH.SECURITY(1)                 Sandbox manual                 ARCH.SECURITY(1)
+
+       This article contains recommendations and best practices for hardening an Arch Linux system.
+
+       CONCEPTS
+
+        * It is possible to tighten security to the point where the system is unusable. Security and convenience must be balanced. The trick is to create a secure and useful system.
+        * The biggest threat is, and will always be, the user.
+        * The principle of least privilege: Each part of a system should only be able to access what is strictly required, and nothing more.
+        * Defense in depth: Security works better in independent layers. When one layer is breached, another should stop the attack.
+        * Be a little paranoid. And be suspicious. If anything sounds too good to be true, it probably is!
+        * You can never make a system 100% secure unless you unplug the machine from all networks, turn it off, lock it in a safe, smother it in concrete and never use it.
+        * Prepare for failure. Create a plan ahead of time to follow when your security is broken.
+
+       PASSWORDS
+
+       Passwords are key to a secure system. They secure your user accounts, encrypted file systems, and SSH/GPG keys. They are the main way a computer chooses to trust the person using it, so a big part of security is just about picking secure passwords and protecting them.
+
+       CHOOSING SECURE PASSWORDS
+
+       Passwords must be complex enough to not be easily guessed from e.g. personal information, or cracked using methods like brute-force attacks. The tenets of strong passwords are based on length and randomness. In cryptography the quality of a password is often referred to as its entropy.
+
+       Insecure passwords include those containing or those using as a base before substitution/variation:
+
+        * Personally identifiable information (e.g., your dog's name, date of birth, area code, favorite video game)
+        * Simple character substitutions on words (e.g., k1araj0hns0n), as modern dictionary attacks can easily work with these
+        * Root "words" or common strings followed or preceded by added numbers, symbols, or characters (e.g., DG091101%)
+        * Common phrases or short strings of common dictionary words (e.g. photocopyhauntbranchexpose) including with character substitution (e.g. Ph0toc0pyh4uN7br@nch3xp*se) (See Diceware below for when a combination of dictionary words can be secure)
+        * Any of the most common passwords
+       The best choice for a password is something long (the longer, the better) and generated from a random source. It is important to use a long password. Weak hash algorithms allow an 8-character password hash to be compromised in just a few hours.
+
+       Tools like pwgen or apgAUR can generate random passwords. However, these passwords can be difficult to memorize. One memorization technique (for ones often typed) is to generate a long password and memorize a minimally secure number of characters, temporarily writing down the full generated string. Over time, increase the number of characters typed - until the password is ingrained in muscle memory and need not be remembered. This technique is more difficult, but can provide confidence that a password will not turn up in wordlists or "intelligent" brute force attacks that combine words and substitute characters.
+
+       Apart from password management, keepassxc offers password/passphrase generation. It is possible to customize the generation in a GUI. Dictionary based passphrases are also supported.
+
+       One technique for memorizing a password is to use a mnemonic phrase, where each word in the phrase reminds you of the next character in the password. Take for instance “the girl is walking down the rainy street” could be translated to t6!WdtR5 or, less simply, t&6!RrlW@dtR,57. This approach could make it easier to remember a password, but note that the various letters have very different probabilities of being found at the start of words (Wikipedia:Letter frequency).
+
+       Another effective technique can be to write randomly generated passwords down and store them in a safe place, such as in a wallet, purse, or document safe. Most people do a generally good job of protecting their physical valuables from attack, and it is easier for most people to understand physical security best practices compared to digital security practices.
+
+       It is also very effective to combine the mnemonic and random technique by saving long randomly generated passwords with a password manager, which will be in turn accessed with a memorable "master password"/primary password that must be used only for that purpose. The master password must be memorized and never saved. This requires the password manager to be installed on a system to easily access the password (which could be seen as an inconvenience or a security feature, depending on the situation). Some password managers also have smartphone apps which can be used to display passwords for manual entry on systems without that password manager installed (if that is a common use case, you could still use easily typeable but secure passwords for each service instead of completely random ones, see below). Note that a password manager introduces a single point of failure if you ever forget the master password. Some password managers compute the contained passwords based on the master password and the service name where you want to log in instead of encrypting them, making it possible to use it on a new system without syncing any data.
+
+       It can be effective to use a memorable long series of unrelated words as a password. The theory is that if a sufficiently long phrase is used, the gained entropy from the password's length can counter the lost entropy from the use of dictionary words. This xkcd comic demonstrates the entropy tradeoff of this method, taking into account the limited set of possible words for each word in the passphrase. If the set of words you choose from is large (multiple thousand words) and you choose 5-7 or even more random words from it, this method provides great entropy, even assuming the attacker knows the set of possible words chosen from and the number of words chosen. The number of possible passphrases after settling on a set of words and number of words is: (number of words in the set of words to select from) to the power of (the number of words chosen for the passphrase). See e.g. Diceware for more.
+
+       See The passphrase FAQ or Wikipedia:Password strength for some additional background.
+
+       MAINTAINING PASSWORDS
+
+       Once you pick a strong password, be sure to keep it safe. Watch out for keyloggers (software and hardware), screen loggers, social engineering, shoulder surfing, and avoid reusing passwords so insecure servers cannot leak more information than necessary. Password managers can help manage large numbers of complex passwords: if you are copy-pasting the stored passwords from the manager to the applications that need them, make sure to clear the copy buffer every time, and ensure they are not saved in any kind of log (e.g. do not paste them in plain terminal commands, which would store them in files like .bash_history). Note that password managers that are implemented as browser extensions may be vulnerable to side channel attacks. These can be mitigated by using password managers that run as separate applications.
+
+       As a rule, do not pick insecure passwords just because secure ones are harder to remember. Passwords are a balancing act. It is better to have an encrypted database of secure passwords, guarded behind a key and one strong master password, than it is to have many similar weak passwords. Writing passwords down is perhaps equally effective [1], avoiding potential vulnerabilities in software solutions while requiring physical security.
+
+       Another aspect of the strength of the passphrase is that it must not be easily recoverable from other places.
+
+       If you use the same passphrase for disk encryption as you use for your login password (useful e.g. to auto-mount the encrypted partition or folder on login), make sure that /etc/shadow ends up on an encrypted partition or/and uses a strong key derivation function (i.e. yescrypt/argon2 or sha512 with PBKDF2, but not md5 or low iterations in PBKDF2) for the stored password hash (see SHA password hashes for more information).
+
+       Tip In 2023 Arch Linux switched the default hashing algorithm to yescrypt. If you have not customized the default, executing a password change with passwd is necessary (and sufficient) to apply the new default.
+
+       If you are backing up your password database, make sure that each copy is not stored behind any other passphrase which in turn is stored in it, e.g. an encrypted drive or an authenticated remote storage service, or you will not be able to access it in case of need; a useful trick is to protect the drives or accounts where the database is backed up using a simple cryptographic hash of the master password. Maintain a list of all the backup locations: if one day you fear that the master passphrase has been compromised you will have to change it immediately on all the database backups and the locations protected with keys derived from the master password.
+
+       Version-controlling the database in a secure way can be very complicated: if you choose to do it, you must have a way to update the master password of all the database versions. It may not always be immediately clear when the master password is leaked: to reduce the risk of somebody else discovering your password before you realize that it leaked, you may choose to change it on a periodical basis. If you fear that you have lost control over a copy of the database, you will need to change all the passwords contained in it within the time that it may take to brute-force the master password, according to its entropy.
+
+       PASSWORD HASHES
+
+       A hash is a one-way function, i.e. it is designed to make it impossible to deduct the input without computing the hash function with it (example: MD5, SHA).
+
+       A password-hash function is designed to make deducting a user-input (password) impossible without computing the hash function with it (example: bcrypt). A key derivation function (KDF; examples: yescrypt, scrypt, PBKDF2) is a cryptographic algorithm designed to derive secret keys (e.g. an AES key, a password hash) from an input (a master key, a password). Hence, a KDF can serve multiple applications, including those of a password-hash function.
+
+       By default, Arch stores the hashed user passwords in the root-only-readable /etc/shadow file, separated from the other user parameters stored in the world-readable /etc/passwd file, see Users and groups#User database. See also #Restricting root.
+
+       Passwords are set with the passwd command, which stretches them with the system's crypt function and then saves them in /etc/shadow. The passwords are also salted in order to defend them against rainbow table attacks. See also How are passwords stored in Linux (Understanding hashing with shadow utils).
+
+       Since password hashes follow a defined format, the method and parameter can be configured for subsequent new invocations of the passwd command. Hence, the individual hashes stored in the /etc/shadow file can be a heterogeneous mix of the hash functions supported by the system.
+
+       See crypt(5) for more information on the format, hashing methods and parameters.
+
+       The /etc/login.defs file configures the default password hashing method ENCRYPT_METHOD YESCRYPT and its parameter YESCRYPT_COST_FACTOR.
+
+       For example, an increment of the default YESCRYPT_COST_FACTOR parameter will lead to a logarithmic increase of the compute time required to deduce the hash from a password. This applies, likewise, to a third-party trying to obtain the password secret, and the system to authenticate a user log-in.
+
+       In contrast, the compute time for the SHA-512 hash function is configured by a parameter with a linear influence. See SHA password hashes for information on the previous Arch default. Note the yescrypt algorithm internally uses SHA-256, HMAC and PBKDF2 to compute its password-hash. The main reason is to combine positive attributes of these widely used and tested functions for an enhanced resistance to attacks. For example, the usability of SHA for various purposes has resulted in hardware support for the function, i.e. the performance to compute a pure SHA hash has accelerated considerably, making its application as a password-hash function more and more derelict.
+
+       DISALLOW EMPTY PASSWORDS
+
+       Allowing empty passwords for authentication can increase the attack surface, e.g. see CVE-2020-27780, or dirtyfrag (CVE-2026-43284 , CVE-2026-43500) - a manipulated /etc/shadow with a present nullok option from pam_unix.
+
+       To disallow empty passwords remove the nullok option in /etc/pam.d/system-auth:
+
+         /etc/pam.d/system-auth
+
+         auth       [success=1 default=bad]     pam_unix.so          try_first_pass
+
+       To list users with currently empty passwords:
+
+         # getent shadow | awk -F: '($2=="") {print $1}'
+
+       If the output lists users without an account on the local system (e.g. authenticating via OpenLDAP), these remain unaffected by the nullok option removal.
+
+       ENFORCING STRONG PASSWORDS WITH PAM_PWQUALITY
+
+       PAM stands for the Pluggable Authentication Modules. pam_pwquality provides protection against Dictionary attacks and helps configure a password policy that can be enforced throughout the system. It is based on pam_cracklib, so it is backwards compatible with its options.
+
+       Install the libpwquality package.
+
+       Warning The root account is not affected by this policy by default.
+
+       Note
+
+        * You can use the root account to set a password for a user that bypasses the desired/configured policy. This is useful when setting temporary passwords.
+        * Current security guidelines around passwords, e.g. from NIST, but also from others, do not recommend enforcing special characters, since they often only lead to predictable alterations.
+       If for example you want to enforce this policy:
+
+        * prompt 2 times for password in case of an error (retry option)
+        * 10 characters minimum length (minlen option)
+        * at least 6 characters should be different from old password when entering a new one (difok option)
+        * at least 1 digit (dcredit option)
+        * at least 1 uppercase (ucredit option)
+        * at least 1 lowercase (lcredit option)
+        * at least 1 other character (ocredit option)
+        * cannot contain the words "myservice" and "mydomain"
+        * enforce the policy for root
+       Edit the /etc/pam.d/passwd file to read as:
+
+         #%PAM-1.0
+         password required pam_pwquality.so retry=2 minlen=10 difok=6 dcredit=-1 ucredit=-1 ocredit=-1 lcredit=-1 [badwords=myservice mydomain] enforce_for_root
+         password required pam_unix.so use_authtok yescrypt shadow
+
+       The password required pam_unix.so use_authtok instructs the pam_unix module to not prompt for a password but rather to use the one provided by pam_pwquality.
+
+       You can refer to the pam_pwquality(8) and pam_unix(8) man pages for more information.
+
+       CPU
+
+       MICROCODE
+
+       See microcode for information on how to install important security updates for your CPU's microcode.
+
+       HARDWARE VULNERABILITIES
+
+       Some CPUs contain hardware vulnerabilities. See the kernel documentation on hardware vulnerabilities for a list of these vulnerabilities, as well as mitigation selection guides to help customize the kernel to mitigate these vulnerabilities for specific usage scenarios.
+
+       To check if you are affected by a known vulnerability, run the following:
+
+         $ grep -r . /sys/devices/system/cpu/vulnerabilities/
+
+       In most cases, updating the kernel and microcode will mitigate vulnerabilities.
+
+       SIMULTANEOUS MULTITHREADING (HYPER-THREADING)
+
+       Simultaneous multithreading (SMT), also called hyper-threading on Intel CPUs, is a hardware feature that may be a source of L1 Terminal Fault and Microarchitectural Data Sampling vulnerabilities. The Linux kernel and microcode updates contain mitigations for known vulnerabilities, but disabling SMT may still be required on certain CPUs if untrusted virtualization guests are present.
+
+       Note Disabling SMT is something mostly hypervisors benefit from.[2] On an ordinary system it has very little to no security benefits.
+
+       SMT can often be disabled in your system's firmware. Consult your motherboard or system documentation for more information. You can also disable SMT in the kernel by adding the following kernel parameter:
+
+         mitigations=auto,nosmt
+
+       MEMORY
+
+       HARDENED MALLOC
+
+       hardened_mallocAUR is a hardened replacement for glibc's malloc(). The project was originally developed for integration into Android's Bionic and musl by Daniel Micay, of GrapheneOS, but he has also built in support for standard Linux distributions on the x86_64 architecture.
+
+       STORAGE
+
+       DATA-AT-REST ENCRYPTION
+
+       Data-at-rest encryption, preferably full-disk encryption with a strong passphrase, is the only way to guard data against physical recovery. This provides data confidentiality when the computer is turned off or the disks in question are unmounted.
+
+       Once the computer is powered on and the drive is mounted, however, its data becomes just as vulnerable as an unencrypted drive. It is therefore best practice to unmount data partitions as soon as they are no longer needed.
+
+       You may also encrypt a drive with the key stored in a TPM, although it has had vulnerabilities in the past and the key can be extracted by a bus sniffing attack.
+
+       Certain programs, like dm-crypt, allow the user to encrypt a loop file as a virtual volume. This is a reasonable alternative to full-disk encryption when only certain parts of the system need to be secure.
+
+       While the block-device or file-system-based encryption types compared in the data-at-rest encryption article are useful at protecting data on physical media, most can not be used to protect data on a remote system that you can not control (such as cloud storage). In some cases, individual file encryption will be useful.
+
+       These are some methods to encrypt files:
+
+        * age is a simple and easy to use file encryption tool. It supports multiple recipients and encryption using SSH keys, which is useful for secure file sharing.
+        * Some archiving and compression tools provide basic encryption. One should not rely on them without understanding the security properties of a particular tool and its configuration, as they may use weak algorithms for compatibility reasons, especially when using the zip file format[3]. Examples include 7-Zip (-p flag), zip (-e flag).
+        * GnuPG can be used to encrypt files. However it requires substantial training and knowledge to use securely[4][5], has some problems especially when using asymmetric cryptography[6][7] and includes GnuPG-proprietary extensions incompatible with the OpenPGP standard. GnuPG maintainers recommend using the graphical kleopatra application instead of the GPG CLI to prevent common user errors[8].
+
+       FILE SYSTEMS
+
+       The kernel now prevents security issues related to hardlinks and symlinks if the fs.protected_hardlinks and fs.protected_symlinks sysctl switches are enabled, so there is no longer a major security benefit from separating out world-writable directories.
+
+       File systems containing world-writable directories can still be kept separate as a coarse way of limiting the damage from disk space exhaustion. However, filling /var or /tmp is enough to take down services. More flexible mechanisms for dealing with this concern exist (like quotas), and some file systems include related features themselves (Btrfs has quotas on subvolumes).
+
+       MOUNT OPTIONS
+
+       Following the principle of least privilege, file systems should be mounted with the most restrictive mount options possible (without losing functionality).
+
+       Relevant mount options are:
+
+        * nodev: Do not interpret character or block special devices on the file system.
+        * nosuid: Do not allow set-user-identifier or set-group-identifier bits to take effect.
+        * noexec: Do not allow direct execution of any binaries on the mounted file system.
+          * Setting noexec on /home disallows executable scripts and breaks Wine, Steam, PyCharm, .NET, etc.
+            * Wine does not need the exec flag for opening Windows binaries. It is only needed when Wine itself is installed in /home.
+            * To keep Steam working you can mount /home/user/.local/share/Steam as exec in fstab by adding the following:
+
+         /home/user/.local/share/Steam  /home/user/.local/share/Steam  none defaults,bind,user,nodev,nosuid,exec,nofail  0  0
+
+          * Some packages (building nvidia-open-dkms for example) may require exec on /var.
+       File systems used for data should always be mounted with nodev, nosuid and noexec.
+
+       Potential file system mounts to consider:
+
+        * /var
+        * /home
+        * /dev/shm
+        * /tmp
+        * /boot
+       Tip When using GPT partition automounting, the ESP and XBOOTLDR partitions are always hardened with noexec,nosuid,nodev.
+
+       SUID-FREE
+
+       If you are able to accept some loss of functionality by switching to run0 instead of sudo and all other SUID and file system capabilities, it is possible to mount all file systems including the root file system with nosuid.
+
+       First, find the #SUID and SGID files on the system.
+
+       Next, consider binaries with file system capabilities:
+
+         $ getcap -r /
+
+       Systems with NVIDIA GPUs need the following drop-in to compensate for loss of SUID for nvidia-modprobe:
+
+         /etc/systemd/system/local-nvidia.service
+
+         [Service]
+         Type=simple
+         ExecStart=/usr/bin/nvidia-modprobe -m -l -s
+
+         [Install]
+         WantedBy=multi-user.target
+
+       In the SUID-free setup, it is also possible to globally enable NoNewPrivileges=yes, which also disables SUID/SGID and FS capabilities:
+
+         /etc/systemd/system.conf.d/local-nnp.conf
+
+         [Manager]
+         NoNewPrivileges=yes
+
+       It is also possible to remove individual capabilities from PID 1 and all its children, or from individual units. See Capabilities and systemd/Sandboxing#Capabilities for details.
+
+       SNAPSHOTS
+
+       When utilizing file system snapshots, e.g. with Btrfs, LVM, or ZFS, it is essential to be aware that snapshots may retain sensitive information that users expect to be deleted. This is especially true when automatic snapshotting tools like Snapper are configured, as they can capture snapshots at regular intervals or in response to system events. Here are some examples of how sensitive information in /home/ can persist within snapshots:
+
+        * Deleted files and directories: Even though files or directories are deleted from the file system, they may still exist within older snapshots. This is expected most of the time, but consider whether files and directories such as .local/share/Trash/, .history, etc. should be retained.
+        * Temporary files and cache: Temporary files and cached data generated by applications may be included in snapshots. For example, files kept in encrypted directories might generate thumbnails (.cache/thumbnails) or work copies when opened, which might in turn be included in snapshots. The same applies e.g. to browsing history (.mozilla/, .config/chromium/, etc.), which could have been included in a snapshot before being purged.
+       If this is supported, consider excluding such directories from snapshots altogether. For example, if using Btrfs, you can create subvolumes for example .cache/, .config/, .local/, .var/ or any other directory according to your use-case.
+
+       Note Moving .local/share/Trash to a separate subvolume might break the trash feature in some cases, e.g. with GNOME/Files.
+
+       FILE ACCESS PERMISSIONS
+
+       The default file permissions allow read access to almost everything and changing the permissions can hide valuable information from an attacker who gains access to a non-root account such as the http or nobody users. You can use chmod to take away all permissions from the group and others:
+
+         # chmod go-r path_to_hide
+
+       Warning Do not apply this broadly. Try this for one config at a time, ensuring that it is worth hiding, and that it will not break program functionality. You may need to remove the g from the command (or re-add the permission with chmod g+r path if already ran) if the group is relied on.
+
+       Some paths to consider are:
+
+        * /boot: The boot directory, which may include traditional vmlinuz and initramfs images, or a Unified kernel image. Note that safe permissions are used by default when using systemd#GPT partition automounting.
+        * /etc/nftables.conf: The nftables configuration, applicable to nftables and iptables.
+        * /etc/iptables: The legacy iptables configuration, applicable to iptables-legacy.
+       The default umask 0022 can be changed to improve security for newly created files. The NSA RHEL5 Security Guide suggests a umask of 0077 for maximum security, which makes new files not readable by users other than the owner. To change this, see Umask#Set the mask value. If you use sudo, consider configuring it to use the default root umask.
+
+       SUID AND SGID FILES
+
+       It is important to be aware of any files with the Setuid (SUID) or Setgid (SGID) bit. To search for files with either the SUID or SGID bit:
+
+         $ find / -perm "/u=s,g=s" -type f 2>/dev/null
+
+       Common examples of relevant files with the SUID bit set:
+
+        * unix_chkpwd
+        * chage, expiry, gpasswd, passwd, sg (shadow)
+        * fusermount3, fusermount2
+        * pkexec
+        * ssh-keysign
+        * chfn, chsh, mount, newgrp, umount, wall, write (util-linux)
+        * sudo, sudo-rs, doas, su, su-rs, ksu
+        * firejail
+        * dbus-daemon-launch-helper
+        * chromium-sandbox
+        * Xorg.wrap
+       The prominent risks of such executable files include privilege escalation vulnerabilities, see e.g Wikipedia:Setuid#Security impact.[9][10][11]
+
+       Files with the SUID bit set and not owned by root, or files with the SGID bit set typically have less potential impact but can theoretically still do decent damage if vulnerable. It is usually possible to avoid using SUID or SGID by assigning Capabilities instead.
+
+       Tip It is vital to be vigilant in keeping packages which provide SUID/SGID executables up to date in order to prevent having a vulnerable system; also see #SUID-free as an option.
+
+       BACKUPS
+
+       Backups are essential for security because they enable recovery from ransomware, data corruption, accidental deletion, and system compromise without permanent data loss. See System backup.
+
+       SATA SSD FROZEN MODE
+
+       SATA SSD are most likely vulnerable to ATA SECURITY ERASE UNIT commands, when waking up from S3 sleep, to mitigate see Solid state drive#Setting the SATA SSD state to frozen mode after waking up from sleep.
+
+       USER SETUP
+
+       DO NOT USE THE ROOT ACCOUNT FOR DAILY USE
+
+       Following the principle of least privilege, do not use the root user for daily use. Create a non-privileged user account for each person using the system. See List of applications/Security#Privilege elevation for ways of temporarily gaining privileged access.
+
+       ENFORCE A DELAY AFTER A FAILED LOGIN ATTEMPT
+
+       Add the following line to /etc/pam.d/system-login to add a delay of at least 4 seconds between failed login attempts:
+
+         /etc/pam.d/system-login
+
+         auth optional pam_faildelay.so delay=4000000
+
+       Note This line needs to be the first line in the file.
+
+       4000000 is the time in microseconds to delay.
+
+       Other PAM modules besides pam_faildelay can also suggest such a delay; if multiple modules do so, PAM will use the longest one.
+
+       In particular, both pam_unix and pam_faillock set a minimum delay of 2 seconds by default. In order to completely remove this delay, you need to add the nodelay parameter to any auth lines of these modules, for example
+
+         /etc/pam.d/system-auth
+
+         auth       [success=1 default=bad]     pam_unix.so          try_first_pass nullok nodelay
+
+       LOCK OUT USER AFTER THREE FAILED LOGIN ATTEMPTS
+
+       Since pambase 20200721.1-2, pam_faillock.so is enabled by default to lock out users for 10 minutes after 3 failed login attempts in a 15 minute period (see FS#67644). The lockout only applies to password authentication (e.g. login and sudo), public key authentication over SSH is still accepted. To prevent complete denial-of-service, this lockout is disabled for the root user by default.
+
+       To unlock a user, do:
+
+         $ faillock --user username --reset
+
+       By default, the lock mechanism is a file per-user located at /run/faillock/. Deleting or emptying the file unlocks that user—the directory is owned by root, but the file is owned by the user, so the faillock command only empties the file, therefore does not require root.
+
+       The module pam_faillock.so can be configured with the file /etc/security/faillock.conf. The lockout parameters:
+
+        * unlock_time — the lockout time (in seconds, default 10 minutes).
+        * fail_interval — the time in which failed logins can cause a lockout (in seconds, default 15 minutes).
+        * deny — the number of failed logins before lockout (default 3).
+       Tip The primary purpose for the lockout is to slow down brute-force attacks so that they become infeasible. Hence, if lockouts due to mistyping of passwords become too frequent, relaxing the number of attempts may be preferred to reducing the lockout time.
+
+       Note deny = 0 will disable the lockout mechanism entirely.
+
+       By default, all user locks are lost after reboot. If your attacker can reboot the machine, it is more secure if locks persist. To make locks persist, change the dir parameter in /etc/security/faillock.conf to /var/lib/faillock.
+
+       No restart is required for changes to take effect. See faillock.conf(5) for further configuration options, such as enabling lockout for the root account, disabling for centralized login (e.g. LDAP), etc.
+
+       Note If you make locks persistent, following the changes introduced in polkit 127: you may have to relax the sandbox of its helper agent in order to keep it functional. The best way is to create a drop-in for its systemd unit via systemctl edit polkit-agent-helper\@.service and add:
+
+         [Service]
+         ReadWritePaths=/var/lib/faillock
+
+       LIMIT AMOUNT OF PROCESSES
+
+       On systems with many, or untrusted users, it is important to limit the number of processes each can run at once, therefore preventing fork bombs and other denial of service attacks. The /etc/security/limits.conf configuration determines how many processes each user, or group can have open, and is empty (except for useful comments) by default. Adding the following lines to this file will limit all users to 100 active processes, unless they use the prlimit command to explicitly raise their maximum to 200 for that session. These values can be changed according to the appropriate number of processes a user should have running, or the hardware of the box you are administrating.
+
+         * soft nproc 100
+         * hard nproc 200
+
+       The current number of threads for each user can be found with ps --no-headers -Leo user | sort | uniq --count. This may help with determining appropriate values for the users' limits; see also limits.conf.
+
+       DISPLAY SERVER
+
+       Prefer using Wayland over Xorg as Display server. Xorg's design predates modern security practices and is considered insecure by many. For example, Xorg applications may record keystrokes while inactive.
+
+       For Xorg applications within Wayland, the Xwayland compatibility layer will automatically use rootless Xorg. If you must run Xorg, it is always recommended to avoid running it as root and to make sure it does not listen on abstract and TCP sockets.
+
+       RESTRICTING ROOT
+
+       The root user is, by definition, the most powerful user on a system. It is also difficult to audit the root user account. It is therefore important to restrict usage of the root user account as much as possible. There are a number of ways to keep the power of the root user while limiting its ability to cause harm.
+
+       USE SUDO INSTEAD OF SU
+
+       Using sudo for privileged access is preferable to su for a number of reasons:
+
+        * It keeps a log of which normal privilege user has run each privileged command.
+        * The root user password need not be given out to each user who requires root access.
+        * sudo prevents users from accidentally running commands as root that do not need root access, because a full root terminal is not created. This aligns with the principle of least privilege.
+        * Individual programs may be enabled per user, instead of offering complete root access just to run one command.
+       See Sudo#Configuration.
+
+       EDITING FILES USING SUDO
+
+       See Sudo#Editing files. Alternatively, you can use editors like rvim or rnano which have restricted capabilities in order to be safe to run as root.
+
+       RESTRICTING ROOT LOGIN
+
+       Once sudo is properly configured, full root access can be heavily restricted or denied without losing much usability. To disable root, but still allowing to use sudo, you can use passwd(1) with passwd --lock root.
+
+       ALLOW ONLY CERTAIN USERS
+
+       The PAM pam_wheel.so lets you allow only users in the group wheel to login using su. See su#su and wheel.
+
+       DENYING SSH LOGIN
+
+       Even if you do not wish to deny root login for local users, it is always good practice to deny root login via SSH. The purpose of this is to add an additional layer of security before a user can completely compromise your system remotely.
+
+       SPECIFY ACCEPTABLE LOGIN COMBINATIONS WITH ACCESS.CONF
+
+       Warning If you are using GNOME 49 or later, you should make sure the group gdm can log in locally. This can be done with a +:(gdm):LOCAL rule. [12]
+
+       When someone attempts to log in with PAM, /etc/security/access.conf is checked for the first combination that matches their login properties. Their attempt then fails or succeeds based on the rule for that combination.
+
+         +:root:LOCAL
+         -:root:ALL
+
+       Rules can be set for specific groups and users. In this example, the user archie is allowed to login locally, as are all users in the wheel and adm groups. All other logins are rejected:
+
+         +:archie:LOCAL
+         +:(wheel):LOCAL
+         +:(adm):LOCAL
+         -:ALL:ALL
+
+       Read more at access.conf(5)
+
+       MANDATORY ACCESS CONTROL
+
+       Mandatory access control (MAC) is a type of security policy that differs significantly from the discretionary access control (DAC) used by default in Arch and most Linux distributions. MAC essentially means that every action a program could perform that affects the system in any way is checked against a security ruleset. This ruleset, in contrast to DAC methods, cannot be modified by users. Using virtually any mandatory access control system will significantly improve the security of your computer, although there are differences in how it can be implemented.
+
+       PATHNAME MAC
+
+       Pathname-based access control is a simple form of access control that offers permissions based on the path of a given file. The downside to this style of access control is that permissions are not carried with files if they are moved around the system. On the positive side, pathname-based MAC can be implemented on a much wider range of file systems, unlike labels-based alternatives.
+
+        * AppArmor is a Canonical-maintained MAC implementation seen as an "easier" alternative to SELinux.
+        * TOMOYO is another simple, easy-to-use system offering mandatory access control. It is designed to be both simple in usage and in implementation, requiring very few dependencies.
+
+       LABELS MAC
+
+       Labels-based access control means the extended attributes of a file are used to govern its security permissions. While this system is arguably more flexible in its security offerings than pathname-based MAC, it only works on file systems that support these extended attributes.
+
+        * SELinux, based on an NSA project to improve Linux security, implements MAC completely separate from system users and roles. It offers an extremely robust multi-level MAC policy implementation that can easily maintain control of a system that grows and changes past its original configuration.
+
+       ACCESS CONTROL LISTS
+
+       Access Control Lists (ACLs) are an alternative to attaching rules directly to the file system in some way. ACLs implement access control by checking program actions against a list of permitted behavior.
+
+       KERNEL HARDENING
+
+       KERNEL SELF-PROTECTION / EXPLOIT MITIGATION
+
+       The linux-hardened package uses a basic kernel hardening patch set and more security-focused compile-time configuration options than the linux package. A custom build can be made to choose a different compromise between security and performance than the security-leaning defaults.
+
+       However, it should be noted that several packages (such as throttled) will not work when using this kernel.
+
+       If you use an out-of-tree driver such as NVIDIA, you may need to switch to its DKMS package.
+
+       USERSPACE ASLR COMPARISON
+
+       The linux-hardened package provides an improved implementation of Address Space Layout Randomization for userspace processes. The paxtest command can be used to obtain an estimate of the provided entropy:
+
+       64-BIT PROCESSES
+
+         linux-hardened 5.4.21.a-1-hardened
+
+         Anonymous mapping randomization test     : 32 quality bits (guessed)
+         Heap randomization test (ET_EXEC)        : 40 quality bits (guessed)
+         Heap randomization test (PIE)            : 40 quality bits (guessed)
+         Main executable randomization (ET_EXEC)  : 32 quality bits (guessed)
+         Main executable randomization (PIE)      : 32 quality bits (guessed)
+         Shared library randomization test        : 32 quality bits (guessed)
+         VDSO randomization test                  : 32 quality bits (guessed)
+         Stack randomization test (SEGMEXEC)      : 40 quality bits (guessed)
+         Stack randomization test (PAGEEXEC)      : 40 quality bits (guessed)
+         Arg/env randomization test (SEGMEXEC)    : 44 quality bits (guessed)
+         Arg/env randomization test (PAGEEXEC)    : 44 quality bits (guessed)
+         Offset to library randomisation (ET_EXEC): 34 quality bits (guessed)
+         Offset to library randomisation (ET_DYN) : 34 quality bits (guessed)
+         Randomization under memory exhaustion @~0: 32 bits (guessed)
+         Randomization under memory exhaustion @0 : 32 bits (guessed)
+
+         linux 5.5.5-arch1-1
+
+         Anonymous mapping randomization test     : 28 quality bits (guessed)
+         Heap randomization test (ET_EXEC)        : 28 quality bits (guessed)
+         Heap randomization test (PIE)            : 28 quality bits (guessed)
+         Main executable randomization (ET_EXEC)  : 28 quality bits (guessed)
+         Main executable randomization (PIE)      : 28 quality bits (guessed)
+         Shared library randomization test        : 28 quality bits (guessed)
+         VDSO randomization test                  : 20 quality bits (guessed)
+         Stack randomization test (SEGMEXEC)      : 30 quality bits (guessed)
+         Stack randomization test (PAGEEXEC)      : 30 quality bits (guessed)
+         Arg/env randomization test (SEGMEXEC)    : 22 quality bits (guessed)
+         Arg/env randomization test (PAGEEXEC)    : 22 quality bits (guessed)
+         Offset to library randomisation (ET_EXEC): 28 quality bits (guessed)
+         Offset to library randomisation (ET_DYN) : 28 quality bits (guessed)
+         Randomization under memory exhaustion @~0: 29 bits (guessed)
+         Randomization under memory exhaustion @0 : 29 bits (guessed)
+
+         linux-lts 4.19.101-1-lts
+
+         Anonymous mapping randomization test     : 28 quality bits (guessed)
+         Heap randomization test (ET_EXEC)        : 28 quality bits (guessed)
+         Heap randomization test (PIE)            : 28 quality bits (guessed)
+         Main executable randomization (ET_EXEC)  : 28 quality bits (guessed)
+         Main executable randomization (PIE)      : 28 quality bits (guessed)
+         Shared library randomization test        : 28 quality bits (guessed)
+         VDSO randomization test                  : 19 quality bits (guessed)
+         Stack randomization test (SEGMEXEC)      : 30 quality bits (guessed)
+         Stack randomization test (PAGEEXEC)      : 30 quality bits (guessed)
+         Arg/env randomization test (SEGMEXEC)    : 22 quality bits (guessed)
+         Arg/env randomization test (PAGEEXEC)    : 22 quality bits (guessed)
+         Offset to library randomisation (ET_EXEC): 28 quality bits (guessed)
+         Offset to library randomisation (ET_DYN) : 28 quality bits (guessed)
+         Randomization under memory exhaustion @~0: 28 bits (guessed)
+         Randomization under memory exhaustion @0 : 28 bits (guessed)
+
+       32-BIT PROCESSES (ON AN X86_64 KERNEL)
+
+         linux-hardened
+
+         Anonymous mapping randomization test     : 16 quality bits (guessed)
+         Heap randomization test (ET_EXEC)        : 22 quality bits (guessed)
+         Heap randomization test (PIE)            : 27 quality bits (guessed)
+         Main executable randomization (ET_EXEC)  : No randomization
+         Main executable randomization (PIE)      : 18 quality bits (guessed)
+         Shared library randomization test        : 16 quality bits (guessed)
+         VDSO randomization test                  : 16 quality bits (guessed)
+         Stack randomization test (SEGMEXEC)      : 24 quality bits (guessed)
+         Stack randomization test (PAGEEXEC)      : 24 quality bits (guessed)
+         Arg/env randomization test (SEGMEXEC)    : 28 quality bits (guessed)
+         Arg/env randomization test (PAGEEXEC)    : 28 quality bits (guessed)
+         Offset to library randomisation (ET_EXEC): 18 quality bits (guessed)
+         Offset to library randomisation (ET_DYN) : 16 quality bits (guessed)
+         Randomization under memory exhaustion @~0: 18 bits (guessed)
+         Randomization under memory exhaustion @0 : 18 bits (guessed)
+
+         linux
+
+         Anonymous mapping randomization test     : 8 quality bits (guessed)
+         Heap randomization test (ET_EXEC)        : 13 quality bits (guessed)
+         Heap randomization test (PIE)            : 13 quality bits (guessed)
+         Main executable randomization (ET_EXEC)  : No randomization
+         Main executable randomization (PIE)      : 8 quality bits (guessed)
+         Shared library randomization test        : 8 quality bits (guessed)
+         VDSO randomization test                  : 8 quality bits (guessed)
+         Stack randomization test (SEGMEXEC)      : 19 quality bits (guessed)
+         Stack randomization test (PAGEEXEC)      : 19 quality bits (guessed)
+         Arg/env randomization test (SEGMEXEC)    : 11 quality bits (guessed)
+         Arg/env randomization test (PAGEEXEC)    : 11 quality bits (guessed)
+         Offset to library randomisation (ET_EXEC): 8 quality bits (guessed)
+         Offset to library randomisation (ET_DYN) : 13 quality bits (guessed)
+         Randomization under memory exhaustion @~0: No randomization
+         Randomization under memory exhaustion @0 : No randomization
+
+       MANUAL CONFIGURATION
+
+       You can achieve the same effect on kernels other than linux-hardened using the following sysctl parameters:
+
+         /etc/sysctl.d/51-aslr.conf
+
+         vm.mmap_rnd_bits = 32
+         vm.mmap_rnd_compat_bits = 16
+
+       RESTRICTING ACCESS TO KERNEL POINTERS IN THE PROC FILE SYSTEM
+
+       Setting kernel.kptr_restrict to 1 will hide kernel symbol addresses in /proc/kallsyms from regular users without CAP_SYSLOG, making it more difficult for kernel exploits to resolve addresses/symbols dynamically. This will not help that much on a pre-compiled Arch Linux kernel, since a determined attacker could just download the kernel package and get the symbols manually from there, but if you are compiling your own kernel, this can help mitigating local root exploits. This will break some perf commands when used by non-root users (but many perf features require root access anyway). See FS#34323 for more information.
+
+       Setting kernel.kptr_restrict to 2 will hide kernel symbol addresses in /proc/kallsyms regardless of privileges.
+
+         /etc/sysctl.d/51-kptr-restrict.conf
+
+         kernel.kptr_restrict = 1
+
+       Note linux-hardened sets kptr_restrict=2 by default rather than 0.
+
+       BPF HARDENING
+
+       BPF is a system used to load and execute bytecode within the kernel dynamically during runtime. It is used in a number of Linux kernel subsystems such as networking (e.g. XDP, tc), tracing (e.g. kprobes, uprobes, tracepoints) and security (e.g. seccomp). It is also useful for advanced network security, performance profiling and dynamic tracing.
+
+       BPF was originally an acronym of Berkeley Packet Filter since the original classic BPF was used for packet capture tools for BSD. This eventually evolved into Extended BPF (eBPF), which was shortly afterwards renamed to just BPF (not an acronym). BPF should not be confused with packet filtering tools like iptables or netfilter, although BPF can be used to implement packet filtering tools.
+
+       BPF code may be either interpreted or compiled using a Just-In-Time (JIT) compiler. The Arch kernel is built with CONFIG_BPF_JIT_ALWAYS_ON which disables the BPF interpreter and forces all BPF to use JIT compilation. This makes it harder for an attacker to use BPF to escalate attacks that exploit SPECTRE-style vulnerabilities. See the kernel patch which introduced CONFIG_BPF_JIT_ALWAYS_ON for more details.
+
+       The kernel includes a hardening feature for JIT-compiled BPF which can mitigate some types of JIT spraying attacks at the cost of performance and the ability to trace and debug many BPF programs. It may be enabled by setting net.core.bpf_jit_harden to 1 (to enable hardening of unprivileged code) or 2 (to enable hardening of all code).
+
+       See the net.core.bpf_* settings in the kernel documentation for more details.
+
+       Tip
+
+        * linux-hardened sets net.core.bpf_jit_harden=2 by default rather than 0.
+        * By default, BPF programs can be run even by unprivileged users. To change that behaviour set kernel.unprivileged_bpf_disabled=1[13].
+
+       PTRACE SCOPE
+
+       The ptrace(2) syscall provides a means by which one process (the "tracer") may observe and control the execution of another process (the "tracee"), and examine and change the tracee's memory and registers. ptrace is commonly used by debugging tools including gdb, strace, perf, reptyr and other debuggers. However, it also provides a means by which a malicious process can read data from and take control of other processes.
+
+       Arch enables the Yama LSM by default, which provides a kernel.yama.ptrace_scope kernel parameter. This parameter is set to 1 (restricted) by default which prevents tracers from performing a ptrace call on traces outside of a restricted scope unless the tracer is privileged or has the CAP_SYS_PTRACE capability. This is a significant improvement in security compared to the classic permissions. Without this module, there is no separation between processes running as the same user (in the absence of additional security layers such as pid_namespaces(7)).
+
+       Note By default, you can still use tools which require ptrace by running them as privileged processes, e.g. using sudo.
+
+       If you do not need to use debugging tools, consider setting kernel.yama.ptrace_scope to 2 (admin-only) or 3 (no ptrace possible) to harden the system.
+
+       Note Some anti-cheat and DRM implementations rely on ptrace to work, including Easy Anti-Cheat and Ubisoft Connect under Wine. Setting this parameter to 2 or higher might prevent games using these solutions from launching.
+
+       HIDEPID
+
+       Warning
+
+        * This may cause issues for certain applications like an application running in a sandbox and Xorg (see workaround).
+        * This causes issues with D-Bus, Polkit, PulseAudio and bluetooth when using systemd > 237.64-1.
+       The kernel has the ability to hide other users' processes, normally accessible via /proc, from unprivileged users by mounting the proc file system with the hidepid= and gid= options documented in https://docs.kernel.org/filesystems/proc.html.
+
+       This greatly complicates an intruder's task of gathering information about running processes, whether some daemon runs with elevated privileges, whether other user runs some sensitive program, whether other users run any program at all, makes it impossible to learn whether any user runs a specific program (given the program does not reveal itself by its behavior), and, as an additional bonus, poorly written programs passing sensitive information via program arguments are now protected against local eavesdroppers.
+
+       The proc group, provided by the filesystem package, acts as a whitelist of users authorized to learn other users' process information. If users or services need access to /proc/<pid> directories beyond their own, add them to the group.
+
+       For example, to hide process information from other users except those in the proc group:
+
+         /etc/fstab
+
+         proc	/proc	proc	nosuid,nodev,noexec,hidepid=2,gid=proc	0	0
+
+       For user sessions to work correctly, an exception needs to be added for systemd-logind:
+
+         /etc/systemd/system/systemd-logind.service.d/hidepid.conf
+
+         [Service]
+         SupplementaryGroups=proc
+
+       RESTRICTING MODULE LOADING
+
+       The default Arch kernel has CONFIG_MODULE_SIG_ALL enabled, which signs all kernel modules built as part of the linux package. This allows the kernel to only load modules signed with a valid key, i.e. out-of-tree modules compiled locally or provided by packages such as nvidia-open cannot be loaded. You can use modinfo to verify currently loaded modules have signatures; verifying the signatures by hand is slightly more involved [15].
+
+       Kernel module loading can be restricted by setting the module.sig_enforce=1 kernel parameter. More information can be found in the kernel documentation.
+
+       Further, unneeded individual modules can be blacklisted, see secureblue for examples.
+
+       Automatic module loading by the kernel can be hardened by restricting capabilities with sysctl.
+
+       DISABLE LOADING MODULES
+
+       Some security vulnerabilities like Copy Fail are in kernel modules that most users do not need. Disabling the loading of all extraneous modules can prevent such vulnerabilities from being exploited. For this to be viable, your kernel must usually be in a stable state, meaning that it typically does not need to load any more modules once the system has fully started. If and when your kernel reaches that state, you can toggle modules_disabled to irreversibly disable loading and unloading modules until the next reboot.
+
+       DISABLE KEXEC
+
+       Kexec allows replacing the current running kernel.
+
+         /etc/sysctl.d/70-kexec-restrict.conf
+
+         kernel.kexec_load_disabled = 1
+
+       Tip Kexec is disabled (CONFIG_KEXEC unset[16]) in linux-hardened.
+
+       KERNEL LOCKDOWN MODE
+
+       Linux supports an optional lockdown feature, intended to strengthen the boundary between UID 0 (root) and the kernel. When enabled some applications may cease to work which rely on low-level access to either hardware or the kernel.
+
+       To use lockdown, its LSM must be initialized and a lockdown mode must be set.
+
+       All officially supported kernels initialize the LSM, but none of them enforce any lockdown mode.
+
+       Tip Initialized LSMs can be verified by running cat /sys/kernel/security/lsm.
+
+       Lockdown has two modes of operation:
+
+        * integrity: kernel features that allow userland to modify the running kernel are disabled (e.g. kexec, bpf).
+        * confidentiality: kernel features that allow userland to extract confidential information from the kernel are also disabled.
+       It is recommended to use integrity, unless your specific threat model dictates otherwise.
+
+       To enable kernel lockdown at runtime, run:
+
+         # echo mode > /sys/kernel/security/lockdown
+
+       To enable kernel lockdown on boot, use the kernel parameter lockdown=mode.
+
+       Note
+
+        * Kernel lockdown cannot be disabled at runtime.
+        * Kernel lockdown disables hibernation.
+        * Versions <6.17 of the kernel_lockdown(7) man page incorrectly state that "lockdown will be automatically enabled if the system boots in EFI Secure Boot mode". This is not the behaviour of the upstream kernel, nor Arch's packaged kernels.
+       See also kernel_lockdown(7).
+
+       LINUX KERNEL RUNTIME GUARD (LKRG)
+
+       LKRG (lkrg-dkmsAUR) is a kernel module which performs integrity checking of the kernel and detection of exploit attempts.
+
+       DISABLE EMERGENCY SHELL
+
+       The emergency shell is used to interactively troubleshoot the machine during the boot process. However, it is also a gadget that an attacker can use to access secure resources such as the TPM. See this article for a practical example. The difficulty of attacks can be increased by disabling the emergency shell, at the tradeoff of removing a tool to troubleshoot early boot failures.
+
+       To disable the emergency shell, See systemd#Disable emergency mode on remote machine.
+
+       DISABLE UNPRIVILEGED USER NAMESPACES
+
+       user_namespaces(7) is a Linux feature that allows users (especially unprivileged users) to become limited root in their own user namespaces. Unprivileged user namespaces are useful for rootless containers and sandboxing applications, but this feature also increases the attack surface for local privilege escalation; see AppArmor's Wiki and FS#36969.
+
+       However, alternatives to unprivileged user namespaces (such as setuid executables, or IPC with a privileged daemon) might be more insecure and have a larger attack surface, so there are some trade-offs. Disabling this feature can break some sandboxing applications such as bubblewrap, nsjail, and rootless podman. Chromium based applications need a SUID bit for chrome-sandbox to work with this feature disabled.
+
+       There is no easy way in the upstream kernel to prevent unprivileged users from using this feature, so Arch Linux applies a patch to all officially supported kernels, which introduces a kernel.unprivileged_userns_clone sysctl to toggle it. Unprivileged user namespaces usage is enabled by default in all officially supported kernels except for linux-hardened.
+
+       Disabling unprivileged user namespaces:
+
+        * use the linux-hardened kernel, which disables unprivileged user namespaces by default, or
+        * set the kernel.unprivileged_userns_clone sysctl to 0.
+
+       RESTRICTING SYSTEM SERVICES
+
+       It's possible to limit what system services are allowed to do. Use the systemd-analyze security command to review the security of the systemd service units on your machine, and read the dedicated article systemd/Sandboxing to learn more.
+
+       SANDBOXING APPLICATIONS
+
+       See also Wikipedia:Sandbox (computer security).
+
+       FIREJAIL
+
+       Firejail is an easy to use tool for sandboxing applications and servers alike. It was originally created for browsers and internet facing applications, but supports a large number of applications by now. To establish a sandboxed environment with a variety of features, it is installed as a suid binary and builds a sandboxed runtime environment for the target application based on black and white lists.
+
+       BUBBLEWRAP
+
+       bubblewrap is a sandbox application developed for unprivileged container tools like Flatpak with a significantly smaller resource footprint and complexity than Firejail. While it lacks certain features such as file path whitelisting, bubblewrap does offer bind mounts as well as the creation of user/IPC/PID/network/cgroup namespaces and can support both simple and complex sandboxes.
+
+       bubblewrap requires unprivileged user_namespaces(7), so for the linux-hardened kernel you will need to enable the kernel.unprivileged_userns_clone sysctl manually.
+
+       Bubblejail sandbox is based on bubblewrap and provides a resource oriented permission model with a graphical interface to tweak permissions.
+
+       PORTABLE
+
+       Portable is a sandboxing framework which utilizes bubblewrap and many other tools to lockdown running applications. It is designed to be simple for packagers and efficient for users, yet cuts off security holes and monitors background processes by default.
+
+       See portable-arch for a repository of applications sandboxed by portable.
+
+       If a sandboxed application does not utilize the Portal file chooser, portable can pass files to the sandbox (by passing --actions share-files).
+
+       Portable is fully functional on GNOME, while other desktops may lack small amounts of features like advanced background monitoring and ScreenShot portal.
+
+       CHROOTS
+
+       Manual chroot jails can also be constructed to build sandboxed process environments. It is much more limited than other sandboxing technologies; the extent of its sandboxing is file path isolation.
+
+       LINUX CONTAINERS
+
+       Linux Containers are another good option when you need more separation than the other options (short of full system virtualization) provide. LXC is run on top of the existing kernel in a pseudo-chroot with their own virtual hardware.
+
+       GVISOR
+
+       The gVisor project, led by Google, is providing a sandboxing application with a focus on containers following the OCI initiative, such as Docker and Kubernetes. It isolates containers and individual applications from the host by intercepting a majority of system calls to the kernel and presenting itself as guest kernel.
+
+       A key difference to other intercepting sandboxing projects is that gVisor re-implements system calls in the Go programming language, as described in its design overview. Details for the list of re-implemented syscalls support can be seen in git. For usage examples, limitations and special features see the project documentation.
+
+       The application is available as gvisor-gitAUR and gvisor-binAUR.
+
+       FULL VIRTUALIZATION OPTIONS
+
+       Using full virtualization options such as VirtualBox, KVM, Xen or Qubes OS (based on Xen) can also improve isolation and security in the event you plan on running risky applications or browsing dangerous websites.
+
+       NETWORK AND FIREWALLS
+
+       FIREWALLS
+
+       While the stock Arch kernel is capable of using Netfilter's nftables (and its predecessor iptables), the services are not enabled by default. It is highly recommended to set up some form of firewall to protect the services running on the system. Many resources (including ArchWiki) do not state explicitly which services are worth protecting, so enabling a firewall is a good precaution.
+
+        * See nftables for general information.
+        * See Uncomplicated Firewall for a guide on setting up a basic firewall.
+        * See Category:Firewalls for other ways of setting up netfilter.
+        * See Ipset for blocking lists of ip addresses, such as those from Bluetack.
+
+       OPEN PORTS
+
+       Some services listen for inbound traffic on open network ports. It is important to only bind these services to the addresses and interfaces that are strictly necessary. It may be possible for a remote attacker to exploit flawed network protocols to access exposed services. This can even happen with processes bound to localhost.
+
+       In general, if a service only needs to be accessible to the local system, bind to a Unix domain socket (unix(7)) or a loopback address such as localhost instead of a non-loopback address like 0.0.0.0/0.
+
+       If a service needs to be accessible to other systems via the network, control the access with strict firewall rules and configure authentication, authorization and encryption whenever possible.
+
+       You can list all current open ports with ss -l. To show all listening processes and their numeric tcp and udp port numbers:
+
+         # ss -lpntu
+
+       See ss(8) for more options.
+
+       KERNEL PARAMETERS
+
+       Kernel parameters which affect networking can be set using Sysctl. For how to do this, see Sysctl#TCP/IP stack hardening.
+
+       SSH
+
+       To mitigate brute-force attacks it is recommended to enforce key-based authentication. For OpenSSH see OpenSSH#Protection for more recommendations. Alternatively Fail2ban or Sshguard offer lesser forms of protection by monitoring logs and writing firewall rules but open up the potential for a denial of service, since an attacker can spoof packets as if they came from the administrator after identifying their address. Spoofing IP has lines of defense, such as by reverse path filtering and disabling ICMP redirects.
+
+       You may want to harden authentication even more by using two-factor authentication. Google Authenticator provides a two-step authentication procedure using one-time passcodes (OTP).
+
+       Denying root login is also a good practice, both for tracing intrusions and adding an additional layer of security before root access. For OpenSSH, see OpenSSH#Deny.
+
+       Mozilla publishes an OpenSSH configuration guide which configures more verbose audit logging and restricts ciphers.
+
+       DNS
+
+       The default domain name resolution (DNS) configuration is highly compatible but has security weaknesses. See DNS privacy and security for more information.
+
+       PROXIES
+
+       Proxies are commonly used as an extra layer between applications and the network, sanitizing data from untrusted sources. The attack surface of a small proxy running with lower privileges is significantly smaller than a complex application running with the end user privileges.
+
+       For example the DNS resolver is implemented in glibc, that is linked with the application (that may be running as root), so a bug in the DNS resolver might lead to a remote code execution. This can be prevented by installing a DNS caching server, such as dnsmasq, which acts as a proxy. [19]
+
+       MANAGING TLS CERTIFICATES
+
+       See TLS#Trust management.
+
+       PHYSICAL SECURITY
+
+       Physical access to a computer is root access given enough time and resources. However, a high practical level of security can be obtained by putting up enough barriers.
+
+       An attacker can gain full control of your computer on the next boot by simply attaching a malicious IEEE 1394 (FireWire), Thunderbolt or PCI Express device as they are given full memory access by default.[20] For Thunderbolt, you can restrict the direct memory access completely or to known devices, see user device authorization. For Firewire and PCI Express, there is little you can do from preventing this, or modification of the hardware itself - such as flashing malicious firmware onto a drive. However, the vast majority of attackers will not be this knowledgeable and determined.
+
+       Data-at-rest encryption will prevent access to your data if the computer is stolen, but malicious firmware can be installed to obtain this data upon your next log in by a resourceful attacker.
+
+       LOCKING DOWN BIOS
+
+       Adding a password to the BIOS prevents someone from booting into removable media, which is basically the same as having root access to your computer. You should make sure your drive is first in the boot order and disable the other drives from being bootable if you can.
+
+       BOOT LOADERS
+
+       It is highly important to protect your boot loader. An unprotected boot loader can bypass any login restrictions, e.g. by setting the init=/bin/sh kernel parameter to boot directly to a shell.
+
+       SYSLINUX
+
+       Syslinux supports password-protecting your boot loader. It allows you to set either a per-menu-item password or a global boot loader password.
+
+       GRUB
+
+       GRUB supports boot loader passwords as well. See GRUB/Tips and tricks#Password protection of GRUB menu for details. It also has support for encrypted /boot, which only leaves some parts of the boot loader code unencrypted. GRUB's configuration, kernel and initramfs are encrypted.
+
+       SYSTEMD-BOOT
+
+       systemd-boot disables editing of kernel parameters when Secure Boot is enabled. Alternatively, you can set kernel parameters for password protection in systemd-boot for a more traditional password-based option.
+
+       SECURE BOOT
+
+       Secure Boot is a feature of UEFI that allows authentication of the files your computer boots. This helps preventing some evil maid attacks such as replacing files inside the boot partition. Normally computers come with keys that are enrolled by vendors (OEM). However these can be removed and allow the computer to enter Setup Mode which allows the user to enroll and manage their own keys.
+
+       The secure boot page guides you through how to set secure boot up by using your own keys.
+
+       TRUSTED PLATFORM MODULE (TPM)
+
+       TPMs are hardware microprocessors which have cryptographic keys embedded. This forms the fundamental root of trust of most modern computers and allows end-to-end verification of the boot chain. They can be used as internal smartcards, attest the firmware running on the computer and allow users to insert secrets into a tamper-proof and brute-force resistant store.
+
+       BOOT PARTITION ON REMOVABLE FLASH DRIVE
+
+       One popular idea is to place the boot partition on a flash drive in order to render the system unbootable without it. Proponents of this idea often use full-disk encryption alongside, and some also use detached encryption headers placed on the boot partition.
+
+       This method can also be merged with encrypting /boot.
+
+       AUTOMATIC LOGOUT
+
+       If you are using Bash or Zsh, you can set TMOUT for an automatic logout from shells after a timeout.
+
+       For example, the following will automatically log out from virtual consoles (but not terminal emulators in X11):
+
+         /etc/profile.d/shell-timeout.sh
+
+         TMOUT="$(( 60*10 ))";
+         [ -z "$DISPLAY" ] && export TMOUT;
+         case $( /usr/bin/tty ) in
+         	/dev/tty[0-9]*) export TMOUT;;
+         esac
+
+       If you really want EVERY Bash/Zsh prompt (even within X) to timeout, use:
+
+         $ export TMOUT="$(( 60*10 ))";
+
+       Note that this will not work if there is some command running in the shell (eg.: an SSH session or other shell without TMOUT support). But if you are using VC mostly for restarting frozen GDM/Xorg as root, then this is very useful.
+
+       PROTECT AGAINST ROGUE USB DEVICES
+
+       The kernel has settings to deactivate USB ports to protect your computer against rogue USB devices (a.k.a. BadUSB, PoisonTap or LanTurtle). They can be set at runtime and automated via sysctl.
+
+       For more control install USBGuard, which is a software framework implementing basic whitelisting and blacklisting capabilities based on device attributes.
+
+       VOLATILE DATA COLLECTION
+
+       A computer that is powered on may be vulnerable to volatile data collection. It is a best practice to turn a computer completely off at times it is not necessary for it to be on, or if the computer's physical security is temporarily compromised (e.g. when passing through a security checkpoint).
+
+       PACKAGES
+
+       AUTHENTICATION
+
+       Attacks on package managers are possible without proper use of package signing, and can affect even package managers with proper signature systems. Arch uses package signing by default and relies on a web of trust from 5 trusted master keys. See Pacman-key for details.
+
+       UPGRADES
+
+       It is important to regularly upgrade the system.
+
+       FOLLOW VULNERABILITY ALERTS
+
+       Subscribe to the Common Vulnerabilities and Exposure (CVE) Security Alert updates, made available by National Vulnerability Database, and found on the NVD Download webpage.
+
+       You should also consider subscribing to the release notifications for software you use, especially if you install software through means other than the main repositories or AUR. Some software have mailing lists you can subscribe to for security notifications. Source code hosting sites often offer RSS feeds for new releases. See Arch Security Team#Resources.
+
+       REBUILDING PACKAGES
+
+       Packages can be rebuilt and stripped of undesired functions and features as a means to reduce attack surface. For example, bzip2 can be rebuilt without bzip2recover in an attempt to circumvent CVE-2016-3189. Custom hardening flags can also be applied either manually or via a wrapper.
+
+         Flag | Purpose
+         -D_FORTIFY_SOURCE=2 | Run-time buffer overflow detection
+         -D_GLIBCXX_ASSERTIONS | Run-time bounds checking for C++ strings and containers
+         -fasynchronous-unwind-tables | Increased reliability of backtraces
+         -fexceptions | Enable table-based thread cancellation
+         -fpie -Wl,-pie | Full ASLR for executables
+         -fpic -shared | No text relocations for shared libraries
+         -fplugin=annobin | Generate data for hardening quality control
+         -fstack-clash-protection | Increased reliability of stack overflow detection
+         -fstack-protector, -fstack-protector-all or -fstack-protector-strong | Stack smashing protector
+         -grecord-gcc-switches | Store compiler flags in debugging information
+         -mcet -fcf-protection | Control flow integrity protection
+         -Werror=format-security | Reject potentially unsafe format string arguments
+         -Werror=implicit-function-declaration | Reject missing function prototypes
+         -Wl,-z,defs | Detect and reject underlinking
+         -Wl,-z,now | Disable lazy binding
+         -Wl,-z,relro | Read-only segments after relocation
+        * Flags and info source
+
+       SEE ALSO
+
+        * Arch Linux Security Tracker
+        * CentOS Wiki: OS Protection
+        * Hardening the Linux desktop
+        * Hardening the Linux server
+        * Linux Foundation: Linux workstation security checklist
+        * privacyguides.org Privacy Resources
+        * Red Hat Enterprise Linux 7 Security Guide
+        * Securing Debian Manual
+        * The paranoid #! Security Guide
+
+ArchWiki manual                         bundled documentation

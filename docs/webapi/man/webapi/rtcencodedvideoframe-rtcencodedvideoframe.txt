@@ -1,0 +1,58 @@
+WEBAPI.RTCENCODEDVIDEOFRAME-RTCENCODEDVIDEOFRAME(1) Sandbox manual WEBAPI.RTCENCODEDVIDEOFRAME-RTCENCODEDVIDEOFRAME(1)
+
+       NAME
+
+       RTCEncodedVideoFrame: RTCEncodedVideoFrame() constructor - windowanddedicated
+
+       RTCENCODEDVIDEOFRAME: RTCENCODEDVIDEOFRAME() CONSTRUCTOR
+
+       window_and_dedicated
+
+       The RTCEncodedVideoFrame() constructor creates a new and fully independent RTCEncodedVideoFrame object.
+
+       The new object is a deep clone of the original object data and metadata, with any metadata specified in the options parameter overwriting the copied values.
+
+       SYNTAX
+
+         new RTCEncodedVideoFrame(originalFrame);
+         new RTCEncodedVideoFrame(originalFrame, options);
+
+       PARAMETERS
+
+        * originalFrame
+          * : The frame to be copied.
+        * options (optional)
+          * : This is an object with the following property:
+            * metadata (optional)
+              * : An object setting the frame metadata.
+       This is an object with the same properties as the object returned by RTCEncodedVideoFrame.getMetadata().
+
+       EXCEPTIONS
+
+        * TypeError
+          * The source buffer is detached.
+        * RangeError
+          * The allocation is too large.
+
+       EXAMPLES
+
+       CLONING A FRAME WITH MODIFIED METADATA
+
+       This snippet shows how you might copy a frame and modify its metadata. In this case we just update the capture time.
+
+         // Frame is an incoming RTCEncodedVideoFrame
+         frame.getMetadata();
+
+         const newFrame = new RTCEncodedVideoFrame(frame, {
+           metadata: {
+             captureTime: frame.metadata.captureTime + 3,
+           },
+         });
+
+       This kind of modification might be useful if you need to create multiple outgoing frames from a single incoming frame; for example, in order to relay media to another peer on the network. Generally you will not need to modify the metadata for a frame.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

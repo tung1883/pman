@@ -1,0 +1,65 @@
+WEBAPI.TASKCONTROLLER-SETPRIORITY(1) Sandbox manual WEBAPI.TASKCONTROLLER-SETPRIORITY(1)
+
+       NAME
+
+       TaskController: setPriority() method - The setPriority() method of the TaskController interface can be called to set a new priority for this controller's signal.
+
+       TASKCONTROLLER: SETPRIORITY() METHOD
+
+       The setPriority() method of the TaskController interface can be called to set a new priority for this controller's signal. If a prioritized task is configured to use the signal, this will also change the task priority.
+
+       Observers are notified of priority changes by dispatching a prioritychange event. The method will only notify if the priority actually changes (the event is not fired if the priority would not be changed by the call).
+
+       Note that task priority can only be changed for tasks with mutable priorities. If the task is immutable, the function call is ignored.
+
+       SYNTAX
+
+         setPriority(priority)
+
+       PARAMETERS
+
+        * priority
+          * : The priority of the task.
+       One of: "user-blocking", "user-visible", "background".
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * NotAllowedError DOMException
+          * : A priority change has been started when one is already running.
+
+       EXAMPLES
+
+       First we create a task controller. In this case we don't specify a priority, so it will default to user-visible.
+
+         // Create a TaskController with default priority: 'user-visible'
+         const controller = new TaskController();
+
+       Then we pass the controller's signal to the Scheduler.postTask() method.
+
+         // Post task passing the controller's signal.
+         // The signal priority sets the initial priority of the task
+         scheduler
+           .postTask(() => "Task execute", { signal: controller.signal })
+           .then((taskResult) => {
+             console.log(`${taskResult}`);
+           }) // Run on success)
+           .catch((error) => {
+             console.log(`Catch error: ${error}`);
+           }); // Run on fail
+
+       The controller can then be used to change the priority
+
+         // Change the priority to 'background' using the controller
+         controller.setPriority("background");
+
+       Additional examples, including showing how to handle the event that results from changing the priority, can be found in: Prioritized Task Scheduling API > Examples.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,45 @@
+SHELLCHECK.SC2126(1)             Sandbox manual             SHELLCHECK.SC2126(1)
+
+       NAME
+
+       Consider using grep -c instead of grep | wc - grep foo | wc -l
+
+       CONSIDER USING GREP -C INSTEAD OF GREP WC
+
+       CONSIDER USING GREP -C INSTEAD OF GREP WC
+
+       PROBLEMATIC CODE
+
+         grep foo | wc -l
+
+       CORRECT CODE
+
+         grep -c foo
+
+       FOR MULTIPLE FILES
+
+       Instead of:
+
+         grep foo *.log | wc -l
+
+       You can pipe all the file contents into grep (passing the files directly to grep causes -c to print each file's count separately, rather than the total):
+
+         cat *.log | grep foo -c
+
+       RATIONALE
+
+       This is purely a stylistic issue. grep can count lines without piping to wc.
+
+       Often this number is only used to see whether there are matches (i.e. == 0). In these cases it's clearer and more efficient to use grep -q and check its exit status:
+
+         if grep -q pattern file; then
+           echo "The file contains the pattern"
+         fi
+
+       Also note that in foo | grep bar | wc -l, wc will mask the exit code of grep by default (i.e. without set -o pipefail), and always return success. If replacing with foo | grep -c bar, grep will exit non-zero when there are no matches. This is generally desirable (see above), but may require handling when used with set -e.
+
+       EXCEPTIONS
+
+       If you find piping to wc is clearer in a given situation it's fine to [[ignore]] this error.
+
+ShellCheck manual                       from the official documentation

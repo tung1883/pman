@@ -1,0 +1,66 @@
+WEBAPI.NAVIGATEEVENT-SCROLL(1)   Sandbox manual   WEBAPI.NAVIGATEEVENT-SCROLL(1)
+
+       NAME
+
+       NavigateEvent: scroll() method - The scroll() method of the
+
+       NAVIGATEEVENT: SCROLL() METHOD
+
+       The scroll() method of the NavigateEvent interface can be called to manually trigger the browser-driven scrolling behavior that occurs in response to the navigation, if you want it to happen before the navigation handling has completed.
+
+       SYNTAX
+
+         scroll()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the current Document is not yet active, or if the navigation has been canceled.
+        * SecurityError DOMException
+          * : Thrown if the event was dispatched by a dispatchEvent() call, rather than the user agent.
+
+       EXAMPLES
+
+       HANDLING SCROLLING USING SCROLL()
+
+       In this example of intercepting a navigation, the handler() function starts by fetching and rendering some article content, but then fetches and renders some secondary content afterwards. It makes sense to scroll the page to the main article content as soon as it is available so the user can interact with it, rather than waiting until the secondary content is also rendered. To achieve this, we have added a scroll() call between the two.
+
+         navigation.addEventListener("navigate", (event) => {
+           if (shouldNotIntercept(navigateEvent)) {
+             return;
+           }
+           const url = new URL(event.destination.url);
+
+           if (url.pathname.startsWith("/articles/")) {
+             event.intercept({
+               async handler() {
+                 const articleContent = await getArticleContent(url.pathname);
+                 renderArticlePage(articleContent);
+
+                 event.scroll();
+
+                 const secondaryContent = await getSecondaryContent(url.pathname);
+                 addSecondaryContent(secondaryContent);
+               },
+             });
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,40 @@
+ROCKY.KERNEL-REGENERATE_INITRAMFS(1) Sandbox manual ROCKY.KERNEL-REGENERATE_INITRAMFS(1)
+
+       NAME
+
+       Regenerate initramfs - An initramfs is the root file system inside a Linux kernel to help boot the system. It contains the core modules needed to boot Linux.
+
+       REGENERATE INITRAMFS
+
+       INTRODUCTION
+
+       An initramfs is the root file system inside a Linux kernel to help boot the system. It contains the core modules needed to boot Linux.
+
+       Sometimes, a Linux administrator might want to regenerate the initramfs, say if they want to blacklist a driver or include an out-of-band module. The author did this to enable Intel vPro on a Minisforum MS-01.
+
+       REQUIREMENTS
+
+       The following are the minimum requirements for using this procedure:
+
+        * A Rocky Linux system or virtual machine (not a container)
+        * Changes to the kernel setup, such as blacklisting or adding a module
+
+       REGENERATING THE INITRAMFS
+
+       To regenerate the initramfs you should first back up the existing initramfs:
+
+         cp /boot/initramfs-$(uname -r).img /boot/initramfs-$(uname -r)-$(date +%m-%d-%H%M%S).img
+
+       Next, run dracut to regenerate the initramfs:
+
+         dracut -f /boot/initramfs-$(uname -r).img $(uname -r)
+
+       Then reboot:
+
+         reboot
+
+       CONCLUSION
+
+       The Linux kernel is extremely powerful and modular. It makes sense that some users might want to allow or disallow certain modules, and regenerating the initramfs allows for this to happen.
+
+Rocky Linux manual                      from the official documentation

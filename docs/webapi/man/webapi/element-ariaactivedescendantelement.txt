@@ -1,0 +1,81 @@
+WEBAPI.ELEMENT-ARIAACTIVEDESCENDANTELEMENT(1) Sandbox manual WEBAPI.ELEMENT-ARIAACTIVEDESCENDANTELEMENT(1)
+
+       NAME
+
+       Element: ariaActiveDescendantElement property - The ariaActiveDescendantElement property of the Element interface represents the current active element when focus is on a composite widget,
+
+       ELEMENT: ARIAACTIVEDESCENDANTELEMENT PROPERTY
+
+       The ariaActiveDescendantElement property of the Element interface represents the current active element when focus is on a composite widget, combobox, textbox, group, or application.
+
+       The aria-activedescendant topic contains additional information about how the attribute and property should be used.
+
+       VALUE
+
+       A subclass of HTMLElement that represents the active descendant, or null if there is no active descendant.
+
+       DESCRIPTION
+
+       The property is a flexible alternative to using the aria-activedescendant attribute. Unlike aria-activedescendant, the element assigned to this property does not have to have an id attribute.
+
+       The property reflects the element's aria-activedescendant attribute when it is defined, but only for reference id values that match valid in-scope elements. If the property is set, then the corresponding attribute is cleared. For more information about reflected element references and scope see Reflected element references in the _Reflected attributes_ guide.
+
+       EXAMPLES
+
+       GET THE ACTIVE DESCENDANT
+
+       This example shows how ariaActiveDescendantElement can be used to get the current active descendant.
+
+       HTML
+
+       The HTML defines a listbox for selecting different kinds of streets, consisting of a element with the listbox role and nested items for each of the options. The active descendant is initially set to the element with id of avenue using aria-activedescendant.
+
+         <div id="streetType" role="listbox" aria-activedescendant="avenue">
+           <div>Street</div>
+           <div id="avenue">Avenue</div>
+           <div>Lane</div>
+         </div>
+
+         <pre id="log"></pre>
+
+         #log {
+           height: 70px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+       JAVASCRIPT
+
+       The code below first checks whether the ariaActiveDescendantElement is supported. It the property is supported the code then logs the value of aria-activedescendant (the id of the referenced element) using Element.getAttribute(), the property element, and the element's text content.
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+         // Feature test for ariaActiveDescendantElement
+         if ("ariaActiveDescendantElement" in Element.prototype) {
+           log(`getAttribute(): ${streetType.getAttribute("aria-activedescendant")}`);
+           log(`ariaActiveDescendantElement: ${streetType.ariaActiveDescendantElement}`);
+           log(`text: ${streetType.ariaActiveDescendantElement?.textContent.trim()}`);
+         } else {
+           log("ariaActiveDescendantElement not supported by browser");
+         }
+
+       RESULT
+
+       The log below shows the output of the above code. The value returned from the aria-activedescendant property should be "avenue", the associated element should be a HTMLDivElement element, and the text in that element should be Avenue.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * aria-activedescendant attribute
+        * ElementInternals.ariaActiveDescendantElement
+        * Reflected element references in the _Attribute reflection_ guide.
+
+Web APIs manual                         from the official documentation

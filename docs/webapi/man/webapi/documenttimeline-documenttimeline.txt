@@ -1,0 +1,54 @@
+WEBAPI.DOCUMENTTIMELINE-DOCUMENTTIMELINE(1) Sandbox manual WEBAPI.DOCUMENTTIMELINE-DOCUMENTTIMELINE(1)
+
+       NAME
+
+       DocumentTimeline: DocumentTimeline() constructor - The DocumentTimeline() constructor of the Web Animations API creates a new instance of the DocumentTimeline object associated with the activ
+
+       DOCUMENTTIMELINE: DOCUMENTTIMELINE() CONSTRUCTOR
+
+       The DocumentTimeline() constructor of the Web Animations API creates a new instance of the DocumentTimeline object associated with the active document of the current browsing context.
+
+       SYNTAX
+
+         new DocumentTimeline(options)
+
+       PARAMETERS
+
+        * options (optional)
+          * : An object specifying options for the new timeline. The following properties are available:
+            * originTime (optional)
+              * : A number that specifies the zero time for the DocumentTimeline
+       as a number of milliseconds relative to Performance.timeOrigin. Defaults to 0.
+
+       EXAMPLES
+
+       ORIGIN TIME
+
+       A DocumentTimeline with an originTime of zero counts time starting from Performance.timeOrigin. This is the same behavior as Document.timeline.
+
+         const timeline = new DocumentTimeline();
+         console.log(timeline.currentTime === document.timeline.currentTime); // true
+
+       Setting a non-zero originTime will offset the DocumentTimeline from Document.timeline by that amount:
+
+         const offsetTimeline = new DocumentTimeline({ originTime: 500 });
+         console.log(document.timeline.currentTime - offsetTimeline.currentTime); // 500
+
+       A DocumentTimeline relative to the current moment can be constructed with:
+
+         const nowTimeline = new DocumentTimeline({
+           originTime: document.timeline.currentTime,
+         });
+         console.log(nowTimeline.currentTime); // 0
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Animations API
+        * AnimationTimeline
+        * DocumentTimeline
+
+Web APIs manual                         from the official documentation

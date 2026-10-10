@@ -1,0 +1,126 @@
+WEBAPI.HTMLBUTTONELEMENT-REPORTVALIDITY(1) Sandbox manual WEBAPI.HTMLBUTTONELEMENT-REPORTVALIDITY(1)
+
+       NAME
+
+       HTMLButtonElement: reportValidity() method - The reportValidity() method of the HTMLButtonElement interface performs the same validity checking steps as the checkValidity() method. In a
+
+       HTMLBUTTONELEMENT: REPORTVALIDITY() METHOD
+
+       The reportValidity() method of the HTMLButtonElement interface performs the same validity checking steps as the checkValidity() method. In addition, if the invalid event is not canceled, the browser displays the problem to the user. It always returns true if the element is not a candidate for constraint validation (its willValidate is false).
+
+       SYNTAX
+
+         reportValidity()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       Returns true if the element's value has no validity problems or if it's not a candidate for constraint validation; otherwise, returns false.
+
+       EXAMPLES
+
+       This far fetched example demonstrates how a button can be made invalid.
+
+       HTML
+
+       We create a form that only contains a few buttons:
+
+         <form action="#" id="form" method="post">
+           <p>
+             <input type="submit" value="Submit" />
+             <button id="example" type="submit" value="fixed">THIS BUTTON</button>
+           </p>
+           <p>
+             <button type="button" id="report">reportValidity()</button>
+           </p>
+         </form>
+
+         <p id="log"></p>
+
+       CSS
+
+       We add a bit of CSS, including :valid and :invalid styles for our button:
+
+         input[type="submit"],
+         button {
+           background-color: #3333aa;
+           border: none;
+           font-size: 1.3rem;
+           padding: 5px 10px;
+           color: white;
+         }
+         button:invalid {
+           background-color: #aa3333;
+         }
+         button:valid {
+           background-color: #33aa33;
+         }
+
+       JAVASCRIPT
+
+       We include a function to toggle the value, content, and validation message of the example button:
+
+         const reportButton = document.querySelector("#report");
+         const exampleButton = document.querySelector("#example");
+         const output = document.querySelector("#log");
+
+         reportButton.addEventListener("click", () => {
+           const reportVal = exampleButton.reportValidity();
+           output.innerHTML = `reportValidity returned: ${reportVal} <br/> custom error: ${exampleButton.validationMessage}`;
+         });
+
+         exampleButton.addEventListener("invalid", () => {
+           console.log("Invalid event fired on exampleButton");
+         });
+
+         exampleButton.addEventListener("click", (e) => {
+           e.preventDefault();
+           if (exampleButton.value === "error") {
+             breakOrFixButton("fixed");
+           } else {
+             breakOrFixButton("error");
+           }
+           output.innerHTML = `validation message: ${exampleButton.validationMessage} <br/> custom error: ${exampleButton.validationMessage}`;
+         });
+
+         function breakOrFixButton() {
+           const state = toggleButton();
+           if (state === "error") {
+             exampleButton.setCustomValidity("This is a custom error message");
+           } else {
+             exampleButton.setCustomValidity("");
+           }
+         }
+
+         function toggleButton() {
+           if (exampleButton.value === "error") {
+             exampleButton.value = "fixed";
+             exampleButton.innerHTML = "No error";
+           } else {
+             exampleButton.value = "error";
+             exampleButton.innerHTML = "Custom error";
+           }
+           return exampleButton.value;
+         }
+
+       RESULTS
+
+       The button is by default valid. Activate "THIS BUTTON" to change the value, content, and add a custom error message. Activating the "reportValidity()" button checks the validity of the button, reporting the custom error message to the user and throwing an invalid event if the button does not pass constraint validation due to the message.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTMLButtonElement.checkValidity()
+        * 
+        * 
+        * Learn: Client-side form validation
+        * Guide: Constraint validation
+        * CSS :valid and :invalid pseudo-classes
+
+Web APIs manual                         from the official documentation

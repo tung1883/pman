@@ -1,0 +1,50 @@
+SHELLCHECK.SC2283(1)             Sandbox manual             SHELLCHECK.SC2283(1)
+
+       NAME
+
+       Use [ ] to compare values, or remove spaces around = to assign (or quote '=' if literal). - var = value
+
+       USE TO COMPARE VALUES, OR REMOVE SPACES AROUND TO ASSIGN (OR QUOTE ' '
+
+       USE TO COMPARE VALUES, OR REMOVE SPACES AROUND TO ASSIGN (OR QUOTE ' '
+
+       PROBLEMATIC CODE
+
+         var = value
+
+         # Comparison
+         if $var = value
+         then
+           echo "Match"
+         fi
+
+       CORRECT CODE
+
+         # Assignment
+         var=value
+
+         # Comparison
+         if [ "$var" = value ]
+         then
+           echo "Match"
+         fi
+
+       RATIONALE
+
+       ShellCheck found an unquoted = after a word.
+
+       If this was supposed to be a comparison, use square brackets: [ "$var" = value ]
+
+       If this was supposed to be an assignment, remove spaces around =: var=value
+
+       EXCEPTIONS
+
+       If the = was meant literally, quote it:
+
+       grep '=true' file.cfg
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

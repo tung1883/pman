@@ -1,0 +1,35 @@
+SHELLCHECK.SC2176(1)             Sandbox manual             SHELLCHECK.SC2176(1)
+
+       NAME
+
+       time is undefined for pipelines. time single stage or bash -c instead. - time foo | bar
+
+       TIME IS UNDEFINED FOR PIPELINES. TIME SINGLE STAGE OR BASH -C INSTEAD
+
+       TIME IS UNDEFINED FOR PIPELINES. TIME SINGLE STAGE OR BASH -C INSTEAD
+
+       PROBLEMATIC CODE
+
+         time foo | bar
+
+       CORRECT CODE
+
+       To time the most relevant stage:
+
+         foo | { time bar; }
+
+       To time everything in a pipeline:
+
+         time bash -c 'foo | bar'
+
+       Note that you can not use time sh -c to time an entire pipeline, because POSIX does not guarantee that anything other than the last stage is waited upon by the shell.
+
+       RATIONALE
+
+       This behavior is explicitly left undefined in POSIX.
+
+       EXCEPTIONS
+
+       None. This warning is not emitted in ksh or bash where time is defined for pipelines.
+
+ShellCheck manual                       from the official documentation

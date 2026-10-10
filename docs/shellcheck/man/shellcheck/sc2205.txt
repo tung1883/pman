@@ -1,0 +1,39 @@
+SHELLCHECK.SC2205(1)             Sandbox manual             SHELLCHECK.SC2205(1)
+
+       NAME
+
+       (..) is a subshell. Did you mean [ .. ], a test expression? - if ( 1 -lt 2 )
+
+       (..) IS A SUBSHELL. DID YOU MEAN .. , A TEST EXPRESSION
+
+       (..) IS A SUBSHELL. DID YOU MEAN .. , A TEST EXPRESSION
+
+       PROBLEMATIC CODE
+
+         if ( 1 -lt 2 )
+         then
+           echo "1 is less than 2"
+         fi
+
+       CORRECT CODE
+
+         if [ 1 -lt 2 ]
+         then
+           echo "1 is less than 2"
+         fi
+
+       RATIONALE
+
+       Tests like -eq to check numeric equality or \< for string comparison only work are actually parameters to the test command, and only work as tests in that context. [ is an alias for test, so you'll frequently see them written as [ 1 -eq 2 ].
+
+       ( .. ) is completely unrelated, and is a subshell mostly used to scope shell modifications. They should not be used in if or while statements in shell scripts.
+
+       If you wanted to test a condition, rewrite the ( .. ) to [ .. ].
+
+       EXCEPTIONS
+
+       This error is triggered by having a binary operator as the first parameter in a subshell, and could falsely trigger on e.g. if ( grep -eq "foo|bar" file ). In these cases, check whether the subshell is actually needed.
+
+       Note that there's a similar looking error [[SC2204]] with a low false positive rate.
+
+ShellCheck manual                       from the official documentation

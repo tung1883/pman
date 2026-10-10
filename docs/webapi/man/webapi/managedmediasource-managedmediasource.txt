@@ -1,0 +1,66 @@
+WEBAPI.MANAGEDMEDIASOURCE-MANAGEDMEDIASOURCE(1) Sandbox manual WEBAPI.MANAGEDMEDIASOURCE-MANAGEDMEDIASOURCE(1)
+
+       NAME
+
+       ManagedMediaSource: ManagedMediaSource() constructor - windowanddedicated
+
+       MANAGEDMEDIASOURCE: MANAGEDMEDIASOURCE() CONSTRUCTOR
+
+       window_and_dedicated
+
+       The ManagedMediaSource() constructor of the ManagedMediaSource interface constructs and returns a new ManagedMediaSource object instance with no associated source buffers.
+
+       SYNTAX
+
+         new ManagedMediaSource()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A new ManagedMediaSource object instance.
+
+       EXAMPLES
+
+       CREATING A MANAGEDMEDIASOURCE AND ATTACHING IT TO A VIDEO ELEMENT
+
+       The following example creates a new ManagedMediaSource, attaches it to a element, and uses the startstreaming event to begin fetching media data.
+
+         const videoUrl =
+           "https://mdn.github.io/shared-assets/videos/flower-fragmented.mp4";
+         const mediaType = 'video/mp4; codecs="avc1.64001F, mp4a.40.2"';
+
+         if (ManagedMediaSource.isTypeSupported(mediaType)) {
+           const source = new ManagedMediaSource();
+           const video = document.createElement("video");
+
+           video.controls = true;
+           video.disableRemotePlayback = true;
+           video.src = URL.createObjectURL(source);
+           document.body.appendChild(video);
+
+           source.addEventListener("sourceopen", () => {
+             const sourceBuffer = source.addSourceBuffer(mediaType);
+
+             source.addEventListener("startstreaming", async () => {
+               console.log("startstreaming — fetching media data");
+               const response = await fetch(videoUrl);
+               const data = await response.arrayBuffer();
+               sourceBuffer.appendBuffer(data);
+             });
+           });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ManagedMediaSource
+        * ManagedSourceBuffer
+        * MediaSource()
+
+Web APIs manual                         from the official documentation

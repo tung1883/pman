@@ -1,0 +1,68 @@
+WEBAPI.LANGUAGEDETECTOR(1)       Sandbox manual       WEBAPI.LANGUAGEDETECTOR(1)
+
+       NAME
+
+       LanguageDetector - The LanguageDetector interface of the Translator and Language Detector APIs contains all the language detection functionality, including che
+
+       LANGUAGEDETECTOR
+
+       The LanguageDetector interface of the Translator and Language Detector APIs contains all the language detection functionality, including checking AI model availability, creating a new LanguageDetector instance, using it to detect a language, and more.
+
+       INSTANCE PROPERTIES
+
+        * inputQuota (read-only) (experimental)
+          * : The input quota available to the browser for detecting languages.
+        * expectedInputLanguages (read-only) (experimental)
+          * : The expected languages to be detected in the input text.
+
+       STATIC METHODS
+
+        * availability() (experimental)
+          * : Returns an enumerated value that indicates whether the browser AI model supports a given LanguageDetector configuration.
+        * create() (experimental)
+          * : Creates a new LanguageDetector instance to detect languages.
+
+       INSTANCE METHODS
+
+        * destroy() (experimental)
+          * : Releases the resources assigned to the LanguageDetector instance it is called on and stops any further activity on it.
+        * detect() (experimental)
+          * : Detects the closest matching language or languages that a given text string is most likely to be written in.
+        * measureInputUsage() (experimental)
+          * : Reports how much input quota would be used by a language detection operation for a given text input.
+
+       EXAMPLES
+
+       See Using the Translator and Language Detector APIs for a complete example.
+
+       CREATING A LANGUAGEDETECTOR INSTANCE
+
+         const detector = await LanguageDetector.create({
+           expectedInputLanguages: ["en-US", "zh"],
+         });
+
+       > Different implementations will likely support different languages.
+
+       DETECTING LANGUAGES
+
+         const results = await detector.detect(myTextString);
+
+         results.forEach((result) => {
+           console.log(`${result.detectedLanguage}: ${result.confidence}`);
+         });
+
+         // Results in logs like this:
+         // la: 0.8359838724136353
+         // es: 0.017705978825688362
+         // sv: 0.012977192178368568
+         // en: 0.011148443445563316
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Translator and Language Detector APIs
+
+Web APIs manual                         from the official documentation

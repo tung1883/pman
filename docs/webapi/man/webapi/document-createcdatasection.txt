@@ -1,0 +1,44 @@
+WEBAPI.DOCUMENT-CREATECDATASECTION(1) Sandbox manual WEBAPI.DOCUMENT-CREATECDATASECTION(1)
+
+       NAME
+
+       Document: createCDATASection() method - createCDATASection() creates a new CDATA section node,
+
+       DOCUMENT: CREATECDATASECTION() METHOD
+
+       createCDATASection() creates a new CDATA section node, and returns it.
+
+       SYNTAX
+
+         createCDATASection(data)
+
+       PARAMETERS
+
+        * data
+          * : A string containing the data to be added to the CDATA Section.
+
+       RETURN VALUE
+
+       A CDATA Section node.
+
+       EXAMPLES
+
+         const doc = new DOMParser().parseFromString("<xml></xml>", "application/xml");
+         const cdata = doc.createCDATASection("Some <CDATA> data & then some");
+         doc.querySelector("xml").appendChild(cdata);
+         console.log(new XMLSerializer().serializeToString(doc));
+         // Displays: <xml><![CDATA[Some <CDATA> data & then some]]></xml>
+
+       NOTES
+
+        * This will only work with XML, not HTML documents (as HTML documents do not support
+       CDATA sections); attempting it on an HTML document will throw NOT_SUPPORTED_ERR.
+
+        * Will throw a NS_ERROR_DOM_INVALID_CHARACTER_ERR exception if one tries
+       to submit the closing CDATA sequence (]]>) as part of the data, so unescaped user-provided data cannot be safely used without this method getting this exception (createTextNode() can often be used in its place).
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

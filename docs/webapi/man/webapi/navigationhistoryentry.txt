@@ -1,0 +1,73 @@
+WEBAPI.NAVIGATIONHISTORYENTRY(1) Sandbox manual WEBAPI.NAVIGATIONHISTORYENTRY(1)
+
+       NAME
+
+       NavigationHistoryEntry - The NavigationHistoryEntry interface of the Navigation API represents a single navigation history entry.
+
+       NAVIGATIONHISTORYENTRY
+
+       The NavigationHistoryEntry interface of the Navigation API represents a single navigation history entry.
+
+       These objects are commonly accessed via the Navigation.currentEntry property and Navigation.entries() method.
+
+       The Navigation API only exposes history entries created in the current browsing context that have the same origin as the current page (e.g., not navigations inside embedded s, or cross-origin navigations), providing an accurate list of all previous history entries just for your app. This makes traversing the history a much less fragile proposition than with the older History API.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, EventTarget._
+
+        * id (read-only)
+          * : Returns the id of the history entry. This is a unique, UA-generated value that always represents a specific history entry, useful to correlate it with an external resource such as a storage cache.
+        * index (read-only)
+          * : Returns the index of the history entry in the history entries list (that is, the list returned by Navigation.entries()), or -1 if the entry does not appear in the list.
+        * key (read-only)
+          * : Returns the key of the history entry. This is a unique, UA-generated value that represents the history entry's slot in the entries list rather than the entry itself. It is used to navigate that particular slot via Navigation.traverseTo(). The key will be reused by other entries that replace the entry in the list (that is, if the NavigateEvent.navigationType is replace).
+        * sameDocument (read-only)
+          * : Returns true if this history entry is for the same document as the current Document value, or false otherwise.
+        * url (read-only)
+          * : Returns the absolute URL of this history entry. If the entry corresponds to a different document than the current one (like sameDocument property is false), and that document was fetched with a Referrer-Policy header set to no-referrer or origin, the property returns null.
+
+       INSTANCE METHODS
+
+       _Inherits methods from its parent, EventTarget._
+
+        * getState()
+          * : Returns a clone of the available state associated with this history entry.
+
+       EVENTS
+
+        * dispose
+          * : Fires when the entry is no longer part of the history entry list.
+
+       EXAMPLES
+
+         function initHomeBtn() {
+           // Get the key of the first loaded entry
+           // so the user can always go back to this view.
+           const { key } = navigation.currentEntry;
+           backToHomeButton.onclick = () => {
+             navigation.traverseTo(key);
+           };
+         }
+         // Intercept navigate events, such as link clicks, and
+         // replace them with single-page navigations
+         navigation.addEventListener("navigate", (event) => {
+           event.intercept({
+             async handler() {
+               // Navigate to a different view,
+               // but the "home" button will always work.
+             },
+           });
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+        * Navigation API live demo (view demo source)
+
+Web APIs manual                         from the official documentation

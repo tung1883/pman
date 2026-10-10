@@ -1,0 +1,49 @@
+SHELLCHECK.SC2233(1)             Sandbox manual             SHELLCHECK.SC2233(1)
+
+       NAME
+
+       Remove superfluous (..) around condition to avoid subshell overhead. - if ([ "$x" -gt 0 ])
+
+       REMOVE SUPERFLUOUS (..) AROUND CONDITION TO AVOID SUBSHELL OVERHEAD
+
+       REMOVE SUPERFLUOUS (..) AROUND CONDITION TO AVOID SUBSHELL OVERHEAD
+
+       PROBLEMATIC CODE
+
+         if ([ "$x" -gt 0 ])
+         then true; fi
+
+       CORRECT CODE
+
+         if [ "$x" -gt 0 ]
+         then true; fi
+
+       RATIONALE
+
+       The shell syntax is if cmd, elif cmd, while cmd and until cmd without any parentheses. Instead, parentheses are an independent construct used to create subshells.
+
+       ShellCheck has noticed that you're wrapping (..) around one or more test commands. This is unnecessary, and the resulting fork adds quite a lot of overhead:
+
+         $ i=0; time while ( [ "$i" -lt 10000 ] ); do i=$((i+1)); done
+         real    0m6.998s
+         user    0m3.453s
+         sys     0m3.464s
+
+         $ i=0; time while [ "$i" -lt 10000 ]; do i=$((i+1)); done
+         real    0m0.055s
+         user    0m0.054s
+         sys     0m0.001s
+
+       Just delete the surrounding (..) since they serve no purpose and only slows the script down.
+
+       EXCEPTIONS
+
+       This issue only affects performance, not correctness, so it can be safely [[ignore]]d.
+
+       If you are considering doing it to stylistically match C-like languages, please note that this is not conventional and that you'd probably recommend someone use if (1 == 2) over if (system("[ 1 = 2 ]")) in C no matter which language they're used to.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

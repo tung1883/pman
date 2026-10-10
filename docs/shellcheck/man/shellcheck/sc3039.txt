@@ -1,0 +1,39 @@
+SHELLCHECK.SC3039(1)             Sandbox manual             SHELLCHECK.SC3039(1)
+
+       NAME
+
+       In POSIX sh, let is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, LET IS UNDEFINED
+
+       IN POSIX SH, LET IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         let x=2+2
+
+       CORRECT CODE
+
+       Use standard $((arithmetic expansion)) instead of legacy let:
+
+         #!/bin/sh
+         x=$((2+2))
+
+       RATIONALE
+
+       let is a command used for arithmetic in some shells, but it's not a standard command. Use $((..)) instead.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

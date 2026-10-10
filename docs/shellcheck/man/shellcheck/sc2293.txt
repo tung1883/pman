@@ -1,0 +1,35 @@
+SHELLCHECK.SC2293(1)             Sandbox manual             SHELLCHECK.SC2293(1)
+
+       NAME
+
+       When eval'ing @Q-quoted words, use  rather than @ as the index. - eval "$MYCOMMAND ${@@Q}"
+
+       WHEN EVAL'ING Q-QUOTED WORDS, USE RATHER THAN AS THE INDEX
+
+       WHEN EVAL'ING Q-QUOTED WORDS, USE RATHER THAN AS THE INDEX
+
+       PROBLEMATIC CODE
+
+         eval "$MYCOMMAND ${@@Q}"
+
+       CORRECT CODE
+
+         eval "$MYCOMMAND ${*@Q}"
+
+       RATIONALE
+
+       ShellCheck noticed that you are calling eval and including an escaped array. However, the array is passed as multiple arguments and relies on being implicitly joined together to form a single shell string, which eval can then evaluate.
+
+       Instead, prefer building your shell string with explicit string concatenation by using instead of @ for the index, such as ${@Q} or ${array[*]@Q}.
+
+       This suggestion is equivalent to [[SC2124]], but for eval arguments rather than string variables.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

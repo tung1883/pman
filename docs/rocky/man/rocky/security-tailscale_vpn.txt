@@ -1,0 +1,66 @@
+ROCKY.SECURITY-TAILSCALE_VPN(1)  Sandbox manual  ROCKY.SECURITY-TAILSCALE_VPN(1)
+
+       NAME
+
+       Tailscale VPN - Compared to other VPN solutions, Tailscale does not require open TCP/IP ports and can work behind Network Address Translation or a firewall.
+
+       TAILSCALE VPN
+
+       INTRODUCTION
+
+       Tailscale is a zero-config, end-to-end encrypted, peer-to-peer VPN based on Wireguard. Tailscale supports all major desktop and mobile operating systems.
+
+       Compared to other VPN solutions, Tailscale does not require open TCP/IP ports and can work behind Network Address Translation or a firewall.
+
+       PREREQUISITES AND ASSUMPTIONS
+
+       The following are minimum requirements for using this procedure:
+
+        * The ability to run commands as the root user or use sudo to elevate privileges
+        * A Tailscale account
+
+       INSTALLING TAILSCALE
+
+       To install Tailscale, we first need to add its dnf repository:
+
+         dnf config-manager --add-repo https://pkgs.tailscale.com/stable/rhel/10/tailscale.repo
+
+       Then install Tailscale:
+
+         dnf install tailscale
+
+       CONFIGURING TAILSCALE
+
+       With the packages installed, you need to enable and configure Tailscale. To enable the Tailscale daemon:
+
+         systemctl enable --now tailscaled
+
+       Subsequently, you will authenticate with Tailscale:
+
+         tailscale up
+
+       You will get a URL for authentication. Visit that in a browser and log into Tailscale:
+
+       
+
+       Next, you will grant access to your server. Click Connect to do so:
+
+       
+
+       When you've granted access, you will see a success dialog:
+
+       
+
+       Once your server is authenticated with Tailscale, it will get a Tailscale IPv4 address:
+
+         tailscale ip -4
+
+       It will also get an RFC 4193 (Unique Local Address) Tailscale IPv6 address:
+
+         tailscale ip -6
+
+       CONCLUSION
+
+       Traditional VPN services using a VPN gateway are centralized. This requires manual configuration, setting up your firewall and giving user accounts. Tailscale solves this problem by its peer-to-peer model combined with network-level access control.
+
+Rocky Linux manual                      from the official documentation

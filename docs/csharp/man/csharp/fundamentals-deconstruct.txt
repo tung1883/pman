@@ -1,0 +1,923 @@
+CSHARP.FUNDAMENTALS-DECONSTRUCT(1) Sandbox manual CSHARP.FUNDAMENTALS-DECONSTRUCT(1)
+
+       NAME
+
+       Deconstruct tuples and other types - Learn how C# deconstruction assigns tuple elements or object components to individual variables.
+
+       DECONSTRUCT TUPLES AND OTHER TYPES
+
+       > This article is part of the Fundamentals section for developers who already know at least one programming language and are learning C#. Start with the pattern matching overview if patterns are new to you.
+       A deconstruction assigns the individual parts of a value — its components — to multiple variables in a single operation. A tuple's components are its elements, exposed by position. Another type can expose components by defining a Deconstruct method. Positional records, which declare their properties as constructor-like parameters, get a Deconstruct method automatically.
+
+       DECONSTRUCT TUPLES
+
+       Suppose a method returns a tuple with city data. You can read each component one at a time:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       A deconstruction assigns those components in one step:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       You can also let C# infer the variable types:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       A deconstruction can mix existing variables, newly declared variables, and discards in one assignment:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       Choose the form that makes the code easiest to read. A single var before the parentheses is often the clearest inferred form. You can also mix explicit types and var inside the parentheses, but that form is usually harder to scan. If you need only some values, use discards instead of omitting positions.
+
+       IGNORE UNNEEDED VALUES WITH DISCARDS
+
+       Every produced value must line up with a position on the left side of the assignment. When you do not need one or more positions, use _ as a discard:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       Here, the tuple returns the city name, two years, and two population values. The deconstruction keeps only the population values because the calculation uses only those components.
+
+       DECONSTRUCT USER-DEFINED TYPES
+
+       A class, struct, or interface can support deconstruction by declaring a Deconstruct method. Each component becomes an out parameter, which lets the method assign a value back to the caller's variable without returning it. Because every component is returned through an out parameter, the method itself returns void:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       You can then deconstruct an instance directly:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       A type can provide multiple Deconstruct overloads with different arity — the number of out parameters the method declares — so callers can choose how many components to retrieve:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       Two overloads with the same number of out parameters are ambiguous. The compiler reports an error for the ambiguous call, so distinguish overloads by arity, not only by parameter types.
+
+       Discards work with user-defined deconstruction too. For more on discards in general, see Discards and the discard pattern:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       DECONSTRUCT RECORDS
+
+       A positional record or record struct declares its properties as parameters on the type declaration itself, similar to a constructor. The compiler generates a Deconstruct method for you, with out parameters matching those positional parameters:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       Only the positional parameters participate in that generated deconstruction. Additional properties you declare elsewhere on the record are not added automatically.
+
+       DECONSTRUCT TYPES YOU DON'T OWN
+
+       If you cannot modify a type, you can still support deconstruction by writing an extension method — a static method that adds a Deconstruct method to a type you don't own, as if it were a member of that type. After you add the method, any Uri value can use deconstruction syntax:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       The same ambiguity rule applies here: two extension Deconstruct methods with the same arity are ambiguous. Ambiguity can also arise between an instance Deconstruct method and an extension method of the same arity. In either case, the compiler reports an error for the ambiguous call.
+
+       BUILT-IN DECONSTRUCTION ON SYSTEM TYPES
+
+       Some system types already define a Deconstruct method, using the same mechanism you'd use for your own types. For example, KeyValuePair2 supports deconstruction, which makes dictionary iteration concise:
+
+         static class DeconstructSamples
+         {
+             public static void Run()
+             {
+                 ShowTupleMemberAccess();
+                 ShowTypedTupleDeconstruction();
+                 ShowVarTupleDeconstruction();
+                 ShowMixedDeconstruction();
+                 ShowTupleDiscards();
+                 ShowPersonDeconstruction();
+                 ShowPersonDeconstructionWithDiscards();
+                 ShowRecordDeconstruction();
+                 ShowUriDeconstruction();
+                 ShowKeyValuePairDeconstruction();
+             }
+
+             static void ShowTupleMemberAccess()
+             {
+                 var cityData = QueryCityData("New York City");
+                 var city = cityData.City;
+                 var population = cityData.Population;
+                 var area = cityData.Area;
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowTypedTupleDeconstruction()
+             {
+                 (string city, int population, double area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowVarTupleDeconstruction()
+             {
+                 var (city, population, area) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}, area {area:F2}");
+             }
+
+             static void ShowMixedDeconstruction()
+             {
+                 string city = "Raleigh";
+
+                 (city, var population, _) = QueryCityData("New York City");
+
+                 Console.WriteLine($"{city}: population {population:N0}");
+             }
+
+             static void ShowTupleDiscards()
+             {
+                 var (_, _, population1960, _, population2010) = QueryPopulationDataForYears(
+                     "New York City", 1960, 2010);
+
+                 Console.WriteLine($"Population change: {population2010 - population1960:N0}");
+             }
+
+             static (string City, int Population, double Area) QueryCityData(string name) =>
+                 name switch
+                 {
+                     "New York City" => (name, 8_175_133, 468.48),
+                     "Raleigh" => (name, 458_880, 149.60),
+                     _ => (name, 0, 0)
+                 };
+
+             static (string City, int Year1, int PopulationYear1, int Year2, int PopulationYear2) QueryPopulationDataForYears(
+                 string name, int year1, int year2) =>
+                 (name, year1, year2) switch
+                 {
+                     ("New York City", 1960, 2010) => (name, year1, 7_781_984, year2, 8_175_133),
+
+       DECONSTRUCTION AND PATTERN MATCHING
+
+       A Deconstruct method also enables positional patterns for that type. A positional pattern tests and deconstructs a value in one step, using the same parenthesized syntax as a deconstruction: person is ("Alice", 30) matches a Person whose deconstructed components equal those values. This is different from a property pattern, which tests named properties directly, such as person is { Name: "Alice", Age: 30 }. Property patterns are usually clearer for object shapes because member names explain the test. Positional patterns are strongest when order already carries the meaning, such as with tuples or other small ordered values.
+
+       SEE ALSO
+
+        * Pattern matching overview
+        * Property and positional patterns
+        * Discards and the discard pattern
+        * Tuple types
+        * Record types
+        * out parameter modifier
+
+C# manual                               from the official documentation

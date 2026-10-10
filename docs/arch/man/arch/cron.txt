@@ -1,0 +1,382 @@
+ARCH.CRON(1)                     Sandbox manual                     ARCH.CRON(1)
+
+       From Wikipedia:
+
+       cron is the time-based job scheduler in Unix-like computer operating systems. cron enables users to schedule jobs (commands or shell scripts) to run periodically at certain times, dates or intervals. It is commonly used to automate system maintenance or administration.
+
+       INSTALLATION
+
+       There are many cron implementations, but none of them are installed by default as the base system uses systemd timers instead.
+
+       Packages available:
+
+        * cronie
+        * fcron
+        * dcronAUR
+        * scron-gitAUR
+       See Gentoo:Cron, which offers comparisons.
+
+       CONFIGURATION
+
+       The cron daemon parses a configuration file called a crontab(5). Each user on the system can maintain a separate crontab file to schedule commands individually. The root user's crontab is used to schedule system-wide tasks (though users may opt to use /etc/crontab or the /etc/cron.d directory, depending on which cron implementation they choose).
+
+       ACTIVATION AND AUTOSTART
+
+       After installation, the daemon will not be enabled by default. The installed package likely provides a service, which can be controlled by systemctl. For example, cronie uses cronie.service.
+
+       Check /etc/cron.daily/ and similar directories to see which jobs are present. Activating a cron service will trigger all of them.
+
+       Note See #Asynchronous job processing for details on running tasks while accounting for instances where the system was off at the time of scheduled execution.
+
+       BASIC COMMANDS
+
+       Crontabs should never be edited directly; instead, you should use the crontab program to work with your crontabs.
+
+       To view your crontabs:
+
+         $ crontab -l
+
+       To edit your crontabs:
+
+         $ crontab -e
+
+       To remove all of your crontabs:
+
+         $ crontab -r
+
+       If you have a saved crontab and would like to completely overwrite your old crontab:
+
+         $ crontab saved_crontab_filename
+
+       To overwrite a crontab from the command line (Wikipedia:stdin):
+
+         $ crontab -
+
+       To edit somebody else's crontab:
+
+         # crontab -u username -e
+
+       This same format (appending -u username to a command) works for listing and deleting crontabs as well.
+
+       CRONTAB FORMAT
+
+       The basic format for a crontab is a set of 6 space-separated values, in the following order:
+
+        * minute from 0 to 59.
+        * hour from 0 to 23.
+        * day_of_month from 1 to 31.
+        * month from 1 to 12.
+        * day_of_week from 0 to 6, with 0 denoting Sunday.
+        * command is the process to run.
+       To fine-tune your schedule you may also use one of the following symbols:
+
+         Symbol | Description
+         * | Wildcard, specifies every possible time interval
+         , | List multiple values separated by a comma.
+         - | Specify a range between two numbers, separated by a hyphen
+         / | Specify a periodicity/frequency using a slash
+       For example, the line:
+
+         */5 9-16 * 1-5,9-12 1-5 ~/bin/i_love_cron.sh
+
+       will execute the script i_love_cron.sh at five minute intervals from 9 AM to 4:55 PM on weekdays except during the months of June, July, and August.
+
+       In addition, crontab has some special keywords:
+
+         Keyword | Description
+         @reboot | at startup
+         @yearly | once a year
+         @annually | identical to @yearly
+         @monthly | once a month
+         @weekly | once a week
+         @daily | once a day
+         @midnight | identical to @daily
+         @hourly | once an hour
+       For example:
+
+         @reboot ~/bin/i_love_cron.sh
+
+       will execute the script i_love_cron.sh at startup.
+
+       CRONIE
+
+       The /etc/cron.deny file includes the list of users not allowed to use crontab, without this file, only users listed in /etc/cron.allow can use it.
+
+       Note
+
+        * Cronie uses run-parts to carry out scripts in the different directories. The filenames should not include any dot (.) since run-parts in its default mode will silently ignore them (see run-parts(8)). The names must consist only of upper and lower-case letters, digits, underscores and minus-hyphens. If you want to be absolutely sure what scripts are being run you can test and validate using e.g. run-parts --test --debug /etc/cron.daily.
+        * The output of systemctl status cronie might show a message such as CAN'T OPEN (/etc/crontab): No such file or directory. However, this can be safely ignored since cronie does not require one.
+        * Cronie is particular about the permissions for /etc/cron.d/0hourly. None of the tasks in /etc/cron.d/{hourly,weekly,daily} ... etc will be run (including the anacron launcher) if /etc/cron.d/0hourly is damaged or has improper permissions. pacman -Qkk cronie can show if you have any such issues.
+       Tip To prevent the sending of output and stop email alert, add >/dev/null 2>&1 at the end of the line for each cron job to redirect output to /dev/null.
+
+         0 1 5 10 * /path/to/script.sh >/dev/null 2>&1
+
+       You can also set MAILTO=”” variable in your crontab file to disable email alerts.
+
+       DCRON
+
+       Dcron follows the common crontab format, but allows adding the ID=jobname and AFTER= tags.
+
+       See crontab(1) for further information and configuration examples.
+
+       FCRON
+
+       When replacing cronie with fcron be aware the spool directory is /var/spool/fcron and the fcrontab command is used instead of crontab to edit the user crontabs. These crontabs are stored in a binary format with the text version next to them as foo.orig in the spool directory. Any scripts which manually edit user crontabs may need to be adjusted due to this difference in behavior.
+
+       A quick scriptlet which may aide in converting traditional user crontabs to fcron format:
+
+         cd /var/spool/cron && (
+          for ctab in *; do
+           fcrontab ${ctab} -u ${ctab}
+          done
+         )
+
+       See also the forum thread.
+
+       EXAMPLES
+
+       The entry:
+
+         01 * * * * /bin/echo "Hello, world!"
+
+       runs the command /bin/echo "Hello, world!" on the first minute of every hour of every day of every month (i.e. at 12:01, 1:01, 2:01, etc.).
+
+       Similarly:
+
+         */5 * * jan mon-fri /bin/echo "Hello, world!"
+
+       runs the same job every five minutes on weekdays during the month of January (i.e. at 12:00, 12:05, 12:10, etc.).
+
+       The line:
+
+         */5 9-16 * 1-5,9-12 1-5 /home/user/bin/i_love_cron.sh
+
+       will execute the script i_love_cron.sh at five minute intervals from 9 AM to 5 PM (excluding 5 PM itself) every weekday (Mon-Fri) of every month except during the summer (June, July, and August).
+
+       Here are some self-documenting examples of cron tasks:
+
+         #  mm  hh   DD  MM     W  program [--option]...  (W = weekday [Sun=0])
+            20   4                 echo "It is now 4:20 AM."
+            30  15   25  12        echo "It is 3:30 PM on Christmas Day."
+            30   3    *   *     *  echo "Remind me that it's 3:30 AM every day."
+            0    *    *   *     *  echo "It is the start of a new hour."
+            0    6 1,15   *     *  echo "At 6am on the 1st and 15th of every month."
+            0    6    *   * 2,3,5  echo "At 6am on Tuesdays, Wednesdays and Fridays."
+            59  23    *   *   1-5  echo "Just before midnight on weekdays."
+            21  01    *   *     *  systemctl poweroff --message="Shutting down like all days at 21:01."
+            0  */2    *   *     *  echo "Every two hours."
+            0   20    *   *     4  echo "8 PM on a Thursday."
+            0   20    *   *   Thu  echo "8 PM on a Thursday."
+         */15 9-17    *   *   1-5  echo "Every 15 minutes from 9 AM - 5 PM on weekdays."
+         @yearly                   echo "Happy New Year!"
+
+       TIPS AND TRICKS
+
+       DEFAULT EDITOR
+
+       To use an alternate default editor, define the EDITOR environment variable in a shell initialization script as described in Environment variables.
+
+       As a regular user, su will need to be used instead of sudo for the environment variable to be pulled correctly:
+
+         $ su -c "crontab -e"
+
+       To have an alias to this printf is required to carry the arbitrary string because su launches in a new shell:
+
+         alias scron="su -c $(printf "%q " "crontab -e")"
+
+       HANDLING ERRORS OF JOBS
+
+       cron registers the output from stdout and stderr and attempts to send it as email to the user's spools via the sendmail command. Cronie disables mail output if /usr/bin/sendmail is not found. In order for mail to be written to a user's spool, there must be an smtp daemon running on the system, e.g. opensmtpd. Otherwise, you can install a package that provides the sendmail command, and configure it to send mail to a remote mail exchanger. You can also log the messages by using the -m option and writing a custom script.
+
+       Tip One can send the output to local system users using Postfix#Local mail.
+
+        * Edit the cronie.service unit.
+        * Install esmtpAUR, msmtp, opensmtpd, sSMTP, or write a custom script.
+
+       EXAMPLE WITH SSMTP
+
+       sSMTP is a send-only sendmail emulator which delivers email from a local computer to an smtp server. While there are currently no active maintainers, it is still by far the simplest way to transfer mail to a configured mailhub. There are no daemons to run, and configuration can be as simple as editing 3 lines in a single configuration file (if your host is trusted to relay unauthenticated email through your mailhub). sSMTP does not receive mail, expand aliases, or manage a queue.
+
+       Install ssmtpAUR, which creates a symbolic link from /usr/bin/sendmail to /usr/bin/ssmtp. You must then edit /etc/ssmtp/ssmtp.conf. See sSMTP for details. Creating a symbolic link to /usr/bin/sendmail insures that programs like S-nail (or any package which provides /usr/bin/mail) will just work without modification.
+
+       Restart cronie.service to insure that it detects that you now have a /usr/bin/sendmail installed.
+
+       EXAMPLE WITH MSMTP
+
+       Install msmtp-mta, which creates a symbolic link from /usr/bin/sendmail to /usr/bin/msmtp. Restart cronie.service to make sure it detects the new sendmail command. You must then provide a way for msmtp to convert your username into an email address.
+
+       Add MAILFROM line to your crontab:
+
+         MAILFROM=your@email.com
+
+       Note Without MAILFROM the smtp server may complain about header errors.
+
+       Then either add MAILTO line to your crontab, like so:
+
+         MAILTO=your@email.com
+
+       or create /etc/msmtprc and append this line:
+
+         aliases /etc/aliases
+
+       and create /etc/aliases:
+
+         your_username: your@email.com
+         # Optional:
+         default: your@email.com
+
+       Then modify the configuration of cronie daemon by replacing the ExecStart command with:
+
+         ExecStart=/usr/bin/crond -n -m '/usr/bin/msmtp -t'
+
+       EXAMPLE WITH ESMTP
+
+       Install esmtpAUR and procmailAUR.
+
+       After installation configure the routing:
+
+         /etc/esmtprc
+
+         identity myself@myisp.com
+                hostname mail.myisp.com:25
+                username "myself"
+                password "secret"
+                starttls enabled
+                default
+         mda "/usr/bin/procmail -d %T"
+
+       Procmail needs root privileges to work in delivery mode but it is not an issue if you are running the cronjobs as root anyway.
+
+       To test that everything works correctly, create a file message.txt with "test message" in it.
+
+       From the same directory run:
+
+         $ sendmail user_name < message.txt
+
+       then:
+
+         $ cat /var/spool/mail/user_name
+
+       You should now see the test message and the time and date it was sent.
+
+       The error output of all jobs will now be redirected to /var/spool/mail/user_name.
+
+       Due to the privileged issue, it is hard to create and send emails to root (e.g. su -c ""). You can ask esmtp to forward all root's email to an ordinary user with:
+
+         /etc/esmtprc
+
+         force_mda="user-name"
+
+       Note If the above test did not work, you may try creating a local configuration in ~/.esmtprc with the same content.
+
+       Run the following command to make sure it has the correct permission:
+
+         $ chmod 710 ~/.esmtprc
+
+       Then repeat the test with message.txt exactly as before.
+
+       EXAMPLE WITH OPENSMTPD
+
+       Install opensmtpd.
+
+       Edit /etc/smtpd/smtpd.conf. The following configuration allows for local delivery:
+
+         /etc/smtpd/smtpd.conf
+
+         listen on localhost
+         action "local" mbox alias <aliases>
+         match for local action "local"
+
+       You can proceed to test it. First start smtpd.service. Then do:
+
+         $ echo test | sendmail user
+
+       user can check their mail in with any reader able to handle mbox format, or just have a look at the file /var/spool/mail/user. If everything goes as expected, you can enable opensmtpd for future boots.
+
+       This approach has the advantage of not sending local cron notifications to a remote server. On the downside, you need a new daemon running.
+
+       Note
+
+        * At the moment of writing the Arch opensmtpd package does not create all needed directories under /var/spool/smtpd, but the daemon will warn about that specifying the required ownerships and permissions. Just create them as suggested.
+        * Even though the suggested configuration does not accept remote connections, it is a healthy precaution to add an additional layer of security blocking port 25 with a firewall.
+
+       LONG CRON JOB
+
+       Suppose this program is invoked by cron :
+
+         #!/bin/sh
+         echo "I had a recoverable error!"
+         sleep 1h
+
+       What happens is this:
+
+        * Cron runs the script.
+        * As soon as cron sees some output, it runs your MTA, and provides it with the headers. It leaves the pipe open, because the job has not finished and there might be more output.
+        * The MTA opens the connection to postfix and leaves that connection open while it waits for the rest of the body.
+        * Postfix closes the idle connection after less than an hour and you get an error like this :
+
+         smtpmsg='421 … Error: timeout exceeded' errormsg='the server did not accept the mail'
+
+       To solve this problem you can use the command chronic or sponge from moreutils. From their respective man page:
+
+         chronic(1)
+       chronic runs a command, and arranges for its standard out and standard error to only be displayed if the command fails (exits nonzero or crashes). If the command succeeds, any extraneous output will be hidden.
+
+         sponge(1)
+       sponge reads standard input and writes it out to the specified file. Unlike a shell redirect, sponge soaks up all its input before opening the output file… If no output file is specified, sponge outputs to stdout.
+
+       Chronic too buffers the command output before opening its standard output.
+
+       RUNNING X.ORG SERVER-BASED APPLICATIONS
+
+       Cron does not run under the Xorg server therefore it cannot know the environment variable necessary to be able to start an X.org server application so they will have to be defined. One can use a program like xuserrun-gitAUR to do it:
+
+         17 02 * ... /usr/bin/xuserrun /usr/bin/xclock
+
+       Or they can be defined manually (echo $DISPLAY will give the current DISPLAY value):
+
+         17 02 * ... env DISPLAY=:0 /usr/bin/xclock
+
+       If running notify-send for desktop notifications in cron, notify-send is sending values to dbus. So it needs to tell dbus to connect to the right bus. The address can be found by examining DBUS_SESSION_BUS_ADDRESS environment variable and setting it to the same value. Therefore:
+
+         17 02 * ... env DBUS_SESSION_BUS_ADDRESS=your-address notify-send 'Foo bar'
+
+       If done through say SSH, permission will need be given:
+
+         # xhost +si:localuser:$(whoami)
+
+       ASYNCHRONOUS JOB PROCESSING
+
+       If you regularly turn off your computer but do not want to miss jobs, there are some solutions.
+
+       CRONIE
+
+       cronie comes with anacron included. The configuration file is /etc/anacrontab. Information on the format can be found in the anacrontab(5). Running anacron -T will test /etc/anacrontab for validity.
+
+       DCRON
+
+       Vanilla dcronAUR supports asynchronous job processing. Just put it with @hourly, @daily, @weekly or @monthly with a jobname, like this:
+
+         @hourly         ID=greatest_ever_job      echo "This job is very useful."
+
+       CRONWHIP
+
+       cronwhipAUR is a script to automatically run missed cron jobs; it works with the former default cron implementation, dcron. See also the forum thread.
+
+       FCRON
+
+       Like anacron, fcron assumes the computer is not always running and, unlike anacron, it can schedule events at intervals shorter than a single day which may be useful for systems which suspend/hibernate regularly (such as a laptop). Like cronwhip, fcron can run jobs that should have been run during the computer's downtime.
+
+       ENSURING EXCLUSIVITY
+
+       If you run potentially long-running jobs (e.g., a backup might all of a sudden run for a long time, because of many changes or a particular slow network connection), then flock (from util-linux) can ensure that the cron job will not start a second time:
+
+         5,35 * * * * /usr/bin/flock -n /tmp/lock.backup /root/make-backup.sh
+
+       SEE ALSO
+
+        * Admin's Choice - Crontab Quick Reference
+        * crontab.guru - online editor for cronjob expressions
+        * cron-notifyAUR is a FreeDesktop.org-compatible notification service to periodically ask for acknowledgement before executing a command. Commands are configured in a custom configuration file.
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,56 @@
+WEBAPI.NAVIGATION-CURRENTENTRYCHANGE-EVENT(1) Sandbox manual WEBAPI.NAVIGATION-CURRENTENTRYCHANGE-EVENT(1)
+
+       NAME
+
+       Navigation: currententrychange event - The currententrychange event of the Navigation interface is fired when the Navigation.currentEntry has changed.
+
+       NAVIGATION: CURRENTENTRYCHANGE EVENT
+
+       The currententrychange event of the Navigation interface is fired when the Navigation.currentEntry has changed.
+
+       This event will fire for:
+
+        * Same-document navigations (e.g., back() or traverseTo()).
+        * Replacements (i.e., a navigate() call with history set to replace).
+        * Other calls that change the entry's state (e.g., updateCurrentEntry(), or the History API's History.replaceState()).
+       This event fires after the navigation is committed, meaning that the visible URL has changed and the NavigationHistoryEntry update has occurred. It is useful for migrating from usage of older API features like the hashchange or popstate events.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("currententrychange", (event) => { })
+
+         oncurrententrychange = (event) => { }
+
+       EVENT TYPE
+
+       A NavigationCurrentEntryChangeEvent. Inherits from Event.
+
+       NavigationCurrentEntryChangeEvent
+
+       EXAMPLES
+
+       Navigation data reporting:
+
+         navigation.addEventListener("currententrychange", () => {
+           const data = navigation.currentEntry.getState();
+           submitAnalyticsData(data.analytics);
+         });
+
+       Setting up a per-entry event:
+
+         navigation.addEventListener("currententrychange", () => {
+           navigation.currentEntry.addEventListener("dispose", genericDisposeHandler);
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+
+Web APIs manual                         from the official documentation

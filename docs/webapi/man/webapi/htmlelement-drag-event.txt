@@ -1,0 +1,136 @@
+WEBAPI.HTMLELEMENT-DRAG-EVENT(1) Sandbox manual WEBAPI.HTMLELEMENT-DRAG-EVENT(1)
+
+       NAME
+
+       HTMLElement: drag event - The drag event is fired repeatedly as an element or text selection is being dragged by the user. The firing frequency depends on the browser
+
+       HTMLELEMENT: DRAG EVENT
+
+       The drag event is fired repeatedly as an element or text selection is being dragged by the user. The firing frequency depends on the browser, operating system, and pointer movement; do not rely on a fixed interval.
+
+       The firing frequency depends on the browser, operating system, and pointer movement. The drag event can continue to fire while the pointer is stationary, and can fire more frequently while it is moving. Do not rely on a fixed interval or expect an event for every pointer movement. The HTML specification uses a firing frequency of roughly 350 ms (±200 ms). In practice, browsers use native drag updates and platform-specific timers to dispatch these events, so this interval does not describe all browser behavior.
+
+       This event is cancelable and may bubble up to the Document and Window objects.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("drag", (event) => { })
+
+         ondrag = (event) => { }
+
+       EVENT TYPE
+
+       A DragEvent. Inherits from Event.
+
+       DragEvent
+
+       EXAMPLES
+
+       DRAG AND DROP EXAMPLE
+
+       HTML
+
+         <div class="dropzone">
+           <div id="draggable" draggable="true">This div is draggable</div>
+         </div>
+         <div class="dropzone" id="drop-target"></div>
+
+       CSS
+
+         body {
+           /* Prevent the user selecting text in the example */
+           user-select: none;
+         }
+
+         #draggable {
+           text-align: center;
+           background: white;
+         }
+
+         .dropzone {
+           width: 200px;
+           height: 20px;
+           background: blueviolet;
+           margin: 10px;
+           padding: 10px;
+         }
+
+         .dropzone.dragover {
+           background-color: purple;
+         }
+
+         .dragging {
+           opacity: 0.5;
+         }
+
+       JAVASCRIPT
+
+         let dragged;
+
+         /* events fired on the draggable target */
+         const source = document.getElementById("draggable");
+         source.addEventListener("drag", (event) => {
+           console.log("dragging");
+         });
+
+         source.addEventListener("dragstart", (event) => {
+           // store a ref. on the dragged elem
+           dragged = event.target;
+           // make it half transparent
+           event.target.classList.add("dragging");
+         });
+
+         source.addEventListener("dragend", (event) => {
+           // reset the transparency
+           event.target.classList.remove("dragging");
+         });
+
+         /* events fired on the drop targets */
+         const target = document.getElementById("drop-target");
+         target.addEventListener("dragover", (event) => {
+           // prevent default to allow drop
+           event.preventDefault();
+         });
+
+         target.addEventListener("dragenter", (event) => {
+           // highlight potential drop target when the draggable element enters it
+           if (event.target.classList.contains("dropzone")) {
+             event.target.classList.add("dragover");
+           }
+         });
+
+         target.addEventListener("dragleave", (event) => {
+           // reset background of potential drop target when the draggable element leaves it
+           if (event.target.classList.contains("dropzone")) {
+             event.target.classList.remove("dragover");
+           }
+         });
+
+         target.addEventListener("drop", (event) => {
+           // prevent default action (open as link for some elements)
+           event.preventDefault();
+           // move dragged element to the selected drop target
+           if (event.target.classList.contains("dropzone")) {
+             event.target.classList.remove("dragover");
+             event.target.appendChild(dragged);
+           }
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * dragstart
+        * dragend
+        * dragover
+        * dragenter
+        * dragleave
+        * drop
+
+Web APIs manual                         from the official documentation

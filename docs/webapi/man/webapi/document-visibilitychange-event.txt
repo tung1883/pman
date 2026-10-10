@@ -1,0 +1,71 @@
+WEBAPI.DOCUMENT-VISIBILITYCHANGE-EVENT(1) Sandbox manual WEBAPI.DOCUMENT-VISIBILITYCHANGE-EVENT(1)
+
+       NAME
+
+       Document: visibilitychange event - The visibilitychange event is fired at the document when its visibility status changes — for example, when the user switches browser tabs, n
+
+       DOCUMENT: VISIBILITYCHANGE EVENT
+
+       The visibilitychange event is fired at the document when its visibility status changes — for example, when the user switches browser tabs, navigates to a new page, minimizes or closes the browser, or on mobile, switches to a different app.
+
+       The event is not cancelable.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("visibilitychange", (event) => { })
+
+         onvisibilitychange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       USAGE NOTES
+
+       The event doesn't include the document's updated visibility status, but you can get that information from the document's visibilityState property.
+
+       This event fires with a visibilityState of hidden when a user navigates to a new page, switches tabs, closes the tab, minimizes or closes the browser, or, on mobile, switches from the browser to a different app. Transitioning to hidden is the last event that's reliably observable by the page, so developers should treat it as the likely end of the user's session (for example, for sending analytics data).
+
+       The transition to hidden is also a good point at which pages can stop making UI updates and stop any tasks that the user doesn't want to have running in the background.
+
+       EXAMPLES
+
+       PAUSING MUSIC ON TRANSITIONING TO HIDDEN
+
+       This example pauses playing audio when the page is hidden and resumes playing when the page becomes visible again. For a full example, see the Page Visibility API: Pausing audio on page hide documentation.
+
+         document.addEventListener("visibilitychange", () => {
+           if (document.hidden) {
+             playingOnHide = !audio.paused;
+             audio.pause();
+           } else if (playingOnHide) {
+             // Resume playing if audio was "playing on hide"
+             audio.play();
+           }
+         });
+
+       SENDING END-OF-SESSION ANALYTICS ON TRANSITIONING TO HIDDEN
+
+       This example treats the transition to hidden as the end of the user's session, and sends the appropriate analytics using the Navigator.sendBeacon() API:
+
+         document.onvisibilitychange = () => {
+           if (document.visibilityState === "hidden") {
+             navigator.sendBeacon("/log", analyticsData);
+           }
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Page Visibility API
+        * Document.visibilityState
+        * Document.hidden
+        * Don't lose user and app state, use Page Visibility explains in detail why you should use visibilitychange, not beforeunload/unload.
+        * Page Lifecycle API gives best-practices guidance on handling page lifecycle behavior in your web applications.
+
+Web APIs manual                         from the official documentation

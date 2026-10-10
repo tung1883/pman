@@ -1,0 +1,47 @@
+SHELLCHECK.SC1036(1)             Sandbox manual             SHELLCHECK.SC1036(1)
+
+       NAME
+
+       ( is invalid here. Did you forget to escape it? - echo (foo) bar
+
+       ( IS INVALID HERE. DID YOU FORGET TO ESCAPE IT
+
+       ( IS INVALID HERE. DID YOU FORGET TO ESCAPE IT
+
+       PROBLEMATIC CODE
+
+         echo (foo) bar
+
+       CORRECT CODE
+
+       Depends on your intention:
+
+         echo "(foo) bar"  # Literal parentheses
+         echo "$(foo) bar" # Command expansion
+         echo "foo bar"    # Tried to use parentheses for grouping or function invocation
+
+       RATIONALE
+
+       ShellCheck expected an ordinary shell word but found an opening parenthesis instead.
+
+       Determine what you intended the parenthesis to do and rewrite accordingly. Common issues include:
+
+        * Wanting them to be literal, as in echo (FAIL) Some tests failed. In this case, it requires quoting.
+        * Wanting command expansion, as in echo Today is (date). Add the missing $: echo "Today is $(date)"
+        * Adding parentheses because other languages need them in that context, such as foo (bar, 42) to call a function. This should be foo bar 42. Also, shells do not support tuples or passing arrays as single parameters.
+
+       EXCEPTIONS
+
+       Bash allows some parentheses as part of assignment-like tokens to certain commands, including export and eval. This is a workaround in Bash to allow commands that normally would not be valid:
+
+         eval foo=(bar)       # Valid command
+         echo foo=(bar)       # Invalid syntax
+         f=foo; eval $f=(bar) # Also invalid
+
+       In these cases, please quote the command, such as eval "foo=(bar)". This does not change the behavior, but stops relying on Bash-specific parsing quirks.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

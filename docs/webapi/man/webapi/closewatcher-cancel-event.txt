@@ -1,0 +1,45 @@
+WEBAPI.CLOSEWATCHER-CANCEL-EVENT(1) Sandbox manual WEBAPI.CLOSEWATCHER-CANCEL-EVENT(1)
+
+       NAME
+
+       CloseWatcher: cancel event - A cancel event is fired at a CloseWatcher object before the close event, so that close can be prevented from firing, if necessary. It is tri
+
+       CLOSEWATCHER: CANCEL EVENT
+
+       A cancel event is fired at a CloseWatcher object before the close event, so that close can be prevented from firing, if necessary. It is triggered by all close signals (e.g., the Esc key) as well as CloseWatcher.requestClose().
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("cancel", (event) => { })
+
+         oncancel = (event) => { }
+
+       EVENT TYPE
+
+       An Event.
+
+       EXAMPLES
+
+       USING THE CANCEL EVENT
+
+       In this example, we ask the user to confirm that they really want to close the component, and if they don't, we cancel the event using Event.preventDefault(), which prevents the close event from being fired.
+
+         watcher.addEventListener("cancel", (e) => {
+           if (e.cancelable && hasUnsavedData) {
+             const userReallyWantsToClose = confirm("Are you sure you want to close?");
+             if (!userReallyWantsToClose) {
+               e.preventDefault();
+             }
+           }
+         });
+
+         // Trigger a close request manually
+         watcher.requestClose();
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

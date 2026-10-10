@@ -1,0 +1,175 @@
+ARCH.DEFAULT-APPLICATIONS(1)     Sandbox manual     ARCH.DEFAULT-APPLICATIONS(1)
+
+       Programs implement default application associations in different ways. While command-line programs traditionally use environment variables, graphical applications tend to use XDG MIME Applications through either the GIO API, the Qt API, or by executing /usr/bin/xdg-open, which is part of xdg-utils. Because xdg-open and XDG MIME Applications are quite complex, various alternative resource openers were developed. The following table lists example applications for each method.
+
+         Method | Uses XDG | Application examples | Checking association
+         GIO's GAppInfo | Yes | Firefox, GNOME Files, PCManFM, Thunar, Thunderbird, Telegram | gio mime mimetype
+         /usr/bin/xdg-open | By default | Chromium (Open downloaded file) | xdg-mime query default mimetype
+         Custom | Usually not | mc, ranger | –
+         Environment variables | No | man, sudoedit, systemctl | –
+         D-Bus's FileManager1 | org.freedesktop.FileManager1 | Firefox (Open containing folder), Zotero (Show file), Telegram (Show in folder) | –
+       Many desktop environments and graphical file managers provide a GUI for configuring default applications.
+
+       Note XDG MIME Applications specification allows MIME type definition files to subclass and alias other types. This can cause non-obvious handling of some MIME types where applications do not directly support the target type, but support the one that it subclasses. For example Firefox can resolve application/rss+xml via GIO to be eventually opened by itself, due to the type subclassing application/xml and Firefox being the default handler for that.
+
+       BACKGROUND INFORMATION
+
+       Programs sometimes need to open a file or a URI in the user's preferred application. To open a file in the user's preferred application the filetype needs to be detected (usually using filename extensions or magic numbers mapped to MIME types) and there needs to be an application associated with the filetype.
+
+       Heirloom UNIX programs used mime.types for MIME type detection and mailcap for application association.
+
+       RESOURCE OPENERS
+
+        * XDG MIME Apps: implements the XDG MIME Applications specification
+        * RegEx rules: allows MIME types to be associated with applications using regular expressions
+        * URI support: allows arbitrary URI schemes to be associated with applications
+         Name | Package | XDG MIME Apps | RegEx rules | URI support
+         xdg-open | xdg-utils | Yes | No | Yes
+         gio(1) | glib2 | Yes | – | Yes
+         mimeopen(1p) | perl-file-mimeinfo | Yes | No | No
+         mimeo | mimeoAUR | Yes | Yes | Yes
+         mimi | mimiAUR, mimi-gitAUR | No | No | partly
+         busking | busking-gitAUR | No | Yes | Yes
+         rifle(1) | ranger | No | Yes | No
+         handlr | handlr-regex | Yes | Yes | Yes
+         clifm | clifmAUR | No | Yes | partly
+         mimejs-git | mimejs-gitAUR | No | No | Yes
+
+       XDG-OPEN
+
+       xdg-open (part of xdg-utils) implements XDG MIME Applications and is used by many programs.
+
+       Because of the complexity of the xdg-utils version of xdg-open, it can be difficult to debug when the wrong default application is being opened. Because of this, there are many alternatives that attempt to improve upon it. Several of these alternatives replace the /usr/bin/xdg-open executable, thus changing the default application behavior of most applications. Others simply provide an alternative method of choosing default applications.
+
+       PERL-FILE-MIMEINFO
+
+       perl-file-mimeinfo provides the tools mimeopen(1p) and mimetype(1p). These have a slightly nicer interface than their xdg-utils equivalents:
+
+         # determine a file's MIME type
+         $ mimetype photo.jpeg
+         photo.jpeg: image/jpeg
+
+         # choose the default application for this file
+         $ mimeopen -d photo.jpeg
+         Please choose an application
+
+             1) Feh (feh)
+             2) GNU Image Manipulation Program (gimp)
+             3) Pinta (pinta)
+
+         use application #
+
+         # open a file with its default application
+         $ mimeopen -n photo.jpeg
+
+       Most importantly, xdg-utils programs will actually call file instead of mimetype for MIME type detection if it does not detect your desktop environment. This is important because file does not follow the XDG standard.
+
+       Note perl-file-mimeinfo does not entirely follow the XDG standard.
+
+        * For example, before 0.28-1 it did not not read distribution-wide defaults and it saved its configuration in deprecated locations.
+        * As of 0.35-3 it still deviates from the specification by not applying glob resolution precedence, glob weights, or file magic priorities. Having it installed can subtly alter the behavior of xdg-mime and xdg-open for a set of MIME types which are associated with the same file extension.
+
+       MIMEO
+
+       mimeoAUR provides the tool mimeo, which unifies the functionality of xdg-open and xdg-mime.
+
+       In the following example we see how to associate SVG files with Inkscape:
+
+         # determine a file's MIME type
+         $ mimeo --mimetype Svg_example2.svg
+         Svg_example2.svg
+          image/svg+xml
+
+         # determine desktop file associated with executable "inkscape"
+         $ mimeo --app2desk inkscape
+         inkscape
+          org.inkscape.Inkscape.desktop
+
+         # find desktop file path
+         $ mimeo --finddesk org.inkscape.Inkscape.desktop
+         /usr/share/applications/org.inkscape.Inkscape.desktop
+
+         # choose the default application for this MIME type
+         $ mimeo --prefer image/svg+xml org.inkscape.Inkscape.desktop
+
+         # check association
+         $ mimeo --mime2desk image/svg+xml
+         image/svg+xml
+          org.inkscape.Inkscape.desktop
+
+         # open a file with its default application
+         $ mimeo Svg_example2.svg
+
+       One can also find the path to the mimeapps.list file:
+
+         $ mimeo --mimeapps-list
+         /home/user/.config/mimeapps.list
+
+       However a big difference with xdg-utils is that mimeo also supports custom "association files" that allow for more complex associations. For example, passing specific command line arguments based on a regular expression match:
+
+         # open youtube links in VLC without opening a new instance
+         vlc --one-instance --playlist-enqueue %U
+           ^https?://(www.)?youtube.com/watch\?.*v=
+
+       xdg-utils-mimeoAUR patches xdg-utils so that xdg-open falls back to mimeo if no desktop environment is detected.
+
+       HANDLR-REGEX
+
+       handlr-regex (a fork of handlr with regex support written in Rust) provides the functionality of xdg-open and xdg-mime with a streamlined interface.
+
+       Compared to xdg-utils, it includes:
+
+        * setting associations by extension, removing the need to look up or remember mime types
+        * validation for mime types and extensions
+        * removal of invalid entries from mimeapps.list
+        * intelligent detection of mime types from file content in case filename is ambiguous
+        * autocompletion of mimes, extensions, and desktop entries
+        * setting arbitrary commands as handlers based on regular expressions
+
+         # The following two are identical
+         handlr set .png feh.desktop
+         handlr set image/png feh.desktop
+
+         # List default apps
+         handlr list
+
+         # Get the handler for a mime/extension
+         $ handlr get .png --json
+         {"handler":"pqiv.desktop","name":"pqiv","cmd":"/usr/bin/pqiv"}
+
+         # Launch a handler with optional path/URL
+         handlr launch x-scheme-handler/https
+         handlr launch x-scheme-handler/https -- https://google.ca
+
+       To use handlr as a replacement for xdg-open, shadow it with the following script:
+
+         #!/usr/bin/bash
+         handlr open "$@"
+
+       CLIFM
+
+       Lira, clifm's built-in resource opener, can be used as a standalone resource opener via the --open command line option. The configuration file (~/.config/clifm/profiles/PROFILE_NAME/mimelist.clifm) supports regular expressions for both MIME types and file names (or file extensions). A few examples:
+
+         # Open a regular file
+         clifm --open /etc/hosts
+
+         # Open a directory
+         clifm --open /media/data
+
+         # Open an URL (via the application associated to the text/http MIME type in the configuration file)
+         clifm --open www.archlinux.org
+
+       MINIMALIST REPLACEMENTS
+
+       The following packages conflict with and provide xdg-utils because they provide their own /usr/bin/xdg-open script.
+
+       If you want to use one of these resource openers while still being able to use xdg-utils, install them manually in a PATH directory before /usr/bin.
+
+        * mimiAUR, mimi-gitAUR - 130-line Bash script, can change command arguments for each MIME type
+        * busking-gitAUR - 80-line Perl script similar to mimi but also supports regex rules
+
+       RUN-MAILCAP
+
+       Warning If you use run-mailcapAUR, it is possible for xdg-open to delegate to it. This will cause an infinite loop if you are using the /etc/mailcap from mailcap, because it also delegates to xdg-open.
+
+ArchWiki manual                         bundled documentation

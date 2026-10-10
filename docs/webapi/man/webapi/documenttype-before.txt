@@ -1,0 +1,57 @@
+WEBAPI.DOCUMENTTYPE-BEFORE(1)    Sandbox manual    WEBAPI.DOCUMENTTYPE-BEFORE(1)
+
+       NAME
+
+       DocumentType: before() method - The DocumentType.before() method inserts a set of
+
+       DOCUMENTTYPE: BEFORE() METHOD
+
+       The DocumentType.before() method inserts a set of Node objects or strings in the children list of the DocumentType's parent, just before the DocumentType. Strings are inserted as equivalent Text nodes.
+
+       SYNTAX
+
+         before(param1)
+         before(param1, param2)
+         before(param1, param2, /* …, */ paramN)
+
+       PARAMETERS
+
+        * param1, …, paramN
+          * : A set of Node objects or strings to insert.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * HierarchyRequestError DOMException
+          * : Thrown when the node cannot be inserted at the specified point in the hierarchy.
+
+       EXAMPLES
+
+       ADDING A CONDITIONAL COMMENT
+
+       Comment nodes are valid before doctype declarations but not advisable given they trigger quirks mode in IE. A conditional comment works for IE as well, though:
+
+         let docType = document.implementation.createDocumentType("html", "", "");
+         let myDoc = document.implementation.createDocument("", "", docType);
+
+         docType.before(
+           document.createComment("<!--[if !IE]> conditional comment <![endif]-->"),
+         );
+
+         myDoc.childNodes;
+         // NodeList [<!--[if !IE]> conditional comment <![endif]-->, <!DOCTYPE html>]
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * DocumentType.after()
+        * CharacterData.before()
+        * Element.before()
+
+Web APIs manual                         from the official documentation

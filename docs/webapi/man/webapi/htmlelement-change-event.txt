@@ -1,0 +1,101 @@
+WEBAPI.HTMLELEMENT-CHANGE-EVENT(1) Sandbox manual WEBAPI.HTMLELEMENT-CHANGE-EVENT(1)
+
+       NAME
+
+       HTMLElement: change event - The change event is fired for <input>, <select>, and <textarea> elements when the user modifies the element's value. Unlike the input event,
+
+       HTMLELEMENT: CHANGE EVENT
+
+       The change event is fired for , , and elements when the user modifies the element's value. Unlike the input event, the change event is not necessarily fired for each alteration to an element's value.
+
+       Depending on the kind of element being changed and the way the user interacts with the element, the change event fires at a different moment:
+
+        * When a element is checked or unchecked (by clicking or using the keyboard);
+        * When a element is checked (but not when unchecked);
+        * When the user commits the change explicitly (e.g., by selecting a value from a 's dropdown with a mouse click, by selecting a date from a date picker for , by selecting a file in the file picker for , etc.);
+        * When the element loses focus after its value was changed: for elements where the user's interaction is typing rather than selection, such as a or the , , , , , or types of the element.
+       The HTML specification lists the types that should fire the change event.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("change", (event) => { })
+
+         onchange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       ELEMENT
+
+       HTML
+
+         <label>
+           Choose an ice cream flavor:
+           <select class="ice-cream" name="ice-cream">
+             <option value="">Select One …</option>
+             <option value="chocolate">Chocolate</option>
+             <option value="sardine">Sardine</option>
+             <option value="vanilla">Vanilla</option>
+           </select>
+         </label>
+
+         <div class="result"></div>
+
+         body {
+           display: grid;
+           grid-template-areas: "select result";
+         }
+
+         select {
+           grid-area: select;
+         }
+
+         .result {
+           grid-area: result;
+         }
+
+       JAVASCRIPT
+
+         const selectElement = document.querySelector(".ice-cream");
+         const result = document.querySelector(".result");
+
+         selectElement.addEventListener("change", (event) => {
+           result.textContent = `You like ${event.target.value}`;
+         });
+
+       RESULT
+
+       TEXT INPUT ELEMENT
+
+       For some elements, including , the change event doesn't fire until the control loses focus. Try entering something into the field below, and then click somewhere else to trigger the event.
+
+       HTML
+
+         <input placeholder="Enter some text" name="name" />
+         <p id="log"></p>
+
+       JAVASCRIPT
+
+         const input = document.querySelector("input");
+         const log = document.getElementById("log");
+
+         input.addEventListener("change", updateValue);
+
+         function updateValue(e) {
+           log.textContent = e.target.value;
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       Different browsers do not always agree whether a change event should be fired for certain types of interaction. For example, keyboard navigation in elements used to never fire a change event in Gecko until the user hit Enter or switched the focus away from the (see Firefox bug 126379). Since Firefox 63 (Quantum), this behavior is consistent between all major browsers, however.
+
+Web APIs manual                         from the official documentation

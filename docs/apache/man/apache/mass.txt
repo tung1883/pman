@@ -1,0 +1,141 @@
+APACHE.MASS(1)                   Sandbox manual                   APACHE.MASS(1)
+
+       MOTIVATION
+
+       The techniques described here are of interest if your httpd.conf contains many <VirtualHost> sections that are substantially the same, for example:
+
+         <VirtualHost 111.22.33.44>
+             ServerName                 customer-1.example.com
+             DocumentRoot        "/www/hosts/customer-1.example.com/docs"
+             ScriptAlias  "/cgi-bin/"  "/www/hosts/customer-1.example.com/cgi-bin"
+         </VirtualHost>
+
+         <VirtualHost 111.22.33.44>
+             ServerName                 customer-2.example.com
+             DocumentRoot        "/www/hosts/customer-2.example.com/docs"
+             ScriptAlias  "/cgi-bin/"  "/www/hosts/customer-2.example.com/cgi-bin"
+         </VirtualHost>
+
+         <VirtualHost 111.22.33.44>
+             ServerName                 customer-N.example.com
+             DocumentRoot        "/www/hosts/customer-N.example.com/docs"
+             ScriptAlias  "/cgi-bin/"  "/www/hosts/customer-N.example.com/cgi-bin"
+         </VirtualHost>
+
+       We wish to replace these multiple <VirtualHost> blocks with a mechanism that works them out dynamically. This has a number of advantages:
+
+        * Your configuration file is smaller, so Apache starts more quickly and uses less memory. Perhaps more importantly, the smaller configuration is easier to maintain, and leaves less room for errors.
+        * Adding virtual hosts is simply a matter of creating the appropriate directories in the filesystem and entries in the DNS - you don't need to reconfigure or restart Apache.
+       The main disadvantage is that you cannot have a different log file for each virtual host; however, if you have many virtual hosts, doing this can be a bad idea anyway, because of the number of file descriptors needed. It is better to log to a pipe or a fifo, and arrange for the process at the other end to split up the log files into one per virtual host. One example of such a process can be found in the split-logfile utility.
+
+       OVERVIEW
+
+       A virtual host is defined by two pieces of information: its IP address, and the contents of the Host: header in the HTTP request. The dynamic mass virtual hosting technique used here is based on automatically inserting this information into the pathname of the file that is used to satisfy the request. This can be most easily done by using mod_vhost_alias with Apache httpd. Alternatively, mod_rewrite can be used.
+
+       Both of these modules are disabled by default; you must enable one of them when configuring and building Apache httpd if you want to use this technique.
+
+       A couple of things need to be determined from the request in order to make the dynamic virtual host look like a normal one. The most important is the server name, which is used by the server to generate self-referential URLs etc. It is configured with the ServerName directive, and it is available to CGIs via the SERVER_NAME environment variable. The actual value used at run time is controlled by the UseCanonicalName setting. With UseCanonicalName Off, the server name is taken from the contents of the Host: header in the request. With UseCanonicalName DNS, it is taken from a reverse DNS lookup of the virtual host's IP address. The former setting is used for name-based dynamic virtual hosting, and the latter is used for IP-based hosting. If httpd cannot work out the server name because there is no Host: header, or the DNS lookup fails, then the value configured with ServerName is used instead.
+
+       The other thing to determine is the document root (configured with DocumentRoot and available to CGI scripts via the DOCUMENT_ROOT environment variable). In a normal configuration, this is used by the core module when mapping URIs to filenames, but when the server is configured to do dynamic virtual hosting, that job must be taken over by another module (either mod_vhost_alias or mod_rewrite), which has a different way of doing the mapping. Neither of these modules is responsible for setting the DOCUMENT_ROOT environment variable so if any CGIs or SSI documents make use of it, they will get a misleading value.
+
+       DYNAMIC VIRTUAL HOSTS WITH MOD_VHOST_ALIAS
+
+       This extract from httpd.conf implements the virtual host arrangement outlined in the Motivation section above using mod_vhost_alias.
+
+         # get the server name from the Host: header
+         UseCanonicalName Off
+
+         # this log format can be split per-virtual-host based on the first field
+         # using the split-logfile utility.
+         LogFormat "%V %h %l %u %t \"%r\" %s %b" vcommon
+         CustomLog "logs/access_log" vcommon
+
+         # include the server name in the filenames used to satisfy requests
+         VirtualDocumentRoot "/www/hosts/%0/docs"
+         VirtualScriptAlias  "/www/hosts/%0/cgi-bin"
+
+       This configuration can be changed into an IP-based virtual hosting solution by just turning UseCanonicalName Off into UseCanonicalName DNS. The server name that is inserted into the filename is then derived from the IP address of the virtual host. The variable %0 references the requested servername, as indicated in the Host: header.
+
+       See the mod_vhost_alias documentation for more usage examples.
+
+       SIMPLIFIED DYNAMIC VIRTUAL HOSTS
+
+       This is an adjustment of the above system, tailored for an ISP's web hosting server. Using %2, we can select substrings of the server name to use in the filename so that, for example, the documents for www.user.example.com are found in /home/user/www. It uses a single cgi-bin directory instead of one per virtual host.
+
+         UseCanonicalName Off
+
+         LogFormat "%V %h %l %u %t \"%r\" %s %b" vcommon
+         CustomLog "logs/access_log" vcommon
+
+         # include part of the server name in the filenames
+         VirtualDocumentRoot "/home/%2/www"
+
+         # single cgi-bin directory
+         ScriptAlias  "/cgi-bin/"  "/www/std-cgi/"
+
+       There are examples of more complicated VirtualDocumentRoot settings in the mod_vhost_alias documentation.
+
+       USING MULTIPLE VIRTUAL HOSTING SYSTEMS ON THE SAME SERVER
+
+       With more complicated setups, you can use httpd's normal <VirtualHost> directives to control the scope of the various virtual hosting configurations. For example, you could have one IP address for general customers' homepages, and another for commercial customers, with the following setup. This can be combined with conventional <VirtualHost> configuration sections, as shown below.
+
+         UseCanonicalName Off
+
+         LogFormat "%V %h %l %u %t \"%r\" %s %b" vcommon
+
+         <Directory "/www/commercial">
+             Options FollowSymLinks
+             AllowOverride All
+         </Directory>
+
+         <Directory "/www/homepages">
+             Options FollowSymLinks
+             AllowOverride None
+         </Directory>
+
+         <VirtualHost 111.22.33.44>
+             ServerName www.commercial.example.com
+
+             CustomLog "logs/access_log.commercial" vcommon
+
+             VirtualDocumentRoot "/www/commercial/%0/docs"
+             VirtualScriptAlias  "/www/commercial/%0/cgi-bin"
+         </VirtualHost>
+
+         <VirtualHost 111.22.33.45>
+             ServerName www.homepages.example.com
+
+             CustomLog "logs/access_log.homepages" vcommon
+
+             VirtualDocumentRoot "/www/homepages/%0/docs"
+             ScriptAlias         "/cgi-bin/" "/www/std-cgi/"
+         </VirtualHost>
+
+       NOTE
+
+       If the first VirtualHost block does not include a ServerName directive, the reverse DNS of the relevant IP will be used instead. If this is not the server name you wish to use, a bogus entry (eg. ServerName none.example.com) can be added to get around this behavior.
+
+       MORE EFFICIENT IP-BASED VIRTUAL HOSTING
+
+       The configuration changes suggested to turn the first example into an IP-based virtual hosting setup result in a rather inefficient setup. A new DNS lookup is required for every request. To avoid this overhead, the filesystem can be arranged to correspond to the IP addresses, instead of to the host names, thereby negating the need for a DNS lookup. Logging will also have to be adjusted to fit this system.
+
+         # get the server name from the reverse DNS of the IP address
+         UseCanonicalName DNS
+
+         # include the IP address in the logs so they may be split
+         LogFormat "%A %h %l %u %t \"%r\" %s %b" vcommon
+         CustomLog "logs/access_log" vcommon
+
+         # include the IP address in the filenames
+         VirtualDocumentRootIP "/www/hosts/%0/docs"
+         VirtualScriptAliasIP  "/www/hosts/%0/cgi-bin"
+
+       MASS VIRTUAL HOSTS WITH MOD_REWRITE
+
+       Mass virtual hosting may also be accomplished using mod_rewrite, either using simple RewriteRule directives, or using more complicated techniques such as storing the vhost definitions externally and accessing them via RewriteMap. These techniques are discussed in the rewrite documentation.
+
+       MASS VIRTUAL HOSTS WITH MOD_MACRO
+
+       Another option for dynamically generated virtual hosts is mod_macro, with which you can create a virtualhost template, and invoke it for multiple hostnames. An example of this is provided in the Usage section of the module documentation.
+
+Apache HTTP Server manual               bundled documentation

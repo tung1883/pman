@@ -1,0 +1,210 @@
+K8S.TASKS-TOOLS-INSTALL-KUBECTL-MACOS(1) Sandbox manual K8S.TASKS-TOOLS-INSTALL-KUBECTL-MACOS(1)
+
+       NAME
+
+       Install and Set Up kubectl on macOS - You must use a kubectl version that is within one minor version difference of
+
+       INSTALL AND SET UP KUBECTL ON MACOS
+
+       ## PREREQUISITES
+
+       You must use a kubectl version that is within one minor version difference of your cluster. For example, a v client can communicate with v, v, and v control planes. Using the latest compatible version of kubectl helps avoid unforeseen issues.
+
+       INSTALL KUBECTL ON MACOS
+
+       The following methods exist for installing kubectl on macOS:
+
+        * Install kubectl on macOS
+          * Install kubectl binary with curl on macOS
+          * Install with Homebrew on macOS
+          * Install with Macports on macOS
+        * Verify kubectl configuration
+        * Optional kubectl configurations and plugins
+          * Enable shell autocompletion
+          * Install kubectl convert plugin
+
+       INSTALL KUBECTL BINARY WITH CURL ON MACOS
+
+        1. Download the latest release:
+       curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/amd64/kubectl"
+
+       curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/arm64/kubectl"
+
+       > Note:
+       To download a specific version, replace the $(curl -L -s https://dl.k8s.io/release/stable.txt) portion of the command with the specific version.
+
+       For example, to download version on Intel macOS, type:
+
+            curl -LO "https://dl.k8s.io/release/v/bin/darwin/amd64/kubectl"
+
+       And for macOS on Apple Silicon, type:
+
+            curl -LO "https://dl.k8s.io/release/v/bin/darwin/arm64/kubectl"
+
+        1. Validate the binary (optional)
+       Download the kubectl checksum file:
+
+       curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/amd64/kubectl.sha256"
+
+       curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/arm64/kubectl.sha256"
+
+       Validate the kubectl binary against the checksum file:
+
+            echo "$(cat kubectl.sha256)  kubectl" | shasum -a 256 --check
+
+       If valid, the output is:
+
+            kubectl: OK
+
+       If the check fails, shasum exits with nonzero status and prints output similar to:
+
+            kubectl: FAILED
+            shasum: WARNING: 1 computed checksum did NOT match
+
+       > Note:
+       Download the same version of the binary and checksum.
+
+        1. Make the kubectl binary executable.
+
+            chmod +x ./kubectl
+
+        1. Move the kubectl binary to a file location on your system PATH.
+
+            sudo mv ./kubectl /usr/local/bin/kubectl
+            sudo chown root: /usr/local/bin/kubectl
+
+       > Note:
+       Make sure /usr/local/bin is in your PATH environment variable.
+
+        1. Test to ensure the version you installed is up-to-date:
+
+            kubectl version --client
+
+       Or use this for detailed view of version:
+
+            kubectl version --client --output=yaml
+
+        1. After installing and validating kubectl, delete the checksum file:
+
+            rm kubectl.sha256
+
+       INSTALL WITH HOMEBREW ON MACOS
+
+       If you are on macOS and using Homebrew package manager, you can install kubectl with Homebrew.
+
+        1. Run the installation command:
+
+            brew install kubectl
+
+       or
+
+            brew install kubernetes-cli
+
+        1. Test to ensure the version you installed is up-to-date:
+
+            kubectl version --client
+
+       INSTALL WITH MACPORTS ON MACOS
+
+       If you are on macOS and using Macports package manager, you can install kubectl with Macports.
+
+        1. Run the installation command:
+
+            sudo port selfupdate
+            sudo port install kubectl
+
+        1. Test to ensure the version you installed is up-to-date:
+
+            kubectl version --client
+
+       VERIFY KUBECTL CONFIGURATION
+
+       OPTIONAL KUBECTL CONFIGURATIONS AND PLUGINS
+
+       ENABLE SHELL AUTOCOMPLETION
+
+       kubectl provides autocompletion support for Bash, Zsh, Fish, and PowerShell which can save you a lot of typing.
+
+       Below are the procedures to set up autocompletion for Bash, Fish, and Zsh.
+
+       CONFIGURE KUBERC
+
+       See kuberc for more information.
+
+       INSTALL KUBECTL CONVERT PLUGIN
+
+        1. Download the latest release with the command:
+       curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/amd64/kubectl-convert"
+
+       curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/arm64/kubectl-convert"
+
+        1. Validate the binary (optional)
+       Download the kubectl-convert checksum file:
+
+       curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/amd64/kubectl-convert.sha256"
+
+       curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/arm64/kubectl-convert.sha256"
+
+       Validate the kubectl-convert binary against the checksum file:
+
+            echo "$(cat kubectl-convert.sha256)  kubectl-convert" | shasum -a 256 --check
+
+       If valid, the output is:
+
+            kubectl-convert: OK
+
+       If the check fails, shasum exits with nonzero status and prints output similar to:
+
+            kubectl-convert: FAILED
+            shasum: WARNING: 1 computed checksum did NOT match
+
+       > Note:
+       Download the same version of the binary and checksum.
+
+        1. Make kubectl-convert binary executable
+
+            chmod +x ./kubectl-convert
+
+        1. Move the kubectl-convert binary to a file location on your system PATH.
+
+            sudo mv ./kubectl-convert /usr/local/bin/kubectl-convert
+            sudo chown root: /usr/local/bin/kubectl-convert
+
+       > Note:
+       Make sure /usr/local/bin is in your PATH environment variable.
+
+        1. Verify plugin is successfully installed
+
+            kubectl convert --help
+
+       If you do not see an error, it means the plugin is successfully installed.
+
+        1. After installing the plugin, clean up the installation files:
+
+            rm kubectl-convert kubectl-convert.sha256
+
+       UNINSTALL KUBECTL ON MACOS
+
+       Depending on how you installed kubectl, use one of the following methods.
+
+       UNINSTALL KUBECTL USING THE COMMAND-LINE
+
+        1. Locate the kubectl binary on your system:
+
+             which kubectl
+
+        1. Remove the kubectl binary:
+
+             sudo rm <path>
+
+       Replace with the path to the kubectl binary from the previous step. For example, sudo rm /usr/local/bin/kubectl.
+
+       UNINSTALL KUBECTL USING HOMEBREW
+
+       If you installed kubectl using Homebrew, run the following command:
+
+         brew remove kubectl
+
+       ## WHATSNEXT
+
+Kubernetes manual                       from the official documentation

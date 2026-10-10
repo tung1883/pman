@@ -1,0 +1,41 @@
+SHELLCHECK.SC2334(1)             Sandbox manual             SHELLCHECK.SC2334(1)
+
+       NAME
+
+       You probably wanted || here, otherwise it's always false. - if (( ret == 137 && ret == 143 ))
+
+       YOU PROBABLY WANTED HERE, OTHERWISE IT'S ALWAYS FALSE
+
+       YOU PROBABLY WANTED HERE, OTHERWISE IT'S ALWAYS FALSE
+
+       PROBLEMATIC CODE
+
+         if (( ret == 137 && ret == 143 ))
+         then
+           echo "Process killed by SIGTERM/SIGKILL"
+         fi
+
+       CORRECT CODE
+
+         if (( ret == 137 || ret == 143 ))
+         then
+           echo "Process killed by SIGTERM/SIGKILL"
+         fi
+
+       RATIONALE
+
+       The problematic condition will never trigger because of a logic error.
+
+       In English one think say "I want to check for the numbers 137 and 143", but the test ends up checking that the number is both 137 and 143 at the same time, which it can't be (if the number is 137, it necessarily won't be 143, and vice versa).
+
+       The correct check is "if the number is 137 or if the number is 143", which will be true if the value is either 137 or 143.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

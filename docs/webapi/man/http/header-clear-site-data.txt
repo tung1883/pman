@@ -1,0 +1,94 @@
+HTTP.HEADER-CLEAR-SITE-DATA(1)   Sandbox manual   HTTP.HEADER-CLEAR-SITE-DATA(1)
+
+       NAME
+
+       Clear-Site-Data header - The HTTP Clear-Site-Data response header sends a signal to the client that it should remove all browsing data of certain types (cookies, sto
+
+       CLEAR-SITE-DATA HEADER
+
+       The HTTP Clear-Site-Data response header sends a signal to the client that it should remove all browsing data of certain types (cookies, storage, cache) associated with the requesting website. It allows web developers to have more control over the data stored by browsers for their origins.
+
+       Header type Response header
+
+       SYNTAX
+
+         // Single directive
+         Clear-Site-Data: "cache"
+
+         // Multiple directives (comma separated)
+         Clear-Site-Data: "cache", "cookies"
+
+         // Wild card
+         Clear-Site-Data: "*"
+
+       DIRECTIVES
+
+       > All directives must comply with the quoted-string grammar. A directive that does not include the double quotes is invalid.
+        * "cache"
+          * : The server signals that the client should remove locally cached data (the browser cache, see HTTP caching) for the origin of the response URL.
+       Depending on the browser, this might also clear out things like pre-rendered pages, backwards-forwards cache, script caches, WebGL shader caches, or address bar suggestions.
+
+        * "clientHints" (experimental)
+          * : Indicates that the server will remove all client hints (requested via Accept-CH) stored for the origin of the response URL.
+       > In browsers that support the "clientHints" data type, client hints are also cleared when the "cache", "cookies", or "*" types are specified. "clientHints" is therefore only needed when none of those other types are specified.
+        * "cookies"
+          * : The server signals that the client should remove all cookies for the origin of the response URL. HTTP authentication credentials are also cleared out. This affects the entire registered domain, including subdomains. So https://example.com as well as https://stage.example.com, will have cookies cleared.
+        * "executionContexts" (experimental)
+          * : The server signals that the client should reload all browsing contexts for the origin of the response (Location.reload).
+        * "prefetchCache" (experimental) {{non-standard_inline}}
+          * : Used to clear speculation rules prefetches that are scoped to the referrer origin.
+        * "prerenderCache" (experimental) {{non-standard_inline}}
+          * : Used to clear speculation rules prerenders that are scoped to the referrer origin.
+        * "storage"
+          * : The server signals that the client should remove all DOM storage for the origin of the response URL. This includes storage mechanisms such as:
+            * localStorage (executes localStorage.clear),
+            * sessionStorage (executes sessionStorage.clear),
+            * IndexedDB (for each database execute IDBFactory.deleteDatabase),
+            * Service worker registrations (for each service worker registration, execute ServiceWorkerRegistration.unregister),
+            * Web SQL databases (deprecated),
+            * FileSystem API data,
+            * Plugin data (Flash via NPP_ClearSiteData).
+        * "*" (wildcard)
+          * : The server signals that the client should clear all types of data for the origin of the response. If more data types are added in future versions of this header, they will also be covered by it.
+
+       EXAMPLES
+
+       SIGN OUT OF A WEBSITE
+
+       If a user signs out of your website or service, you might want to remove locally stored data, including any prefetched or prerendered content for speculated navigations. To do this, add the Clear-Site-Data header to the page that confirms the logging out from the site has been accomplished successfully (https://example.com/logout, for example):
+
+         Clear-Site-Data: "cache", "cookies", "storage", "executionContexts", "prefetchCache", "prerenderCache"
+
+       CLEARING COOKIES
+
+       If this header is delivered with the response at https://example.com/clear-cookies, all cookies on the same domain https://example.com and any subdomains (like https://stage.example.com, etc.), will be cleared out.
+
+         Clear-Site-Data: "cookies"
+
+       CLEARING SPECULATIONS
+
+       If this header is delivered with the response at https://example.com/change-state.json, all speculated navigations prerenders on the same domain https://example.com and any subdomains (such as https://stage.example.com), will be cleared.
+
+         Clear-Site-Data: "prerenderCache"
+
+       To clear both prefetch and prerender speculations, both prefetchCache and prerenderCache must be sent:
+
+         Clear-Site-Data: "prefetchCache", "prerenderCache"
+
+       There are cases where clearing one or the other, or both, is appropriate.
+
+       For example, a client-side rendered application that pulls in data from JavaScript might use prerenderCache on state change to discard the prerendered pages, but keep the prefetched HTML to use when the page is rendered (or prerendered again).
+
+       On the other hand, if the prefetched HTML document contains stale data but the corresponding prerendered page is set up to refresh the data when it is displayed, you may not need to use prerenderCache but you probably will want to use the prefetchCache directive: so that the stale HTML isn't used in a future prerender.
+
+       Finally, if the prefetched HTML document contains stale data, and also does not refresh stale content on prerendered pages, then specifying both prefetchCache and prerenderCache is most appropriate.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Cache-Control
+
+HTTP manual                             from the official documentation

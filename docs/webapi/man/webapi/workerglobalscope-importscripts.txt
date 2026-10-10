@@ -1,0 +1,118 @@
+WEBAPI.WORKERGLOBALSCOPE-IMPORTSCRIPTS(1) Sandbox manual WEBAPI.WORKERGLOBALSCOPE-IMPORTSCRIPTS(1)
+
+       NAME
+
+       WorkerGlobalScope: importScripts() method - worker
+
+       WORKERGLOBALSCOPE: IMPORTSCRIPTS() METHOD
+
+       worker
+
+       > The parameters passed to this method represent the URLs of classic scripts to be imported into a worker.
+       > APIs like this are known as injection sinks, and are potentially a vector for cross-site scripting (XSS) attacks.
+       > You can mitigate this risk by having a Content Security Policy (CSP) that restricts the locations from which scripts can be loaded, and by always assigning TrustedScriptURL objects instead of strings and enforcing trusted types.
+       > See Security considerations for more information.
+       The importScripts() method of the WorkerGlobalScope interface synchronously imports one or more scripts into the scope of a classic worker (a worker constructed from a classic script).
+
+       Note that the method cannot be used in module workers, which instead load dependencies using import statements.
+
+       SYNTAX
+
+         importScripts(url0)
+         importScripts(url0, url1)
+         importScripts(url0, url1, /* …, */ urlN)
+
+       PARAMETERS
+
+        * urlN
+          * : A TrustedScriptURL instance or a string representing the URL of the script to be imported.
+       The URL may be absolute or relative. If the URL is relative, it is relative to the worker entry script's URL.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * NetworkError
+          * : Imported scripts were served without a text/javascript media (MIME) type or without one of the permitted legacy JavaScript MIME types.
+        * SyntaxError
+          * : Thrown if any URL cannot be resolved.
+        * TypeError
+          * : Thrown if the current WorkerGlobalScope is a module (use import instead).
+       It may also happen if any parameter is not a TrustedScriptURL and the site is enforcing trusted types.
+
+       DESCRIPTION
+
+       The importScripts() method synchronously imports one or more scripts into the scope of a classic worker.
+
+       Unlike the initial classic module script, which must be same-origin with its document, this method can import cross-origin scripts unless blocked by a Cross-Origin-Resource-Policy, Content Security Policy (CSP), or some other security mechanism. Note that because classic scripts are fetched in no-cors mode, they can be fetched cross-origin even if the server does not set the appropriate CORS headers.
+
+       SECURITY CONSIDERATIONS
+
+       The parameters specify scripts to be imported into the scope of a classic worker. If the URLs for the scripts are provided by a user, this is a possible vector for cross-site scripting (XSS) attacks.
+
+       It is extremely risky to accept and execute arbitrary URLs from untrusted origins. A website should control what scripts that are allowed to run using a Content Security Policy (CSP) with the script-src directive (or a fallback defined in default-src). This can restrict scripts to those from the current origin, or a specific set of origins, or even particular files.
+
+       If you're using this property and enforcing trusted types (using the require-trusted-types-for CSP directive), you will need to always assign TrustedScriptURL objects instead of strings. This ensures that the input is passed through a transformation function, which has the chance to reject or modify the URL before it is injected.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       If you had some functionality written in a separate script called foo.js in the same directory as worker.js, you could import it into the worker using the following line:
+
+         importScripts("foo.js");
+
+       importScripts() and self.importScripts() are effectively equivalent — both represent importScripts() being called from inside the worker's inner scope.
+
+       Note that in the next section we show you how to pass a TrustedScriptURL instead of a string. This was omitted in this example for brevity, but is recommended in production code.
+
+       USING TRUSTEDSCRIPTURL
+
+       To mitigate the risk of XSS, we should always assign TrustedScriptURL instances to each of the parameters. We also need to do this if we're enforcing trusted types for other reasons and we want to allow some script sources that have been permitted (for example, by CSP: script-src).
+
+       Trusted types are not yet supported on all browsers, so first we define the trusted types tinyfill. This acts as a transparent replacement for the trusted types JavaScript API:
+
+         if (typeof trustedTypes === "undefined")
+           trustedTypes = { createPolicy: (n, rules) => rules };
+
+       Next we create a TrustedTypePolicy that defines a createScriptURL() method for transforming input strings into TrustedScriptURL instances.
+
+       For the purpose of this example we'll assume that we want to allow a predefined set of URLs in the scriptAllowList array and log any other scripts.
+
+         const scriptAllowList = [
+           // Some list of allowed URLs
+         ];
+         const policy = trustedTypes.createPolicy("script-url-policy", {
+           createScriptURL(input) {
+             if (scriptAllowList.includes(input)) {
+               return input; // allow the script
+             }
+             console.log(`Script not in scriptAllowList: ${input}`);
+             return ""; // Block the script
+           },
+         });
+
+       Then we use the policy object to create a TrustedScript object from a potentially unsafe input string:
+
+         // The potentially malicious string
+         // We won't be including untrustedScript in our scriptAllowList array
+         const untrustedScript = "https://evil.example.com/import_worker.js";
+
+         // Create a TrustedScriptURL instance using the policy
+         const trustedScriptURL = policy.createScriptURL(untrustedScript);
+
+       The TrustedScriptURL object can now be used when importing the script in a classic worker:
+
+         importScripts(trustedScriptURL);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WorkerGlobalScope
+
+Web APIs manual                         from the official documentation

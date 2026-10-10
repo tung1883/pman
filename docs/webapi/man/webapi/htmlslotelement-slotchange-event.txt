@@ -1,0 +1,57 @@
+WEBAPI.HTMLSLOTELEMENT-SLOTCHANGE-EVENT(1) Sandbox manual WEBAPI.HTMLSLOTELEMENT-SLOTCHANGE-EVENT(1)
+
+       NAME
+
+       HTMLSlotElement: slotchange event - The slotchange event is fired on an HTMLSlotElement instance (<slot> element) when the node(s) contained in that slot change.
+
+       HTMLSLOTELEMENT: SLOTCHANGE EVENT
+
+       The slotchange event is fired on an HTMLSlotElement instance ( element) when the node(s) contained in that slot change.
+
+       > The slotchange event doesn't fire if the children of a slotted node change — only if you change (e.g., add or delete) the actual nodes themselves.
+       In order to trigger a slotchange event, one has to set or remove the slot attribute.
+
+       This event is not cancelable.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("slotchange", (event) => { })
+
+         onslotchange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+         element.setAttribute("slot", slotName);
+         // element.assignedSlot = $slot
+         element.removeAttribute("slot");
+         // element.assignedSlot = null
+
+       The following snippet is taken from our slotchange example (see it live also).
+
+         let slots = this.shadowRoot.querySelectorAll("slot");
+         slots[1].addEventListener("slotchange", (e) => {
+           let nodes = slots[1].assignedNodes();
+           console.log(
+             `Element in Slot "${slots[1].name}" changed to "${nodes[0].outerHTML}".`,
+           );
+         });
+
+       Here we grab references to all the s, then add a slotchange event listener to the template's second slot — which is the one which has its contents changed in the example.
+
+       Every time the element inserted in the slot changes, we log a report to the console saying which slot has changed, and what the new node inside the slot is.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTMLSlotElement
+
+Web APIs manual                         from the official documentation

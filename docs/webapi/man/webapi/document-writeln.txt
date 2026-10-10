@@ -1,0 +1,102 @@
+WEBAPI.DOCUMENT-WRITELN(1)       Sandbox manual       WEBAPI.DOCUMENT-WRITELN(1)
+
+       NAME
+
+       Document: writeln() method - > [!WARNING]
+
+       DOCUMENT: WRITELN() METHOD
+
+       > This method parses its input as HTML, writing the result into the DOM.
+       > APIs like this are known as injection sinks, and are potentially a vector for cross-site-scripting (XSS) attacks, if the input originally came from an attacker.
+       > You can mitigate this risk by always passing TrustedHTML objects instead of strings and enforcing trusted types.
+       > See Security considerations for more information.
+       The writeln() method of the Document interface writes text in one or more TrustedHTML or string parameters to a document stream opened by document.open(), followed by a newline character.
+
+       SYNTAX
+
+         writeln(markup)
+         writeln(markup, markup2)
+         writeln(markup, markup2, /* …, */ markupN)
+
+       PARAMETERS
+
+        * markup, …, markupN
+          * : TrustedHTML or string objects containing the text to be written to the document.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : The method was called on an XML document, or called when the parser is currently executing a custom element constructor.
+        * TypeError
+          * : A string is passed as one of the parameters when Trusted Types are enforced and no default policy has been defined for creating TrustedHTML objects.
+
+       DESCRIPTION
+
+       The method is essentially the same as document.write() but adds a newline (information in the linked topic also applies to this method). This newline will only be visible if it is injected inside an element where newlines are displayed. The additional information in document.write() also applies to this method.
+
+       SECURITY CONSIDERATIONS
+
+       The method is a possible vector for Cross-site-scripting (XSS) attacks, where potentially unsafe strings provided by a user are injected into the DOM without first being sanitized. While the method may block elements from executing when they are injected in some browsers (see Intervening against document.write() for Chrome), it is susceptible to many other ways that attackers can craft HTML to run malicious JavaScript.
+
+       You can mitigate these issues by always passing TrustedHTML objects instead of strings, and enforcing trusted types using the require-trusted-types-for CSP directive. This ensures that the input is passed through a transformation function, which has the chance to sanitize the input to remove potentially dangerous markup (such as elements and event handler attributes), before it is injected.
+
+       EXAMPLES
+
+       WRITING TRUSTEDHTML
+
+       This example uses the Trusted Types API to sanitize HTML strings before they are written to a document. You should always use trusted types for passing untrusted strings to unsafe APIs.
+
+       The example initially displays some default text and a button. When the button is clicked, the current document is opened, some strings of HTML are converted to TrustedHTML instances and written into the document, and the document is then closed. This replaces the document in the example frame, including the original HTML for the button and the JavaScript that made the update!
+
+       HTML
+
+         <p>Some original document content.</p>
+         <button id="replace" type="button">Replace document content</button>
+
+       JAVASCRIPT
+
+       First we use the Window.trustedTypes property to access the global TrustedTypePolicyFactory, and use its createPolicy() method to define a policy called "docPolicy".
+
+       The new policy defines a transformation function createHTML() for creating the TrustedHTML objects that we will pass to the writeln() method. This method can do anything it likes with the input string: the trusted types API just requires that you pass the input through a policy transformation function, not that the transformation function does anything in particular.
+
+       You'd use the method to sanitize the input by removing potentially unsafe features such as tags or event handler attributes. Sanitization is hard to get right, so this process typically uses a reputable third-party library such as DOMPurify.
+
+       Here we implement a rudimentary "sanitizer" that replaces < symbols in script opening and closing tags with the < character. The injected strings in this example don't actually contain any harmful elements, so this is purely for demonstration.
+
+         const policy = trustedTypes.createPolicy("docPolicy", {
+           createHTML(string) {
+             return string
+               .replace("<script", "&lt;script")
+               .replace("</script", "&lt;/script");
+           },
+         });
+
+       We can then use the TrustedTypePolicy.createHTML() method on the returned policy to create TrustedHTML objects from our original input strings. These are then passed to the writeln() function when the user clicks the button.
+
+         const replace = document.querySelector("#replace");
+         const oneInput = "<h1>Out with";
+         const twoInput = "the old</h1>";
+         const threeInput = "<pre>in with";
+         const fourInput = "the new!</pre>";
+
+         replace.addEventListener("click", () => {
+           document.open();
+           document.writeln(policy.createHTML(oneInput));
+           document.writeln(policy.createHTML(twoInput), policy.createHTML(threeInput));
+           document.writeln(policy.createHTML(fourInput));
+           document.close();
+         });
+
+       RESULTS
+
+       Click the button. Note that a newline is added after each call to writeln(), but this will only be visible inside the element because its layout preserves whitespace by default.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

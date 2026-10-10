@@ -1,0 +1,257 @@
+ARCH.FSTAB(1)                    Sandbox manual                    ARCH.FSTAB(1)
+
+       The fstab(5) file can be used to define how disk partitions, various other block devices, or remote file systems should be mounted into the file system.
+
+       Each file system is described in a separate line. These definitions will be converted into systemd mount units dynamically at boot, and when the configuration of the system manager is reloaded. The default setup will automatically fsck and mount file systems before starting services that need them to be mounted. For example, systemd automatically makes sure that remote file system mounts like NFS or Samba are only started after the network has been set up. Therefore, local and remote file system mounts specified in /etc/fstab should work out-of-the-box. See systemd.mount(5) for details.
+
+       The mount command will use fstab, if just one of either directory or device is given, to fill in the value for the other parameter. When doing so, mount options which are listed in fstab will also be used.
+
+       USAGE
+
+       A simple /etc/fstab, using file system UUIDs:
+
+         /etc/fstab
+
+         # <device>                                <dir> <type> <options>                                        <dump> <fsck>
+         UUID=0a3407de-014b-458b-b5c1-848e92a327a3 /     ext4 defaults                                           0      1
+         UUID=CBB6-24F2                            /boot vfat defaults,nodev,nosuid,noexec,fmask=0177,dmask=0077 0      2
+         UUID=f9fe0b69-a280-415d-a03a-a32752370dee none  swap defaults                                           0      0
+         UUID=b411dc99-f0a0-4c87-9e05-184977be8539 /home ext4 defaults                                           0      2
+
+        * <device> describes the block special device or remote file system to be mounted; see #Identifying file systems.
+        * <dir> is the directory where the file system will be mounted to, a.k.a. the mountpoint. The directory must be created beforehand.
+        * <type> is the file system type.
+        * <options> are the file system mount options; see mount(8) § FILESYSTEM-INDEPENDENT MOUNT OPTIONS and ext4(5) § Mount options for ext4.
+        * <dump> is checked by the dump(8) utility. This field is usually set to 0, which disables the check.
+        * <fsck> sets the order for file system checks at boot time; see fsck(8). For the root device it should be 1. For other partitions it should be 2, or 0 to disable checking.
+       Tip
+
+        * The auto type lets the mount command guess what type of file system is used. This is useful for optical media (CD/DVD/Blu-ray).
+        * If the root file system is btrfs or XFS, the fsck order should be set to 0 instead of 1. See fsck.btrfs(8) and fsck.xfs(8).
+       All specified devices within /etc/fstab will be automatically mounted on startup and when the -a flag is used with mount(8) unless the noauto option is specified. Devices that are listed and not present will result in an error unless the nofail option is used.
+
+       See fstab(5) § DESCRIPTION for details.
+
+       IDENTIFYING FILE SYSTEMS
+
+       There are different ways to identify file systems that will be mounted in /etc/fstab: kernel name descriptor, file system label and UUID, and GPT partition label and UUID for GPT disks. Kernel name descriptors should not be used, while UUIDs or PARTUUIDs should be preferred over labels. See Persistent block device naming for more explanations. It is recommended to read that article first before continuing with this article.
+
+       In this section, we will describe how to mount file systems using all the mount methods available via examples. The output of the commands lsblk -f and blkid used in the following examples are available in the article Persistent block device naming.
+
+       KERNEL NAME DESCRIPTORS
+
+       Run lsblk -f to list the partitions and prefix the values in the NAME column with /dev/.
+
+         /etc/fstab
+
+         # <device <dir> <type> <options>                                          <dump> <fsck>
+         /dev/sda2 /     ext4   defaults                                           0      1
+         /dev/sda1 /boot vfat   defaults,nodev,nosuid,noexec,fmask=0177,dmask=0077 0      2
+         /dev/sda3 /home ext4   defaults                                           0      2
+         /dev/sda4 none  swap   defaults                                           0      0
+
+       Warning Kernel name descriptors for block devices are not persistent and can change each boot, they should not be used in configuration files (including /etc/fstab).
+
+       FILE SYSTEM LABELS
+
+       Run lsblk -f to list the partitions, and prefix the values in the LABEL column with LABEL= or alternatively run blkid and use the LABEL values without the quotes:
+
+         /etc/fstab
+
+         # <device>   <dir> <type> <options>                                          <dump> <fsck>
+         LABEL=System /     ext4   defaults                                           0      1
+         LABEL=ESP    /boot vfat   defaults,nodev,nosuid,noexec,fmask=0177,dmask=0077 0      2
+         LABEL=Data   /home ext4   defaults                                           0      2
+         LABEL=Swap   none  swap   defaults                                           0      0
+
+       Note If any of your fields contains spaces, see #Filepath spaces.
+
+       FILE SYSTEM UUIDS
+
+       Run lsblk -f to list the partitions, and prefix the values in the UUID column with UUID= or alternatively run blkid and use the UUID values without the quotes:
+
+         /etc/fstab
+
+         # <device>                                <dir> <type> <options>                                        <dump> <fsck>
+         UUID=0a3407de-014b-458b-b5c1-848e92a327a3 /     ext4 defaults                                           0      1
+         UUID=CBB6-24F2                            /boot vfat defaults,nodev,nosuid,noexec,fmask=0177,dmask=0077 0      2
+         UUID=b411dc99-f0a0-4c87-9e05-184977be8539 /home ext4 defaults                                           0      2
+         UUID=f9fe0b69-a280-415d-a03a-a32752370dee none  swap defaults                                           0      0
+
+       GPT PARTITION LABELS
+
+       Run blkid to list the partitions, and use the PARTLABEL values without the quotes:
+
+         /etc/fstab
+
+         # <device>                           <dir> <type> <options>                                        <dump> <fsck>
+         PARTLABEL=GNU/Linux                  /     ext4 defaults                                           0      1
+         PARTLABEL=EFI\040system\040partition /boot vfat defaults,nodev,nosuid,noexec,fmask=0177,dmask=0077 0      2
+         PARTLABEL=Home                       /home ext4 defaults                                           0      2
+         PARTLABEL=Swap                       none  swap defaults                                           0      0
+
+       Note If any of your fields contains spaces, see #Filepath spaces.
+
+       GPT PARTITION UUIDS
+
+       Run blkid to list the partitions, and use the PARTUUID values without the quotes:
+
+         /etc/fstab
+
+         # <device>                                    <dir> <type> <options>                                        <dump> <fsck>
+         PARTUUID=98a81274-10f7-40db-872a-03df048df366 /     ext4 defaults                                           0      1
+         PARTUUID=d0d0d110-0a71-4ed6-936a-304969ea36af /boot vfat defaults,nodev,nosuid,noexec,fmask=0177,dmask=0077 0      2
+         PARTUUID=7280201c-fc5d-40f2-a9b2-466611d3d49e /home ext4 defaults                                           0      2
+         PARTUUID=039b6c1c-7553-4455-9537-1befbc9fbc5b none  swap defaults                                           0      0
+
+       TIPS AND TRICKS
+
+       AUTOMOUNT WITH SYSTEMD
+
+       See systemd.mount(5) for all systemd mount options.
+
+       LOCAL PARTITION
+
+       In case of a large partition, it may be more efficient to allow services that do not depend on it to start while it is checked by fsck. This can be achieved by adding the following options to the /etc/fstab entry of the partition:
+
+         x-systemd.automount
+
+       This will fsck and mount the partition only when it is first accessed, and the kernel will buffer all file access to it until it is ready. This method can be relevant if one has, for example, a significantly large /home partition.
+
+       Note This will make the file system type autofs which is ignored by locate by default.
+
+       REMOTE FILE SYSTEM
+
+       The same applies to remote file system mounts. If you want them to be mounted only upon access, you will need to use the x-systemd.automount parameters. In addition, you can use the x-systemd.mount-timeout= option to specify how long systemd should wait for the mount command to finish. Also, the _netdev option ensures systemd understands that the mount is network dependent and order it after the network is online.
+
+         x-systemd.automount,x-systemd.mount-timeout=30,_netdev
+
+       Instruct systemd to reload /etc/fstab and create the .mount unit by doing a daemon-reload then restarting the remote-fs.target.
+
+       ENCRYPTED FILE SYSTEM
+
+       If you have secondary encrypted file systems with keyfiles, you can also add the nofail parameter to the corresponding entries in /etc/crypttab and /etc/fstab. systemd will not wait for the cryptsetup service to finish unlocking and mounting the filesystem on boot, but instead may finish mounting this after reaching default.target. This will avoid any boot delay caused by unlocking secondary partitions that are not required immediately after boot. See dm-crypt/System configuration#Non blocking mounting for cryptsetup configuration
+
+       Since mount services will by default only wait for 90 seconds for the partition to be available, any delay in making the keyfile available may cause the mount to fail. To avoid this, add the option x-systemd.mount-timeout=0 to fstab in order to make sure that the mount service waits indefinitely for the partition to be unlocked.
+
+         /etc/fstab
+
+         UUID=0a3407de-014b-458b-b5c1-848e92a327a3 /data ext4 defaults,nofail,x-systemd.device-timeout=0    0 2
+
+       AUTOMATIC UNMOUNT
+
+       You may also specify an idle timeout for a mount with the x-systemd.idle-timeout flag. For example:
+
+         x-systemd.automount,x-systemd.idle-timeout=1min
+
+       This will make systemd unmount the mount after it has been idle for 1 minute.
+
+       EXTERNAL DEVICES
+
+       External devices that are to be mounted when present but ignored if absent may require the nofail option. This prevents errors being reported at boot. For example:
+
+         /etc/fstab
+
+         LABEL=MyExternalDrive /media/backup    jfs    nofail,x-systemd.device-timeout=5    0  2
+
+       The nofail option is best combined with the x-systemd.device-timeout option. This is because the default device timeout is 90 seconds, so a disconnected external device with only nofail will make your boot take 90 seconds longer, unless you reconfigure the timeout as shown. Make sure not to set the timeout to 0, as this translates to infinite timeout.
+
+       FILEPATH SPACES
+
+       Since spaces are used in fstab to delimit fields, if any field (PARTLABEL, LABEL or the mount point) contains spaces, these spaces must be replaced by escape characters \ followed by the 3 digit octal code 040:
+
+         /etc/fstab
+
+         UUID=47FA-4071         /home/username/Camera\040Pictures   vfat  defaults      0  0
+         LABEL=Storage\040drive /media/100\040GB\040(Storage)       ext4  defaults,user 0  2
+
+       ATIME OPTIONS
+
+       Below atime options can impact drive performance.
+
+        * The strictatime option updates the access time of the files every time they are accessed. This is more purposeful when Linux is used for servers; it does not have much value for desktop use. The drawback about the strictatime option is that even reading a file from the page cache (reading from memory instead of the drive) will still result in a write.
+        * The noatime option fully disables writing file access times to the drive every time you read a file. This works well for almost all applications, except for those that need to know if a file has been read since the last time it was modified. The write time information to a file will continue to be updated anytime the file is written to with this option enabled.
+        * The nodiratime option disables the writing of file access times only for directories while other files still get access times written. Note noatime implies nodiratime. You do not need to specify both.
+        * relatime updates the access time only if the previous access time was earlier than the current modify or change time. In addition, since Linux 2.6.30, the access time is always updated if the previous access time was more than 24 hours old. This option is used when the defaults option, atime option (which means to use the kernel default, which is relatime; see mount(8) and Once upon atime) or no options at all are specified.
+       When using Mutt or other applications that need to know if a file has been read since the last time it was modified, the noatime option should not be used; using the relatime option is acceptable and still provides a performance improvement.
+
+       Since kernel 4.0 there is another related option:
+
+        * lazytime reduces writes to disk by maintaining changes to inode timestamps (access, modification and creation times) only in memory. The on-disk timestamps are updated only when either (1) the file inode needs to be updated for some change unrelated to file timestamps, (2) a sync to disk occurs, (3) an undeleted inode is evicted from memory or (4) if more than 24 hours passed since the last time the in-memory copy was written to disk.
+       Warning In the event of a system crash, the access and modification times on disk might be out of date by up to 24 hours.
+
+       Note that the lazytime option works in combination with the aforementioned *atime options, not as an alternative. That is relatime by default, but can be even strictatime with the same or less cost of disk writes as the plain relatime option.
+
+       REMOUNTING THE ROOT PARTITION
+
+       If for some reason the root partition has been improperly mounted read only, remount the root partition with read-write access with the following command:
+
+         # mount -o remount,rw /
+
+       GPT PARTITION AUTOMOUNTING
+
+       When using UEFI/GPT, it is possible to omit certain partitions from /etc/fstab by partitioning according to the Discoverable Partitions Specification and have systemd-gpt-auto-generator(8) mount the partitions. See systemd#GPT partition automounting.
+
+       To specify custom mount options for these volumes, use a by-designator identifier as the device name:
+
+         /etc/fstab
+
+         /dev/disk/by-designator/root  /     ext4  defaults,noatime  0 1
+         /dev/disk/by-designator/swap  none  swap  defaults,discard  0 0
+
+       BIND MOUNT
+
+       You can link directories with the bind option:
+
+         /etc/fstab
+
+         # <device>                             <dir>                         <type> <options>     <dump> <fsck>
+         UUID=94649E22649E06E0                  /media/user/OS/               ntfs    defaults,rw,errors=remount-ro  0  0
+         /media/user/OS/Users/user/Music/       /home/user/Music/             none    defaults,bind 0   0
+         /media/user/OS/Users/user/Pictures/    /home/user/Pictures/          none    defaults,bind 0   0
+         /media/user/OS/Users/user/Videos/      /home/user/Videos/            none    defaults,bind 0   0
+         /media/user/OS/Users/user/Downloads/   /home/user/Downloads/         none    defaults,bind 0   0
+         /media/user/OS/Users/user/Documents/   /home/user/Documents/         none    defaults,bind 0   0
+         /media/user/OS/Users/user/projects/    /home/user/projects/windows/  none    defaults,bind 0   0
+
+       See mount(8) § Bind mount operation for details.
+
+       AUTOMATICALLY GENERATE AN FSTAB USING GENFSTAB
+
+       You can use the genfstab tool to create an fstab file. See genfstab for details.
+
+       GUI UTILITIES
+
+       Here is a list of programs that can be used to modify mount points. They might not have all the features possible for editing fstab, but have all of the most used ones and might make your workflow much easier:
+
+        * GNOME Disks — A GNOME utility for dealing with storage devices. Part of gnome.
+       https://apps.gnome.org/DiskUtility/ || gnome-disk-utility
+
+        * KDE Partition Manager — Utility to help you manage the disks, partitions, and file systems on your computer. Part of kde-system.
+       https://apps.kde.org/partitionmanager/ || partitionmanager
+
+       MODIFYING USER PERMISSIONS AND OWNERSHIP
+
+       If you want to allow any user to mount the drive, consider adding these mount options to add onto your fstab entries.
+
+       Note This is also used for filesystems that do not have file permission abilities, which will also set the owner and permissions of the entire drive to the user who mounted it.
+
+        * users - Allow any user to mount and to unmount the filesystem, even when some other ordinary user mounted it. This option implies the options noexec, nosuid, and nodev (unless overridden by subsequent options, as in the option line users,exec,dev,suid). Simply add users to the mount options to enable this.
+        * user - Allow an ordinary user to mount the filesystem. Only allows the same user to unmount. This option implies the options noexec, nosuid, and nodev (unless overridden by subsequent options, as in the option line user,exec,dev,suid). Simply add user to the mount options to enable this.
+       For filesystems that do not have file permissions built in such as FAT and exFAT, you can explicitly set the user or group for the entire drive and its files. You can view the ID of a specific user in /etc/passwd. The uid is the third number in the entry, and the group id is the fourth.
+
+        * uid - Set the owner ID of the drive
+        * gid - Set the group ID of the drive
+       For ext4, btrfs, and other filesystems that have permission abilities, other users might not be permitted to see the drive. Be sure to double check the permissions of /path/to/drive/ and modify them for what you need.
+
+       VERIFY CHANGES
+
+       Use findmnt --verify --verbose to check for syntax errors and invalid options in fstab.
+
+       SEE ALSO
+
+        * Full device listing including block device
+        * Filesystem Hierarchy Standard
+        * 30x Faster Cache and Site Speed with TMPFS
+
+ArchWiki manual                         bundled documentation

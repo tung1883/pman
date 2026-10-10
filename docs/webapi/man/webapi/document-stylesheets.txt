@@ -1,0 +1,64 @@
+WEBAPI.DOCUMENT-STYLESHEETS(1)   Sandbox manual   WEBAPI.DOCUMENT-STYLESHEETS(1)
+
+       NAME
+
+       Document: styleSheets property - The styleSheets read-only property of the Document interface returns a StyleSheetList of CSSStyleSheet objects, for stylesheets explicitly l
+
+       DOCUMENT: STYLESHEETS PROPERTY
+
+       The styleSheets read-only property of the Document interface returns a StyleSheetList of CSSStyleSheet objects, for stylesheets explicitly linked into or embedded in a document.
+
+       VALUE
+
+       The returned list is ordered as follows:
+
+        * StyleSheets retrieved from Link headers are placed first, sorted in header order.
+        * StyleSheets retrieved from the DOM are placed after, sorted in tree order.
+
+       EXAMPLES
+
+       RETRIEVING A SPECIFIC STYLESHEET BY ITS TITLE
+
+         function getStyleSheet(uniqueTitle) {
+           for (const sheet of document.styleSheets) {
+             if (sheet.title === uniqueTitle) {
+               return sheet;
+             }
+           }
+         }
+
+       ACCESSING RULES IN THE STYLESHEET
+
+       You can access these stylesheets and their rules individually using the stylesheet, style, and CSSRule objects, as demonstrated in this example, which prints out all of the style rule selectors to the console.
+
+         for (const styleSheet of document.styleSheets) {
+           for (const rule of styleSheet.cssRules) {
+             console.log(`${rule.selectorText}\n`);
+           }
+         }
+
+       For a document with a single stylesheet in which the following three rules are defined:
+
+         body {
+           background-color: darkblue;
+         }
+         p {
+           font-family: "Arial";
+           font-size: 10pt;
+           margin-left: 0.125in;
+         }
+         #lumpy {
+           display: none;
+         }
+
+       This script outputs the following:
+
+         BODY
+         P
+         #LUMPY
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

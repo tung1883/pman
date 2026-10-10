@@ -1,0 +1,58 @@
+WEBAPI.NOTIFICATION-CLOSE(1)     Sandbox manual     WEBAPI.NOTIFICATION-CLOSE(1)
+
+       NAME
+
+       Notification: close() method - The close() method of the Notification interface is used to
+
+       NOTIFICATION: CLOSE() METHOD
+
+       The close() method of the Notification interface is used to close/remove a previously displayed notification.
+
+       > This API shouldn't be used just to have the notification
+       > removed from the screen after a fixed delay since this method will also remove the
+       > notification from any notification tray, preventing users from interacting with it
+       > after it was initially shown. A valid use for this API would be to remove a
+       > notification that is no longer relevant (e.g., the user already read the notification
+       > on the webpage in the case of a messaging app or the following song is already playing
+       > in a music app).
+
+       SYNTAX
+
+         close()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       In the following snippet, we have a function that when called creates an options object and then a new notification. At the end of the function, it also calls close() inside an addEventListener() function to remove the notification when the relevant content has been read on the webpage.
+
+         function spawnNotification(theBody, theIcon, theTitle) {
+           const options = {
+             body: theBody,
+             icon: theIcon,
+           };
+
+           const n = new Notification(theTitle, options);
+           document.addEventListener("visibilitychange", () => {
+             if (document.visibilityState === "visible") {
+               // The tab has become visible so clear the now-stale Notification.
+               n.close();
+             }
+           });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Notifications API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,93 @@
+SHELLCHECK.CONTRIB(1)            Sandbox manual            SHELLCHECK.CONTRIB(1)
+
+       NAME
+
+       Docker wrapper script - This page lists various tips, tricks and user contributions. Feel free to add to it!
+
+       DOCKER WRAPPER SCRIPT
+
+       This page lists various tips, tricks and user contributions. Feel free to add to it!
+
+        * [[Recursiveness]]: Tips for running ShellCheck on all scripts in a directory
+        * [[CentOS6]] and [[More-Installation-Guides]] for installing ShellCheck on CentOS 6
+
+       DOCKER WRAPPER SCRIPT
+
+       @jrupp says:
+
+       I wrote a script to add ShellCheck to any system running Docker, without actually installing anything. I put this into /usr/local/bin/shellcheck:
+
+         #!/bin/bash -
+         for last; do true; done
+         docker run --rm -iv "$( cd "$( dirname -- "${last}" )" && pwd )":/mnt koalaman/shellcheck "${@:1:$(($#-1))}" "$(basename -- "${last}")"
+
+       This works on Docker for Mac as well as a Linux system running Docker. I have tested it when calling shellcheck in any of these forms:
+
+        * shellcheck filename.sh
+        * shellcheck ../../filename.sh
+        * cat filename.sh | shellcheck -
+        * shellcheck -V
+       No modification of my editor settings was needed for this to integrate (I checked Vim through syntastic and VSCode).
+
+       WINDOWS GIT-BASH DOCKER WRAPPER SCRIPT
+
+       @pletnes says:
+
+       > I'd like to have a documented how-to for beginners on Windows. Personally, I use Docker in git-bash. I don't know if this is a "common setup". I came up with this first attempt, which could go into the wiki:
+
+         #!/bin/bash
+         exec docker run --rm -v "$(cygpath -aw .):/mnt" koalaman/shellcheck:stable "$@"
+
+       EMACS AUTO-DISABLE SCRIPT
+
+       By @matthewpersico
+
+       This function and keymap add the ability to auto-insert the appropriate shellcheck disable= directive in your script. With thanks to https://github.com/flycheck/flycheck/issues/1436
+
+         ;; The following is thanks to https://github.com/flycheck/flycheck/issues/1436
+         (defun shellcheck-disable-error-at-point (&optional pos)
+           "Insert a shellcheck disable directive at the current error in the code."
+           (interactive)
+           (-when-let* ((error (tabulated-list-get-id pos))
+                        (buffer (flycheck-error-buffer error))
+                        (id (flycheck-error-id error))
+                        ;;(message (flycheck-error-message error))
+                        )
+             (when (buffer-live-p buffer)
+               (if (eq (window-buffer) (get-buffer flycheck-error-list-buffer))
+                   ;; When called from within the error list, keep the error list,
+                   ;; otherwise replace the current buffer.
+                   (pop-to-buffer buffer 'other-window)
+                 (switch-to-buffer buffer))
+               (let ((pos (flycheck-error-pos error)))
+                 (unless (eq (goto-char pos) (point))
+                   ;; If widening gets in the way of moving to the right place, remove it
+                   ;; and try again
+                   (widen)
+                   (goto-char pos))
+
+                 ;; Move to start of line with error position.
+                 (beginning-of-line-text)
+
+                 ;; The only error I know of where the disable directive is AFTER the
+                 ;; error position, not before.
+                 (when (string-equal id "SC2148")
+                       (forward-line)
+                       )
+                 ;; Insert the disable line
+                 (insert (format "# shellcheck disable=%s\n" id))
+                 ;; Indent it
+                 (indent-for-tab-command))
+
+               ;; Re-highlight the errors
+               (flycheck-error-list-highlight-errors 'preserve-pos))))
+
+         (define-key flycheck-error-list-mode-map (kbd "d") #'shellcheck-disable-error-at-point)
+
+       If you are interested in a version that can handle multiple flycheck checkers, this code has been updated. See here. Search for flycheck-disable-error-at-point.
+
+       JETBRAINS WEBSTORM INTEGRATION
+
+       Scroll to the bottom of Issue #360 for both a plugin and a native external command solution.
+
+ShellCheck manual                       from the official documentation

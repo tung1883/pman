@@ -1,0 +1,197 @@
+CSHARP.GUIDE-RESTRICTING-ACCESSOR-ACCESSIBILITY(1) Sandbox manual CSHARP.GUIDE-RESTRICTING-ACCESSOR-ACCESSIBILITY(1)
+
+       NAME
+
+       Restricting Accessor Accessibility (C# Programming Guide) - The get and set accessors of a property in C# have the same visibility or access level by default as property to which they belong. You can
+
+       RESTRICTING ACCESSOR ACCESSIBILITY (C# PROGRAMMING GUIDE)
+
+       The get and set portions of a property or indexer are called accessors. By default these accessors have the same visibility or access level of the property or indexer to which they belong. For more information, see accessibility levels. However, it's sometimes useful to restrict access to one of these accessors. Typically, you restrict the accessibility of the set accessor, while keeping the get accessor publicly accessible. For example:
+
+         private string _name = "Hello";
+
+         public string Name
+         {
+             get
+             {
+                 return _name;
+             }
+             protected set
+             {
+                 _name = value;
+             }
+         }
+
+       In this example, a property called Name defines a get and set accessor. The get accessor receives the accessibility level of the property itself, public in this case, while the set accessor is explicitly restricted by applying the protected access modifier to the accessor itself.
+
+       > The examples in this article don't use automatically implemented properties. Automatically implemented properties provide a concise syntax for declaring properties when a custom backing field isn't required.
+
+       RESTRICTIONS ON ACCESS MODIFIERS ON ACCESSORS
+
+       Using the accessor modifiers on properties or indexers is subject to these conditions:
+
+        * You can't use accessor modifiers on an interface or an explicit interface member implementation.
+        * You can use accessor modifiers only if the property or indexer has both set and get accessors. In this case, the modifier is permitted on only one of the two accessors.
+        * If the property or indexer has an override modifier, the accessor modifier must match the accessor of the overridden accessor, if any.
+        * The accessibility level on the accessor must be more restrictive than the accessibility level on the property or indexer itself.
+
+       ACCESS MODIFIERS ON OVERRIDING ACCESSORS
+
+       When you override a property or indexer, the overridden accessors must be accessible to the overriding code. Also, the accessibility of both the property/indexer and its accessors must match the corresponding overridden property/indexer and its accessors. For example:
+
+         public class Parent
+         {
+             public virtual int TestProperty
+             {
+                 // Notice the accessor accessibility level.
+                 protected set { }
+
+                 // No access modifier is used here.
+                 get { return 0; }
+             }
+         }
+         public class Kid : Parent
+         {
+             public override int TestProperty
+             {
+                 // Use the same accessibility level as in the overridden accessor.
+                 protected set { }
+
+                 // Cannot use access modifier here.
+                 get { return 0; }
+             }
+         }
+
+       IMPLEMENTING INTERFACES
+
+       When you use an accessor to implement an interface, the accessor may not have an access modifier. However, if you implement the interface using one accessor, such as get, the other accessor can have an access modifier, as in the following example:
+
+         public interface ISomeInterface
+         {
+             int TestProperty
+             {
+                 // No access modifier allowed here
+                 // because this is an interface.
+                 get;
+             }
+         }
+
+         public class TestClass : ISomeInterface
+         {
+             public int TestProperty
+             {
+                 // Cannot use access modifier here because
+                 // this is an interface implementation.
+                 get { return 10; }
+
+                 // Interface property does not have set accessor,
+                 // so access modifier is allowed.
+                 protected set { }
+             }
+         }
+
+       ACCESSOR ACCESSIBILITY DOMAIN
+
+       If you use an access modifier on the accessor, the accessibility domain of the accessor is determined by this modifier.
+
+       If you didn't use an access modifier on the accessor, the accessibility domain of the accessor is determined by the accessibility level of the property or indexer.
+
+       EXAMPLE
+
+       The following example contains three classes, BaseClass, DerivedClass, and MainClass. There are two properties on the BaseClass, Name and Id on both classes. The example demonstrates how the property Id on DerivedClass can be hidden by the property Id on BaseClass when you use a restrictive access modifier such as protected or private. Therefore, when you assign values to this property, the property on the BaseClass class is called instead. Replacing the access modifier by public will make the property accessible.
+
+       The example also demonstrates that a restrictive access modifier, such as private or protected, on the set accessor of the Name property in DerivedClass prevents access to the accessor in the derived class. It generates an error when you assign to it, or accesses the base class property of the same name, if it's accessible.
+
+         public class BaseClass
+         {
+             private string _name = "Name-BaseClass";
+             private string _id = "ID-BaseClass";
+
+             public string Name
+             {
+                 get { return _name; }
+                 set { }
+             }
+
+             public string Id
+             {
+                 get { return _id; }
+                 set { }
+             }
+         }
+
+         public class DerivedClass : BaseClass
+         {
+             private string _name = "Name-DerivedClass";
+             private string _id = "ID-DerivedClass";
+
+             new public string Name
+             {
+                 get
+                 {
+                     return _name;
+                 }
+
+                 // Using "protected" would make the set accessor not accessible.
+                 set
+                 {
+                     _name = value;
+                 }
+             }
+
+             // Using private on the following property hides it in the Main Class.
+             // Any assignment to the property will use Id in BaseClass.
+             new private string Id
+             {
+                 get
+                 {
+                     return _id;
+                 }
+                 set
+                 {
+                     _id = value;
+                 }
+             }
+         }
+
+         class MainClass
+         {
+             static void Main()
+             {
+                 BaseClass b1 = new BaseClass();
+                 DerivedClass d1 = new DerivedClass();
+
+                 b1.Name = "Mary";
+                 d1.Name = "John";
+
+                 b1.Id = "Mary123";
+                 d1.Id = "John123";  // The BaseClass.Id property is called.
+
+                 System.Console.WriteLine("Base: {0}, {1}", b1.Name, b1.Id);
+                 System.Console.WriteLine("Derived: {0}, {1}", d1.Name, d1.Id);
+
+                 // Keep the console window open in debug mode.
+                 System.Console.WriteLine("Press any key to exit.");
+                 System.Console.ReadKey();
+             }
+         }
+         /* Output:
+             Base: Name-BaseClass, ID-BaseClass
+             Derived: John, ID-BaseClass
+         */
+
+       COMMENTS
+
+       Notice that if you replace the declaration new private string Id by new public string Id, you get the output:
+
+       Name and ID in the base class: Name-BaseClass, ID-BaseClass Name and ID in the derived class: John, John123
+
+       SEE ALSO
+
+        * Properties
+        * Indexers
+        * Access Modifiers
+        * Init only properties
+        * Required properties
+
+C# manual                               from the official documentation

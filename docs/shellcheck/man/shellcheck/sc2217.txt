@@ -1,0 +1,38 @@
+SHELLCHECK.SC2217(1)             Sandbox manual             SHELLCHECK.SC2217(1)
+
+       NAME
+
+       Redirecting to echo, a command that doesn't read stdin. Bad quoting or missing xargs? - echo << eof
+
+       REDIRECTING TO ECHO, A COMMAND THAT DOESN'T READ STDIN. BAD QUOTING OR
+
+       REDIRECTING TO ECHO, A COMMAND THAT DOESN'T READ STDIN. BAD QUOTING OR
+
+       PROBLEMATIC CODE
+
+         echo << eof
+           Hello World
+         eof
+
+       CORRECT CODE
+
+         cat << eof
+           Hello World
+         eof
+
+       RATIONALE
+
+       You are redirecting to one of several commands that don't read from stdin.
+
+       This may happen when:
+
+        * Confusing one command for another, e.g. using echo where cat was intended.
+        * Incorrectly quoting angle brackets, e.g. using echo Hello which tries to read from a file p.
+        * Missing xargs, e.g. mv -t dir < files instead of xargs mv -t dir < files (or more safely, tr '\n' '\0' < files | xargs -0 mv -t dir), because stdin should be passed as parameters.
+       Check your logic, and rewrite the command so data is passed correctly.
+
+       EXCEPTIONS
+
+       If you've overridden a command to return output, you can either rename it to make this obvious, or [[ignore]] this message.
+
+ShellCheck manual                       from the official documentation

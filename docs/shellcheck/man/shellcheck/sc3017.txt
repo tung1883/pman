@@ -1,0 +1,43 @@
+SHELLCHECK.SC3017(1)             Sandbox manual             SHELLCHECK.SC3017(1)
+
+       NAME
+
+       In POSIX sh, unary -a in place of -e is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, UNARY -A IN PLACE OF -E IS UNDEFINED
+
+       IN POSIX SH, UNARY -A IN PLACE OF -E IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         if [ -a file.txt ]
+         then
+           echo "file.txt exists"
+         fi
+
+       CORRECT CODE
+
+         #!/bin/sh
+         if [ -e file.txt ]
+         then
+           echo "file.txt exists"
+         fi
+
+       RATIONALE
+
+       -a was used in some shells to check for the existence of a file, but the POSIX standard and better supported equivalent is -e.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

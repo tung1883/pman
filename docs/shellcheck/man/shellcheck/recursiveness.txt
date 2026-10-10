@@ -1,0 +1,56 @@
+SHELLCHECK.RECURSIVENESS(1)      Sandbox manual      SHELLCHECK.RECURSIVENESS(1)
+
+       NAME
+
+       By file extension - By default, shellcheck does not support a -r option. The reason for this is that there are different matching patterns for different files.
+
+       BY FILE EXTENSION
+
+       By default, shellcheck does not support a -r option. The reason for this is that there are different matching patterns for different files.
+
+       Script could have a .sh extension, no extension and have a range of shebang lines (which have their own testing format):
+
+        * #!/bin/bash
+        * #!/bin/sh
+        * #!/usr/bin/bash
+        * #!/usr/bin/sh
+        * #!/usr/bin/env bash
+        * #!/usr/bin/env sh
+        * etc...
+       The solution for this problem is to use shellcheck in combination with the find or grep command.
+
+       BY FILE EXTENSION
+
+       To check files with one of multiple extensions:
+
+         # Bash 4+
+         # nullglob will prevent one of the extension patterns from appearing in the arg list
+         # if they don't match.
+         # dotglob will match shell scripts in hidden directories.
+         shopt -s nullglob dotglob
+         shellcheck /path/to/scripts/**.{sh,bash,ksh,bashrc,bash_profile,bash_login,bash_logout}
+
+         # POSIX
+         find /path/to/scripts -type f \
+           \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc' -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \) \
+           -exec shellcheck {} +
+
+       BY SHEBANG
+
+       To check files whose shebang indicate that they are sh/bash/ksh scripts:
+
+         # POSIX
+         find /path/to/scripts -type f -exec grep -Eq '^#!(.*/|.*env +)(sh|bash|ksh)' {} \; \
+           -exec shellcheck {} +
+
+       WITH DOCKER
+
+         docker run --volume /path/to/scripts:/mnt koalaman/shellcheck-alpine sh -c "find /mnt -name '*.sh' -exec shellcheck {} +"
+
+       TO EXCLUDE FILE/DIRECTORY
+
+       To exclude files or directories from the search(find) results use ! -path. To exclude vendor directory for example:
+
+         find /path/to/scripts -type f \( -name '*.sh' \) ! -path '*/vendor/*' -exec shellcheck -x -s sh {} +
+
+ShellCheck manual                       from the official documentation

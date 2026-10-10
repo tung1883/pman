@@ -1,0 +1,27 @@
+SHELLCHECK.SC2011(1)             Sandbox manual             SHELLCHECK.SC2011(1)
+
+       NAME
+
+       Use find -print0 or find -exec to better handle non-alphanumeric filenames. - ls | xargs -n1 wc -w
+
+       USE FIND -PRINT0 OR FIND -EXEC TO BETTER HANDLE NON-ALPHANUMERIC FILEN
+
+       USE FIND -PRINT0 OR FIND -EXEC TO BETTER HANDLE NON-ALPHANUMERIC FILEN
+
+       PROBLEMATIC CODE
+
+         ls | xargs -n1 wc -w
+
+       CORRECT CODE
+
+         find . -maxdepth 1 -print0 | xargs -0 -n1 wc -w
+
+         find . -maxdepth 1 -exec wc -w {} \;
+
+       RATIONALE
+
+       Using -print0 separates each output with a NUL character, rather than a newline, which is safer to pipe into xargs. Alternatively using -exec avoids the problem of piping and parsing filenames in the first place.
+
+       See [[SC2012]] for more details on this issue.
+
+ShellCheck manual                       from the official documentation

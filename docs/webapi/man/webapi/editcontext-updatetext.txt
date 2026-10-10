@@ -1,0 +1,92 @@
+WEBAPI.EDITCONTEXT-UPDATETEXT(1) Sandbox manual WEBAPI.EDITCONTEXT-UPDATETEXT(1)
+
+       NAME
+
+       EditContext: updateText() method - The updateText() method of the EditContext interface updates the internal text content of an EditContext object.
+
+       EDITCONTEXT: UPDATETEXT() METHOD
+
+       The updateText() method of the EditContext interface updates the internal text content of an EditContext object.
+
+       This method doesn't need to be used when the user types text in the associated element. The EditContext object will automatically update its internal text content, and will fire textupdate events as needed.
+
+       This method can, however, be used when the user interacts with the text content in other ways, such as when pasting text from the clipboard.
+
+       SYNTAX
+
+         updateText(rangeStart, rangeEnd, text)
+
+       PARAMETERS
+
+        * rangeStart
+          * : A number representing the start of the range of text to replace.
+        * rangeEnd
+          * : A number representing the end of the range of text to replace.
+        * text
+          * : A string representing the new text content.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the method is called with less than three arguments.
+
+       EXAMPLES
+
+       UPDATING THE EDITOR WHEN THE USER PASTES TEXT IN IT
+
+       This example shows how to use the updateText method to update the text content in the EditContext of a element when the user presses the Ctrl/Cmd + V shortcut to paste some text.
+
+       The example also uses the Clipboard.readText() method to read the text from the clipboard.
+
+         <canvas id="editor-canvas"></canvas>
+
+         const canvas = document.getElementById("editor-canvas");
+         const ctx = canvas.getContext("2d");
+
+         const editContext = new EditContext();
+         canvas.editContext = editContext;
+
+         function render() {
+           ctx.clearRect(0, 0, canvas.width, canvas.height);
+           ctx.fillText(editContext.text, 0, 40);
+         }
+
+         editContext.addEventListener("textupdate", (e) => {
+           render();
+         });
+
+         canvas.addEventListener("keydown", async (e) => {
+           if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
+             const pastedText = await navigator.clipboard.readText();
+             console.log(
+               `The user pasted the text: ${pastedText}. Updating the EditContext text.`,
+             );
+
+             editContext.updateText(
+               editContext.selectionStart,
+               editContext.selectionEnd,
+               pastedText,
+             );
+
+             editContext.updateSelection(
+               editContext.selectionStart + pastedText.length,
+               editContext.selectionStart + pastedText.length,
+             );
+
+             render();
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The EditContext interface it belongs to.
+
+Web APIs manual                         from the official documentation

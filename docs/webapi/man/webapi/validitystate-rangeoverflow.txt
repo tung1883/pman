@@ -1,0 +1,69 @@
+WEBAPI.VALIDITYSTATE-RANGEOVERFLOW(1) Sandbox manual WEBAPI.VALIDITYSTATE-RANGEOVERFLOW(1)
+
+       NAME
+
+       ValidityState: rangeOverflow property - The read-only rangeOverflow property of the ValidityState interface indicates if the value of an <input>, after having been edited by the us
+
+       VALIDITYSTATE: RANGEOVERFLOW PROPERTY
+
+       The read-only rangeOverflow property of the ValidityState interface indicates if the value of an , after having been edited by the user, does not conform to the constraints set by the element's max attribute.
+
+       If the field is numeric in nature, including the , , , , , and types and a max value is set, if the value doesn't conform to the constraints set by the max value, the rangeOverflow property will be true.
+
+       VALUE
+
+       A boolean that is true if the ValidityState does not conform to the constraints.
+
+       EXAMPLES
+
+       INPUT WITH NUMERIC OVERFLOW
+
+       The following example checks the validity of a numeric input element. A constraint has been added using the max attribute which sets a maximum value of 18 for the input. If the user enters a number higher than 18, the element fails constraint validation, and the styles matching :invalid and :out-of-range CSS pseudo-classes
+
+         /* or :invalid */
+         input:out-of-range {
+           outline: red solid 3px;
+         }
+
+         body {
+           margin: 0.5rem;
+         }
+         pre {
+           padding: 1rem;
+           height: 2rem;
+           background-color: lightgrey;
+           outline: 1px solid grey;
+         }
+
+         <pre id="log">Validation logged here...</pre>
+         <input type="number" id="age" max="18" />
+
+         const userInput = document.getElementById("age");
+         const logElement = document.getElementById("log");
+
+         function log(text) {
+           logElement.innerText = text;
+         }
+
+         userInput.addEventListener("input", () => {
+           userInput.reportValidity();
+           if (userInput.validity.rangeOverflow) {
+             log("Number is too high!");
+           } else {
+             log("Input is valid…");
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ValidityState.rangeUnderflow
+        * Constraint validation
+        * Forms: Data form validation
+        * step attribute
+        * min attribute
+
+Web APIs manual                         from the official documentation

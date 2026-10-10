@@ -1,0 +1,35 @@
+SHELLCHECK.SC2219(1)             Sandbox manual             SHELLCHECK.SC2219(1)
+
+       NAME
+
+       Instead of let expr, prefer (( expr )) . - let a++
+
+       INSTEAD OF LET EXPR, PREFER (( EXPR ))
+
+       INSTEAD OF LET EXPR, PREFER (( EXPR ))
+
+       PROBLEMATIC CODE
+
+         let a++
+
+       CORRECT CODE
+
+         (( a++ )) || true
+
+       > Note, || true bits ignore error status code when incrementing from 0 to 1
+
+       RATIONALE
+
+       The (( .. )) arithmetic compound command evaluates expressions in the same way as let, except it's not subject to glob expansion and therefore requires no additional quoting or escaping.
+
+       This warning only triggers in Bash/Ksh scripts. In Sh/Dash, neither let nor (( .. )) are defined, but can be simulated with [ $(( expr )) -ne 0 ] to retain exit code, or : $(( expr )) to ignore it. For portability, the $(( expr )) syntax is defined in POSIX standard.
+
+       EXCEPTIONS
+
+       None.
+
+       MORE INFORMATION
+
+        * Bash Hacker's Wiki: The let builtin command
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,245 @@
+ARCH.DOMAIN-NAME-RESOLUTION(1)   Sandbox manual   ARCH.DOMAIN-NAME-RESOLUTION(1)
+
+       In general, a domain name represents an IP address and is associated to it in the Domain Name System (DNS). This article explains how to configure domain name resolution and resolve domain names.
+
+       NAME SERVICE SWITCH
+
+       The Name Service Switch (NSS) facility is part of the GNU C Library (glibc) and backs the getaddrinfo(3) API, used to resolve domain names. NSS allows system databases to be provided by separate services, whose search order can be configured by the administrator in nsswitch.conf(5). The database responsible for domain name resolution is the hosts database, for which glibc offers the following services:
+
+        * files: reads the /etc/hosts file, see hosts(5)
+        * dns: the glibc resolver which reads /etc/resolv.conf, see resolv.conf(5)
+       systemd provides three NSS services for hostname resolution:
+
+        * nss-resolve(8) — a caching DNS stub resolver, described in systemd-resolved
+        * nss-myhostname(8) — provides local hostname resolution without having to edit /etc/hosts
+        * nss-mymachines(8) — provides hostname resolution for the names of local systemd-machined(8) containers
+
+       RESOLVE A DOMAIN NAME USING NSS
+
+       NSS databases can be queried with getent(1). A domain name can be resolved through NSS using:
+
+         $ getent ahosts domain_name
+
+       Note While most programs resolve domain names using NSS, some may read /etc/resolv.conf and/or /etc/hosts directly. See Network configuration#local hostname is resolved over the network.
+
+       GLIBC RESOLVER
+
+       The glibc resolver reads /etc/resolv.conf for every resolution to determine the nameservers and options to use.
+
+       resolv.conf(5) lists nameservers together with some configuration options. Nameservers listed first are tried first, up to three nameservers may be listed. Lines starting with a number sign (#) are ignored.
+
+       Note The glibc resolver does not cache queries. To improve query lookup time you can set up a caching resolver. The glibc resolver also can not validate DNSSEC. A DNSSEC validating resolver is required for that. See #DNS servers for more information.
+
+       OVERWRITING OF /ETC/RESOLV.CONF
+
+       Network managers tend to overwrite /etc/resolv.conf, for specifics see the corresponding section:
+
+        * dhcpcd#/etc/resolv.conf
+        * Netctl#/etc/resolv.conf
+        * NetworkManager#/etc/resolv.conf
+        * ConnMan#/etc/resolv.conf
+       To prevent programs from overwriting /etc/resolv.conf, it is also possible to write-protect it by setting the immutable file attribute:
+
+         # chattr +i /etc/resolv.conf
+
+       Tip If you want multiple processes to write to /etc/resolv.conf, you can use resolvconf.
+
+       ALTERNATIVE USING NMCLI
+
+       If you use NetworkManager, nmcli(1) can be used to set persistent options for /etc/resolv.conf. Change "Wired" to the name of your connection. Example:
+
+         # nmcli con mod Wired +ipv4.dns-options 'rotate,single-request,timeout:1'
+
+       For more options have a look at the man pages of nmcli(1), nm-settings-nmcli(5) and resolv.conf(5).
+
+       LIMIT LOOKUP TIME
+
+       If you are confronted with a very long hostname lookup (may it be in pacman or while browsing), it often helps to define a small timeout after which an alternative nameserver is used. To do so, put the following in /etc/resolv.conf.
+
+         /etc/resolv.conf
+
+         options timeout:1
+
+       HOSTNAME LOOKUP DELAYED WITH IPV6
+
+       If you experience a 5 second delay when resolving hostnames it might be due to a DNS-server/Firewall misbehaving and only giving one reply to a parallel A and AAAA request.[1] You can fix that by setting the following option in /etc/resolv.conf:
+
+         /etc/resolv.conf
+
+         options single-request
+
+       LOCAL DOMAIN NAMES
+
+       To be able to use the hostname of local machine names without the fully qualified domain name, add a line to /etc/resolv.conf with the local domain such as:
+
+         /etc/resolv.conf
+
+         search example.org
+
+       That way you can refer to local hosts such as mainmachine1.example.org as simply mainmachine1 when using the ssh command, but the drill command still requires the fully qualified domain names in order to perform lookups.
+
+       LOOKUP UTILITIES
+
+       To query specific DNS servers and DNS/DNSSEC records you can use dedicated DNS lookup utilities or those shipped with DNS servers. These tools implement DNS themselves and do not use NSS.
+
+        * drill(1) — A tool designed to retrieve information out of the DNS. It only supports unencrypted DNS.
+       https://nlnetlabs.nl/projects/ldns/ || ldns
+
+       For example, to query a specific nameserver with drill for the TXT records of a domain:
+
+         $ drill domain @nameserver TXT
+
+       Unless a DNS server is specified, drill will use the nameservers defined in /etc/resolv.conf.
+
+        * adig(1) — Send queries to DNS servers about name and print received information.
+       https://c-ares.org/ || c-ares
+
+        * dnsi — A command line tool to investigate various aspects of the DNS.
+       https://github.com/NLnetLabs/dnsi || dnsiAUR
+
+        * dnslookup — A simple command line utility to make DNS lookups. Supports all known DNS protocols.
+       https://github.com/ameshkov/dnslookup || dnslookupAUR
+
+        * dog(1) — A command-line DNS client like dig.
+       https://github.com/ogham/dog || dog
+
+        * doggo — Command-line DNS client for humans.
+       https://github.com/mr-karan/doggo || doggo
+
+        * q — A tiny command line DNS client.
+       https://github.com/natesales/q || q-dnsAUR
+
+       Some DNS server packages ship with DNS lookup utilities that can be used without running the DNS server:
+
+        * knot provides khost(1) and kdig(1).
+        * unbound provides unbound-host(1).
+        * bind provides dig(1), host(1) and nslookup(1).
+        * powerdns provides sdig(1).
+       Tip systemd-resolved has resolvectl(1), which provides a query sub-command for DNS lookup. It can only be used with systemd-resolved.
+
+       RESOLVER PERFORMANCE
+
+       The Glibc resolver does not cache queries. To implement local caching, use systemd-resolved or set up a local caching DNS server and use it as the name server by setting 127.0.0.1 and ::1 as the name servers in /etc/resolv.conf or in /etc/resolvconf.conf if using openresolv.
+
+       Tip
+
+        * The drill, dig and kdig lookup utilities report the query time.
+        * A router usually sets its own caching resolver as the network's DNS server thus providing DNS cache for the whole network.
+        * If it takes too long to switch to the next DNS server you can try decreasing the timeout.
+
+       PRIVACY AND SECURITY
+
+       The DNS protocol (Do53) is unencrypted and does not account for confidentiality, integrity or authentication, so if you use an untrusted network or a malicious ISP, your DNS queries can be eavesdropped and the responses manipulated. Furthermore, DNS servers can conduct DNS hijacking.
+
+       You need to trust your DNS server to treat your queries confidentially. DNS servers are provided by ISPs and third-parties. Alternatively you can run your own recursive name server (a.k.a. recursive resolver, a.k.a. DNS recursor), which however takes more effort. If you use a DHCP client in untrusted networks, be sure to set static name servers to avoid using and being subject to arbitrary DNS servers, or alternatively, use a VPN to connect to a secure network and use its DNS servers. To secure your communication with a remote DNS server you can use an encrypted protocol, provided that both the upstream server and your local resolver support the protocol. Common encrypted DNS protocols are:
+
+        * DNS over TLS (DoT)—RFC 7858,
+        * DNS over HTTPS (DoH)—RFC 8484,
+        * DNS over QUIC (DoQ)—RFC 9250,
+        * DNSCrypt.
+       To verify that responses are actually from authoritative name servers, you can validate DNSSEC, provided that both the upstream server(s) and your local resolver support it.
+
+       TLS SERVER NAME INDICATION
+
+       Although one may use an encrypted DNS resolver, a TLS connection still leaks the domain names in the Server Name Indication (SNI) when requesting the domain certificate. This leak can be checked using the Wireshark filter tls.handshake.extensions_server_name_len > 0, or using the following tshark command:
+
+         # tshark -p -Tfields -e tls.handshake.extensions_server_name -Y 'tls.handshake.extensions_server_name_len>0'
+
+       A proposed solution is to use the Encrypted Client Hello (ECH), a TLS 1.3 protocol extension.
+
+       APPLICATION-LEVEL DNS
+
+       Be aware that some client software, such as major web browsers[2][3], are starting to implement DNS over HTTPS. While the encryption of queries may often be seen as a bonus, it also means the software sidetracks queries around the system resolver configuration.[4]
+
+       Firefox provides configuration options to enable or disable DNS over HTTPS and select a DNS server. Mozilla has setup a Trusted Recursive Resolver (TRR) programme with transparency information on their default providers. It is notable that Firefox supports and automatically enables the Encrypted Client Hello (ECH) for TRR providers, see Firefox/Privacy#Encrypted Client Hello.
+
+       Chromium will examine the user's system resolver and enable DNS over HTTPS if the system resolver addresses are known to also provide DNS over HTTPS. See this blog post for more information and how DNS over HTTPS can be disabled.
+
+       Mozilla has proposed universally disabling application-level DNS if the system resolver cannot resolve the domain use-application-dns.net. Currently, this is only implemented in Firefox.
+
+       OBLIVIOUS DNS OVER HTTPS
+
+       Oblivious DNS over HTTPS (ODoH)—RFC 9230—is a system which addresses a number of DNS privacy concerns. See Cloudflare's article for more information. It added DNS over HTTPS to the academic Oblivious DNS design. See the Improving the privacy of DNS and DoH with oblivion article for a discussion of the differences.
+
+       RECURSIVE RESOLVER
+
+       Communication between recursive resolvers and root servers is not encrypted and the root server operators are against implementing it. For encrypted communication with authoritative servers there is the experimental RFC 9539 which allows the opportunistic use of DNS over TLS and DNS over QUIC.
+
+       THIRD-PARTY DNS SERVICES
+
+       Note
+
+        * Before using a third-party DNS service, check its privacy policy for information on how user data is handled. User data has value and can be sold to other parties.
+        * It is highly advised to use an encrypted protocol when connecting to third-party DNS services.
+       There are various third-party DNS services. Wikipedia has a list of "notable" public DNS service operators while the curl project's wiki has a more extensive list of publicly available DNS over HTTPS servers (a lot of which also support DNS over TLS). The systemd package configures fallback DNS for systemd-resolved when no DNS servers are configured (manually or via DHCP/RA).
+
+       You can use dnsperftest to test the performance of the most popular DNS resolvers from your location. dnsperf.com provides global benchmarks between providers.
+
+       THIRD-PARTY DNS CLIENT SOFTWARE
+
+       Some DNS services also provide dedicated software:
+
+        * alfis — Alternative Free Identity System.
+       https://github.com/Revertron/Alfis || alfisAUR
+
+        * nextdns — A DNS-over-HTTPS CLI client for NextDNS
+       https://github.com/nextdns/nextdns || nextdnsAUR
+
+        * opennic-up — Automates the renewal of the DNS servers with the most responsive OpenNIC servers
+       https://github.com/kewlfft/opennic-up || opennic-upAUR
+
+       DNS SERVERS
+
+       DNS servers can be authoritative and recursive. If they are neither, they are called stub resolvers and simply forward all queries to another recursive name server. Stub resolvers are typically used to introduce DNS caching on the local host or network. Note that the same can also be achieved with a fully-fledged name server. This section compares the available DNS servers, for a more detailed comparison, refer to Wikipedia:Comparison of DNS server software.
+
+         Name | Package | Capabilities | resolvconf | Supported protocols
+         Authoritative | Recursive | Cache | Validates DNSSEC | DNS | DNSCrypt | DNS over TLS | DNS over HTTPS | DNS over QUIC
+         BIND | bind | Yes | Yes | Yes | Yes | Yes | Yes | No | Yes | Server | No
+         CoreDNS | corednsAUR | Yes | No | Yes | No | No | Yes | No | Yes | Server | No
+         DNS-over-HTTPS | dns-over-https | No | No | No | No | No | Yes | No | No | Yes | No
+         Deadwood (MaraDNS recursor) | maradnsAUR | No | Yes | Yes | No | No | Yes | No | No | No | No
+         dnscrypt-proxy | dnscrypt-proxy | No | No | Yes | No | No | Server | Resolver | No | Yes | No
+         dnsmasq | dnsmasq | Partial1 | No | Yes | Yes2 | Yes | Yes | No | No | No | No
+         dnsproxy | dnsproxy | No | No | Yes | No | No | Yes | Yes | Yes | Yes | Yes
+         Knot Resolver | knot-resolver | No | Yes | Yes | Yes | No | Yes | No | Yes | Server | No
+         pdnsd | pdnsd | Partial1 | Yes | Permanent | No | Yes | Yes | No | No | No | No
+         PowerDNS Recursor | powerdns-recursor | No | Yes | Yes | Yes2 | Yes | Yes | No | Partial | No | No
+         Rescached | rescachedAUR | No | No | Yes | No | Yes | Yes | No | Yes | Yes | No
+         RouteDNS | routedns-gitAUR | No | No | Yes3 | No | No | Yes | No | Yes | Yes | Yes
+         SmartDNS | smartdns | No | No | Yes | No | No | Yes | No | Yes | Yes | Resolver
+         Stubby | stubby | No | No | No | Yes2 | No | Server | No | Resolver | No | No
+         systemd-resolved | systemd | No | No | Yes | Experimental2 | Yes | Resolver and limited server | No | Resolver | No | No
+         Unbound | unbound | Partial | Yes | Yes3 | Yes | Yes | Yes | Server | Yes | Server | Server
+        * From Wikipedia: limited authoritative support, intended for internal network use rather than public Internet use.
+        * DNSSEC validation is disabled by default and must be enabled in the configuration file.
+        * Supports persistent cache using the Redis backend.
+       Tip DNS servers that do not support DNS over TLS can use stunnel to add TLS encryption. For resolver functionality this requires the ability to force using TCP when forwarding.
+
+       AUTHORITATIVE-ONLY SERVERS
+
+         Name | Package | DNSSEC signing | Geographic balancing
+         gdnsd | gdnsd | No | Yes
+         Knot DNS | knot | Yes | Yes
+         MaraDNS | maradnsAUR | No | No
+         NSD | nsd | Yes | No
+         PowerDNS | powerdns | Yes | Yes
+
+       CONDITIONAL FORWARDING
+
+       It is possible to use specific DNS resolvers when querying specific domain names. This is particularly useful when connecting to a VPN, so that queries to the VPN network are resolved by the VPN's DNS, while queries to the internet will still be resolved by your standard DNS resolver. It can also be used on local networks.
+
+       To implement it, you need to use a local resolver because glibc does not support it.
+
+       In a dynamic environment (laptops and to some extents desktops), you need to configure your resolver based on the network(s) you are connected to. The best way to do that is to use openresolv because it supports multiple subscribers. Some network managers support it, either through openresolv, or by configuring the resolver directly. NetworkManager supports conditional forwarding without openresolv.
+
+       Note Although you could use other conditions for forwarding (for example, source IP address), "conditional forwarding" appears to be the name used for the "domain queried" condition.
+
+       SEE ALSO
+
+        * Linux Network Administrators Guide
+        * Debian Handbook
+        * RFC:7706 - Decreasing Access Time to Root Servers by Running One on Loopback
+        * Domain name system overview - Diagram about DNS
+        * What does DNS stand for
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,161 @@
+CSHARP.SELECTION-STATEMENTS(1)   Sandbox manual   CSHARP.SELECTION-STATEMENTS(1)
+
+       NAME
+
+       Selection statements - `if`, `if-else`, and `switch` - The `if` and `switch` statements provide branching logic in C#. You use `if, `else` and `switch` to choose the path your program follows.
+
+       SELECTION STATEMENTS - IF, IF-ELSE, AND SWITCH
+
+       The if, if-else, and switch statements select statements to execute from many possible paths based on the value of an expression. The if statement executes a statement only if a provided Boolean expression evaluates to true. The if-else statement lets you choose which of the two code paths to follow based on a Boolean expression. The switch statement selects a statement list to execute based on a pattern match with an expression.
+
+       THE IF STATEMENT
+
+       An if statement can be any of the following two forms:
+
+        * An if statement with an else part selects one of the two statements to execute based on the value of a Boolean expression, as the following example shows:
+        * An if statement without an else part executes its body only if a Boolean expression evaluates to true, as the following example shows:
+       You can nest if statements to check multiple conditions, as the following example shows:
+
+         DisplayCharacter('f');  // Output: A lowercase letter: f
+         DisplayCharacter('R');  // Output: An uppercase letter: R
+         DisplayCharacter('8');  // Output: A digit: 8
+         DisplayCharacter(',');  // Output: Not alphanumeric character: ,
+
+         void DisplayCharacter(char ch)
+         {
+             if (char.IsUpper(ch))
+             {
+                 Console.WriteLine($"An uppercase letter: {ch}");
+             }
+             else if (char.IsLower(ch))
+             {
+                 Console.WriteLine($"A lowercase letter: {ch}");
+             }
+             else if (char.IsDigit(ch))
+             {
+                 Console.WriteLine($"A digit: {ch}");
+             }
+             else
+             {
+                 Console.WriteLine($"Not alphanumeric character: {ch}");
+             }
+         }
+
+       In an expression context, use the conditional operator ?: to evaluate one of the two expressions based on the value of a Boolean expression.
+
+       THE SWITCH STATEMENT
+
+       The switch statement selects a series of statements to execute based on a pattern match with a match expression, as the following example shows:
+
+         DisplayMeasurement(-4);  // Output: Measured value is -4; too low.
+         DisplayMeasurement(5);  // Output: Measured value is 5.
+         DisplayMeasurement(30);  // Output: Measured value is 30; too high.
+         DisplayMeasurement(double.NaN);  // Output: Failed measurement.
+
+         void DisplayMeasurement(double measurement)
+         {
+             switch (measurement)
+             {
+                 case < 0.0:
+                     Console.WriteLine($"Measured value is {measurement}; too low.");
+                     break;
+
+                 case > 15.0:
+                     Console.WriteLine($"Measured value is {measurement}; too high.");
+                     break;
+
+                 case double.NaN:
+                     Console.WriteLine("Failed measurement.");
+                     break;
+
+                 default:
+                     Console.WriteLine($"Measured value is {measurement}.");
+                     break;
+             }
+         }
+
+       In the preceding example, the switch statement uses the following patterns:
+
+        * A relational pattern: to compare an expression result with a constant.
+        * A constant pattern: test if an expression result equals a constant.
+       > For information about the patterns supported by the switch statement, see Patterns.
+       The preceding example also demonstrates the default case. The default case specifies statements to execute when a match expression doesn't match any other case pattern. If a match expression doesn't match any case pattern and there's no default case, control falls through a switch statement.
+
+       A switch statement executes the statement list in the first switch section whose case pattern matches a match expression and whose case guard, if present, evaluates to true. A switch statement evaluates case patterns in text order from top to bottom. The compiler generates an error when a switch statement contains an unreachable case. That error occurs when an upper case already handles the case or when the pattern is impossible to match.
+
+       > The default case can appear in any place within a switch statement. Regardless of its position, the default case is evaluated only if all other case patterns aren't matched or the goto default; statement is executed in one of the switch sections.
+       You can specify multiple case patterns for one section of a switch statement, as the following example shows:
+
+         DisplayMeasurement(-4);  // Output: Measured value is -4; out of an acceptable range.
+         DisplayMeasurement(50);  // Output: Measured value is 50.
+         DisplayMeasurement(132);  // Output: Measured value is 132; out of an acceptable range.
+
+         void DisplayMeasurement(int measurement)
+         {
+             switch (measurement)
+             {
+                 case < 0:
+                 case > 100:
+                     Console.WriteLine($"Measured value is {measurement}; out of an acceptable range.");
+                     break;
+
+                 default:
+                     Console.WriteLine($"Measured value is {measurement}.");
+                     break;
+             }
+         }
+
+       Within a switch statement, control can't fall through from one switch section to the next. As the examples in this section show, typically you use the break statement at the end of each switch section to pass control out of a switch statement. You can also use the return and throw statements to pass control out of a switch statement. To imitate the fall-through behavior and pass control to other switch section, you can use the goto statement.
+
+       > Every switch section must end with a break, goto, or return. Falling through from one switch section to the next generates a compiler error. However, you can apply multiple switch labels to the same switch section, like case < 0: in the preceding example. This deliberate design choice allows for concisely handling multiple cases that share the same or interdependent logic.
+       In an expression context, you can use the switch expression to evaluate a single expression from a list of candidate expressions based on a pattern match with an expression.
+
+       > Differences between switch expression and switch statement:
+       > - switch statement is used to control the execution flow within a block of code.
+       > - switch expression is typically used in contexts of value return and value assignment, often as expression-bodied members.
+       > - a switch expression case section can't be empty, but a switch statement case section can.
+
+       CASE GUARDS
+
+       A case pattern might not be expressive enough to specify the condition for the execution of the switch section. In such a case, use a case guard. The condition must be satisfied together with a matched pattern. A case guard must be a Boolean expression. Specify a case guard after the when keyword that follows a pattern, as the following example shows:
+
+         DisplayMeasurements(3, 4);  // Output: First measurement is 3, second measurement is 4.
+         DisplayMeasurements(5, 5);  // Output: Both measurements are valid and equal to 5.
+
+         void DisplayMeasurements(int a, int b)
+         {
+             switch ((a, b))
+             {
+                 case (> 0, > 0) when a == b:
+                     Console.WriteLine($"Both measurements are valid and equal to {a}.");
+                     break;
+
+                 case (> 0, > 0):
+                     Console.WriteLine($"First measurement is {a}, second measurement is {b}.");
+                     break;
+
+                 default:
+                     Console.WriteLine("One or both measurements are not valid.");
+                     break;
+             }
+         }
+
+       The preceding example uses positional patterns with nested relational patterns.
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information, see the following sections of the [C# language specification]:
+
+        * [The if statement]
+        * [The switch statement]
+       For more information about patterns, see the [Patterns and pattern matching] section of the [C# language specification].
+
+       SEE ALSO
+
+        * Conditional operator ?:
+        * Logical operators
+        * Patterns
+        * switch expression
+        * Add missing cases to switch statement (style rule IDE0010)
+
+C# manual                               from the official documentation

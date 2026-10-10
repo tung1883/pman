@@ -1,0 +1,77 @@
+WEBAPI.RANGE-GETBOUNDINGCLIENTRECT(1) Sandbox manual WEBAPI.RANGE-GETBOUNDINGCLIENTRECT(1)
+
+       NAME
+
+       Range: getBoundingClientRect() method - The Range.getBoundingClientRect() method returns a DOMRect object that bounds the contents of the range; this is a rectangle
+
+       RANGE: GETBOUNDINGCLIENTRECT() METHOD
+
+       The Range.getBoundingClientRect() method returns a DOMRect object that bounds the contents of the range; this is a rectangle enclosing the union of the bounding rectangles for all the elements in the range.
+
+       This method is useful for determining the viewport coordinates of the cursor or selection inside a text box. See Element.getBoundingClientRect() for details on the returned value.
+
+       SYNTAX
+
+         getBoundingClientRect()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A DOMRect object that encloses the union of the bounding rectangles for all elements in the range.
+
+       EXAMPLES
+
+       HTML
+
+         <div id="highlight"></div>
+         <p>
+           This example positions a "highlight" rectangle behind the contents of a range.
+           The range's content <em>starts here</em> and continues on until it
+           <em>ends here</em>. The bounding client rectangle contains everything selected
+           in the range.
+         </p>
+
+       CSS
+
+         #highlight {
+           background: yellow;
+           position: absolute;
+           z-index: -1;
+         }
+
+         p {
+           width: 200px;
+         }
+
+       JAVASCRIPT
+
+         const range = document.createRange();
+         range.setStartBefore(document.getElementsByTagName("em").item(0));
+         range.setEndAfter(document.getElementsByTagName("em").item(1));
+
+         const clientRect = range.getBoundingClientRect();
+         const highlight = document.getElementById("highlight");
+         highlight.style.left = `${clientRect.x}px`;
+         highlight.style.top = `${clientRect.y}px`;
+         highlight.style.width = `${clientRect.width}px`;
+         highlight.style.height = `${clientRect.height}px`;
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Range.getClientRects() - finer-grained result for non-rectangular
+       ranges (e.g., when the selection wraps onto the next line);
+
+        * Element.getBoundingClientRect()
+        * Document.caretPositionFromPoint() - to get the (node, offset) from
+       viewport coordinates.
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,139 @@
+DOCKER.COMPOSE-HOW-TOS-PROFILES(1) Sandbox manual DOCKER.COMPOSE-HOW-TOS-PROFILES(1)
+
+       NAME
+
+       Using profiles with Compose - Services are associated with profiles through the
+
+       USING PROFILES WITH COMPOSE
+
+       ASSIGNING PROFILES TO SERVICES
+
+       Services are associated with profiles through the profiles attribute which takes an array of profile names:
+
+         services:
+           frontend:
+             image: frontend
+             profiles: [frontend]
+
+           phpmyadmin:
+             image: phpmyadmin
+             depends_on: [db]
+             profiles: [debug]
+
+           backend:
+             image: backend
+
+           db:
+             image: mysql
+
+       Here the services frontend and phpmyadmin are assigned to the profiles frontend and debug respectively and as such are only started when their respective profiles are enabled.
+
+       Services without a profiles attribute are always enabled. In this case running docker compose up would only start backend and db.
+
+       Valid profiles names follow the regex format of a-zA-Z0-9+.
+
+       > The core services of your application shouldn't be assigned profiles so
+       > they are always enabled and automatically started.
+
+       START SPECIFIC PROFILES
+
+       To start a specific profile supply the --profile command-line option or use the COMPOSE_PROFILES environment variable:
+
+         $ docker compose --profile debug up
+
+         $ COMPOSE_PROFILES=debug docker compose up
+
+       Both commands start the services with the debug profile enabled. In the previous compose.yaml file, this starts the services db, backend and phpmyadmin.
+
+       START MULTIPLE PROFILES
+
+       You can also enable multiple profiles, e.g. with docker compose --profile frontend --profile debug up the profiles frontend and debug will be enabled.
+
+       Multiple profiles can be specified by passing multiple --profile flags or a comma-separated list for the COMPOSE_PROFILES environment variable:
+
+         $ docker compose --profile frontend --profile debug up
+
+         $ COMPOSE_PROFILES=frontend,debug docker compose up
+
+       If you want to enable all profiles at the same time, you can run docker compose --profile "*".
+
+       AUTO-STARTING PROFILES AND DEPENDENCY RESOLUTION
+
+       When you explicitly target a service on the command line that has one or more profiles assigned, you do not need to enable the profile manually as Compose runs that service regardless of whether its profile is activated. This is useful for running one-off services or debugging tools.
+
+       Only the targeted service (and any of its declared dependencies via depends_on) is started. Other services that share the same profile will not be started unless:
+
+        * They are also explicitly targeted, or
+        * The profile is explicitly enabled using --profile or COMPOSE_PROFILES.
+       When a service with assigned profiles is explicitly targeted on the command line its profiles are started automatically so you don't need to start them manually. This can be used for one-off services and debugging tools. As an example consider the following configuration:
+
+         services:
+           backend:
+             image: backend
+
+           db:
+             image: mysql
+
+           db-migrations:
+             image: backend
+             command: myapp migrate
+             depends_on:
+               - db
+             profiles:
+               - tools
+
+         # Only start backend and db (no profiles involved)
+         $ docker compose up -d
+
+         # Run the db-migrations service without manually enabling the 'tools' profile
+         $ docker compose run db-migrations
+
+       In this example, db-migrations runs even though it is assigned to the tools profile, because it was explicitly targeted. The db service is also started automatically because it is listed in depends_on.
+
+       If the targeted service has dependencies that are also gated behind a profile, you must ensure those dependencies are either:
+
+        * In the same profile
+        * Started separately
+        * Not assigned to any profile so are always enabled
+
+       STOP APPLICATION AND SERVICES WITH SPECIFIC PROFILES
+
+       As with starting specific profiles, you can use the --profile command-line option or use the COMPOSE_PROFILES environment variable:
+
+         $ docker compose --profile debug down
+
+         $ COMPOSE_PROFILES=debug docker compose down
+
+       Both commands stop and remove services with the debug profile and services without a profile. In the following compose.yaml file, this stops the services db, backend and phpmyadmin.
+
+         services:
+           frontend:
+             image: frontend
+             profiles: [frontend]
+
+           phpmyadmin:
+             image: phpmyadmin
+             depends_on: [db]
+             profiles: [debug]
+
+           backend:
+             image: backend
+
+           db:
+             image: mysql
+
+       if you only want to stop the phpmyadmin service, you can run
+
+         $ docker compose down phpmyadmin
+
+       or
+
+         $ docker compose stop phpmyadmin
+
+       > Running docker compose down only stops backend and db.
+
+       REFERENCE INFORMATION
+
+       profiles
+
+Docker manual                           from the official documentation

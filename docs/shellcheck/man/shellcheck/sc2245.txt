@@ -1,0 +1,54 @@
+SHELLCHECK.SC2245(1)             Sandbox manual             SHELLCHECK.SC2245(1)
+
+       NAME
+
+       -d only applies to the first expansion of this glob. Use a loop to check any/all. - if [ -f ksh ]
+
+       D ONLY APPLIES TO THE FIRST EXPANSION OF THIS GLOB. USE A LOOP TO CHEC
+
+       D ONLY APPLIES TO THE FIRST EXPANSION OF THIS GLOB. USE A LOOP TO CHEC
+
+       PROBLEMATIC CODE
+
+         #!/bin/ksh
+
+         if [ -f ksh* ]
+         then
+           echo "The file exists"
+         fi
+
+       CORRECT CODE
+
+         #!/bin/ksh
+
+         for f in ksh*
+         do
+           if [ -f "$f" ]
+           then
+             echo "Found a matching file: $f"
+           fi
+         done
+
+       RATIONALE
+
+       Ksh has the curious behavior of ignoring anything after an unrecognized flag to test/[, which means that file checking operators against globs will effectively apply the operator to the first expansion:
+
+         [ -f ksh* ]                              # This
+         [ -f ksh93u ksh93u.tar ksh93u.tar.gz ]   # Becomes this
+         [ -f ksh93u ]                            # And is interpreted like this
+
+       This is an issue when you have multiple matches for a glob. Instead of checking some or all, it only checks the first result and ignores the rest. To ensure that all results are considered (either to check that any or all results match the operator), use a loop explicitly.
+
+       If you really only want to match the first result of the glob expansion as sorted alphabetically in the current locale, you can make this intention explicit:
+
+       matches=( ksh* ) if [ -f "${matches[0]}" ] then echo "The first result is a file" fi
+
+       EXCEPTIONS
+
+       If you only care that entries exists, use -e. ShellCheck does not warn in this case, since all files resulting from glob expansion necessarily exist.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

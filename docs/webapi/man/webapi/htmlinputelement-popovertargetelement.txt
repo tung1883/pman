@@ -1,0 +1,88 @@
+WEBAPI.HTMLINPUTELEMENT-POPOVERTARGETELEMENT(1) Sandbox manual WEBAPI.HTMLINPUTELEMENT-POPOVERTARGETELEMENT(1)
+
+       NAME
+
+       HTMLInputElement: popoverTargetElement property - The popoverTargetElement property of the HTMLInputElement interface gets and sets the popover element to control via an <input> element of t
+
+       HTMLINPUTELEMENT: POPOVERTARGETELEMENT PROPERTY
+
+       The popoverTargetElement property of the HTMLInputElement interface gets and sets the popover element to control via an element of type="button".
+
+       It is the JavaScript equivalent of the popovertarget HTML attribute.
+
+       Establishing a relationship between a popover and its invoker button using the popoverTargetElement property has two additional useful effects:
+
+        * The browser creates an implicit aria-details and aria-expanded relationship between popover and invoker, and places the popover in a logical position in the keyboard focus navigation order when shown. This makes the popover more accessible to keyboard and assistive technology (AT) users (see also Popover accessibility features).
+        * The browser creates an implicit anchor reference between the two, making it very convenient to position popovers relative to their controls using CSS anchor positioning. See Popover anchor positioning for more details.
+
+       VALUE
+
+       A reference to a popover element in the DOM.
+
+       EXAMPLES
+
+         function supportsPopover() {
+           return Object.hasOwn(HTMLElement.prototype, "popover");
+         }
+
+         const popover = document.getElementById("mypopover");
+         const toggleBtn = document.getElementById("toggleBtn");
+
+         const popoverSupported = supportsPopover();
+
+         if (popoverSupported) {
+           popover.popover = "auto";
+           toggleBtn.popoverTargetElement = popover;
+           toggleBtn.popoverTargetAction = "toggle";
+         } else {
+           console.log("Popover API not supported.");
+         }
+
+       TOGGLE POPOVER ACTION WITH AN AUTO POPOVER
+
+       This example shows the basic use of the popover API, setting a element as a popover, and then setting it as the popoverTargetElement of an of type="button". The popover attribute is set to "auto", so the popover can be closed ("light-dismissed") by clicking outside the popover area.
+
+       First we define an that we will use to display and hide the popover, and a that will be the popover. In this case we don't set the popovertargetaction HTML attribute on the or the popover attribute on the , as we will be doing so programmatically.
+
+         <input id="toggleBtn" type="button" value="Toggle popover" />
+         <div id="mypopover">This is popover content!</div>
+
+       The JavaScript code first gets a handle to the and elements. It then defines a function to check for popover support.
+
+         const popover = document.getElementById("mypopover");
+         const toggleBtn = document.getElementById("toggleBtn");
+
+         // Check for popover API support.
+         function supportsPopover() {
+           return Object.hasOwn(HTMLElement.prototype, "popover");
+         }
+
+       If the popover API is supported the code sets the element's popover attribute to "auto" and makes it the popover target of the toggle button. We then set the popoverTargetAction of the button to "toggle". If the popover API is not supported we change the text content of the element to state this, and hide the input element.
+
+         if (supportsPopover()) {
+           // Set the <div> element to be an auto popover
+           popover.popover = "auto";
+
+           // Set the button popover target to be the popover
+           toggleBtn.popoverTargetElement = popover;
+
+           // Set that the button toggles popover visibility
+           toggleBtn.popoverTargetAction = "toggle";
+         } else {
+           popover.textContent = "Popover API not supported.";
+           toggleBtn.hidden = true;
+         }
+
+       > A popover element is hidden by default, but if the API is not supported your element will display "as usual".
+       You can try out the example below. Show and hide the popover by toggling the button. The "auto" popover can also be light dismissed by selecting outside the bounds of the popover text.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * popover HTML global attribute
+        * Popover API
+
+Web APIs manual                         from the official documentation

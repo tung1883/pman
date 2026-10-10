@@ -1,0 +1,173 @@
+APACHE.MOD_EXT_FILTER(1)         Sandbox manual         APACHE.MOD_EXT_FILTER(1)
+
+       EXAMPLES
+
+       GENERATING HTML FROM SOME OTHER TYPE OF RESPONSE
+
+         # mod_ext_filter directive to define a filter
+         # to HTML-ize text/c files using the external
+         # program /usr/bin/enscript, with the type of
+         # the result set to text/html
+         ExtFilterDefine c-to-html mode=output \
+             intype=text/c outtype=text/html \
+             cmd="/usr/bin/enscript --color -w html -Ec -o -"
+
+         <Directory "/export/home/trawick/apacheinst/htdocs/c">
+             # core directive to cause the new filter to
+             # be run on output
+             SetOutputFilter c-to-html
+
+             # mod_mime directive to set the type of .c
+             # files to text/c
+             AddType text/c .c
+         </Directory>
+
+       IMPLEMENTING A CONTENT ENCODING FILTER
+
+       Note: this gzip example is just for the purposes of illustration. Please refer to mod_deflate for a practical implementation.
+
+         # mod_ext_filter directive to define the external filter
+         ExtFilterDefine gzip mode=output cmd=/bin/gzip
+
+         <Location "/gzipped">
+
+             # core directive to cause the gzip filter to be
+             # run on output
+             SetOutputFilter gzip
+
+             # mod_headers directive to add
+             # "Content-Encoding: gzip" header field
+             Header set Content-Encoding gzip
+         </Location>
+
+       SLOWING DOWN THE SERVER
+
+         # mod_ext_filter directive to define a filter
+         # which runs everything through cat; cat doesn't
+         # modify anything; it just introduces extra pathlength
+         # and consumes more resources
+         ExtFilterDefine slowdown mode=output cmd=/bin/cat \
+             preservescontentlength
+
+         <Location "/">
+             # core directive to cause the slowdown filter to
+             # be run several times on output
+             #
+             SetOutputFilter slowdown;slowdown;slowdown
+         </Location>
+
+       USING SED TO REPLACE TEXT IN THE RESPONSE
+
+         # mod_ext_filter directive to define a filter which
+         # replaces text in the response
+         #
+         ExtFilterDefine fixtext mode=output intype=text/html \
+             cmd="/bin/sed s/verdana/arial/g"
+
+         <Location "/">
+             # core directive to cause the fixtext filter to
+             # be run on output
+             SetOutputFilter fixtext
+         </Location>
+
+       You can do the same thing using mod_substitute without invoking an external process.
+
+       TRACING ANOTHER FILTER
+
+         # Trace the data read and written by mod_deflate
+         # for a particular client (IP 192.168.1.31)
+         # experiencing compression problems.
+         # This filter will trace what goes into mod_deflate.
+         ExtFilterDefine tracebefore \
+             cmd="/bin/tracefilter.pl /tmp/tracebefore" \
+             EnableEnv=trace_this_client
+
+         # This filter will trace what goes after mod_deflate.
+         # Note that without the ftype parameter, the default
+         # filter type of AP_FTYPE_RESOURCE would cause the
+         # filter to be placed *before* mod_deflate in the filter
+         # chain.  Giving it a numeric value slightly higher than
+         # AP_FTYPE_CONTENT_SET will ensure that it is placed
+         # after mod_deflate.
+         ExtFilterDefine traceafter \
+             cmd="/bin/tracefilter.pl /tmp/traceafter" \
+             EnableEnv=trace_this_client ftype=21
+
+         <Directory "/usr/local/docs">
+             SetEnvIf Remote_Addr 192.168.1.31 trace_this_client
+             SetOutputFilter tracebefore;deflate;traceafter
+         </Directory>
+
+       HERE IS THE FILTER WHICH TRACES THE DATA
+
+         #!/usr/local/bin/perl -w
+         use strict;
+
+         open(SAVE, ">$ARGV[0]")
+             or die "can't open $ARGV[0]: $?";
+
+         while (<STDIN>) {
+             print SAVE $_;
+             print $_;
+         }
+
+         close(SAVE);
+
+       EXTFILTERDEFINE DIRECTIVE
+
+         Description: | Define an external filter
+         Syntax: | ExtFilterDefine filtername parameters
+         Context: | server config
+         Status: | Extension
+         Module: | mod_ext_filter
+       The ExtFilterDefine directive defines the characteristics of an external filter, including the program to run and its arguments.
+
+       filtername specifies the name of the filter being defined. This name can then be used in SetOutputFilter directives. It must be unique among all registered filters. At the present time, no error is reported by the register-filter API, so a problem with duplicate names isn't reported to the user.
+
+       Subsequent parameters can appear in any order and define the external command to run and certain other characteristics. The only required parameter is cmd=. These parameters are:
+
+         cmd=cmdline
+       The cmd= keyword allows you to specify the external command to run. If there are arguments after the program name, the command line should be surrounded in quotation marks (e.g., cmd="/bin/mypgm arg1 arg2".) Normal shell quoting is not necessary since the program is run directly, bypassing the shell. Program arguments are blank-delimited. A backslash can be used to escape blanks which should be part of a program argument. Any backslashes which are part of the argument must be escaped with backslash themselves. In addition to the standard CGI environment variables, DOCUMENT_URI, DOCUMENT_PATH_INFO, and QUERY_STRING_UNESCAPED will also be set for the program.
+
+         mode=mode
+       Use mode=output (the default) for filters which process the response. Use mode=input for filters which process the request. mode=input is available in Apache 2.1 and later.
+
+         intype=imt
+       This parameter specifies the internet media type (i.e., MIME type) of documents which should be filtered. By default, all documents are filtered. If intype= is specified, the filter will be disabled for documents of other types.
+
+         outtype=imt
+       This parameter specifies the internet media type (i.e., MIME type) of filtered documents. It is useful when the filter changes the internet media type as part of the filtering operation. By default, the internet media type is unchanged.
+
+         PreservesContentLength
+       The PreservesContentLength keyword specifies that the filter preserves the content length. This is not the default, as most filters change the content length. In the event that the filter doesn't modify the length, this keyword should be specified.
+
+         ftype=filtertype
+       This parameter specifies the numeric value for filter type that the filter should be registered as. The default value, AP_FTYPE_RESOURCE, is sufficient in most cases. If the filter needs to operate at a different point in the filter chain than resource filters, then this parameter will be necessary. See the AP_FTYPE_foo definitions in util_filter.h for appropriate values.
+
+         disableenv=env
+       This parameter specifies the name of an environment variable which, if set, will disable the filter.
+
+         enableenv=env
+       This parameter specifies the name of an environment variable which must be set, or the filter will be disabled.
+
+       EXTFILTEROPTIONS DIRECTIVE
+
+         Description: | Configure mod_ext_filter options
+         Syntax: | ExtFilterOptions option [option] ...
+         Default: | ExtFilterOptions NoLogStderr
+         Context: | directory
+         Status: | Extension
+         Module: | mod_ext_filter
+       The ExtFilterOptions directive specifies special processing options for mod_ext_filter. Option can be one of
+
+         LogStderr | NoLogStderr
+       The LogStderr keyword specifies that messages written to standard error by the external filter program will be saved in the Apache error log. NoLogStderr disables this feature.
+
+         Onfail=[abort|remove]
+       Determines how to proceed if the external filter program cannot be started. With abort (the default value) the request will be aborted. With remove, the filter is removed and the request continues without it.
+
+         ExtFilterOptions LogStderr
+
+       Messages written to the filter's standard error will be stored in the Apache error log.
+
+Apache HTTP Server manual               bundled documentation

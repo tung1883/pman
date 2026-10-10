@@ -1,0 +1,74 @@
+WEBAPI.TRANSLATOR(1)             Sandbox manual             WEBAPI.TRANSLATOR(1)
+
+       NAME
+
+       Translator - The Translator interface of the Translator and Language Detector APIs contains all the associated translation functionality, including check
+
+       TRANSLATOR
+
+       The Translator interface of the Translator and Language Detector APIs contains all the associated translation functionality, including checking AI model availability, creating a new Translator instance, using it to create a translation, and more.
+
+       INSTANCE PROPERTIES
+
+        * inputQuota (read-only) (experimental)
+          * : The input quota available to the browser for generating translations.
+        * sourceLanguage (read-only) (experimental)
+          * : The expected language of the input text to be translated.
+        * targetLanguage (read-only) (experimental)
+          * : The language that the input text will be translated into.
+
+       STATIC METHODS
+
+        * availability() (experimental)
+          * : Returns an enumerated value that indicates the availability of the AI model for the given Translator configuration.
+        * create() (experimental)
+          * : Creates a new Translator instance from which to generate translations.
+
+       INSTANCE METHODS
+
+        * destroy() (experimental)
+          * : Releases the resources assigned to the Translator instance it is called on and stops any further activity on it.
+        * measureInputUsage() (experimental)
+          * : Reports how much input quota would be used by a translation operation for a given text input.
+        * translate() (experimental)
+          * : Returns a string containing a translation of the input string.
+        * translateStreaming() (experimental)
+          * : Generates a translation of the input string as a ReadableStream.
+
+       EXAMPLES
+
+       See Using the Translator and Language Detector APIs for a complete example.
+
+       CREATING A TRANSLATOR INSTANCE
+
+         const translator = await Translator.create({
+           sourceLanguage: "en",
+           targetLanguage: "ja",
+         });
+
+       GENERATING A TRANSLATION
+
+         const translation = await translator.translate(myTextString);
+         console.log(translation);
+
+       GENERATING A TRANSLATION STREAM
+
+         const stream = translator.translateStreaming(myTextString);
+         let translation = "";
+
+         for await (const chunk of stream) {
+           translation += chunk;
+         }
+
+         console.log("Stream complete");
+         console.log(translation);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Translator and Language Detector APIs
+
+Web APIs manual                         from the official documentation

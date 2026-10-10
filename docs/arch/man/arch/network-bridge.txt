@@ -1,0 +1,257 @@
+ARCH.NETWORK-BRIDGE(1)           Sandbox manual           ARCH.NETWORK-BRIDGE(1)
+
+       A network bridge is a virtual network device that forwards packets between two or more network segments. A bridge behaves like a virtual network switch and works transparently. Other machines in the network do not need to know about its existence. Physical network devices (e.g. eth1) and virtual network devices (e.g. tap0) can be connected to it.
+
+       CREATING A BRIDGE
+
+       There are a number of ways to create a network bridge. This section outlines the steps required to set up a bridge with at least one ethernet interface. This is useful for things like the bridge mode of QEMU, setting a software based access point, etc.
+
+       Warning If you are creating a bridge on a remote server, and you plan to add the main network interface to the bridge, make sure you first add the main network interface's IP address on the bridge, set the bridge up, and set up a backup default route, before adding the interface to the bridge. Otherwise the server will lose network connectivity and you will not be able to SSH back into it.
+
+       WITH IPROUTE2
+
+       This section describes the management of a network bridge using the ip tool from the iproute2 package, which is required by the base meta package.
+
+       Create a new bridge and change its state to up:
+
+         # ip link add name bridge_name type bridge
+         # ip link set dev bridge_name up
+
+       To add an interface (e.g. eth1) into the bridge, its state must be up:
+
+         # ip link set eth1 up
+
+       Adding the interface into the bridge is done by setting its master to bridge_name:
+
+         # ip link set eth1 master bridge_name
+
+       To show the existing bridges and associated interfaces, use the bridge utility (also part of iproute2). See bridge(8) for details.
+
+         # bridge link
+
+       This is how to remove an interface from a bridge:
+
+         # ip link set eth1 nomaster
+
+       The interface will still be up, so you may also want to bring it down:
+
+         # ip link set eth1 down
+
+       To delete a bridge issue the following command:
+
+         # ip link delete bridge_name type bridge
+
+       This will automatically remove all interfaces from the bridge. The slave interfaces will still be up, though, so you may also want to bring them down after.
+
+       ADDING THE MAIN NETWORK INTERFACE
+
+       If you are doing this on a remote server, and the plan is to add the main network interface (e.g. eth0) to the bridge, first take note of the current network status:
+
+         $ ip address show eth0
+         $ ip route show dev eth0
+
+       For this example, this is the relevant info:
+
+        * IP address attached to eth0: 10.2.3.4/8
+        * Default gateway: 10.0.0.1
+        * Bridge name: br0
+       Initial setup for the bridge:
+
+         # ip link add name br0 type bridge
+         # ip link set dev br0 up
+         # ip address add 10.2.3.4/8 dev br0
+         # ip route append default via 10.0.0.1 dev br0
+
+       Then, execute these commands in quick succession. It is advisable to put them in a script file and execute the script:
+
+         # ip link set eth0 master br0
+         # ip address del 10.2.3.4/8 dev eth0
+
+       Explanation:
+
+        * Once eth0 is added to the bridge, it won't be used for routing anymore. br0 will take its place, so it needs an IP and have the default route attached.
+        * We cannot delete the IP address on eth0 before adding the interface to br0, otherwise network connectivity will be lost.
+        * However, we need to quickly remove the ip address on eth0, otherwise network connectivity will be lost after a short period.
+        * Linux does not allow two default routes on the same routing table. The easy workaround is just to append the new default route.
+        * Once the IP address of eth0 is removed, the default route attached to it is automatically removed.
+
+       WITH BRIDGE-UTILS
+
+       This section describes the management of a network bridge using the legacy brctl tool from the bridge-utilsAUR package. See brctl(8) for full listing of options.
+
+       Note The use of brctl is deprecated and is considered obsolete. See the Notes section in brctl(8) § NOTES for details.
+
+       Create a new bridge:
+
+         # brctl addbr bridge_name
+
+       Add a device to a bridge, for example eth1:
+
+       Note Adding an interface to a bridge will cause the interface to lose its existing IP address. If you are connected remotely via the interface you intend to add to the bridge, you will lose your connection. This problem can be worked around by scripting the bridge to be created at system startup.
+
+         # brctl addif bridge_name eth1
+
+       Show current bridges and what interfaces they are connected to:
+
+         $ brctl show
+
+       Set the bridge device up:
+
+         # ip link set dev bridge_name up
+
+       Delete a bridge, you need to first set it to down:
+
+         # ip link set dev bridge_name down
+         # brctl delbr bridge_name
+
+       Note To enable the bridge-netfilter functionality, you need to manually load the br_netfilter module:
+
+         # modprobe br_netfilter
+
+       You can also load the module at boot.
+
+       ADDING THE MAIN NETWORK INTERFACE
+
+       First, take note of the current network status:
+
+         $ ip address show eth0
+         $ ip route show dev eth0
+
+       For this example, this is the relevant info:
+
+        * IP address attached to eth0: 10.2.3.4/8
+        * Default gateway: 10.0.0.1
+        * Bridge name: br0
+       Initial setup for the bridge:
+
+         # brctl addbr br0
+         # ip address add 10.2.3.4/8 dev br0
+         # ip link set dev br0 up
+
+       Then, execute these commands in quick succession. It is advisable to put them in a script file and execute the script:
+
+         # brctl addif br0 eth0
+         # ip address del 10.2.3.4/8 dev eth0
+
+       WITH NETCTL
+
+       See Bridge with netctl.
+
+       WITH SYSTEMD-NETWORKD
+
+       See systemd-networkd#Bridge interface.
+
+       WITH NETWORKMANAGER
+
+       GNOME's Network settings can create bridges, but currently will not auto-connect to them or slave/attached interfaces. Open Network Settings, add a new interface of type Bridge, add a new bridged connection, and select the MAC address of the device to attach to the bridge.
+
+       KDE's plasma-nm can create bridges. In order to view, create and modify bridge interfaces open the Connections window either by right clicking the Networks applet in the system tray and selecting Configure Network Connections... or from System Settings > Connections. Click the Configuration button in the lower left corner of the module and enable "Show virtual connections". A session restart will be necessary to use the enabled functionality.
+
+       nm-connection-editor can create bridges in the same manner as GNOME's Network settings. This page shows these steps with screenshots.
+
+       nmcli from networkmanager can create bridges. For example, to create a bridge br0 with STP disabled (to avoid the bridge being advertised on the network) run:
+
+         $ nmcli connection add type bridge ifname br0 stp no
+
+       Make your Ethernet interface (enp30s0 in this example, see Network configuration#Network interfaces for instructions on finding out the name) into a slave to the bridge:
+
+         $ nmcli connection add type bridge-slave ifname enp30s0 master br0
+
+       Bring the existing connection down (you can acquire the connection name with nmcli connection show --active):
+
+         $ nmcli connection down Connection
+
+       Bring the new bridge up:
+
+         $ nmcli connection up bridge-br0
+         $ nmcli connection up bridge-slave-enp30s0
+
+       If NetworkManager's default interface for the device you added to the bridge connects automatically, you may want to disable that by clicking the gear next to it in Network Settings, and unchecking Connect automatically under Identity or using the command:
+
+         $ nmcli connection modify Connection connection.autoconnect no
+
+       ASSIGNING AN IP ADDRESS
+
+       When the bridge is fully set up, it can be assigned an IP address:
+
+       WITH IPROUTE2
+
+         # ip address add dev bridge_name 192.168.66.66/24
+
+       WITH NETWORKMANAGER
+
+       Give it the desired address:
+
+         # nmcli connection modify Connection ipv4.addresses desired_IP
+
+       Set up a DNS server (this will also avoid not being able to load any pages after you apply the changes):
+
+         # nmcli connection modify Connection ipv4.dns DNS_server
+
+       Set the IP address to static:
+
+         # nmcli connection modify Connection ipv4.method manual
+
+       Apply the changes:
+
+         # nmcli connection up Connection
+
+       TIPS AND TRICKS
+
+       WIRELESS INTERFACE ON A BRIDGE
+
+       To add a wireless interface to a bridge, you first have to assign the wireless interface to an access point or start an access point with hostapd. Otherwise the wireless interface will not be added to the bridge.
+
+       See also Debian:BridgeNetworkConnections#Bridging with a wireless NIC.
+
+       SPEEDING UP TRAFFIC DESTINATED TO THE BRIDGE ITSELF
+
+       In some situations the bridge not only serves as a bridge box, but also talks to other hosts. Packets that arrive on a bridge port and that are destinated to the bridge box itself will by default enter the iptables INPUT chain with the logical bridge port as input device. These packets will be queued twice by the network code, the first time they are queued after they are received by the network device. The second time after the bridge code examined the destination MAC address and determined it was a locally destinated packet and therefore decided to pass the frame up to the higher protocol stack.[1]
+
+       The way to let locally destinated packets be queued only once is by brouting them in the BROUTING chain of the broute table. Suppose br0 has an IP address and that br0's bridge ports do not have an IP address. Using the following rule should make all locally directed traffic be queued only once:
+
+         # ebtables -t broute -A BROUTING -d $MAC_OF_BR0 -p ipv4 -j redirect --redirect-target DROP
+
+       The replies from the bridge will be sent out through the br0 device (assuming your routing table is correct and sends all traffic through br0), so everything keeps working neatly, without the performance loss caused by the packet being queued twice.
+
+       The redirect target is needed because the MAC address of the bridge port is not necessarily equal to the MAC address of the bridge device. The packets destinated to the bridge box will have a destination MAC address equal to that of the bridge br0, so that destination address must be changed to that of the bridge port.
+
+       TROUBLESHOOTING
+
+       NO NETWORKING AFTER BRIDGE CONFIGURATION
+
+       It may help to remove all IP addresses and routes from the interface (e.g. eth1) that was added to the bridge and configure these parameters for the bridge instead.
+
+       First of all, make sure there is no dhcpcd instance running for eth1, otherwise the deleted addresses may be reassigned.
+
+       Remove address and route from the eth1 interface:
+
+         # ip addr del address dev eth1
+         # ip route del address dev eth1
+
+       Now IP address and route for the earlier configured bridge must be set. This is usually done by starting a DHCP client for this interface. Otherwise, consult Network configuration for manual configuration.
+
+       NO NETWORKING ON HOSTED SERVERS AFTER BRIDGE CONFIGURATION
+
+       As the MAC address of the bridge is not necessarily equal to the MAC address of the networking card usually used by the server, the server provider might drop traffic coming out from the bridge, resulting in a loss of connectivity when bridging e.g. the server ethernet interface. Configuring the bridge to clone the mac address of the ethernet interface might therefore be needed for hosted servers.
+
+       CANNOT CONNECT TO BRIDGE CONNECTION AFTER CONNECTING TO USUAL CONNECTI
+
+       In Network Manager applet, if you have usual ethernet/wireless connection (not a bridge slave connection), and if you first connect to it, and then try to connect to bridged connection (with or without disconnecting from usual connection first), then you are not able to connect to it. For some reason, the bridge slave connection (it is not listed in network applet) is not activated, even when the auto connect checkbox is enabled.
+
+       The workaround is to activate it manually via terminal:
+
+         nmcli connection up br1\ slave\ 1
+
+       Then immediately your bridge connections works.
+
+       BRIDGE APPEARS TO NOT BE WORKING ON ONE SIDE OF THE NETWORK
+
+       See QEMU#Internal networking.
+
+       SEE ALSO
+
+        * Official documentation for iproute2
+        * ebtables/iptables interaction on a Linux-based bridge
+
+ArchWiki manual                         bundled documentation

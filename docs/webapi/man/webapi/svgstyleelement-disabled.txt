@@ -1,0 +1,121 @@
+WEBAPI.SVGSTYLEELEMENT-DISABLED(1) Sandbox manual WEBAPI.SVGSTYLEELEMENT-DISABLED(1)
+
+       NAME
+
+       SVGStyleElement: disabled property - The SVGStyleElement.disabled property can be used to get and set whether the stylesheet is disabled (true) or not (false).
+
+       SVGSTYLEELEMENT: DISABLED PROPERTY
+
+       The SVGStyleElement.disabled property can be used to get and set whether the stylesheet is disabled (true) or not (false).
+
+       Note that there is no corresponding disabled attribute on the SVG element.
+
+       VALUE
+
+       Returns true if the stylesheet is disabled, or there is no associated stylesheet; otherwise false. The value is false by default (if there is an associated stylesheet).
+
+       The property can be used to enable or disable an associated stylesheet. Setting the property to true when there is no associated stylesheet has no effect.
+
+       EXAMPLES
+
+       DISABLING A STYLE DEFINED IN THE SVG
+
+       This example demonstrates programmatically setting the disabled property on a style that was defined in the HTML SVG definition.
+
+       HTML
+
+       The HTML contains an SVG definition for a with a element, along with a button that will be used to disable the style.
+
+         <button>Enable</button>
+         <svg
+           xmlns="http://www.w3.org/2000/svg"
+           xmlns:xlink="http://www.w3.org/1999/xlink">
+           <style id="circle_style_id">
+             circle {
+               fill: gold;
+               stroke: green;
+               stroke-width: 3px;
+             }
+           </style>
+           <circle cx="50" cy="50" r="25" />
+         </svg>
+
+       JAVASCRIPT
+
+       The code below gets the style element (an SVGStyleElement) using its id, and then sets it as disabled. The style already exists because it is defined in the SVG, so this should succeed.
+
+         const svg = document.querySelector("svg");
+         const style = svg.getElementById("circle_style_id");
+         style.disabled = true;
+
+       We then add an event handler for the button that toggles the disabled state and button text.
+
+         const button = document.querySelector("button");
+
+         button.addEventListener("click", () => {
+           style.disabled = !style.disabled;
+           button.textContent = style.disabled ? "Enable" : "Disable";
+         });
+
+       RESULT
+
+       The result is shown below. Press the button to toggle the disabled property on the style used for the circle.
+
+       DISABLING A PROGRAMMATICALLY DEFINED STYLE
+
+       This example is very similar to the one above, except that the style is defined programmatically.
+
+       Note that you can have multiple styles applied both in SVG source and programmatically. This example is primarily provided to demonstrate how to create the style externally, and show at what point the style can be disabled.
+
+       HTML
+
+       The HTML is similar to the previous case, but the SVG definition does not include any default styling.
+
+         <button>Enable</button>
+         <svg
+           xmlns="http://www.w3.org/2000/svg"
+           xmlns:xlink="http://www.w3.org/1999/xlink">
+           <circle cx="50" cy="50" r="25" />
+         </svg>
+
+       JAVASCRIPT
+
+       First we create the new SVG style node. This is done by first creating a style element in the SVG namespace using Document.createElementNS(), creating and appending a text node with the style definition, and then appending the node to the SVG defined above.
+
+       > You must use Document.createElementNS() and not Document.createElement() to create the style, or by default you'll create the equivalent HTML style element.
+
+         const svg = document.querySelector("svg");
+
+         // Create the `style` element in the SVG namespace
+         const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+         const node = document.createTextNode("circle { fill: red; }");
+         svg.appendChild(style);
+         style.appendChild(node);
+
+       Then we disable the style. Note that this is the earliest point at which setting the property to true will succeed. Before this point the SVG did not have a style associated, and so the value defaults to false.
+
+         // Disable the style
+         style.disabled = true;
+
+       Last of all we add an event handler for the button that toggles the disabled state and button text (this is the same as in the previous example).
+
+         const button = document.querySelector("button");
+
+         button.addEventListener("click", () => {
+           style.disabled = !style.disabled;
+           button.textContent = style.disabled ? "Enable" : "Disable";
+         });
+
+       RESULT
+
+       The result is shown below. Press the button to toggle the disabled state on the style used for the circle.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTMLStyleElement.disabled
+
+Web APIs manual                         from the official documentation

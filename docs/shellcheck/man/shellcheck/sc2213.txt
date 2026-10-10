@@ -1,0 +1,64 @@
+SHELLCHECK.SC2213(1)             Sandbox manual             SHELLCHECK.SC2213(1)
+
+       NAME
+
+       getopts specified -n, but it's not handled by this case. - while getopts "vrn" n
+
+       GETOPTS SPECIFIED -N, BUT IT'S NOT HANDLED BY THIS CASE
+
+       GETOPTS SPECIFIED -N, BUT IT'S NOT HANDLED BY THIS CASE
+
+       PROBLEMATIC CODE
+
+         while getopts "vrn" n
+         do
+           case "$n" in
+             v) echo "Verbose" ;;
+             r) echo "Recursive" ;;
+             \?) usage;;
+           esac
+         done
+
+       CORRECT CODE
+
+         while getopts "vrn" n
+         do
+           case "$n" in
+             v) echo "Verbose" ;;
+             r) echo "Recursive" ;;
+             n) echo "Dry-run" ;;    # -n handled here
+             \?) usage;;
+           esac
+         done
+
+       RATIONALE
+
+       You have a while getopts loop where the corresponding case statement fails to handle one of the flags.
+
+       Either add a case to handle the flag, or remove it from the getopts option string.
+
+       EXCEPTIONS
+
+       ShellCheck may not correctly recognize less canonical uses of while getopts ..; do case ..;, such as when modifying the variable before using it:
+
+         while getopts "rf-:" OPT; do
+           if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+             OPT="${OPTARG%%=*}"       # extract long option name
+             OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
+             OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+           fi
+
+           case "$OPT" in
+             r) ... ;;
+             f) ... ;;
+             my-long-option) ... ;;
+           esac
+         done
+
+       In such cases you can do one of:
+
+        * [[Ignore]] the warning.
+        * Use the external tool getopt (no "s") which supports long options natively.
+        * Rewrite to not modify the variable first, in this case by instead doing it in a -) branch.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,41 @@
+SHELLCHECK.SC2125(1)             Sandbox manual             SHELLCHECK.SC2125(1)
+
+       NAME
+
+       Brace expansions and globs are literal in assignments. Quote it or use an array. - foo={1..9}
+
+       BRACE EXPANSIONS AND GLOBS ARE LITERAL IN ASSIGNMENTS. QUOTE IT OR USE
+
+       BRACE EXPANSIONS AND GLOBS ARE LITERAL IN ASSIGNMENTS. QUOTE IT OR USE
+
+       PROBLEMATIC CODE
+
+         foo={1..9}
+         echo "$foo"
+
+         foo=/some/path/*
+         echo "$foo"
+
+       CORRECT CODE
+
+         foo=( {1..9} )
+         echo "${foo[@]}"
+
+         foo=(/some/path/*)
+         echo "${foo[@]}"
+
+       Note that either of these will trigger [[SC3030]] ("In POSIX sh, array references are undefined") if you are using sh and not e.g. bash.
+
+       RATIONALE
+
+       echo .png {1..9} expands to all png files and numbers from 1 to 9, but var=.png or var={1..9} will just assign the literal strings '*.png' and '{1..9}'.
+
+       To make the variable contain all png files or 1 through 9, use an array as demonstrated.
+
+       If you intended to assign these values as literals, quote them (e.g. var="*.png").
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

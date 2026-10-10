@@ -1,0 +1,63 @@
+WEBAPI.PERIODICSYNCMANAGER-REGISTER(1) Sandbox manual WEBAPI.PERIODICSYNCMANAGER-REGISTER(1)
+
+       NAME
+
+       PeriodicSyncManager: register() method - The register() method of the
+
+       PERIODICSYNCMANAGER: REGISTER() METHOD
+
+       The register() method of the PeriodicSyncManager interface registers a periodic sync request with the browser with the specified tag and options. It returns a Promise that resolves when the registration completes.
+
+       The method requires the periodic-background-sync permission; see the API's security considerations for details.
+
+       SYNTAX
+
+         register(tag, options)
+
+       PARAMETERS
+
+        * tag
+          * : A unique String identifier.
+        * options (optional)
+          * : An Object containing the following optional data:
+            * minInterval
+              * : The minimum interval time, in milliseconds, at which
+       the periodic sync should occur.
+
+       RETURN VALUE
+
+       Returns a Promise that resolves with undefined.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if there is no active ServiceWorker present.
+        * NotAllowedError DOMException
+          * : Thrown if the periodic-background-sync permission is not granted.
+        * InvalidAccessError DOMException
+          * : Thrown if the active window is not the main window (not of auxiliary or top-level type).
+
+       EXAMPLES
+
+       The following asynchronous function registers a periodic background sync at a minimum interval of one day from a browsing context:
+
+         async function registerPeriodicNewsCheck() {
+           const registration = await navigator.serviceWorker.ready;
+           try {
+             await registration.periodicSync.register("fetch-news", {
+               minInterval: 24 * 60 * 60 * 1000,
+             });
+           } catch {
+             console.log("Periodic Sync could not be registered!");
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Richer offline experiences with the Periodic Background Sync API
+
+Web APIs manual                         from the official documentation

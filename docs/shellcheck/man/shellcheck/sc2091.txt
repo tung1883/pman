@@ -1,0 +1,66 @@
+SHELLCHECK.SC2091(1)             Sandbox manual             SHELLCHECK.SC2091(1)
+
+       NAME
+
+       Remove surrounding $() to avoid executing output (or use eval if intentional). - if $(which epstopdf)
+
+       REMOVE SURROUNDING () TO AVOID EXECUTING OUTPUT (OR USE EVAL IF INTENT
+
+       REMOVE SURROUNDING () TO AVOID EXECUTING OUTPUT (OR USE EVAL IF INTENT
+
+       PROBLEMATIC CODE
+
+         if $(which epstopdf)
+         then
+           echo "Found epstopdf"
+         fi
+
+       or
+
+         make_command() {
+           printf 'cat header %q footer > %q\n' "$1" "$2" | tee log
+         }
+         $(make_command foo.html output/foo.html)
+
+       CORRECT CODE
+
+         if which epstopdf
+         then
+           echo "Found epstopdf"
+         fi
+
+       or
+
+         make_command() {
+           printf 'cat header %q footer > %q\n' "$1" "$2" | tee log
+         }
+         eval "$(make_command foo.html output/foo.html)"
+
+       RATIONALE
+
+       ShellCheck has detected that you have a command that just consists of a command substitution. This often happens when you want to run a command (possibly from a variable name), without realizing that $(..) is for capturing and not for executing.
+
+       For example, if you have this shell function:
+
+       sayhello() { echo "hello world"; }
+
+       Then $(sayhello) will:
+
+        1. Run sayhello, capturing "hello world"
+        1. Run hello world, resulting in bash: hello: command not found
+       Meanwhile, just sayhello will:
+
+        1. Run sayhello, outputting "hello world" to screen
+       Note that this is equally true if the command is in a variable, e.g. x=sayhello; $($x).
+
+       If you do have a command that outputs a second command, similar to how ssh-agent outputs export commands to run, then you should do this via eval. This way, quotes, pipes, redirections, semicolons, and other shell constructs will work as expected. Note that this kind of design is best avoided when possible, since correctly escaping all values can be difficult and error prone.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * StackOverflow: Bash Function -> Command not found
+
+ShellCheck manual                       from the official documentation

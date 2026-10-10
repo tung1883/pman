@@ -1,0 +1,208 @@
+NGINX.NGX_HTTP_AUTH_JWT_MODULE(1) Sandbox manual NGINX.NGX_HTTP_AUTH_JWT_MODULE(1)
+
+       MODULE NGX_HTTP_AUTH_JWT_MODULE
+
+         Supported Algorithms Example Configuration Directives  auth_jwt  auth_jwt_claim_set  auth_jwt_header_set  auth_jwt_key_cache  auth_jwt_key_file  auth_jwt_key_request  auth_jwt_leeway  auth_jwt_type  auth_jwt_require Embedded Variables
+       The ngx_http_auth_jwt_module module (1.11.3) implements client authorization by validating the provided JSON Web Token (JWT) using the specified keys. The module supports JSON Web Signature (JWS), JSON Web Encryption (JWE) (1.19.7), and Nested JWT (1.21.0). The module can be used for OpenID Connect authentication.
+
+       The module may be combined with other access modules, such as ngx_http_access_module, ngx_http_auth_basic_module, and ngx_http_auth_request_module, via the satisfy directive.
+
+       > This module is available as part of our commercial subscription.
+
+       SUPPORTED ALGORITHMS
+
+       The module supports the following JSON Web Algorithms.
+
+       JWS algorithms:
+
+        * HS256, HS384, HS512
+        * RS256, RS384, RS512
+        * ES256, ES384, ES512
+        * EdDSA (Ed25519 and Ed448 signatures) (1.15.7)
+        * PS256, PS384, PS512 (1.29.0)
+       > Prior to version 1.13.7, only HS256, RS256, ES256 algorithms were supported.
+
+       JWE content encryption algorithms (1.19.7):
+
+        * A128CBC-HS256, A192CBC-HS384, A256CBC-HS512
+        * A128GCM, A192GCM, A256GCM
+       JWE key management algorithms (1.19.9):
+
+        * A128KW, A192KW, A256KW
+        * A128GCMKW, A192GCMKW, A256GCMKW
+        * dir - direct use of a shared symmetric key as the content encryption key
+        * RSA-OAEP, RSA-OAEP-256, RSA-OAEP-384, RSA-OAEP-512 (1.21.0)
+
+       EXAMPLE CONFIGURATION
+
+         location / {
+             auth_jwt          "closed site";
+             auth_jwt_key_file conf/keys.json;
+         }
+
+       DIRECTIVES
+
+       AUTH_JWT
+
+         Syntax: | auth_jwt string [token=$variable] | off;
+
+         auth_jwt off;
+
+       Default:
+
+         Context: | http, server, location, limit_except
+       Enables validation of JSON Web Token. The specified string is used as a realm. Parameter value can contain variables.
+
+       The optional token parameter specifies a variable that contains JSON Web Token. By default, JWT is passed in the “Authorization” header as a Bearer Token. JWT may be also passed as a cookie or a part of a query string:
+
+         auth_jwt "closed site" token=$cookie_auth_token;
+
+       The special value off cancels the effect of the auth_jwt directive inherited from the previous configuration level.
+
+       AUTH_JWT_CLAIM_SET
+
+         Syntax: | auth_jwt_claim_set $variable name ...;
+         Default: | —
+         Context: | http
+       This directive appeared in version 1.11.10.
+
+       Sets the variable to a JWT claim parameter identified by key names. Name matching starts from the top level of the JSON tree. For arrays, the variable keeps a list of array elements separated by commas.
+
+         auth_jwt_claim_set $email info e-mail;
+         auth_jwt_claim_set $job info "job title";
+
+       > Prior to version 1.13.7, only one key name could be specified, and the result was undefined for arrays.
+
+       > Variable values for tokens encrypted with JWE are available only after decryption which occurs during the Access phase.
+
+       AUTH_JWT_HEADER_SET
+
+         Syntax: | auth_jwt_header_set $variable name ...;
+         Default: | —
+         Context: | http
+       This directive appeared in version 1.11.10.
+
+       Sets the variable to a JOSE header parameter identified by key names. Name matching starts from the top level of the JSON tree. For arrays, the variable keeps a list of array elements separated by commas.
+
+       > Prior to version 1.13.7, only one key name could be specified, and the result was undefined for arrays.
+
+       AUTH_JWT_KEY_CACHE
+
+         Syntax: | auth_jwt_key_cache time;
+
+         auth_jwt_key_cache 0;
+
+       Default:
+
+         Context: | http, server, location
+       This directive appeared in version 1.21.4.
+
+       Enables or disables caching of keys obtained from a file or from a subrequest, and sets caching time for them. Caching of keys obtained from variables is not supported. By default, caching of keys is disabled.
+
+       AUTH_JWT_KEY_FILE
+
+         Syntax: | auth_jwt_key_file file;
+         Default: | —
+         Context: | http, server, location, limit_except
+       Specifies a file in JSON Web Key Set format for validating JWT signature. Parameter value can contain variables.
+
+       Several auth_jwt_key_file directives can be specified on the same level (1.21.1):
+
+         auth_jwt_key_file conf/keys.json;
+         auth_jwt_key_file conf/key.jwk;
+
+       If at least one of the specified keys cannot be loaded or processed, nginx will return the 500 (Internal Server Error) error.
+
+       AUTH_JWT_KEY_REQUEST
+
+         Syntax: | auth_jwt_key_request uri;
+         Default: | —
+         Context: | http, server, location, limit_except
+       This directive appeared in version 1.15.6.
+
+       Allows retrieving a JSON Web Key Set file from a subrequest for validating JWT signature and sets the URI where the subrequest will be sent to. Parameter value can contain variables. To avoid validation overhead, it is recommended to cache the key file:
+
+         proxy_cache_path /data/nginx/cache levels=1 keys_zone=foo:10m;
+
+         server {
+             ...
+
+             location / {
+                 auth_jwt             "closed site";
+                 auth_jwt_key_request /jwks_uri;
+             }
+
+             location = /jwks_uri {
+                 internal;
+                 proxy_cache foo;
+                 proxy_pass  http://idp.example.com/keys;
+             }
+         }
+
+       Several auth_jwt_key_request directives can be specified on the same level (1.21.1):
+
+         auth_jwt_key_request /jwks_uri;
+         auth_jwt_key_request /jwks2_uri;
+
+       If at least one of the specified keys cannot be loaded or processed, nginx will return the 500 (Internal Server Error) error.
+
+       AUTH_JWT_LEEWAY
+
+         Syntax: | auth_jwt_leeway time;
+
+         auth_jwt_leeway 0s;
+
+       Default:
+
+         Context: | http, server, location
+       This directive appeared in version 1.13.10.
+
+       Sets the maximum allowable leeway to compensate clock skew when verifying the exp and nbf JWT claims.
+
+       AUTH_JWT_TYPE
+
+         Syntax: | auth_jwt_type signed | encrypted | nested;
+
+         auth_jwt_type signed;
+
+       Default:
+
+         Context: | http, server, location, limit_except
+       This directive appeared in version 1.19.7.
+
+       Specifies which type of JSON Web Token to expect: JWS (signed), JWE (encrypted), or signed and then encrypted Nested JWT (nested) (1.21.0).
+
+       AUTH_JWT_REQUIRE
+
+         Syntax: | auth_jwt_require $value ... [error=401 | 403] ;
+         Default: | —
+         Context: | http, server, location, limit_except
+       This directive appeared in version 1.21.2.
+
+       Specifies additional checks for JWT validation. The value can contain text, variables, and their combination, and must start with a variable (1.21.7). The authentication will succeed only if all the values are not empty and are not equal to “0”.
+
+         map $jwt_claim_iss $valid_jwt_iss {
+             "good" 1;
+         }
+         ...
+
+         auth_jwt_require $valid_jwt_iss;
+
+       If any of the checks fails, the 401 error code is returned. The optional error parameter (1.21.7) allows redefining the error code to 403.
+
+       EMBEDDED VARIABLES
+
+       The ngx_http_auth_jwt_module module supports embedded variables:
+
+         $jwt_header_name
+       returns the value of a specified JOSE header
+
+         $jwt_claim_name
+       returns the value of a specified JWT claim   For nested claims and claims including a dot (“.”), the value of the variable cannot be evaluated; the auth_jwt_claim_set directive should be used instead.
+
+       Variable values for tokens encrypted with JWE are available only after decryption which occurs during the Access phase.
+
+         $jwt_payload
+       returns the decrypted top-level payload of nested or encrypted tokens (1.21.2). For nested tokens returns the enclosed JWS token. For encrypted tokens returns JSON with claims.
+
+nginx manual                            bundled documentation

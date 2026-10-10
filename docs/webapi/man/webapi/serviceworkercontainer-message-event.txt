@@ -1,0 +1,68 @@
+WEBAPI.SERVICEWORKERCONTAINER-MESSAGE-EVENT(1) Sandbox manual WEBAPI.SERVICEWORKERCONTAINER-MESSAGE-EVENT(1)
+
+       NAME
+
+       ServiceWorkerContainer: message event - The message event is used in a page controlled by a service worker to receive messages from the service worker.
+
+       SERVICEWORKERCONTAINER: MESSAGE EVENT
+
+       The message event is used in a page controlled by a service worker to receive messages from the service worker.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("message", (event) => { })
+
+         onmessage = (event) => { }
+
+       EVENT TYPE
+
+       A MessageEvent. Inherits from Event.
+
+       MessageEvent
+
+       EXAMPLES
+
+       In this example the service worker get the client's ID from a fetch event and then sends it a message using Client.postMessage:
+
+         // service-worker.js
+         async function messageClient(clientId) {
+           const client = await clients.get(clientId);
+           client.postMessage("Hi client!");
+         }
+
+         addEventListener("fetch", (event) => {
+           messageClient(event.clientId);
+           event.respondWith(() => {
+             // …
+           });
+         });
+
+       The client can receive the message by listening to the message event:
+
+         // main.js
+         navigator.serviceWorker.addEventListener("message", (message) => {
+           console.log(message);
+         });
+
+       Alternatively, the client can receive the message with the onmessage event handler:
+
+         // main.js
+         navigator.serviceWorker.onmessage = (message) => {
+           console.log(message);
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Service workers basic code example
+        * Using web workers
+
+Web APIs manual                         from the official documentation

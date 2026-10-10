@@ -1,0 +1,203 @@
+ARCH.AVAHI(1)                    Sandbox manual                    ARCH.AVAHI(1)
+
+       From Wikipedia:Avahi (software):
+
+       Avahi is a free Zero-configuration networking (zeroconf) implementation, including a system for multicast DNS/DNS-SD service discovery. It allows programs to publish and discover services and hosts running on a local network with no specific configuration. For example you can plug into a network and instantly find printers to print to, files to look at and people to talk to. It is licensed under the GNU Lesser General Public License (LGPL).
+
+       INSTALLATION
+
+       Install the avahi package and enable the avahi-daemon.service or avahi-daemon.socket if you want to use the socket activation.
+
+       Note systemd-resolved has a built-in mDNS service, make sure to disable systemd-resolved's multicast DNS resolver/responder or disable systemd-resolved.service entirely before using Avahi.
+
+       USING AVAHI
+
+       HOSTNAME RESOLUTION
+
+       Avahi provides local hostname resolution using a "hostname.local" naming scheme. To enable it, install the nss-mdns package and start/enable avahi-daemon.service.
+
+       Then, edit the file /etc/nsswitch.conf and change the hosts line to include mdns_minimal [NOTFOUND=return] before resolve and dns:
+
+         hosts: mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns
+
+       Note
+
+        * If you experience slowdowns in resolving .local hosts (or you do not want to use IPv6) try to use mdns4_minimal and mdns4 instead of mdns_minimal and mdns respectively.
+        * The line above makes nss-mdns authoritative for the .local domain, unless your unicast DNS server responds to SOA queries for the top level local name, or if the request has more than two labels. See nss-mdns activation notes.
+          * systemd-resolved responds to these queries even if its mDNS support is disabled. See #systemd-resolved prevents nss-mdns from working.
+          * More info about nss configuration can be found on nss-mymachines(8) and in Avahi docs.
+
+       CONFIGURING MDNS FOR CUSTOM TLD
+
+       The mdns_minimal module handles queries for the .local TLD only. Note the [NOTFOUND=return], which specifies that if mdns_minimal cannot find *.local, it will not continue to search for it in dns, myhostname, etc.
+
+       In case you want Avahi to support other TLDs, you should:
+
+        * replace mdns_minimal [NOTFOUND=return] with the full mdns module. There also are IPv4-only and IPv6-only modules mdns[46](_minimal)
+        * customize /etc/avahi/avahi-daemon.conf with the domain-name of your choice
+        * whitelist Avahi custom TLDs in /etc/mdns.allow
+
+       TOOLS
+
+       Avahi includes several utilities which help you discover the services running on a network. For example, run this to discover services in your network:
+
+         $ avahi-browse --all --ignore-local --resolve --terminate
+
+       If this command yields nothing, it is likely due to a firewall blocking mDNS traffic.
+
+       If you just want to do an mDNS query to resolve a .local hostname to an IP address (similar to dig or nslookup), use:
+
+         $ avahi-resolve-host-name some-host-name.local
+
+       Note that the getent hosts command can do both DNS and mDNS lookups.
+
+       The Avahi Zeroconf Browser avahi-discover shows the various services on your network. Note that it needs Avahi's optional dependencies gtk3, python-dbus and python-gobject. You can also browse SSH and VNC Servers using bssh and bvnc respectively.
+
+       FIREWALL
+
+       Be sure to open UDP port 5353 if you are using a firewall.
+
+       LINK-LOCAL (BONJOUR/ZEROCONF) CHAT
+
+       Avahi can be used for Bonjour protocol support under Linux. Check Wikipedia:Comparison of instant messaging clients or List of applications/Internet#Instant messaging clients for a list of clients supporting the Bonjour protocol.
+
+       OBTAINING IPV4LL IP ADDRESS
+
+       The dhcpcd client can attempt to obtain an IPv4LL address if it failed to get one via DHCP. By default this option is disabled. To enable it, comment noipv4ll string:
+
+         /etc/dhcpcd.conf
+
+         ...
+         #noipv4ll
+         ...
+
+       Alternatively, run avahi-autoipd:
+
+         # avahi-autoipd -D
+
+       ADDING SERVICES
+
+       Avahi advertises the services whose *.service files are found in /etc/avahi/services. Files in this directory must be readable by the avahi user/group.
+
+       If you want to advertise a service for which there is no *.service file, it is very easy to create your own. As an example, let us say you wanted to advertise a quote of the day (QOTD) service operating per RFC:865 on TCP port 17 which you are running on your machine
+
+       The first thing to do is to determine the <type>. avahi.service(5) indicates that the type should be "the DNS-SD service type for this service. e.g. '_http._tcp'". Since the DNS-SD register was merged into the IANA register in 2010, we look for the service name on the IANA register or in /etc/services file. The service name shown there is qotd. Since we are running QOTD on tcp, we now know the service is _qotd._tcp and the port (per IANA and RFC 865) is 17.
+
+       Our service file is thus:
+
+         qotd.service
+
+         <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+         <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+
+         <service-group>
+
+           <name replace-wildcards="yes">%h</name>
+
+           <service>
+             <type>_qotd._tcp</type>
+             <port>17</port>
+           </service>
+
+         </service-group>
+
+       For more complicated scenarios, such as advertising services running on a different server, DNS sub-types and so on, consult avahi.service(5).
+
+       Keep in mind that Avahi does not support arbitrary strings in the <type> field, you can only set values known in service database of Avahi. If you want to register something custom you will likely have to edit the database definition, build an updated version and distribute it to your hosts.
+
+       SSH
+
+       Avahi comes with an example service file to advertise an SSH server. To enable it:
+
+         # cp /usr/share/doc/avahi/ssh.service /etc/avahi/services/
+
+       FILE SHARING
+
+       NFS
+
+       If you have an NFS share set up, you can use Avahi to be able to automount them in Zeroconf-enabled browsers (such as Konqueror on KDE and Finder on macOS) or file managers such as GNOME/Files.
+
+       Create a .service file in /etc/avahi/services with the following contents:
+
+         /etc/avahi/services/nfs_Zephyrus_Music.service
+
+         <?xml version="1.0" standalone='no'?>
+         <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+         <service-group>
+           <name replace-wildcards="yes">NFS Music Share on %h</name>
+           <service>
+             <type>_nfs._tcp</type>
+             <port>2049</port>
+             <txt-record>path=/data/shared/Music</txt-record>
+           </service>
+         </service-group>
+
+       The port is correct if you have insecure as an option in your /etc/exports; otherwise, it needs to be changed (note that insecure is needed for macOS clients). The path is the path to your export, or a subdirectory of it. For some reason the automount functionality has been removed from Leopard, however a script is available. This was based upon this post.
+
+       SAMBA
+
+       With the Avahi daemon running on both the server and client, the file manager on the client should automatically find the server.
+
+       VSFTPD
+
+       You can also auto-discover regular FTP servers, such as vsftpd. Install the vsftpd package and change the settings of vsftpd according to your own personal preferences (see vsftpd.conf(5)).
+
+       Create a .service file in /etc/avahi/services with the following contents:
+
+         /etc/avahi/services/ftp.service
+
+         <?xml version="1.0" standalone='no'?>
+         <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+         <service-group>
+           <name>FTP file sharing</name>
+           <service>
+             <type>_ftp._tcp</type>
+             <port>21</port>
+           </service>
+         </service-group>
+
+       The FTP server should now be advertised by Avahi. You should now be able to find the FTP server from a file manager on another computer in your network. You might need to enable #Hostname resolution on the client.
+
+       TROUBLESHOOTING
+
+       HOSTNAME CHANGES WITH APPENDING INCREMENTING NUMBERS
+
+       This can happen if you have not disabled systemd-resolved's multicast DNS resolver. This is also a known bug that is caused by a hostname race condition. One possible workaround is disabling IPv6 to attempt to prevent the race condition. If multiple interfaces are present use allow-interfaces to limit Avahi to a single interface. Another possible workaround is to disable the cache to prevent Avahi from checking for host name conflicts altogether, but this prevents Avahi from performing lookups.
+
+       SYSTEMD-RESOLVED PREVENTS NSS-MDNS FROM WORKING
+
+       nss-mdns only works if the DNS server listed in /etc/resolv.conf returns NXDOMAIN to SOA queries for the "local" domain.[1]
+
+       Check if your configured DNS server answers the SOA query for the "local" domain with NXDOMAIN first. For example:
+
+         $ host -t SOA local
+
+       If the DNS server responds with NXDOMAIN, you do not need to follow the steps below. Avahi should be able to find resources in the network normally, even if using systemd-resolved.
+
+       In older versions of systemd-resolved the global setting for MulticastDNS=no in resolved.conf(5) lead to Avahi-incompatible response codes for the "local" domain. This resulted in Avahi not finding resources (printers) correctly. See systemd issue 21659 for reference.
+
+       However, if the DNS query above fails to return NXDOMAIN for the "local" domain, you can use the full mdns NSS module instead of mdns_minimal and create /etc/mdns.allow to allow only the "local" domain. For example:
+
+         /etc/nsswitch.conf
+
+         hosts: mymachines mdns [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns
+
+         /etc/mdns.allow
+
+         .local.
+         .local
+
+       Note The above solution will break reverse lookups in networking utilities such as mtr and traceroute. These applications will attempt to do a reverse lookup via Avahi and time out instead of falling back to other DNS services. This seems similar to Debian issue 433943 where the recommendation is, unfortunately, to use mdns_minimal instead of mdns.
+
+       ECONNREFUSED (CONNECTION REFUSED) ON AVAHI SOCKET
+
+       If your Avahi instance starts and operates correctly, but nss does not seem to forward requests to mdns, this may be caused by stuck socket /run/avahi-daemon/socket. This can be verified e.g. with strace. In this case you may have to restart both avahi-daemon.service and avahi-daemon.socket to make it work correctly.
+
+       SEE ALSO
+
+        * Avahi - Official project website
+        * Wikipedia:Avahi (software)
+        * iTunes (includes Bonjour) - Enable Zeroconf on Windows
+        * http://www.zeroconf.org/
+
+ArchWiki manual                         bundled documentation

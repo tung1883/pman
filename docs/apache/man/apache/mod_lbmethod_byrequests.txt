@@ -1,0 +1,68 @@
+APACHE.MOD_LBMETHOD_BYREQUESTS(1) Sandbox manual APACHE.MOD_LBMETHOD_BYREQUESTS(1)
+
+       REQUEST COUNTING ALGORITHM
+
+       Enabled via lbmethod=byrequests, the idea behind this scheduler is that we distribute the requests among the various workers to ensure that each gets their configured share of the number of requests. It works as follows:
+
+       lbfactor is how much we expect this worker to work, or the workers' work quota. This is a normalized value representing their "share" of the amount of work to be done.
+
+       lbstatus is how urgent this worker has to work to fulfill its quota of work.
+
+       The worker is a member of the load balancer, usually a remote host serving one of the supported protocols.
+
+       We distribute each worker's work quota to the worker, and then look which of them needs to work most urgently (biggest lbstatus). This worker is then selected for work, and its lbstatus reduced by the total work quota we distributed to all workers. Thus the sum of all lbstatus does not change(*) and we distribute the requests as desired.
+
+       If some workers are disabled, the others will still be scheduled correctly.
+
+         for each worker in workers
+             worker lbstatus += worker lbfactor
+             total factor    += worker lbfactor
+             if worker lbstatus > candidate lbstatus
+                 candidate = worker
+
+         candidate lbstatus -= total factor
+
+       If a balancer is configured as follows:
+
+         worker | a | b | c | d
+         lbfactor | 25 | 25 | 25 | 25
+         lbstatus | 0 | 0 | 0 | 0
+       And b gets disabled, the following schedule is produced:
+
+         worker | a | b | c | d
+         lbstatus | -50 | 0 | 25 | 25
+         lbstatus | -25 | 0 | -25 | 50
+         lbstatus | 0 | 0 | 0 | 0
+         (repeat)
+       That is it schedules: a c d a c d a c d ... Please note that:
+
+         worker | a | b | c | d
+         lbfactor | 25 | 25 | 25 | 25
+       Has the exact same behavior as:
+
+         worker | a | b | c | d
+         lbfactor | 1 | 1 | 1 | 1
+       This is because all values of lbfactor are normalized with respect to the others. For:
+
+         worker | a | b | c
+         lbfactor | 1 | 4 | 1
+       worker b will, on average, get 4 times the requests that a and c will.
+
+       The following asymmetric configuration works as one would expect:
+
+         worker | a | b
+         lbfactor | 70 | 30
+         lbstatus | -30 | 30
+         lbstatus | 40 | -40
+         lbstatus | 10 | -10
+         lbstatus | -20 | 20
+         lbstatus | -50 | 50
+         lbstatus | 20 | -20
+         lbstatus | -10 | 10
+         lbstatus | -40 | 40
+         lbstatus | 30 | -30
+         lbstatus | 0 | 0
+         (repeat)
+       That is after 10 schedules, the schedule repeats and 7 a are selected with 3 b interspersed.
+
+Apache HTTP Server manual               bundled documentation

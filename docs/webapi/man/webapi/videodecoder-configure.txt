@@ -1,0 +1,106 @@
+WEBAPI.VIDEODECODER-CONFIGURE(1) Sandbox manual WEBAPI.VIDEODECODER-CONFIGURE(1)
+
+       NAME
+
+       VideoDecoder: configure() method - windowanddedicated
+
+       VIDEODECODER: CONFIGURE() METHOD
+
+       window_and_dedicated
+
+       The configure() method of the VideoDecoder interface enqueues a control message to configure the video decoder for decoding chunks.
+
+       SYNTAX
+
+         configure(config)
+
+       PARAMETERS
+
+        * config
+          * : An object containing the following members:
+            * codec
+              * : A string containing a valid codec string. See "codecs" parameter for details on codec string construction.
+            * description (optional)
+              * : An ArrayBuffer, a TypedArray, or a DataView containing a sequence of codec specific bytes, commonly known as extradata.
+            * codedWidth (optional)
+              * : An integer representing the width of the VideoFrame in pixels, including any non-visible padding, before any ratio adjustments.
+            * codedHeight (optional)
+              * : An integer representing the height of the VideoFrame in pixels, including any non-visible padding, before any ratio adjustments.
+            * displayAspectWidth (optional)
+              * : An integer representing the horizontal dimension of the VideoFrame in pixels when displayed.
+            * displayAspectHeight (optional)
+              * : An integer representing the vertical dimension of the VideoFrame in pixels when displayed.
+            * colorSpace (optional)
+              * : An object representing a VideoColorSpace, containing the following members:
+                * primaries
+                  * : A string representing the color gamut of the video sample. One of:
+                    * "bt709"
+                    * "bt470bg"
+                    * "smpte170m"
+                * transfer
+                  * : A string representing transfer characteristics. One of:
+                    * "bt709"
+                    * "smpte170m"
+                    * "iec61966-2-1"
+                * matrix
+                  * : A string representing a matrix coefficient. One of:
+                    * "rgb"
+                    * "bt709"
+                    * "bt470bg"
+                    * "smpte170m"
+            * hardwareAcceleration (optional)
+              * : A hint as to the hardware acceleration method to use. One of:
+                * "no-preference"
+                * "prefer-hardware"
+                * "prefer-software"
+            * optimizeForLatency (optional)
+              * : A boolean. If true this is a hint that the selected decoder should be optimized to minimize the number of EncodedVideoChunk objects that have to be decoded before a VideoFrame is output.
+            * flip (optional)
+              * : A boolean. If true, horizontal mirroring is applied. Defaults to false.
+            * rotation (optional)
+              * : An integer representing the rotation (0, 90, 180, or 270) in degrees clockwise. Defaults to 0. Arbitrary numbers (including negatives) are rounded to the next quarter turn.
+       > The registrations in the WebCodecs Codec Registry link to a specification detailing whether and how to populate the optional description member.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the provided config is invalid.
+        * InvalidStateError DOMException
+          * : Thrown if the state is "closed".
+        * NotSupportedError DOMException
+          * : Thrown if the provided config is valid but the user agent cannot provide a codec that can decode this profile.
+
+       EXAMPLES
+
+       The following example creates a new VideoDecoder and configures it with the "vp8" codec, a codedWidth of 640 pixels and a codedHeight of 480 pixels.
+
+         const init = {
+           output: handleFrame,
+           error(e) {
+             console.log(e.message);
+           },
+         };
+
+         const config = {
+           codec: "vp8",
+           codedWidth: 640,
+           codedHeight: 480,
+         };
+
+         let decoder = new VideoDecoder(init);
+         decoder.configure(config);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * VideoDecoder.isConfigSupported()
+        * Codec String Support Table
+
+Web APIs manual                         from the official documentation

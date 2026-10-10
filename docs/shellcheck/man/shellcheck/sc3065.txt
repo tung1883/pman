@@ -1,0 +1,37 @@
+SHELLCHECK.SC3065(1)             Sandbox manual             SHELLCHECK.SC3065(1)
+
+       NAME
+
+       In POSIX sh, test -k is undefined. - if [ -k file ]
+
+       IN POSIX SH, TEST -K IS UNDEFINED
+
+       IN POSIX SH, TEST -K IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         if [ -k file ]
+         then
+           echo "File has sticky bit set"
+         fi
+
+       CORRECT CODE
+
+         if [ -n "$(find file -prune -perm /1000)" ]
+         then
+           echo "File has sticky bit set"
+         fi
+
+       RATIONALE
+
+       test -k file and [ -k file ] are not defined by POSIX. To ensure compatibility with all target systems, use find instead.
+
+       EXCEPTIONS
+
+       None. If you are targeting a shell that supports test -k, specify it in the shebang.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

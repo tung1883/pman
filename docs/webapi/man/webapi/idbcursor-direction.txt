@@ -1,0 +1,70 @@
+WEBAPI.IDBCURSOR-DIRECTION(1)    Sandbox manual    WEBAPI.IDBCURSOR-DIRECTION(1)
+
+       NAME
+
+       IDBCursor: direction property - The direction read-only property of the
+
+       IDBCURSOR: DIRECTION PROPERTY
+
+       The direction read-only property of the IDBCursor interface is a string that returns the direction of traversal of the cursor (set using IDBObjectStore.openCursor for example). See the Value section below for possible values.
+
+       VALUE
+
+       A string indicating the direction in which the cursor is traversing the data. Possible values are:
+
+        * next
+          * : The cursor is opened at the start of the source.
+        * nextunique
+          * : The cursor is opened at the start of the source.
+       For every key with duplicate values, only the record closest to the start is yielded.
+
+        * prev
+          * : The cursor is opened at the end of the source.
+        * prevunique
+          * : The cursor is opened at the end of the source.
+       For every key with duplicate values, only the record closest to the start is yielded.
+
+       EXAMPLES
+
+       In this simple fragment we create a transaction, retrieve an object store, then use a cursor to iterate through all the records in the object store. Within each iteration we log the direction of the cursor.
+
+       > We can't change the direction of travel of the cursor using
+       > the direction property, as it is read-only. We specify the direction of
+       > travel using the 2nd argument of IDBObjectStore.openCursor.
+       The cursor does not require us to select the data based on a key; we can just grab all of it. Also note that in each iteration of the loop, you can grab data from the current record under the cursor object using cursor.value.foo. For a complete working example, see our IDBCursor example (View the example live).
+
+         function backwards() {
+           list.textContent = "";
+           const transaction = db.transaction(["rushAlbumList"], "readonly");
+           const objectStore = transaction.objectStore("rushAlbumList");
+
+           objectStore.openCursor(null, "prev").onsuccess = (event) => {
+             const cursor = event.target.result;
+             if (cursor) {
+               const listItem = document.createElement("li");
+               listItem.textContent = `${cursor.value.albumTitle}, ${cursor.value.year}`;
+               list.appendChild(listItem);
+
+               console.log(cursor.direction);
+               cursor.continue();
+             } else {
+               console.log("Entries displayed backwards.");
+             }
+           };
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

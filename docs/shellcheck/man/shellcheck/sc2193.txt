@@ -1,0 +1,37 @@
+SHELLCHECK.SC2193(1)             Sandbox manual             SHELLCHECK.SC2193(1)
+
+       NAME
+
+       The arguments to this comparison can never be equal. Make sure your syntax is correct. - ShellCheck has determined that the two values you're comparing can never be equal.
+
+       THE ARGUMENTS TO THIS COMPARISON CAN NEVER BE EQUAL. MAKE SURE YOUR SY
+
+       THE ARGUMENTS TO THIS COMPARISON CAN NEVER BE EQUAL. MAKE SURE YOUR SY
+
+       PROBLEMATIC CODE
+
+         [ $var+1 == 5 ]              # Unevaluated math
+         [ "{$var}" == "value" ]      # Swapped around $ and {
+         [ "$(cmd1) | cmd2" == "42" ] # Ended with ) too soon
+         [[ "$var " == *.png ]]       # Trailing space
+
+       CORRECT CODE
+
+         [ $((var+1)) == 5 ]          # Evaluated math
+         [ "${var}" == "value" ]      # Correct variable expansion
+         [ "$(cmd1 | cmd2)" == "42" ] # Correct command substitution
+         [[ "$var" == *.png ]]        # No trailing space
+
+       RATIONALE
+
+       ShellCheck has determined that the two values you're comparing can never be equal.
+
+       Most of the time, this happens because of a syntax issue that introduced unintended literal characters into one of the arguments.
+
+       The left-hand side in the problematic examples will always contain (respectively) curly braces, pipe and trailing space. The right-hand sides are literal values and a pattern without trailing spaces, so they will never be equal. The statement is therefore useless, strongly indicating a bug.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

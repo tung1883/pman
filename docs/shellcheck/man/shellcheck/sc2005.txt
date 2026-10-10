@@ -1,0 +1,49 @@
+SHELLCHECK.SC2005(1)             Sandbox manual             SHELLCHECK.SC2005(1)
+
+       NAME
+
+       Useless echo? Instead of echo $(cmd), just use cmd - echo "$(whoami)"
+
+       USELESS ECHO INSTEAD OF ECHO (CMD), JUST USE CMD
+
+       PROBLEMATIC CODE
+
+         echo "$(whoami)"
+
+       CORRECT CODE
+
+         whoami
+
+       RATIONALE
+
+       ShellCheck found the unnecessary construct echo "$(somecommand here)".
+
+       This is generally due to a misunderstanding about what echo does. It has no role in "showing on screen" or similar, but simply writes a string to standard output. This is also how all other programs output data.
+
+       echo "$(somecommand)" will capture the output somecommand writes to standard output and write it to standard output, where it was already going. At best this is a no-op, but it may have several other negative effects:
+
+        * It disables parallel processing in pipelines, such as echo "$(find . -name '*.iso')" | xargs sha1sum which does not allow iterating files and checksumming at the same time. Similarly, users don't see incremental updates as programs run.
+        * It introduces shell and echo related pitfalls like being unable to output the string -n, stripping NUL bytes and trailing linefeeds, and expanding escape sequences in some shells but not others.
+        * It suppresses the exit code of the command, so that echo "$(grep '^user:' /etc/passwd)" no longer returns with failure when the user is not found.
+        * It does not allow programs to tailor their output for terminals, such as ls vs echo "$(ls)" where the former outputs columns and colors according to user preferences, while the latter doesn't.
+        * It uses unnecessary memory to buffer up the data before writing it where it was already going.
+       To avoid all this, simply replace echo "$(somecommand)" with somecommand as in the example. It's shorter, faster, and more correct.
+
+       EXCEPTIONS
+
+       If you are relying on one of the otherwise detrimental effects for correctness, you can consider one of:
+
+         # Suppress exit code without the other negative effects
+         cmd || true
+
+         # Disable tty specific output without the other negative effects
+         cmd | cat
+
+         # Buffer up potentially large output without using more memory or modifying the content in any way
+         cmd > file.tmp
+         cat file.tmp
+
+         # Exactly like `echo "$(cmd)"`, but allows output like `-n` and works the same across shells
+         printf '%s\n' "$(cmd)"
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,40 @@
+SHELLCHECK.SC2188(1)             Sandbox manual             SHELLCHECK.SC2188(1)
+
+       NAME
+
+       This redirection doesn't have a command. Move to its command (or use true as no-op). - echo "Report for $(date +%F)"
+
+       THIS REDIRECTION DOESN'T HAVE A COMMAND. MOVE TO ITS COMMAND (OR USE T
+
+       THIS REDIRECTION DOESN'T HAVE A COMMAND. MOVE TO ITS COMMAND (OR USE T
+
+       PROBLEMATIC CODE
+
+         {
+           echo "Report for $(date +%F)"
+           uptime
+           df -h
+         }
+           > report.txt
+
+       CORRECT CODE
+
+         {
+           echo "Report for $(date +%F)"
+           uptime
+           df -h
+         } > report.txt
+
+       RATIONALE
+
+       ShellCheck found a redirection that doesn't actually redirect from/to anything.
+
+       This could indicate a bug, such as in the problematic code where an additional linefeed causes report.txt to be truncated instead of containing report output, or in foo & > bar, where either foo &> bar or foo > bar & was intended.
+
+       However, it could also be intentionally used to truncate a file or check that it's readable. You can make this more explicit for both ShellCheck and human readers by using true or : as a dummy command, e.g. true > file or : > file.
+
+       EXCEPTIONS
+
+       There are no semantic problems with using > foo over true > foo, so if you don't see this as a potential source of bugs or confusion, you can [[ignore]] it.
+
+ShellCheck manual                       from the official documentation

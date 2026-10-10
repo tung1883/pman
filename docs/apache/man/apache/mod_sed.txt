@@ -1,0 +1,67 @@
+APACHE.MOD_SED(1)                Sandbox manual                APACHE.MOD_SED(1)
+
+       SAMPLE CONFIGURATION
+
+       ADDING AN OUTPUT FILTER
+
+         # In the following example, the sed filter will change the string
+         # "monday" to "MON" and the string "sunday" to SUN in html documents
+         # before sending to the client.
+         <Directory "/var/www/docs/sed">
+             AddOutputFilter Sed html
+             OutputSed "s/monday/MON/g"
+             OutputSed "s/sunday/SUN/g"
+         </Directory>
+
+       ADDING AN INPUT FILTER
+
+         # In the following example, the sed filter will change the string
+         # "monday" to "MON" and the string "sunday" to SUN in the POST data
+         # sent to PHP.
+         <Directory "/var/www/docs/sed">
+             AddInputFilter Sed php
+             InputSed "s/monday/MON/g"
+             InputSed "s/sunday/SUN/g"
+         </Directory>
+
+       SED COMMANDS
+
+       Complete details of the sed command can be found from the sed manual page.
+
+         b
+       Branch to the label specified (similar to goto).
+
+         h
+       Copy the current line to the hold buffer.
+
+         H
+       Append the current line to the hold buffer.
+
+         g
+       Copy the hold buffer to the current line.
+
+         G
+       Append the hold buffer to the current line.
+
+         x
+       Swap the contents of the hold buffer and the current line.
+
+       INPUTSED DIRECTIVE
+
+         Description: | Sed command to filter request data (typically POST data)
+         Syntax: | InputSed sed-command
+         Context: | directory, .htaccess
+         Status: | Experimental
+         Module: | mod_sed
+       The InputSed directive specifies the sed command to execute on the request data e.g., POST data.
+
+       OUTPUTSED DIRECTIVE
+
+         Description: | Sed command for filtering response content
+         Syntax: | OutputSed sed-command
+         Context: | directory, .htaccess
+         Status: | Experimental
+         Module: | mod_sed
+       The OutputSed directive specifies the sed command to execute on the response.
+
+Apache HTTP Server manual               bundled documentation

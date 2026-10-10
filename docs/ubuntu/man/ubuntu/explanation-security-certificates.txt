@@ -1,0 +1,106 @@
+UBUNTU.EXPLANATION-SECURITY-CERTIFICATES(1) Sandbox manual UBUNTU.EXPLANATION-SECURITY-CERTIFICATES(1)
+
+       NAME
+
+       About certificates - One of the most common forms of cryptography today is public-key cryptography. Public-key cryptography uses a public key and a private key.
+
+       ABOUT CERTIFICATES
+
+       One of the most common forms of cryptography today is public-key cryptography. Public-key cryptography uses a public key and a private key. The system works by encrypting information using the public key. The information can then only be decrypted using the private key.
+
+       A common use for public-key cryptography is encrypting application traffic using a Secure Socket Layer (SSL) or Transport Layer Security (TLS) connection. One example: configuring Apache to provide HTTPS, the HTTP protocol over SSL/TLS. This allows a way to encrypt traffic using a protocol that does not itself provide encryption.
+
+       A certificate is a way to distribute a public key and other information about a server and the organization responsible for it. Certificates can be digitally signed by a Certification Authority (CA), which is a trusted third party that has confirmed the information contained in the certificate is accurate.
+
+       TYPES OF CERTIFICATES
+
+       To set up a secure server using public-key cryptography, in most cases, you send your certificate request (including your public key), proof of your company's identity, and payment to a CA. The CA verifies the certificate request and your identity, and then sends back a certificate for your secure server. Alternatively, you can create your own self-signed certificate.
+
+       > Note: Self-signed certificates should not be used in most production environments.
+       Continuing the HTTPS example, a CA-signed certificate provides two important capabilities that a self-signed certificate does not:
+
+        * Browsers will (usually) automatically recognize the CA signature and allow a secure connection to be made without prompting the user.
+        * When a CA issues a signed certificate, it is guaranteeing the identity of the organization providing the web pages to the browser.
+       Most software supporting SSL/TLS has a list of CAs whose certificates they automatically accept. If a browser encounters a certificate whose authorising CA is not in the list, the browser asks the user to either accept or decline the connection. Also, other applications may generate an error message when using a self-signed certificate.
+
+       The process of getting a certificate from a CA is fairly straightforward. A quick overview is as follows:
+
+        1. Create a private and public encryption key pair.
+        1. Create a certificate signing request based on the public key. The certificate request contains information about your server and the company hosting it.
+        1. Send the certificate request, along with documents proving your identity, to a CA. We cannot tell you which certificate authority to choose. Your decision may be based on your past experiences, or on the experiences of your friends or colleagues, or purely on monetary factors.
+       Once you have decided upon a CA, you need to follow the instructions they provide on how to obtain a certificate from them.
+
+        1. When the CA is satisfied that you are indeed who you claim to be, they send you a digital certificate.
+        1. Install this certificate on your secure server, and configure the appropriate applications to use the certificate.
+
+       GENERATE A CERTIFICATE SIGNING REQUEST (CSR)
+
+       Whether you are getting a certificate from a CA or generating your own self-signed certificate, the first step is to generate a key.
+
+       If the certificate will be used by service daemons, such as Apache, Postfix, Dovecot, etc., a key without a passphrase is often appropriate. Not having a passphrase allows the services to start without manual intervention, usually the preferred way to start a daemon.
+
+       This section will cover generating a key both with or without a passphrase. The non-passphrase key will then be used to generate a certificate that can be used with various service daemons.
+
+       > Warning: Running your secure service without a passphrase is convenient because you will not need to enter the passphrase every time you start your secure service. But it is insecure -- a compromise of the key means a compromise of the server as well.
+       To generate the keys for the Certificate Signing Request (CSR) run the following command from a terminal prompt:
+
+         openssl genrsa -des3 -out server.key 2048
+
+         Generating RSA private key, 2048 bit long modulus
+         ..........................++++++
+         .......++++++
+         e is 65537 (0x10001)
+         Enter pass phrase for server.key:
+
+       You can now enter your passphrase. For best security, it should contain at least eight characters. The minimum length when specifying -des3 is four characters. As a best practice it should also include numbers and/or punctuation and not be a word in a dictionary. Also remember that your passphrase is case-sensitive.
+
+       Re-type the passphrase to verify. Once you have re-typed it correctly, the server key is generated and stored in the server.key file.
+
+       Now create the insecure key, the one without a passphrase, and shuffle the key names:
+
+         openssl rsa -in server.key -out server.key.insecure
+         mv server.key server.key.secure
+         mv server.key.insecure server.key
+
+       The insecure key is now named server.key, and you can use this file to generate the CSR without a passphrase.
+
+       To create the CSR, run the following command at a terminal prompt:
+
+         openssl req -new -key server.key -out server.csr
+
+       It will prompt you to enter the passphrase. If you enter the correct passphrase, it will prompt you to enter 'Company Name', 'Site Name', 'Email ID', etc. Once you enter all these details, your CSR will be created and it will be stored in the server.csr file.
+
+       You can now submit this CSR file to a CA for processing. The CA will use this CSR file and issue the certificate. Alternatively, you can create self-signed certificate using this CSR.
+
+       CREATING A SELF-SIGNED CERTIFICATE
+
+       To create the self-signed certificate, run the following command at a terminal prompt:
+
+         openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+
+       The above command will prompt you to enter the passphrase. Once you enter the correct passphrase, your certificate will be created and it will be stored in the server.crt file.
+
+       > Warning: If your secure server is to be used in a production environment, you probably need a CA-signed certificate. It is not recommended to use self-signed certificates in production environments.
+
+       INSTALL THE CERTIFICATE
+
+       You can install the key file server.key and certificate file server.crt, or the certificate file issued by your CA, by running following commands at a terminal prompt:
+
+         sudo cp server.crt /etc/ssl/certs
+         sudo cp server.key /etc/ssl/private
+
+       Now configure any applications that have the ability to use public-key cryptography so that they use the certificate and key files. For example, Apache can provide HTTPS, Dovecot can provide IMAPS and POP3S, etc.
+
+       CERTIFICATION AUTHORITY
+
+       If the services on your network require more than a few self-signed certificates it may be worth the additional effort to set up your own internal Certification Authority (CA). Using certificates signed by your own CA allows the various services using the certificates to easily trust other services using certificates issued from the same CA.
+
+       Creating and running your own CA is covered step by step in obtain-tls-certificates.
+
+       FURTHER READING
+
+        * The Wikipedia HTTPS page has more information regarding HTTPS.
+        * For more information on OpenSSL see the OpenSSL Home Page.
+        * Also, O'Reilly's "Network Security with OpenSSL" is a good in-depth reference.
+
+Ubuntu Server manual                    from the official documentation

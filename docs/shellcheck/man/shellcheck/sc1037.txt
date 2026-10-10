@@ -1,0 +1,42 @@
+SHELLCHECK.SC1037(1)             Sandbox manual             SHELLCHECK.SC1037(1)
+
+       NAME
+
+       Braces are required for positionals over 9, e.g. ${10}. - echo "Ninth parameter: $9"
+
+       BRACES ARE REQUIRED FOR POSITIONALS OVER 9, E.G. 10
+
+       BRACES ARE REQUIRED FOR POSITIONALS OVER 9, E.G. 10
+
+       PROBLEMATIC CODE
+
+         echo "Ninth parameter: $9"
+         echo "Tenth parameter: $10"
+
+       CORRECT CODE
+
+         echo "Ninth parameter: $9"
+         echo "Tenth parameter: ${10}"
+
+       RATIONALE
+
+       For legacy reasons, $10 is interpreted as the variable $1 followed by the literal string 0.
+
+       Curly braces are needed to tell the shell that both digits are part of the parameter expansion.
+
+       EXCEPTIONS
+
+       If you wanted the trailing digits to be literal, ${1}0 will make this clear to both humans and ShellCheck.
+
+       In dash, $10 is (wrongly) interpreted as ${10}, so some 'reversed' care should also be taken:
+
+         bash -c 'set a b c d e f g h i j; echo $10 ${1}0' # POSIX: a0 a0
+         dash -c 'set a b c d e f g h i j; echo $10 ${1}0' # WRONG: j a0
+
+       RELATED RESOURCES
+
+        * BashFaq: How can I access positional parameters after $9?
+        * StackOverflow: How to handle more than 10 parameters in shell
+        * Autoconf Manual: Shell Substitutions - documents some non-POSIX older shells too
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,88 @@
+WEBAPI.XMLHTTPREQUEST-SEND(1)    Sandbox manual    WEBAPI.XMLHTTPREQUEST-SEND(1)
+
+       NAME
+
+       XMLHttpRequest: send() method - windowandworkerexceptservice
+
+       XMLHTTPREQUEST: SEND() METHOD
+
+       window_and_worker_except_service
+
+       The XMLHttpRequest method send() sends the request to the server.
+
+       If the request is asynchronous (which is the default), this method returns as soon as the request is sent and the result is delivered using events. If the request is synchronous, this method doesn't return until the response has arrived.
+
+       send() accepts an optional parameter which lets you specify the request's body; this is primarily used for requests such as PUT. If the request method is GET or HEAD, the body parameter is ignored and the request body is set to null.
+
+       If no Accept header has been set using the setRequestHeader(), an Accept header with the type "/" (any type) is sent.
+
+       SYNTAX
+
+         send()
+         send(body)
+
+       PARAMETERS
+
+        * body (optional)
+          * : A body of data to be sent in the XHR request. This can be:
+            * A Document, in which case it is serialized before being sent.
+            * An XMLHttpRequestBodyInit, which per the Fetch spec can be a Blob, an ArrayBuffer, a TypedArray, a DataView, a FormData, a URLSearchParams, or a string.
+            * null
+       If no value is specified for the body, a default value of null is used.
+
+       The best way to send binary content (e.g., in file uploads) is by using a TypedArray, a DataView or a Blob object in conjunction with the send() method.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if send() has already been invoked for the request, and/or the request is complete.
+        * NetworkError DOMException
+          * : Thrown if the resource type to be fetched is a Blob, and the method is not GET.
+
+       EXAMPLE: GET
+
+         const xhr = new XMLHttpRequest();
+         xhr.open("GET", "/server", true);
+
+         xhr.onload = () => {
+           // Request finished. Do processing here.
+         };
+
+         xhr.send(null);
+         // xhr.send('string');
+         // xhr.send(new Blob());
+         // xhr.send(new Int8Array());
+         // xhr.send(document);
+
+       EXAMPLE: POST
+
+         const xhr = new XMLHttpRequest();
+         xhr.open("POST", "/server", true);
+
+         // Send the proper header information along with the request
+         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+         xhr.onreadystatechange = () => {
+           // Call a function when the state changes.
+           if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+             // Request finished. Do processing here.
+           }
+         };
+         xhr.send("foo=bar&lorem=ipsum");
+         // xhr.send(new Int8Array());
+         // xhr.send(document);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using XMLHttpRequest
+        * HTML in XMLHttpRequest
+
+Web APIs manual                         from the official documentation

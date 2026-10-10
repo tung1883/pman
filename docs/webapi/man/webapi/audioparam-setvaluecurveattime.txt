@@ -1,0 +1,107 @@
+WEBAPI.AUDIOPARAM-SETVALUECURVEATTIME(1) Sandbox manual WEBAPI.AUDIOPARAM-SETVALUECURVEATTIME(1)
+
+       NAME
+
+       AudioParam: setValueCurveAtTime() method - The
+
+       AUDIOPARAM: SETVALUECURVEATTIME() METHOD
+
+       The setValueCurveAtTime() method of the AudioParam interface schedules the parameter's value to change following a curve defined by a list of values.
+
+       The curve is a linear interpolation between the sequence of values defined in an array of floating-point values, which are scaled to fit into the given interval starting at startTime and a specific duration.
+
+       SYNTAX
+
+         setValueCurveAtTime(values, startTime, duration)
+
+       PARAMETERS
+
+        * values
+          * : An array of floating-point numbers representing the value curve the
+       AudioParam will change through along the specified duration. Every value in the array must be a finite number; if any value is NaN, Infinity, or -Infinity, a TypeError exception is thrown.
+
+        * startTime
+          * : A double representing the time (in seconds) after the AudioContext
+       was first created that the change in value will happen. If this value is lower than AudioContext.currentTime, it is clamped to currentTime.
+
+        * duration
+          * : A double representing the total time (in seconds) over which the parameter's
+       value will change following the specified curve. The specified values are spaced equally along this duration.
+
+       RETURN VALUE
+
+       A reference to this AudioParam object. Some older browser implementations of this interface return undefined.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the specified array of values has fewer than 2 items in it.
+        * RangeError
+          * : Thrown if the specified startTime is either negative or a non-finite value, or
+       duration is not a finite, strictly positive number.
+
+        * TypeError
+          * : Thrown if one or more of the values in the values array is non-finite. Non-finite
+       values are NaN, Infinity, and -Infinity.
+
+       USAGE NOTES
+
+       When the parameter's value finishes following the curve, its value is guaranteed to match the last value in the set of values specified in the values parameter.
+
+       > Some early implementations of the Web Audio API did not ensure
+       > this to be the case, causing unexpected results.
+
+       EXAMPLES
+
+       In this example, we have a media source with a single button (see the webaudio-examples repo for the source code, or view the example live.) When this button is pressed, setValueCurveAtTime() is used to change the gain value between the values contained in the waveArray array:
+
+         // create audio context
+         const audioCtx = new AudioContext();
+
+         // set basic variables for example
+         const myAudio = document.querySelector("audio");
+
+         const valueCurve = document.querySelector(".value-curve");
+
+         // Create a MediaElementAudioSourceNode
+         // Feed the HTMLMediaElement into it
+         const source = audioCtx.createMediaElementSource(myAudio);
+
+         // Create a gain node and set its gain value to 0.5
+         const gainNode = audioCtx.createGain();
+         gainNode.gain.value = 0.5;
+         const currGain = gainNode.gain.value;
+
+         // connect the AudioBufferSourceNode to the gainNode
+         // and the gainNode to the destination
+         source.connect(gainNode);
+         gainNode.connect(audioCtx.destination);
+
+         // set button to do something onclick
+
+         const waveArray = new Float32Array(9);
+         waveArray[0] = 0.5;
+         waveArray[1] = 1;
+         waveArray[2] = 0.5;
+         waveArray[3] = 0;
+         waveArray[4] = 0.5;
+         waveArray[5] = 1;
+         waveArray[6] = 0.5;
+         waveArray[7] = 0;
+         waveArray[8] = 0.5;
+
+         valueCurve.onclick = () => {
+           gainNode.gain.setValueCurveAtTime(waveArray, audioCtx.currentTime, 2);
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       Versions before Chrome 46 use nearest neighbor instead of linear interpolation.
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

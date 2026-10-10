@@ -1,0 +1,61 @@
+WEBAPI.SHADOWROOT-ELEMENTFROMPOINT(1) Sandbox manual WEBAPI.SHADOWROOT-ELEMENTFROMPOINT(1)
+
+       NAME
+
+       ShadowRoot: elementFromPoint() method - The elementFromPoint() method, available on the ShadowRoot object, returns the element at the topmost shadow root layer at the specified coo
+
+       SHADOWROOT: ELEMENTFROMPOINT() METHOD
+
+       {{Non-standard_Header}}
+
+       The elementFromPoint() method, available on the ShadowRoot object, returns the element at the topmost shadow root layer at the specified coordinates relative to the viewport (the shadow root highest in the display z-order, that is able to receive pointer events). Shadow root elements that have pointer-events set to none are ignored.
+
+       If the specified point is outside the bounds of the shadow root, the result is undefined.
+
+       SYNTAX
+
+         elementFromPoint(x, y)
+
+       PARAMETERS
+
+        * x
+          * : The horizontal coordinate of a point, relative to the left edge of the current viewport.
+        * y
+          * : The vertical coordinate of a point, relative to the top edge of the current viewport.
+
+       RETURN VALUE
+
+       An Element; the topmost shadow root element located at the specified coordinates, if any.
+
+       EXAMPLES
+
+       In this example, assuming the existence of a in the HTML, we define a . If the appended custom element abuts the top-left corner of the viewport, or any portion of it overlaps that corner, the element that is the topmost layer at that point in the custom element will have a thin, dashed red border.
+
+         customElements.define(
+           "my-custom-element",
+           class extends HTMLElement {
+             constructor() {
+               super();
+               const template = document.getElementById("my-custom-element-template");
+               const sRoot = this.attachShadow({ mode: "open" });
+               sRoot.appendChild(document.importNode(template.content, true));
+               // get the topmost element in the top left corner of the viewport
+               const srElement = this.shadowRoot.elementFromPoint(0, 0);
+               // apply a border to that element
+               srElement.style.border = "1px dashed red";
+             }
+           },
+         );
+
+       SPECIFICATIONS
+
+       Not part of any standard.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ShadowRoot.elementsFromPoint()
+        * Document.elementFromPoint()
+
+Web APIs manual                         from the official documentation

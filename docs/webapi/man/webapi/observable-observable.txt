@@ -1,0 +1,90 @@
+WEBAPI.OBSERVABLE-OBSERVABLE(1)  Sandbox manual  WEBAPI.OBSERVABLE-OBSERVABLE(1)
+
+       NAME
+
+       Observable: Observable() constructor - The Observable() constructor creates a new Observable object whose values and lifecycle are controlled by a callback.
+
+       OBSERVABLE: OBSERVABLE() CONSTRUCTOR
+
+       The Observable() constructor creates a new Observable object whose values and lifecycle are controlled by a callback.
+
+       SYNTAX
+
+         new Observable(callback)
+
+       PARAMETERS
+
+        * callback
+          * : A function that starts producing values when a subscription starts. Its return value is ignored. The function is called with the following argument:
+            * subscriber
+              * : A Subscriber used to send values with next(), signal completion or an error with complete() or error(), and register cleanup with addTeardown().
+
+       RETURN VALUE
+
+       A new Observable object.
+
+       DESCRIPTION
+
+       The constructor does not call callback immediately. It runs synchronously when the first observer subscribes. Additional observers share the same Subscriber until it becomes inactive. A later subscription starts the callback again with a new subscriber. See Creating an observable for the subscription lifecycle.
+
+       > This shared-subscription behavior may change. A proposal to give each observer its own Subscriber would make each subscription start a separate execution instead of reusing an active subscription.
+       If callback throws an exception, it is passed to subscriber.error(). An async callback's returned promise is ignored, so its rejection is not handled automatically. Handle asynchronous errors explicitly and forward them with subscriber.error() while the subscriber is active.
+
+       EXAMPLES
+
+       OBSERVING ELEMENT SIZE
+
+       This example reports a resizable panel's dimensions using a custom observable backed by ResizeObserver. Clicking Stop unsubscribes and disconnects the observer. Click Restart to observe the panel again. See Observing element size for a more detailed explanation.
+
+         <div id="panel">Drag the corner to resize.</div>
+         <p></p>
+         <button>Stop</button>
+         <button id="restart" disabled>Restart</button>
+
+         #panel {
+           width: 200px;
+           height: 100px;
+           resize: both;
+           overflow: auto;
+           border: 1px solid;
+         }
+
+         const panel = document.querySelector("#panel");
+         const output = document.querySelector("p");
+         const btn = document.querySelector("button");
+
+         const sizes = new Observable((subscriber) => {
+           const observer = new ResizeObserver(([entry]) => {
+             subscriber.next(entry.contentRect);
+           });
+           observer.observe(panel);
+           subscriber.addTeardown(() => observer.disconnect());
+         });
+
+         const restart = document.querySelector("#restart");
+
+         function start() {
+           restart.disabled = true;
+           sizes.takeUntil(btn.when("click")).subscribe({
+             next({ width, height }) {
+               output.textContent = `${Math.round(width)} × ${Math.round(height)} pixels`;
+             },
+             complete() {
+               restart.disabled = false;
+             },
+           });
+         }
+
+         restart.when("click").subscribe(start);
+         start();
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Creating custom observables
+        * Observable explainer
+
+Web APIs manual                         from the official documentation

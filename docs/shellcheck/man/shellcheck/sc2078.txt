@@ -1,0 +1,39 @@
+SHELLCHECK.SC2078(1)             Sandbox manual             SHELLCHECK.SC2078(1)
+
+       NAME
+
+       This expression is constant. Did you forget a $ somewhere? - if [ "myvar" ]
+
+       THIS EXPRESSION IS CONSTANT. DID YOU FORGET A SOMEWHERE
+
+       THIS EXPRESSION IS CONSTANT. DID YOU FORGET A SOMEWHERE
+
+       PROBLEMATIC CODE
+
+         if [ "myvar" ]
+         then
+           echo "myvar is set"
+         fi
+
+       CORRECT CODE
+
+         if [ "$myvar" ]
+         then
+           echo "myvar is set"
+         fi
+
+       RATIONALE
+
+       ShellCheck has found a [ .. ] or [[ .. ]] statement that just contains a literal string. Such a check does not do anything useful, and will always be true (or always false, for empty strings).
+
+       This is usually due to missing $ or bad quoting:
+
+       if [[ STY ] # always true if [[ $STY ]] # checks variable $STY
+
+       if [[ 'grep foo bar' ]] # always true if [[ grep foo bar ]] # checks grep output (poorly) if grep -q foo bar # checks for grep match (preferred)
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

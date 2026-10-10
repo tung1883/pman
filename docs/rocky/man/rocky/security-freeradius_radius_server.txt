@@ -1,0 +1,87 @@
+ROCKY.SECURITY-FREERADIUS_RADIUS_SERVER(1) Sandbox manual ROCKY.SECURITY-FREERADIUS_RADIUS_SERVER(1)
+
+       NAME
+
+       FreeRADIUS 802.1X Server - RADIUS is an AAA (authentication, authorization and accounting) protocol to manage network access. FreeRADIUS is the de-facto RADIUS server
+
+       FREERADIUS 802.1X SERVER
+
+       INTRODUCTION
+
+       RADIUS is an AAA (authentication, authorization and accounting) protocol to manage network access. FreeRADIUS is the de-facto RADIUS server for Linux and other Unix-like systems.
+
+       PREREQUISITES AND ASSUMPTIONS
+
+       The following are minimum requirements for this procedure:
+
+        * The ability to run commands as the root user or use sudo to elevate privileges
+        * A RADIUS client, such as a router, switch or Wi-Fi access point
+
+       INSTALLING FREERADIUS
+
+       You can install FreeRADIUS from the dnf repositories:
+
+         dnf install -y freeradius
+
+       CONFIGURING FREERADIUS
+
+       With the packages installed, you need to first generate the TLS encryption certificates for FreeRADIUS:
+
+         cd /etc/raddb/certs
+         ./bootstrap
+
+       Subsequently, you will need to add users to authenticate. Open the users file:
+
+         cd ..
+         vi users
+
+       In the file, insert the following:
+
+         user    Cleartext-Password := "password"
+
+       Replace user and password with the respective desired username and password.
+
+       Know that the password is not hashed, so if an attacker gets hold of the users file they could gain unauthorized access to your protected network.
+
+       You can also do an MD5-hashed or Crypt-hashed password. To generate an MD5-hashed password, run:
+
+         echo -n password | md5sum | awk '{print $1}'
+
+       Replace password with the desired password.
+
+       You will get a hash of 5f4dcc3b5aa765d61d8327deb882cf99. In users file, insert the following instead:
+
+         user    MD5-Password := "5f4dcc3b5aa765d61d8327deb882cf99"
+
+       You will also need to define clients. This is to prevent unauthorized access to our RADIUS server. Edit the clients.conf file:
+
+         vi clients.conf
+
+       Insert the following:
+
+         client 172.20.0.254 {
+                 secret = secret123
+         }
+
+       Replace 172.20.0.254 and secret123 with the IP address and secret value the clients will use. Repeat this for other clients.
+
+       ENABLING FREERADIUS
+
+       After the initial configuration, you can start radiusd:
+
+         systemctl enable --now radiusd
+
+       CONFIGURING RADIUS ON A SWITCH
+
+       After setting up the FreeRADIUS server, you will configure a RADIUS client.
+
+       As an example, the author's MikroTik switch can be configured like:
+
+         /radius
+         add address=172.20.0.12 secret=secret123 service=dot1x
+         /interface dot1x server
+         add interface=combo3
+
+       Replace 172.20.0.12 with the FreeRADIUS server's IP address and secret123 with the secret you set earlier.
+
+Rocky Linux manual                      from the official documentation

@@ -1,0 +1,114 @@
+CSHARP.FUNDAMENTALS-CREATING-AND-THROWING-EXCEPTIONS(1) Sandbox manual CSHARP.FUNDAMENTALS-CREATING-AND-THROWING-EXCEPTIONS(1)
+
+       NAME
+
+       Create and throw exceptions - Learn about creating and throwing exceptions. Exceptions are used to indicate that an error has occurred while running a program.
+
+       CREATE AND THROW EXCEPTIONS
+
+       Exceptions are used to indicate that an error has occurred while running the program. Exception objects that describe an error are created and then thrown with the throw statement or expression. The runtime then searches for the most compatible exception handler.
+
+       Programmers should throw exceptions when one or more of the following conditions are true:
+
+        * The method can't complete its defined functionality. For example, if a parameter to a method has an invalid value:
+        * An inappropriate call to an object is made, based on the object state. One example might be trying to write to a read-only file. In cases where an object state doesn't allow an operation, throw an instance of InvalidOperationException or an object based on a derivation of this class. The following code is an example of a method that throws an InvalidOperationException object:
+        * When an argument to a method causes an exception. In this case, the original exception should be caught and an ArgumentException instance should be created. The original exception should be passed to the constructor of the ArgumentException as the InnerException* parameter:
+       > The preceding example shows how to use the InnerException property. It's intentionally simplified. In practice, you should check that an index is in range before using it. You could use this technique of wrapping an exception when a member of a parameter throws an exception you couldn't anticipate before calling the member.
+       Exceptions contain a property named StackTrace*. This string contains the name of the methods on the current call stack, together with the file name and line number where the exception was thrown for each method. A StackTrace* object is created automatically by the common language runtime (CLR) from the point of the throw statement, so that exceptions must be thrown from the point where the stack trace should begin.
+
+       All exceptions contain a property named Message*. This string should be set to explain the reason for the exception. Information that is sensitive to security shouldn't be put in the message text. In addition to Message*, ArgumentException contains a property named ParamName* that should be set to the name of the argument that caused the exception to be thrown. In a property setter, ParamName* should be set to value.
+
+       Public and protected methods throw exceptions whenever they can't complete their intended functions. The exception class thrown is the most specific exception available that fits the error conditions. These exceptions should be documented as part of the class functionality, and derived classes or updates to the original class should retain the same behavior for backward compatibility.
+
+       THINGS TO CONSIDER WHEN THROWING EXCEPTIONS
+
+       The following list identifies practices to consider when throwing exceptions:
+
+        * Don't use exceptions to change the flow of a program as part of ordinary execution. Use exceptions to report and handle error conditions.
+        * Exceptions shouldn't be returned as a return value or parameter instead of being thrown.
+        * Don't throw Exception, SystemException, NullReferenceException, or IndexOutOfRangeException intentionally from your own source code.
+        * Don't create exceptions that can be thrown in debug mode but not release mode. To identify run-time errors during the development phase, use Debug Assert instead.
+
+       EXCEPTIONS IN TASK-RETURNING METHODS
+
+       Methods declared with the async modifier have some special considerations when it comes to exceptions. Exceptions thrown in an async method are stored in the returned task and don't emerge until, for example, the task is awaited. For more information about stored exceptions, see Asynchronous exceptions.
+
+       We recommend that you validate arguments and throw any corresponding exceptions, such as ArgumentException and ArgumentNullException, before entering the asynchronous parts of your methods. That is, these validation exceptions should emerge synchronously before the work starts. The following code snippet shows an example where, if the exceptions are thrown, the ArgumentException exceptions would emerge synchronously, whereas the InvalidOperationException would be stored in the returned task.
+
+         ﻿namespace exceptions;
+
+         class KitchenHelpers
+         {
+             public class Toast { }
+
+             // Non-async, task-returning method.
+             // Within this method (but outside of the local function),
+             // any thrown exceptions emerge synchronously.
+             public static Task<Toast> ToastBreadAsync(int slices, int toastTime)
+             {
+                 if (slices is < 1 or > 4)
+                 {
+                     throw new ArgumentException(
+                         "You must specify between 1 and 4 slices of bread.",
+                         nameof(slices));
+                 }
+
+                 if (toastTime < 1)
+                 {
+                     throw new ArgumentException(
+                         "Toast time is too short.", nameof(toastTime));
+                 }
+
+                 return ToastBreadAsyncCore(slices, toastTime);
+
+                 // Local async function.
+                 // Within this function, any thrown exceptions are stored in the task.
+                 static async Task<Toast> ToastBreadAsyncCore(int slices, int time)
+                 {
+                     for (int slice = 0; slice < slices; slice++)
+                     {
+                         Console.WriteLine("Putting a slice of bread in the toaster");
+                     }
+                     // Start toasting.
+                     await Task.Delay(time);
+
+                     if (time > 2_000)
+                     {
+                         throw new InvalidOperationException("The toaster is on fire!");
+                     }
+
+                     Console.WriteLine("Toast is ready!");
+
+                     return new Toast();
+                 }
+             }
+         }
+
+       DEFINE EXCEPTION CLASSES
+
+       Programs can throw a predefined exception class in the System namespace (except where previously noted), or create their own exception classes by deriving from Exception. The derived classes should define at least three constructors: one parameterless constructor, one that sets the message property, and one that sets both the Message* and InnerException properties. For example:
+
+         ﻿using System;
+
+         namespace Exceptions
+         {
+             [Serializable]
+             public class InvalidDepartmentException : Exception
+             {
+                 public InvalidDepartmentException() : base() { }
+                 public InvalidDepartmentException(string message) : base(message) { }
+                 public InvalidDepartmentException(string message, Exception inner) : base(message, inner) { }
+             }
+         }
+
+       Add new properties to the exception class when the data they provide is useful to resolving the exception. If new properties are added to the derived exception class, ToString() should be overridden to return the added information.
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information, see [Exceptions] and [The throw statement] in the [C# Language Specification]. The language specification is the definitive source for C# syntax and usage.
+
+       SEE ALSO
+
+        * Exception Hierarchy
+
+C# manual                               from the official documentation

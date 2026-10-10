@@ -1,0 +1,40 @@
+WEBAPI.PERFORMANCEELEMENTTIMING-LOADTIME(1) Sandbox manual WEBAPI.PERFORMANCEELEMENTTIMING-LOADTIME(1)
+
+       NAME
+
+       PerformanceElementTiming: loadTime property - The loadTime read-only property of the PerformanceElementTiming interface always returns 0 for text. For images it returns the time which is
+
+       PERFORMANCEELEMENTTIMING: LOADTIME PROPERTY
+
+       The loadTime read-only property of the PerformanceElementTiming interface always returns 0 for text. For images it returns the time which is the latest between the time the image resource is loaded and the time it is attached to the element.
+
+       VALUE
+
+       A DOMHighResTimeStamp with the loadTime of the element. Always 0 for text.
+
+       EXAMPLES
+
+       LOGGING LOADTIME
+
+       In this example an element is being observed by adding the elementtiming attribute. A PerformanceObserver is registered to get all performance entries of type "element". The buffered flag is used to access data from before the observer was created. Calling entry.loadTime returns the loadTime of the image element.
+
+         <img
+           src="image.jpg"
+           alt="a nice image"
+           elementtiming="big-image"
+           id="myImage" />
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             if (entry.identifier === "big-image") {
+               console.log(entry.loadTime);
+             }
+           });
+         });
+         observer.observe({ type: "element", buffered: true });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

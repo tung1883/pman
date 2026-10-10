@@ -1,0 +1,41 @@
+SHELLCHECK.SC3056(1)             Sandbox manual             SHELLCHECK.SC3056(1)
+
+       NAME
+
+       In POSIX sh, name matching prefixes are undefined. - (or "In dash, ... are not supported." when using dash)
+
+       IN POSIX SH, NAME MATCHING PREFIXES ARE UNDEFINED
+
+       IN POSIX SH, NAME MATCHING PREFIXES ARE UNDEFINED
+
+       (or "In dash, ... are not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         echo "${!ANDROID_*}"
+
+       CORRECT CODE
+
+       The easiest solution is to switch to a shell that does support name matching prefixes, like bash:
+
+         #!/bin/bash
+         echo "${!ANDROID_*}"
+
+       Alternatively, extract the data you want from env or set
+
+       RATIONALE
+
+       Using ${!name*} to find all variable names with a given prefix is a bash and ksh extension that dash and POSIX sh does not support.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

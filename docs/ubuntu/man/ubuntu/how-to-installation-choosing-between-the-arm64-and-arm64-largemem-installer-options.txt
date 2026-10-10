@@ -1,0 +1,62 @@
+UBUNTU.HOW-TO-INSTALLATION-CHOOSING-BETWEEN-THE-ARM64-AND-ARM64-LARGEMEM-INSTALLER-OPTIONS(1) Sandbox manual UBUNTU.HOW-TO-INSTALLATION-CHOOSING-BETWEEN-THE-ARM64-AND-ARM64-LARGEMEM-INSTALLER-OPTIONS(1)
+
+       NAME
+
+       Choose between the arm64 and arm64+largemem installer options - From 22.04.4 onward, Ubuntu will provide both 4k and 64k page size kernel ISOs for ARM servers.
+
+       CHOOSE BETWEEN THE ARM64 AND ARM64+LARGEMEM INSTALLER OPTIONS
+
+       From 22.04.4 onward, Ubuntu will provide both 4k and 64k page size kernel ISOs for ARM servers.
+
+       The default arm64 ISO will still use a 4k page size kernel, while the new 64k page size kernel ISO is named arm64+largemem.
+
+        * arm64 4k ISO download
+        * arm64+largemem ISO download
+
+       THE DEFAULT ARM64 (4K) OPTION
+
+       The 4k page size is the default in our arm64 ISO. It is suitable for workloads with many small processes, or environments with tight memory constraints. Typical use cases include (but are not limited to):
+
+        * Web servers
+        * Embedded devices
+        * General purpose/build systems
+
+       THE ARM64+LARGEMEM (64K) OPTION
+
+       Our new arm64+largemem ISO includes a kernel with 64k page size. A larger page size can increase throughput, but comes at the cost of increased memory use, making this option more suitable for servers with plenty of memory. Typical use cases for this ISO include:
+
+        * Machine learning
+        * Databases with many large entries
+        * High performance computing
+        * etc.
+       > Note: It is possible to switch between these kernel options after installation by installing the other kernel alternative, rebooting, and selecting the new kernel from the GRUB menu.
+
+       SWITCHING KERNELS POST-INSTALLATION
+
+       To switch between the two kernels after the initial installation you can run the following commands, replacing with linux-generic-64k when swapping to 64k, or linux-generic when swapping to the default 4k kernel:
+
+         sudo apt update
+
+         sudo apt install <desired-kernel>
+
+         sudo reboot
+
+       Upon reboot you will be greeted with the GRUB menu (you may need to hold down the Shift key during the reboot for it to appear). Select “Advanced Options for Ubuntu”, then select your desired kernel to boot into Ubuntu.
+
+       To permanently change the default to your , replace with generic or generic-64k and then run the following command:
+
+         echo "GRUB_FLAVOUR_ORDER=<desired-flavour>" | sudo tee /etc/default/grub.d/local-order.cfg
+
+       To apply your change run:
+
+         sudo update-grub
+
+       Future boots will automatically use your new desired kernel flavour. You can verify this by rebooting using:
+
+         sudo reboot
+
+       And then running the following command to display the active kernel:
+
+         uname -r
+
+Ubuntu Server manual                    from the official documentation

@@ -1,0 +1,147 @@
+K8S.KUBECTL-KUBECTL_KUBERC-KUBECTL_KUBERC_SET(1) Sandbox manual K8S.KUBECTL-KUBECTL_KUBERC-KUBECTL_KUBERC_SET(1)
+
+       NAME
+
+       kubectl kuberc set - Set values in the kuberc configuration file.
+
+       KUBECTL KUBERC SET
+
+       ## SYNOPSIS
+
+       Set values in the kuberc configuration file.
+
+       Use --section to specify whether to set defaults or aliases.
+
+       For defaults: Sets default flag values for kubectl commands. The --command flag should specify only the command (e.g., "get", "create", "set env"), not resources.
+
+       For aliases: Creates command aliases with optional default flag values and arguments. Use --prependarg and --appendarg to include resources or other arguments.
+
+         kubectl kuberc set --section (defaults|aliases) --command COMMAND
+
+       ## EXAMPLES
+
+           # Set default output format for 'get' command
+           kubectl kuberc set --section defaults --command get --option output=wide
+
+           # Set default output format for a subcommand
+           kubectl kuberc set --section defaults --command "set env" --option output=yaml
+
+           # Create an alias 'getn' for 'get' command with prepended 'nodes' resource
+           kubectl kuberc set --section aliases --name getn --command get --prependarg nodes --option output=wide
+
+           # Create an alias 'runx' for 'run' command with appended arguments
+           kubectl kuberc set --section aliases --name runx --command run --option image=nginx --appendarg "--" --appendarg custom-arg1
+
+           # Overwrite an existing default
+           kubectl kuberc set --section defaults --command get --option output=json --overwrite
+
+           # Set the credential plugin policy and allowlist
+           kubectl kuberc set --section credentialplugin --policy Allowlist --allowlist-entry command=cloud-credential-helper
+
+       ## OPTIONS
+
+       
+
+       --allowlist-entry strings Allowlist entry the form field=value (can be specified multiple times)
+
+       --appendarg strings Argument to append to the command (can be specified multiple times, for aliases only)
+
+       --command string Command to configure (e.g., 'get', 'create', 'set env')
+
+       -h, --help help for set
+
+       --kuberc string Path to the kuberc file to use for preferences. This can be disabled by exporting KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
+
+       --name string Alias name (required for --section=aliases)
+
+       --option strings Flag option in the form flag=value (can be specified multiple times)
+
+       --overwrite Allow overwriting existing entries
+
+       --policy string Plugin policy to use for exec credential plugins, must be one of 'AllowAll', 'DenyAll' or 'Allowlist'
+
+       --prependarg strings Argument to prepend to the command (can be specified multiple times, for aliases only)
+
+       --section string Section to modify: 'defaults', 'aliases', or 'credentialplugin'
+
+       
+
+       ## PARENTOPTIONS
+
+       
+
+       --as string Username to impersonate for the operation. User could be a regular user or a service account in a namespace.
+
+       --as-group strings Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
+
+       --as-uid string UID to impersonate for the operation.
+
+       --as-user-extra strings User extras to impersonate for the operation, this flag can be repeated to specify multiple values for the same key.
+
+       --cache-dir string Default: "$HOME/.kube/cache" Default cache directory
+
+       --certificate-authority string Path to a cert file for the certificate authority
+
+       --client-certificate string Path to a client certificate file for TLS
+
+       --client-key string Path to a client key file for TLS
+
+       --cluster string The name of the kubeconfig cluster to use
+
+       --context string The name of the kubeconfig context to use
+
+       --disable-compression If true, opt-out of response compression for all requests to the server
+
+       --insecure-skip-tls-verify If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure
+
+       --kubeconfig string Path to the kubeconfig file to use for CLI requests.
+
+       --match-server-version Require server version to match client version
+
+       -n, --namespace string If present, the namespace scope for this CLI request
+
+       --password string Password for basic authentication to the API server
+
+       --profile string Default: "none" Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
+
+       --profile-output string Default: "profile.pprof" Name of the file to write the profile to
+
+       --proxy-url string Proxy URL to use for requests to the API server
+
+       --request-timeout string Default: "0" The length of time to wait before giving up on a single server request. Non-zero values should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don't timeout requests.
+
+       -s, --server string The address and port of the Kubernetes API server
+
+       --storage-driver-buffer-duration duration Default: 1m0s Writes in the storage driver will be buffered for this duration, and committed to the non memory backends as a single transaction
+
+       --storage-driver-db string Default: "cadvisor" database name
+
+       --storage-driver-host string Default: "localhost:8086" database host:port
+
+       --storage-driver-password string Default: "root" database password
+
+       --storage-driver-secure use secure connection with database
+
+       --storage-driver-table string Default: "stats" table name
+
+       --storage-driver-user string Default: "root" database username
+
+       --tls-server-name string Server name to use for server certificate validation. If it is not provided, the hostname used to contact the server is used
+
+       --token string Bearer token for authentication to the API server
+
+       --user string The name of the kubeconfig user to use
+
+       --username string Username for basic authentication to the API server
+
+       --version version[=true] --version, --version=raw prints version information and quits; --version=vX.Y.Z... sets the reported version
+
+       --warnings-as-errors Treat warnings received from the server as errors and exit with a non-zero exit code
+
+       
+
+       ## SEEALSO
+
+        * kubectl kuberc - Manage kuberc configuration files
+
+Kubernetes manual                       from the official documentation

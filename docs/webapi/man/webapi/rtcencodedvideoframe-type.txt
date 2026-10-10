@@ -1,0 +1,48 @@
+WEBAPI.RTCENCODEDVIDEOFRAME-TYPE(1) Sandbox manual WEBAPI.RTCENCODEDVIDEOFRAME-TYPE(1)
+
+       NAME
+
+       RTCEncodedVideoFrame: type property - windowanddedicated
+
+       RTCENCODEDVIDEOFRAME: TYPE PROPERTY
+
+       window_and_dedicated
+
+       The type read-only property of the RTCEncodedVideoFrame interface indicates whether this frame is a key frame or a delta frame.
+
+       VALUE
+
+       The type can have one of the following values:
+
+        * key
+          * : This is a "key frame", which contains all the information needed to render an image.
+       It can be decoded without reference to any other frames.
+
+        * delta
+          * : This is a "delta frame", which contains changes to an image relative to some previous frame.
+       The frame cannot be decoded without access to the frame(s) that it references.
+
+       EXAMPLES
+
+       The implementation of a transform() function in a WebRTC Encoded Transform can look at the type and modify the transform code based on whether it is dealing with a key frame or delta frame:
+
+         const transformer = new TransformStream({
+           async transform(encodedFrame, controller) {
+             if (encodedFrame.type === "key") {
+               // Apply key frame transformation
+             } else {
+               // Apply delta frame transformation
+             }
+             controller.enqueue(encodedFrame);
+           },
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using WebRTC Encoded Transforms
+
+Web APIs manual                         from the official documentation

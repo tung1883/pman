@@ -1,0 +1,55 @@
+WEBAPI.SPEECHSYNTHESISUTTERANCE-VOLUME(1) Sandbox manual WEBAPI.SPEECHSYNTHESISUTTERANCE-VOLUME(1)
+
+       NAME
+
+       SpeechSynthesisUtterance: volume property - The volume property of the SpeechSynthesisUtterance interface gets and sets the volume that the utterance will be spoken at.
+
+       SPEECHSYNTHESISUTTERANCE: VOLUME PROPERTY
+
+       The volume property of the SpeechSynthesisUtterance interface gets and sets the volume that the utterance will be spoken at.
+
+       If not set, the default value 1 will be used.
+
+       VALUE
+
+       A float that represents the volume value, between 0 (lowest) and 1 (highest.)
+
+       If SSML is used, this value will be overridden by prosody tags in the markup.
+
+       EXAMPLES
+
+         const synth = window.speechSynthesis;
+
+         const inputForm = document.querySelector("form");
+         const inputTxt = document.querySelector("input");
+         const voiceSelect = document.querySelector("select");
+
+         const voices = synth.getVoices();
+
+         // …
+
+         inputForm.onsubmit = (event) => {
+           event.preventDefault();
+
+           const utterThis = new SpeechSynthesisUtterance(inputTxt.value);
+           const selectedOption =
+             voiceSelect.selectedOptions[0].getAttribute("data-name");
+           for (const voice of voices) {
+             if (voice.name === selectedOption) {
+               utterThis.voice = voice;
+             }
+           }
+           utterThis.volume = 0.5;
+           synth.speak(utterThis);
+           inputTxt.blur();
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Speech API
+
+Web APIs manual                         from the official documentation

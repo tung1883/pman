@@ -1,0 +1,66 @@
+CSHARP.LINQ-CONVERTING-DATA-TYPES(1) Sandbox manual CSHARP.LINQ-CONVERTING-DATA-TYPES(1)
+
+       NAME
+
+       Converting Data Types (C#) - Conversion methods change the type of input objects. See conversion operations in LINQ queries in C#, such as Enumerable.AsEnumerable and En
+
+       CONVERTING DATA TYPES (C#)
+
+       Conversion methods change the type of input objects.
+
+       Conversion operations in LINQ queries are useful in various applications. Following are some examples:
+
+        * The AsEnumerable* method can be used to hide a type's custom implementation of a standard query operator.
+        * The OfType* method can be used to enable non-parameterized collections for LINQ querying.
+        * The ToArray*, ToDictionary*, ToList*, and ToLookup* methods can be used to force immediate query execution instead of deferring it until the query is enumerated.
+
+       METHODS
+
+       The following table lists the standard query operator methods that perform data-type conversions.
+
+       The conversion methods in this table whose names start with "As" change the static type of the source collection but don't enumerate it. The methods whose names start with "To" enumerate the source collection and put the items into the corresponding collection type.
+
+         Method Name  |  Description  |  C# Query Expression Syntax  |  More Information
+         AsEnumerable  |  Returns the input typed as IEnumerable1.  |  Not applicable.  |  AsEnumerable*
+         AsQueryable  |  Converts a (generic) IEnumerable to a (generic) IQueryable.  |  Not applicable.  |  AsQueryable*
+         Cast  |  Casts the elements of a collection to a specified type.  |  Use an explicitly typed range variable. For example: from string str in words  |  Cast* Cast*
+         OfType  |  Filters values, depending on their ability to be cast to a specified type.  |  Not applicable.  |  OfType* OfType*
+         ToArray  |  Converts a collection to an array. This method forces query execution.  |  Not applicable.  |  ToArray*
+         ToDictionary  |  Puts elements into a Dictionary2 based on a key selector function. This method forces query execution.  |  Not applicable.  |  ToDictionary*
+         ToList  |  Converts a collection to a List1. This method forces query execution.  |  Not applicable.  |  ToList*
+         ToLookup  |  Puts elements into a Lookup2 (a one-to-many dictionary) based on a key selector function. This method forces query execution.  |  Not applicable.  |  ToLookup*
+
+       QUERY EXPRESSION SYNTAX EXAMPLE
+
+       The following code example uses an explicitly typed range variable to cast a type to a subtype before accessing a member that is available only on the subtype.
+
+         IEnumerable people = students;
+
+         var query = from Student student in people
+                     where student.Year == GradeLevel.ThirdYear
+                     select student;
+
+         foreach (Student student in query)
+         {
+             Console.WriteLine(student.FirstName);
+         }
+
+       The equivalent query can be expressed using method syntax as shown in the following example:
+
+         IEnumerable people = students;
+
+         var query = people
+             .Cast<Student>()
+             .Where(student => student.Year == GradeLevel.ThirdYear);
+
+         foreach (Student student in query)
+         {
+             Console.WriteLine(student.FirstName);
+         }
+
+       SEE ALSO
+
+        * Linq
+        * from clause
+
+C# manual                               from the official documentation

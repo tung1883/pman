@@ -1,0 +1,87 @@
+WEBAPI.IDBDATABASE-VERSIONCHANGE-EVENT(1) Sandbox manual WEBAPI.IDBDATABASE-VERSIONCHANGE-EVENT(1)
+
+       NAME
+
+       IDBDatabase: versionchange event - The versionchange event is fired when a database structure change (upgradeneeded event send on an IDBOpenDBRequest or IDBFactory.deleteDatab
+
+       IDBDATABASE: VERSIONCHANGE EVENT
+
+       The versionchange event is fired when a database structure change (upgradeneeded event send on an IDBOpenDBRequest or IDBFactory.deleteDatabase) was requested elsewhere (most probably in another window/tab on the same computer).
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("versionchange", (event) => { })
+
+         onversionchange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       This example opens a database and, on success, adds a listener to versionchange:
+
+         // Open the database
+         const dBOpenRequest = window.indexedDB.open("Nonexistent", 4);
+
+         dBOpenRequest.onupgradeneeded = (event) => {
+           const db = event.target.result;
+           // Create an objectStore for this database
+           const objectStore = db.createObjectStore("toDoList", {
+             keyPath: "taskTitle",
+           });
+
+           // define what data items the objectStore will contain
+           objectStore.createIndex("hours", "hours", { unique: false });
+           objectStore.createIndex("minutes", "minutes", { unique: false });
+           objectStore.createIndex("day", "day", { unique: false });
+           objectStore.createIndex("month", "month", { unique: false });
+           objectStore.createIndex("year", "year", { unique: false });
+         };
+
+         dBOpenRequest.addEventListener("success", (event) => {
+           const db = event.target.result;
+           db.addEventListener("versionchange", (event) => {
+             console.log("The version of this database has changed");
+           });
+         });
+
+       The same example, using the onversionchange event handler property:
+
+         // Open the database
+         const dBOpenRequest = window.indexedDB.open("Nonexistent", 4);
+
+         dBOpenRequest.onupgradeneeded = (event) => {
+           const db = event.target.result;
+           // Create an objectStore for this database
+           const objectStore = db.createObjectStore("toDoList", {
+             keyPath: "taskTitle",
+           });
+
+           // define what data items the objectStore will contain
+           objectStore.createIndex("hours", "hours", { unique: false });
+           objectStore.createIndex("minutes", "minutes", { unique: false });
+           objectStore.createIndex("day", "day", { unique: false });
+           objectStore.createIndex("month", "month", { unique: false });
+           objectStore.createIndex("year", "year", { unique: false });
+         };
+
+         dBOpenRequest.onsuccess = (event) => {
+           const db = event.target.result;
+           db.onversionchange = (event) => {
+             console.log("The version of this database has changed");
+           };
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+
+Web APIs manual                         from the official documentation

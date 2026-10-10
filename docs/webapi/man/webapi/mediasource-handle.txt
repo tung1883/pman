@@ -1,0 +1,58 @@
+WEBAPI.MEDIASOURCE-HANDLE(1)     Sandbox manual     WEBAPI.MEDIASOURCE-HANDLE(1)
+
+       NAME
+
+       MediaSource: handle property - dedicated
+
+       MEDIASOURCE: HANDLE PROPERTY
+
+       dedicated
+
+       The handle read-only property of the MediaSource interface returns a MediaSourceHandle object, a proxy for the MediaSource that can be transferred from a dedicated worker back to the main thread and attached to a media element via its HTMLMediaElement.srcObject property.
+
+       > handle is only visible on MediaSource instances inside dedicated workers.
+       Each MediaSource object created inside a dedicated worker has its own distinct MediaSourceHandle. The handle getter will always return the MediaSourceHandle instance specific to the associated dedicated worker MediaSource instance. If the handle has already been transferred to the main thread using postMessage(), the handle instance in the worker is technically detached and can't be transferred again.
+
+       VALUE
+
+       A MediaSourceHandle object instance.
+
+       EXAMPLES
+
+       The handle property can be accessed inside a dedicated worker and the resulting MediaSourceHandle object is then transferred over to the thread that created the worker (in this case the main thread) via a postMessage() call:
+
+         // Inside dedicated worker
+         let mediaSource = new MediaSource();
+         let handle = mediaSource.handle;
+         // Transfer the handle to the context that created the worker
+         postMessage({ arg: handle }, [handle]);
+
+         mediaSource.addEventListener("sourceopen", () => {
+           // Await sourceopen on MediaSource before creating SourceBuffers
+           // and populating them with fetched media — MediaSource won't
+           // accept creation of SourceBuffers until it is attached to the
+           // HTMLMediaElement and its readyState is "open"
+         });
+
+       Over in the main thread, we receive the handle via a message event handler, attach it to a via its HTMLMediaElement.srcObject property, and play the video:
+
+         worker.addEventListener("message", (msg) => {
+           let mediaSourceHandle = msg.data.arg;
+           video.srcObject = mediaSourceHandle;
+           video.play();
+         });
+
+       > MediaSourceHandles cannot be successfully transferred into or via a shared worker or service worker.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * MSE-in-Workers Demo by Matt Wolenetz
+        * Media Source Extensions API
+        * MediaSource
+        * SourceBuffer
+
+Web APIs manual                         from the official documentation

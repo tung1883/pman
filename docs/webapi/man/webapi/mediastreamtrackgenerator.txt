@@ -1,0 +1,61 @@
+WEBAPI.MEDIASTREAMTRACKGENERATOR(1) Sandbox manual WEBAPI.MEDIASTREAMTRACKGENERATOR(1)
+
+       NAME
+
+       MediaStreamTrackGenerator - > [!NOTE]
+
+       MEDIASTREAMTRACKGENERATOR
+
+       {{Non-standard_Header}}
+
+       > Consider using VideoTrackGenerator instead.
+       The MediaStreamTrackGenerator interface of the Insertable Streams for MediaStreamTrack API creates a WritableStream that acts as a MediaStreamTrack source. The object consumes a stream of media frames as input, which can be audio or video frames.
+
+       CONSTRUCTOR
+
+        * MediaStreamTrackGenerator() (experimental) {{Non-standard_Inline}}
+          * : Creates a new MediaStreamTrackGenerator object which accepts either VideoFrame or AudioData objects.
+
+       INSTANCE PROPERTIES
+
+       _This interface also inherits properties from MediaStreamTrack._
+
+        * MediaStreamTrackGenerator.writable (experimental) {{Non-standard_Inline}}
+          * : A WritableStream.
+
+       INSTANCE METHODS
+
+       _This interface doesn't implement any specific methods, but inherits methods from MediaStreamTrack._
+
+       EXAMPLES
+
+       The following example is from the article Insertable streams for MediaStreamTrack, and demonstrates a barcode scanner application, which process barcodes and highlights them before writing the transformed frames to the writable stream of MediaStreamTrackGenerator.writable.
+
+         const stream = await getUserMedia({ video: true });
+         const videoTrack = stream.getVideoTracks()[0];
+
+         const trackProcessor = new MediaStreamTrackProcessor({ track: videoTrack });
+         const trackGenerator = new MediaStreamTrackGenerator({ kind: "video" });
+
+         const transformer = new TransformStream({
+           async transform(videoFrame, controller) {
+             const barcodes = await detectBarcodes(videoFrame);
+             const newFrame = highlightBarcodes(videoFrame, barcodes);
+             videoFrame.close();
+             controller.enqueue(newFrame);
+           },
+         });
+
+         trackProcessor.readable
+           .pipeThrough(transformer)
+           .pipeTo(trackGenerator.writable);
+
+       SEE ALSO
+
+        * VideoTrackGenerator
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

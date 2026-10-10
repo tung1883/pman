@@ -1,0 +1,39 @@
+SHELLCHECK.SC2226(1)             Sandbox manual             SHELLCHECK.SC2226(1)
+
+       NAME
+
+       This ln has no destination. Check the arguments, or specify . explicitly. - ln "$file $dir"
+
+       THIS LN HAS NO DESTINATION. CHECK THE ARGUMENTS, OR SPECIFY . EXPLICIT
+
+       THIS LN HAS NO DESTINATION. CHECK THE ARGUMENTS, OR SPECIFY . EXPLICIT
+
+       PROBLEMATIC CODE
+
+         ln "$file $dir"
+
+       or
+
+         ln /foo/bar/baz
+
+       CORRECT CODE
+
+         ln "$file" "$dir"
+
+       or
+
+         ln /foo/bar/baz .
+
+       RATIONALE
+
+       ShellCheck found a ln command with a single parameter. This may be because the source and destination was accidentally merged into a single argument, because the line was broken in an invalid way, or because you're using a non-standard invocation of ln that defaults to linking the argument into the current directory.
+
+       If you wanted to specify both source and destination, fix the ln statement.
+
+       If you wanted to link a file into the current directory, prefer using the more explicit and POSIX standard invocation ln /your/file .
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

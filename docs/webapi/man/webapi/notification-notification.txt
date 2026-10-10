@@ -1,0 +1,150 @@
+WEBAPI.NOTIFICATION-NOTIFICATION(1) Sandbox manual WEBAPI.NOTIFICATION-NOTIFICATION(1)
+
+       NAME
+
+       Notification: Notification() constructor - The Notification() constructor creates a new Notification object instance, which represents a user notification.
+
+       NOTIFICATION: NOTIFICATION() CONSTRUCTOR
+
+       The Notification() constructor creates a new Notification object instance, which represents a user notification.
+
+       > This constructor throws a TypeError when called in nearly all mobile browsers.
+       > Instead, you need to register a service worker and use ServiceWorkerRegistration.showNotification().
+
+       SYNTAX
+
+         new Notification(title)
+         new Notification(title, options)
+
+       PARAMETERS
+
+        * title
+          * : Defines a title for the notification, which is shown at the top of the notification window.
+        * options (optional)
+          * : An options object containing any custom settings that you want to apply to the notification.
+       The possible options are:
+
+            * actions (optional)
+              * : Must be unspecified or an empty array.
+       actions is only supported for persistent notifications fired from a service worker using ServiceWorkerRegistration.showNotification().
+
+            * badge (optional)
+              * : A string containing the URL of the image used to represent the notification when there isn't enough space to display the notification itself; for example, the Android Notification Bar.
+       On Android devices, the badge should support devices with up to 4x resolution, about 96x96px, and the image will be automatically masked.
+
+            * body (optional)
+              * : A string representing the body text of the notification, which is displayed below the title.
+       The default is the empty string.
+
+            * data (optional)
+              * : Arbitrary data that you want associated with the notification.
+       This can be of any structured-clonable data type. The default is null.
+
+            * dir (optional)
+              * : The direction in which to display the notification.
+       It defaults to auto, which just adopts the browser's language setting behavior, but you can override that behavior by setting values of ltr and rtl (although most browsers seem to ignore these settings.)
+
+            * icon (optional)
+              * : A string containing the URL of an icon to be displayed in the notification.
+            * image (optional)
+              * : A string containing the URL of an image to be displayed in the notification.
+            * lang (optional)
+              * : The notification's language, as specified using a string representing a BCP 47 language tag.
+       The default is the empty string.
+
+            * navigate (optional) (experimental)
+              * : A string containing a URL to navigate to when the user activates the notification.
+       When set, the user agent navigates to this URL instead of firing the click event. The value is parsed relative to the base URL of the page. See Notification.navigate for more information.
+
+            * renotify (optional)
+              * : A boolean value specifying whether the user should be notified after a new notification replaces an old one.
+       The default is false, which means they won't be notified. If true, tag must also be set.
+
+            * requireInteraction (optional)
+              * : Indicates that a notification should remain active until the user clicks or dismisses it, rather than closing automatically.
+       The default value is false.
+
+            * silent (optional)
+              * : A boolean value specifying whether the notification should be silent, i.e., no sounds or vibrations should be issued regardless of the device settings.
+       If set to true, the notification is silent; if set to null (the default value), the device's default settings are respected.
+
+            * tag (optional)
+              * : A string representing an identifying tag for the notification.
+       The default is the empty string.
+
+            * timestamp (optional)
+              * : A timestamp, given as Unix time in milliseconds, representing the time associated with the notification.
+       This could be in the past when a notification is used for a message that couldn't immediately be delivered because the device was offline, or in the future for a meeting that is about to start.
+
+            * vibrate (optional)
+              * : A vibration pattern for the device's vibration hardware to emit with the notification.
+       If specified, silent must not be true.
+
+       RETURN VALUE
+
+       An instance of the Notification object.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if:
+            * The constructor is called within the ServiceWorkerGlobalScope.
+            * The actions option is specified and is not empty.
+            * The silent option is true and the vibrate option is specified.
+            * The renotify option is true but the tag option is empty.
+        * DataCloneError DOMException
+          * : Thrown if serializing the data option failed for some reason.
+
+       DESCRIPTION
+
+       The constructor creates a new Notification object instance, which represents a user notification.
+
+       You must get permission to display notifications using Notification.requestPermission(). The permission may not be grantable, for example if the page is in private browsing mode.
+
+       This constructor throws a TypeError when called in nearly all mobile browsers, and this is unlikely to change, because web pages on mobile devices almost never "run in the background", which is the main use case for notifications. Instead, you need to register a service worker and use ServiceWorkerRegistration.showNotification(). See Chrome issue #481856 for more information.
+
+       EXAMPLES
+
+       For more examples, see the Notification page and Using the Notifications API.
+
+       BASIC EXAMPLE
+
+       This is a basic example that shows a notification if permission is already granted. This will not work on mobile devices.
+
+         if (Notification.permission === "granted") {
+           const notification = new Notification("Hi there!");
+         }
+
+       USING NOTIFICATION() AS A FALLBACK
+
+       This example shows a more robust approach that allows showing notifications on both desktop and mobile devices.
+
+       First we check if Notification is supported, and if permission has been granted, returning early if either condition is not met. We then check if there is an active service worker. If so, we use it to call ServiceWorkerRegistration.showNotification(); if not, we fall back to calling the constructor.
+
+         async function showNotification(title, options = {}) {
+           if (!("Notification" in window)) return;
+           if (Notification.permission !== "granted") return;
+
+           // Only use SW if one is already active — don't hang waiting
+           const swReg = navigator.serviceWorker?.controller
+             ? await navigator.serviceWorker.getRegistration()
+             : null;
+
+           if (swReg) {
+             await swReg.showNotification(title, options);
+           } else {
+             new Notification(title, options);
+           }
+         }
+
+       Note that this will still throw an error on a mobile device if the page does not have a service worker ready. Depending on your application, you might wrap this code in a try...catch block.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Notifications API
+
+Web APIs manual                         from the official documentation

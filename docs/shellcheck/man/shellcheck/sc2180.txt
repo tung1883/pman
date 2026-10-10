@@ -1,0 +1,38 @@
+SHELLCHECK.SC2180(1)             Sandbox manual             SHELLCHECK.SC2180(1)
+
+       NAME
+
+       Bash does not support multidimensional arrays. Use 1D or associative arrays. - foo[1][2]=bar
+
+       BASH DOES NOT SUPPORT MULTIDIMENSIONAL ARRAYS. USE 1D OR ASSOCIATIVE A
+
+       BASH DOES NOT SUPPORT MULTIDIMENSIONAL ARRAYS. USE 1D OR ASSOCIATIVE A
+
+       PROBLEMATIC CODE
+
+         foo[1][2]=bar
+         echo "${foo[1][2]}"
+
+       CORRECT CODE
+
+       In bash4, consider using associative arrays:
+
+         declare -A foo
+         foo[1,2]=bar
+         echo "${foo[1,2]}"
+
+       Otherwise, do your own index arithmetic:
+
+         size=10
+         foo[1*size+2]=bar
+         echo "${foo[1*size+2]}"
+
+       RATIONALE
+
+       Bash does not support multidimensional arrays. Rewrite it to use 1D arrays. Associative arrays map arbitrary strings to values, and are therefore useful since you can construct keys like "1,2,3" or "val1;val2;val3" to index them.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

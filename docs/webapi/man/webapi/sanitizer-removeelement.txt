@@ -1,0 +1,98 @@
+WEBAPI.SANITIZER-REMOVEELEMENT(1) Sandbox manual WEBAPI.SANITIZER-REMOVEELEMENT(1)
+
+       NAME
+
+       Sanitizer: removeElement() method - The removeElement() method of the Sanitizer interface sets the specified element be removed from the output when the sanitizer is used.
+
+       SANITIZER: REMOVEELEMENT() METHOD
+
+       The removeElement() method of the Sanitizer interface sets the specified element be removed from the output when the sanitizer is used.
+
+       The method can be used with either an allow configuration or a remove configuration. If used with a remove configuration, the specified element is added to the removeElements array. If used with an allow configuration, the element is removed from the elements array (if present).
+
+       SYNTAX
+
+         removeElement(element)
+
+       PARAMETERS
+
+        * element
+          * : A string indicating the name of the element to be disallowed, or an object with the following properties:
+            * name
+              * : A string containing the name of the element.
+            * namespace (optional)
+              * : A string containing the namespace of the element.
+       The default namespace is "http://www.w3.org/1999/xhtml".
+
+       RETURN VALUE
+
+       true if the operation changed the configuration to disallow the element, and false if the element was already disallowed.
+
+       Note that false might be returned if the internal configuration:
+
+        * defines an elements array and the element is already omitted (it does not need to be removed)
+        * instead defines the removeElements array and the specified element is already present (and is hence already filtered)
+
+       EXAMPLES
+
+       HOW TO DISALLOW ELEMENTS
+
+       This example shows how removeElement() is used to specify an element to be "disallowed".
+
+         <pre id="log"></pre>
+
+         #log {
+           height: 420px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.textContent = text;
+         }
+
+       JAVASCRIPT
+
+       The code first creates a new Sanitizer object that initially allows and elements, and that replaces elements with their child elements.
+
+       The code then calls removeElement() to add , and elements to the removeElements list in the configuration. Note that adding and removes the elements from their original lists.
+
+         if ("Sanitizer" in window) {
+
+         // Create sanitizer using SanitizerConfig
+         const sanitizer = new Sanitizer({
+           elements: ["div", "script"],
+           replaceWithChildrenElements: ["span"],
+         });
+
+         // Disallow the <p> element
+         sanitizer.removeElement("p");
+
+         // Disallow the <script> element
+         sanitizer.removeElement("script");
+         // Disallow the <span> element
+         sanitizer.removeElement("span");
+
+         // Log the sanitizer configuration
+         let sanitizerConfig = sanitizer.get();
+         log(JSON.stringify(sanitizerConfig, null, 2));
+
+         } else {
+           log("The HTML Sanitizer API is NOT supported in this browser.");
+         }
+
+       > This configuration is provided for demonstration only.
+       > Sanitizer configurations should include either just the allowed elements (elements) or just the disallowed elements (removeElements), but not both.
+       > In this case only the element is allowed and all other elements will be removed from the input: so the removed elements have no effect.
+
+       RESULTS
+
+       The final configuration is logged below.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

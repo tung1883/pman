@@ -1,0 +1,47 @@
+SHELLCHECK.SC2003(1)             Sandbox manual             SHELLCHECK.SC2003(1)
+
+       NAME
+
+       expr is antiquated. Consider rewriting this using $((..)), ${} or [[  ]]. - i=$(expr 1 + 2)
+
+       EXPR IS ANTIQUATED. CONSIDER REWRITING THIS USING ((..)), OR
+
+       PROBLEMATIC CODE
+
+         i=$(expr 1 + 2)
+         l=$(expr length "$var")
+
+       CORRECT CODE
+
+         i=$((1+2))
+         l=${#var}
+
+       WARNING: constants with a leading 0 are interpreted as octal numbers by bash, but not by expr. Then you should specify the base when a leading zero may occur:
+
+         $ x=08
+         $ echo $(expr 1 + $x)
+         9
+         $ echo $((1 + $x))
+         -bash: 1 + 08: value too great for base (error token is "08")
+         $ echo $((1 + 10#$x))
+         9
+
+       See issue #1910
+
+       RATIONALE
+
+       To quote POSIX:
+
+       > The expr utility has a rather difficult syntax [...] In many cases, the arithmetic and string features provided as part of the shell command language are easier to use than their equivalents in expr. Newly written scripts should avoid expr in favor of the new features within the shell.
+
+       EXCEPTIONS
+
+       sh doesn't have a great replacement for the : operator (regex match). ShellCheck tries not to warn when using expr with :, but e.g. op=:; expr string "$op" regex will still trigger it.
+
+       Bash has [[ string =~ regex ]], so not even expr .. : .. is necessary.
+
+       Bash doesn't check for integer overflow. When dealing with extremely large numbers, it may be necessary to use an external tool like expr.
+
+       Other than that, all uses of expr can be rewritten to use modern shell features instead.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,75 @@
+ARCH.BUILDAH(1)                  Sandbox manual                  ARCH.BUILDAH(1)
+
+       Buildah is a tool that facilitates building Open Container Initiative (OCI) container images. The Buildah package provides a command line tool that can be used to:
+
+        * create a working container, either from scratch or using an image as a starting point
+        * create an image, either from a working container or via the instructions in a Dockerfile
+        * images can be built in either the OCI image format or the traditional upstream docker image format
+        * mount a working container's root filesystem for manipulation
+        * unmount a working container's root filesystem
+        * use the updated contents of a container's root filesystem as a filesystem layer to create a new image
+        * delete a working container or an image
+        * rename a local container
+       The most widely known alternative for building containers is docker. Do note that Buildah does not run containers, for that you may want to consider podman.
+
+       INSTALLATION
+
+       Install the buildah and podman packages.
+
+       CONFIGURATION
+
+       ENABLE SUPPORT TO BUILD UNPRIVILEGED CONTAINERS
+
+       Users wishing to use Buildah to build unprivileged containers need to complete additional setup steps before running podman for the first time.
+
+       Note If you are building a system dedicated for running unprivileged containers, follow the steps below before adding any user. This way you will not have to edit /etc/subuid and /etc/subgid: useradd will do that for you, you only need to run touch /etc/subgid and touch /etc/subuid as root.
+
+       Finally, create both /etc/subuid and /etc/subgid to contain the mapping to the containerized UID/GID pairs for each user who shall be able to run the containers.[1] The example below is for the root user (and systemd system unit) and an example user buildah:
+
+         /etc/subuid
+
+         buildah:100000:65536
+
+         /etc/subgid
+
+         buildah:100000:65536
+
+       If you did run podman before applying the changes above, you will get errors when trying to pull images as an unprivileged user. Run podman system migrate to fix it.
+
+       If everything went well then after logging out and logging back in buildah images should not result in error
+
+       Note If you see errors accessing /run/user/0 then you have probably used su to become the user you are using for test — you should log in as such user since su without the --login flag will not set XDG_RUNTIME_DIR and other environmental variables to correct values.
+
+       USAGE
+
+       See the Buildah tutorials.
+
+       TROUBLESHOOTING
+
+       WARN 0000 / IS NOT A SHARED MOUNT, THIS COULD CAUSE ISSUES OR MISSING
+
+       Buildah/Podman running as rootless expects the bind mount to be shared, check if it is set to private:
+
+         $ findmnt -o PROPAGATION /
+
+         PROPAGATION
+         private
+
+       In this case see mount(8) § Shared subtree operations and set temporarily the mount as shared with:
+
+         # mount --make-shared /
+
+       To set it permanently, edit /etc/fstab and add the shared option to the desired mount and reboot. It will result in a entry like:
+
+         /etc/fstab
+
+         # <device>                                <dir> <type> <options> <dump> <fsck>
+         UUID=0a3407de-014b-458b-b5c1-848e92a327a3 /     ext4   defaults,shared   0      1
+
+       SEE ALSO
+
+        * Buildah Blog Post Series
+        * Containers Organization GitHub projects
+        * Podman daemonless container engine
+
+ArchWiki manual                         bundled documentation

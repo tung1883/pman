@@ -1,0 +1,47 @@
+WEBAPI.PERFORMANCE-EVENTCOUNTS(1) Sandbox manual WEBAPI.PERFORMANCE-EVENTCOUNTS(1)
+
+       NAME
+
+       Performance: eventCounts property - The read-only performance.eventCounts property is an EventCounts map containing the number of events which have been dispatched per event ty
+
+       PERFORMANCE: EVENTCOUNTS PROPERTY
+
+       The read-only performance.eventCounts property is an EventCounts map containing the number of events which have been dispatched per event type since the page was loaded.
+
+       Not all event types are exposed. You can only get counts for event types supported by the PerformanceEventTiming interface.
+
+       VALUE
+
+       An EventCounts map. (A read-only Map without the clear(), delete(), and set() methods).
+
+       EXAMPLES
+
+       REPORTING EVENT TYPES AND THEIR COUNTS
+
+       If you like to send event counts to your analytics, you may want to implement a function like sendToEventAnalytics which takes the event counts from the performance.eventCounts map and then uses the Fetch API to post the data to your endpoint.
+
+         // Report all exposed events
+         for (entry of performance.eventCounts.entries()) {
+           const type = entry[0];
+           const count = entry[1];
+           // sendToEventAnalytics(type, count);
+         }
+
+         // Report a specific event
+         const clickCount = performance.eventCounts.get("click");
+         // sendToEventAnalytics("click", clickCount);
+
+         // Check if an event count is exposed for a type
+         const isExposed = performance.eventCounts.has("mousemove"); // false
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * EventCounts
+        * PerformanceEventTiming
+        * Map
+
+Web APIs manual                         from the official documentation

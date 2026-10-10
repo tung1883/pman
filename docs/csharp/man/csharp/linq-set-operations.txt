@@ -1,0 +1,187 @@
+CSHARP.LINQ-SET-OPERATIONS(1)    Sandbox manual    CSHARP.LINQ-SET-OPERATIONS(1)
+
+       NAME
+
+       Set operations (C#) - Learn about set operations and the standard query operator methods that perform set operations in LINQ in C#.
+
+       SET OPERATIONS (C#)
+
+       Set operations in LINQ refer to query operations that produce a result set based on the presence or absence of equivalent elements within the same or separate collections.
+
+         Method names  |  Description  |  C# query expression syntax  |  More information
+         Distinct or DistinctBy  |  Removes duplicate values from a collection.  |  Not applicable.  |  Distinct*DistinctBy*Distinct*DistinctBy*
+         Except or ExceptBy  |  Returns the set difference, which means the elements of one collection that don't appear in a second collection.  |  Not applicable.  |  Except*ExceptBy*Except*ExceptBy*
+         Intersect or IntersectBy  |  Returns the set intersection, which means elements that appear in each of two collections.  |  Not applicable.  |  Intersect*IntersectBy*Intersect*IntersectBy*
+         Union or UnionBy  |  Returns the set union, which means unique elements that appear in either of two collections.  |  Not applicable.  |  Union*UnionBy*Union*UnionBy*
+
+       DISTINCT AND DISTINCTBY
+
+       The following example depicts the behavior of the Distinct* method on a sequence of strings. The returned sequence contains the unique elements from the input sequence.
+
+         string[] words = ["the", "quick", "brown", "fox", "jumped", "over", "the", "lazy", "dog"];
+
+         IEnumerable<string> query = from word in words.Distinct()
+                                     select word;
+
+         foreach (var str in query)
+         {
+             Console.WriteLine(str);
+         }
+
+         /* This code produces the following output:
+          *
+          * the
+          * quick
+          * brown
+          * fox
+          * jumped
+          * over
+          * lazy
+          * dog
+          */
+
+       The DistinctBy is an alternative approach to Distinct that takes a keySelector. The keySelector is used as the comparative discriminator of the source type. In the following code, words are discriminated based on their Length, and the first word of each length is displayed:
+
+         string[] words = ["the", "quick", "brown", "fox", "jumped", "over", "the", "lazy", "dog"];
+
+         foreach (string word in words.DistinctBy(p => p.Length))
+         {
+             Console.WriteLine(word);
+         }
+
+         // This code produces the following output:
+         //     the
+         //     quick
+         //     jumped
+         //     over
+
+       EXCEPT AND EXCEPTBY
+
+       The following example depicts the behavior of Except*. The returned sequence contains only the elements from the first input sequence that aren't in the second input sequence.
+
+         string[] words1 = ["the", "quick", "brown", "fox"];
+         string[] words2 = ["jumped", "over", "the", "lazy", "dog"];
+
+         IEnumerable<string> query = from word in words1.Except(words2)
+                                     select word;
+
+         foreach (var str in query)
+         {
+             Console.WriteLine(str);
+         }
+
+         /* This code produces the following output:
+          *
+          * quick
+          * brown
+          * fox
+          */
+
+       The ExceptBy* method is an alternative approach to Except that takes two sequences of possibly heterogenous types and a keySelector. The keySelector is the same type as the first collection's type. Consider the following Teacher array and teacher IDs to exclude. To find teachers in the first collection that aren't in the second collection, you can project the teacher's ID onto the second collection:
+
+         int[] teachersToExclude =
+         [
+             901,    // English
+             965,    // Mathematics
+             932,    // Engineering
+             945,    // Economics
+             987,    // Physics
+             901     // Chemistry
+         ];
+
+         foreach (Teacher teacher in
+             teachers.ExceptBy(
+                 teachersToExclude, teacher => teacher.ID))
+         {
+             Console.WriteLine($"{teacher.First} {teacher.Last}");
+         }
+
+       In the preceding C# code:
+
+        * The teachers array is filtered to only those teachers that aren't in the teachersToExclude array.
+        * The teachersToExclude array contains the ID value for all department heads.
+        * The call to ExceptBy results in a new set of values that are written to the console.
+       The new set of values is of type Teacher, which is the type of the first collection. Each teacher in the teachers array that doesn't have a corresponding ID value in the teachersToExclude array is written to the console.
+
+       INTERSECT AND INTERSECTBY
+
+       The following example depicts the behavior of Intersect*. The returned sequence contains the elements that are common to both of the input sequences.
+
+         string[] words1 = ["the", "quick", "brown", "fox"];
+         string[] words2 = ["jumped", "over", "the", "lazy", "dog"];
+
+         IEnumerable<string> query = from word in words1.Intersect(words2)
+                                     select word;
+
+         foreach (var str in query)
+         {
+             Console.WriteLine(str);
+         }
+
+         /* This code produces the following output:
+          *
+          * the
+          */
+
+       The IntersectBy* method is an alternative approach to Intersect that takes two sequences of possibly heterogenous types and a keySelector. The keySelector is used as the comparative discriminator of the second collection's type. Consider the following student and teacher arrays. The query matches items in each sequence by name to find those students who are also teachers:
+
+         foreach (Student person in
+             students.IntersectBy(
+                 teachers.Select(t => (t.First, t.Last)), s => (s.FirstName, s.LastName)))
+         {
+             Console.WriteLine($"{person.FirstName} {person.LastName}");
+         }
+
+       In the preceding C# code:
+
+        * The query produces the intersection of the Teacher and Student by comparing names.
+        * Only people that are found in both arrays are present in the resulting sequence.
+        * The resulting Student instances are written to the console.
+
+       UNION AND UNIONBY
+
+       The following example depicts a union operation on two sequences of strings. The returned sequence contains the unique elements from both input sequences.
+
+         string[] words1 = ["the", "quick", "brown", "fox"];
+         string[] words2 = ["jumped", "over", "the", "lazy", "dog"];
+
+         IEnumerable<string> query = from word in words1.Union(words2)
+                                     select word;
+
+         foreach (var str in query)
+         {
+             Console.WriteLine(str);
+         }
+
+         /* This code produces the following output:
+          *
+          * the
+          * quick
+          * brown
+          * fox
+          * jumped
+          * over
+          * lazy
+          * dog
+         */
+
+       The UnionBy* method is an alternative approach to Union that takes two sequences of the same type and a keySelector. The keySelector is used as the comparative discriminator of the source type. The following query produces the list of all people that are either students or teachers. Students who are also teachers are added to the union set only once:
+
+         foreach (var person in
+             students.Select(s => (s.FirstName, s.LastName)).UnionBy(
+                 teachers.Select(t => (FirstName: t.First, LastName: t.Last)), s => (s.FirstName, s.LastName)))
+         {
+             Console.WriteLine($"{person.FirstName} {person.LastName}");
+         }
+
+       In the preceding C# code:
+
+        * The teachers and students arrays are woven together using their names as the key selector.
+        * The resulting names are written to the console.
+
+       SEE ALSO
+
+        * Linq
+        * How to find the set difference between two lists (LINQ) (C#)
+
+C# manual                               from the official documentation

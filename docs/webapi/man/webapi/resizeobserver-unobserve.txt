@@ -1,0 +1,80 @@
+WEBAPI.RESIZEOBSERVER-UNOBSERVE(1) Sandbox manual WEBAPI.RESIZEOBSERVER-UNOBSERVE(1)
+
+       NAME
+
+       ResizeObserver: unobserve() method - The unobserve() method of the
+
+       RESIZEOBSERVER: UNOBSERVE() METHOD
+
+       The unobserve() method of the ResizeObserver interface ends the observing of a specified Element or SVGElement.
+
+       SYNTAX
+
+         unobserve(target)
+
+       PARAMETERS
+
+        * target
+          * : A reference to an Element or SVGElement to be unobserved.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+       None.
+
+       EXAMPLES
+
+       The following snippet is taken from the resize-observer-text.html (see source) example:
+
+         const resizeObserver = new ResizeObserver((entries) => {
+           for (const entry of entries) {
+             if (entry.contentBoxSize) {
+               // Checking for chrome as using a non-standard array
+               if (entry.contentBoxSize[0]) {
+                 h1Elem.style.fontSize = `${Math.max(
+                   1.5,
+                   entry.contentBoxSize[0].inlineSize / 200,
+                 )}rem`;
+                 pElem.style.fontSize = `${Math.max(
+                   1,
+                   entry.contentBoxSize[0].inlineSize / 600,
+                 )}rem`;
+               } else {
+                 h1Elem.style.fontSize = `${Math.max(
+                   1.5,
+                   entry.contentBoxSize.inlineSize / 200,
+                 )}rem`;
+                 pElem.style.fontSize = `${Math.max(
+                   1,
+                   entry.contentBoxSize.inlineSize / 600,
+                 )}rem`;
+               }
+             } else {
+               h1Elem.style.fontSize = `${Math.max(
+                 1.5,
+                 entry.contentRect.width / 200,
+               )}rem`;
+               pElem.style.fontSize = `${Math.max(1, entry.contentRect.width / 600)}rem`;
+             }
+           }
+           console.log("Size changed");
+         });
+
+         resizeObserver.observe(divElem);
+
+         checkbox.addEventListener("change", () => {
+           if (checkbox.checked) {
+             resizeObserver.observe(divElem);
+           } else {
+             resizeObserver.unobserve(divElem);
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

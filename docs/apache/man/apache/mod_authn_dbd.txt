@@ -1,0 +1,83 @@
+APACHE.MOD_AUTHN_DBD(1)          Sandbox manual          APACHE.MOD_AUTHN_DBD(1)
+
+       PERFORMANCE AND CACHING
+
+       Some users of DBD authentication in HTTPD 2.2/2.4 have reported that it imposes a problematic load on the database. This is most likely where an HTML page contains hundreds of objects (e.g. images, scripts, etc) each of which requires authentication. Users affected (or concerned) by this kind of problem should use mod_authn_socache to cache credentials and take most of the load off the database.
+
+       CONFIGURATION EXAMPLE
+
+       This simple example shows use of this module in the context of the Authentication and DBD frameworks.
+
+         # mod_dbd configuration
+         # UPDATED to include authentication caching
+         DBDriver pgsql
+         DBDParams "dbname=apacheauth user=apache password=xxxxxx"
+
+         DBDMin  4
+         DBDKeep 8
+         DBDMax  20
+         DBDExptime 300
+
+         <Directory "/usr/www/myhost/private">
+           # mod_authn_core and mod_auth_basic configuration
+           # for mod_authn_dbd
+           AuthType Basic
+           AuthName "My Server"
+
+           # To cache credentials, put socache ahead of dbd here
+           AuthBasicProvider socache dbd
+
+           # Also required for caching: tell the cache to cache dbd lookups!
+           AuthnCacheProvideFor dbd
+           AuthnCacheContext my-server
+
+           # mod_authz_core configuration
+           Require valid-user
+
+           # mod_authn_dbd SQL query to authenticate a user
+           AuthDBDUserPWQuery "SELECT password FROM authn WHERE user = %s"
+         </Directory>
+
+       EXPOSING LOGIN INFORMATION
+
+       Whenever a query is made to the database server, all column values in the first row returned by the query are placed in the environment, using environment variables with the prefix "AUTHENTICATE_".
+
+       If a database query for example returned the username, full name and telephone number of a user, a CGI program will have access to this information without the need to make a second independent database query to gather this additional information.
+
+       This has the potential to dramatically simplify the coding and configuration required in some web applications.
+
+       AUTHDBDUSERPWQUERY DIRECTIVE
+
+         Description: | SQL query to look up a password for a user
+         Syntax: | AuthDBDUserPWQuery query
+         Context: | directory
+         Status: | Extension
+         Module: | mod_authn_dbd
+       The AuthDBDUserPWQuery specifies an SQL query to look up a password for a specified user. The user's ID will be passed as a single string parameter when the SQL query is executed. It may be referenced within the query statement using a %s format specifier.
+
+         AuthDBDUserPWQuery "SELECT password FROM authn WHERE user = %s"
+
+       The first column value of the first row returned by the query statement should be a string containing the encrypted password. Subsequent rows will be ignored. If no rows are returned, the user will not be authenticated through mod_authn_dbd.
+
+       Any additional column values in the first row returned by the query statement will be stored as environment variables with names of the form AUTHENTICATE_COLUMN.
+
+       The encrypted password format depends on which authentication frontend (e.g. mod_auth_basic or mod_auth_digest) is being used. See Password Formats for more information.
+
+       AUTHDBDUSERREALMQUERY DIRECTIVE
+
+         Description: | SQL query to look up a password hash for a user and realm.
+         Syntax: | AuthDBDUserRealmQuery query
+         Context: | directory
+         Status: | Extension
+         Module: | mod_authn_dbd
+       The AuthDBDUserRealmQuery specifies an SQL query to look up a password for a specified user and realm in a digest authentication process. The user's ID and the realm, in that order, will be passed as string parameters when the SQL query is executed. They may be referenced within the query statement using %s format specifiers.
+
+         AuthDBDUserRealmQuery "SELECT password FROM authn WHERE user = %s AND realm = %s"
+
+       The first column value of the first row returned by the query statement should be a string containing the encrypted password. Subsequent rows will be ignored. If no rows are returned, the user will not be authenticated through mod_authn_dbd.
+
+       Any additional column values in the first row returned by the query statement will be stored as environment variables with names of the form AUTHENTICATE_COLUMN.
+
+       The encrypted password format depends on which authentication frontend (e.g. mod_auth_basic or mod_auth_digest) is being used. See Password Formats for more information.
+
+Apache HTTP Server manual               bundled documentation

@@ -1,0 +1,31 @@
+SHELLCHECK.SC2322(1)             Sandbox manual             SHELLCHECK.SC2322(1)
+
+       NAME
+
+       In arithmetic contexts, ((x)) is the same as (x). Prefer only one layer of parentheses. - value=$(( ((offset + index))  512 ))
+
+       IN ARITHMETIC CONTEXTS, ((X)) IS THE SAME AS (X). PREFER ONLY ONE LAYE
+
+       IN ARITHMETIC CONTEXTS, ((X)) IS THE SAME AS (X). PREFER ONLY ONE LAYE
+
+       PROBLEMATIC CODE
+
+         value=$(( ((offset + index)) * 512 ))
+
+       CORRECT CODE
+
+         value=$(( (offset + index) * 512 ))
+
+       RATIONALE
+
+       ShellCheck found doubly nested parentheses in an arithmetic expression. While the syntax for an arithmetic expansion is $((..)), this does not imply that parentheses in the expression should also be doubled. (x), ((x)), and (((x))) are all identical, so you might as well use only one layer of parentheses.
+
+       EXCEPTIONS
+
+       This is a stylistic suggestion. If you prefer keeping both parentheses, you can [[ignore]] this message.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

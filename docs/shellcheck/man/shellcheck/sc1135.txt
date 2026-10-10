@@ -1,0 +1,35 @@
+SHELLCHECK.SC1135(1)             Sandbox manual             SHELLCHECK.SC1135(1)
+
+       NAME
+
+       Prefer escape over ending quote to make $ literal. Instead of "It costs $"5, use "It costs \$5" - echo "The apples are $""1 each"
+
+       PREFER ESCAPE OVER ENDING QUOTE TO MAKE LITERAL. INSTEAD OF IT COSTS 5
+
+       PREFER ESCAPE OVER ENDING QUOTE TO MAKE LITERAL. INSTEAD OF IT COSTS 5
+
+       PROBLEMATIC CODE
+
+         echo "The apples are $""1 each"
+         eval "var=$"name
+
+       CORRECT CODE
+
+         echo "The apples are \$1 each"
+         eval "var=\$name"
+
+       RATIONALE
+
+       The script appears to be closing a double quoted string for the sole purpose of making a dollar sign $ literal.
+
+       While this happens to work, the better solution is instead to escape it with a backslash. This allows the double quoted string to continue uninterrupted, thereby reducing the visual noise of stopping and starting quotes in the middle of a shell word.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

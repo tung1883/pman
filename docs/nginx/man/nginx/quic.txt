@@ -1,0 +1,81 @@
+NGINX.QUIC(1)                    Sandbox manual                    NGINX.QUIC(1)
+
+       SUPPORT FOR QUIC AND HTTP/3
+
+         Building from sources Configuration tips Troubleshooting
+       Support for QUIC and HTTP/3 protocols is available since 1.25.0, it is included in Linux binary packages. Please refer to the ngx_http_v3_module documentation.
+
+       BUILDING FROM SOURCES
+
+       The build is configured using the configure command. Please refer to Building nginx from Sources for details.
+
+       The OpenSSL library version 3.5.1 or higher is recommended to build nginx with QUIC support. Otherwise, the OpenSSL compatibility layer will be used that does not support early data. Alternatively, BoringSSL, LibreSSL, or QuicTLS prebuilt libraries can be used.
+
+       Use the following command to configure nginx with BoringSSL:
+
+         ./configure
+             --with-debug
+             --with-http_v3_module
+             --with-cc-opt="-I../boringssl/include"
+             --with-ld-opt="-L../boringssl/build -lstdc++"
+
+       Alternatively, nginx can be configured with QuicTLS:
+
+         ./configure
+             --with-debug
+             --with-http_v3_module
+             --with-cc-opt="-I../quictls/build/include"
+             --with-ld-opt="-L../quictls/build/lib"
+
+       Alternatively, nginx can be configured with LibreSSL:
+
+         ./configure
+             --with-debug
+             --with-http_v3_module
+             --with-cc-opt="-I../libressl/build/include"
+             --with-ld-opt="-L../libressl/build/lib"
+
+       After configuration, nginx is compiled and installed using make.
+
+       CONFIGURATION TIPS
+
+       The listen directive in ngx_http_core_module module got a new parameter quic which enables HTTP/3 over QUIC on the specified port.
+
+       Along with the quic parameter it is also possible to specify the reuseport parameter to make it work properly with multiple workers.
+
+       To enable address validation:
+
+         quic_retry on;
+
+       To enable 0-RTT:
+
+         ssl_early_data on;
+
+       To enable GSO (Generic Segmentation Offloading):
+
+         quic_gso on;
+
+       To set host key for various tokens:
+
+         quic_host_key <filename>;
+
+       QUIC requires TLSv1.3 protocol version which is enabled by default in the ssl_protocols directive.
+
+       By default, GSO Linux-specific optimization is disabled. Enable it in case a corresponding network interface is configured to support GSO.
+
+       TROUBLESHOOTING
+
+       Tips that may help to identify problems:
+
+        * Ensure nginx is built with the proper SSL library.
+        * Ensure nginx is using the proper SSL library in runtime (the nginx -V shows what it is currently used).
+        * Ensure a client is actually sending requests over QUIC. It is recommended to start with a simple console client such as ngtcp2 to ensure the server is configured properly before trying with real browsers that may be quite picky with certificates.
+        * Build nginx with debug support and check the debug log. It should contain all details about the connection and why it failed. All related messages contain the “quic” prefix and can be easily filtered out.
+        * For a deeper investigation, additional debugging can be enabled using the following macros: NGX_QUIC_DEBUG_PACKETS, NGX_QUIC_DEBUG_FRAMES, NGX_QUIC_DEBUG_ALLOC, NGX_QUIC_DEBUG_CRYPTO.
+
+         ./configure
+             --with-http_v3_module
+             --with-debug
+             --with-cc-opt="-DNGX_QUIC_DEBUG_PACKETS -DNGX_QUIC_DEBUG_CRYPTO"
+
+nginx manual                            bundled documentation

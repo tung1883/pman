@@ -1,0 +1,167 @@
+WEBAPI.MATHMLANCHORELEMENT(1)    Sandbox manual    WEBAPI.MATHMLANCHORELEMENT(1)
+
+       NAME
+
+       MathMLAnchorElement - The MathMLAnchorElement interface represents MathML <a> (hyperlink) elements and provides properties for getting and setting various feature
+
+       MATHMLANCHORELEMENT
+
+       The MathMLAnchorElement interface represents MathML (hyperlink) elements and provides properties for getting and setting various features of such elements.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, MathMLElement._
+
+        * MathMLAnchorElement.hash (experimental)
+          * : A string representing the fragment identifier, including the leading hash mark (#), if any, in the referenced URL.
+        * MathMLAnchorElement.host (experimental)
+          * : A string representing the hostname and port (if it's not the default port) in the referenced URL.
+        * MathMLAnchorElement.hostname (experimental)
+          * : A string representing the hostname in the referenced URL.
+        * MathMLAnchorElement.href (experimental)
+          * : A string that is the result of parsing the element's href attribute relative to the document, containing a valid URL of a linked resource.
+        * MathMLAnchorElement.hreflang (experimental)
+          * : A string that reflects the element's hreflang attribute, indicating the language of the linked resource.
+        * MathMLAnchorElement.origin (read-only) (experimental)
+          * : Returns a string containing the origin of the URL, that is its scheme, its domain and its port.
+        * MathMLAnchorElement.password (experimental)
+          * : A string containing the password specified before the domain name.
+        * MathMLAnchorElement.pathname (experimental)
+          * : A string containing an initial / followed by the path of the URL, not including the query string or fragment.
+        * MathMLAnchorElement.port (experimental)
+          * : A string representing the port component, if any, of the referenced URL.
+        * MathMLAnchorElement.protocol (experimental)
+          * : A string representing the protocol component, including trailing colon (:), of the referenced URL.
+        * MathMLAnchorElement.search (experimental)
+          * : A string representing the search element, including leading question mark (?), if any, of the referenced URL.
+        * MathMLAnchorElement.target (experimental)
+          * : A string that reflects the element's target attribute, indicating where to display the linked resource.
+        * MathMLAnchorElement.type (experimental)
+          * : A string that reflects the element's type attribute, indicating the MIME type of the linked resource.
+        * MathMLAnchorElement.username (experimental)
+          * : A string containing the username specified before the domain name.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       This example marks up the Gamma function in MathML. It demonstrates how to access MathML properties in JavaScript via the MathMLAnchorElement interface.
+
+       MATHML
+
+       The example includes several elements. The first one is an example.com link that includes several link and URL features that we can target with JavaScript. We also include a element to output property values to.
+
+         <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"
+           ><semantics
+             ><mrow
+               ><a
+                 href="https://uname:pwd@example.com:8000/subsection?q=123#fragment"
+                 target="_blank"
+                 hreflang="en"
+                 type="text/html"
+                 ><mrow
+                   ><mi mathvariant="normal">Γ</mi><mo stretchy="false">(</mo><mi>t</mi
+                   ><mo stretchy="false">)</mo></mrow
+                 ></a
+               ><mo>=</mo
+               ><a href="https://en.wikipedia.org/wiki/Gamma_function#Main_definition"
+                 ><mrow
+                   ><msubsup
+                     ><mo>∫</mo><mn>0</mn><mrow><mo>+</mo><mn>∞</mn></mrow></msubsup
+                   ><msup
+                     ><mi>x</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msup
+                   ><msup
+                     ><mi>e</mi><mrow><mo>−</mo><mi>x</mi></mrow></msup
+                   ><mi>d</mi><mi>x</mi></mrow
+                 ></a
+               ><mo>=</mo
+               ><a
+                 href="https://en.wikipedia.org/wiki/Gamma_function#Euler's_definition_as_an_infinite_product"
+                 ><mrow
+                   ><mfrac><mn>1</mn><mi>t</mi></mfrac
+                   ><munderover
+                     ><mo>∏</mo><mrow><mi>n</mi><mo>=</mo><mn>1</mn></mrow
+                     ><mn>∞</mn></munderover
+                   ><mfrac
+                     ><msup
+                       ><mrow
+                         ><mo>(</mo
+                         ><mrow
+                           ><mn>1</mn><mo>+</mo><mfrac><mn>1</mn><mi>n</mi></mfrac></mrow
+                         ><mo>)</mo></mrow
+                       ><mi>t</mi></msup
+                     ><mrow
+                       ><mn>1</mn><mo>+</mo><mfrac><mi>t</mi><mi>n</mi></mfrac></mrow
+                     ></mfrac
+                   ></mrow
+                 ></a
+               ><a href="https://en.wikipedia.org/wiki/Asymptotic_analysis#Definition"
+                 ><mo>∼</mo></a
+               ><a href="https://en.wikipedia.org/wiki/Gamma_function#Stirling's_formula"
+                 ><mrow
+                   ><msqrt
+                     ><mfrac
+                       ><mrow><mn>2</mn><mi>π</mi></mrow
+                       ><mi>t</mi></mfrac
+                     ></msqrt
+                   ><msup
+                     ><mrow
+                       ><mo>(</mo><mfrac><mi>t</mi><mi>e</mi></mfrac
+                       ><mo>)</mo></mrow
+                     ><mi>t</mi></msup
+                   ></mrow
+                 ></a
+               ></mrow
+             ></semantics
+           ></math
+         >
+
+         <ul></ul>
+
+         math {
+           font-size: 4vw;
+         }
+
+       JAVASCRIPT
+
+       We get references to the first MathML element in the document and the element.
+
+         const mathAnchor = document.querySelector("math a");
+         const list = document.querySelector("ul");
+
+       Next, we define a function that takes a string value representing a property of the MathMLAnchorElement object and appends an to the list containing the property name and property value:
+
+         function outputValue(value) {
+           const listItem = document.createElement("li");
+           listItem.textContent = `${value}: ${mathAnchor[value]}`;
+           list.appendChild(listItem);
+         }
+
+       Finally, we call the function several times to output names and values of properties defined directly on the interface to the list:
+
+         outputValue("href");
+         outputValue("target");
+         outputValue("origin");
+         outputValue("protocol");
+         outputValue("username");
+         outputValue("password");
+         outputValue("host");
+         outputValue("hostname");
+         outputValue("port");
+         outputValue("pathname");
+         outputValue("search");
+         outputValue("hash");
+         outputValue("hreflang");
+         outputValue("type");
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The MathML element
+
+Web APIs manual                         from the official documentation

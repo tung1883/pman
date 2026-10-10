@@ -1,0 +1,66 @@
+SHELLCHECK.SC3001(1)             Sandbox manual             SHELLCHECK.SC3001(1)
+
+       NAME
+
+       In POSIX sh, process substitution is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, PROCESS SUBSTITUTION IS UNDEFINED
+
+       IN POSIX SH, PROCESS SUBSTITUTION IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         while IFS= read -r n
+         do
+           sum=$((sum+n))
+         done < <(program)
+
+       CORRECT CODE
+
+       The easiest fix is to switch to a shell that does support process substitution, by changing the shebang to #!/bin/bash or ksh.
+
+         #!/bin/bash
+         while IFS= read -r n
+         do
+           sum=$((sum+n))
+         done < <(program)
+
+       Alternatively, process substitution can often be replaced with temporary files:
+
+         #!/bin/sh
+         tmp="$(mktemp)"
+         program > "$tmp"
+         while IFS= read -r n
+         do
+           sum=$((sum+n))
+         done < "$tmp"
+         rm "$tmp"
+
+       If streaming is important, the temporary file can be a named pipe, and the producer or consumer can be run as a background job.
+
+       If the reading command accepts input from standard input, the process substitution can be replaced with a regular pipe:
+
+         #!/bin/sh
+         program | while IFS= read -r n
+         do
+           sum=$((sum+n))
+         done
+
+       RATIONALE
+
+       Process substitution is a ksh and bash extension. It does not work in sh or dash scripts.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

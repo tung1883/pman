@@ -1,0 +1,129 @@
+CSHARP.GUIDE-USING-VARIANCE-FOR-FUNC-AND-ACTION-GENERIC-DELEGATES(1) Sandbox manual CSHARP.GUIDE-USING-VARIANCE-FOR-FUNC-AND-ACTION-GENERIC-DELEGATES(1)
+
+       NAME
+
+       Using Variance for Func and Action Generic Delegates (C#) - Learn about using covariance and contravariance in the Func and Action generic delegates to give you more flexibility in your code.
+
+       USING VARIANCE FOR FUNC AND ACTION GENERIC DELEGATES (C#)
+
+       These examples demonstrate how to use covariance and contravariance in the Func and Action generic delegates to enable reuse of methods and provide more flexibility in your code.
+
+       For more information about covariance and contravariance, see Variance in Delegates (C#).
+
+       USING DELEGATES WITH COVARIANT TYPE PARAMETERS
+
+       The following example illustrates the benefits of covariance support in the generic Func delegates. The FindByTitle method takes a parameter of the String type and returns an object of the Employee type. However, you can assign this method to the Func delegate because Employee inherits Person.
+
+         // Simple hierarchy of classes.
+         public class Person { }
+         public class Employee : Person { }
+         class Program
+         {
+             static Employee FindByTitle(String title)
+             {
+                 // This is a stub for a method that returns
+                 // an employee that has the specified title.
+                 return new Employee();
+             }
+
+             static void Test()
+             {
+                 // Create an instance of the delegate without using variance.
+                 Func<String, Employee> findEmployee = FindByTitle;
+
+                 // The delegate expects a method to return Person,
+                 // but you can assign it a method that returns Employee.
+                 Func<String, Person> findPerson = FindByTitle;
+
+                 // You can also assign a delegate
+                 // that returns a more derived type
+                 // to a delegate that returns a less derived type.
+                 findPerson = findEmployee;
+
+             }
+         }
+
+       USING DELEGATES WITH CONTRAVARIANT TYPE PARAMETERS
+
+       The following example illustrates the benefits of contravariance support in the generic Action delegates. The AddToContacts method takes a parameter of the Person type. However, you can assign this method to the Action delegate because Employee inherits Person.
+
+         public class Person { }
+         public class Employee : Person { }
+         class Program
+         {
+             static void AddToContacts(Person person)
+             {
+                 // This method adds a Person object
+                 // to a contact list.
+             }
+
+             static void Test()
+             {
+                 // Create an instance of the delegate without using variance.
+                 Action<Person> addPersonToContacts = AddToContacts;
+
+                 // The Action delegate expects
+                 // a method that has an Employee parameter,
+                 // but you can assign it a method that has a Person parameter
+                 // because Employee derives from Person.
+                 Action<Employee> addEmployeeToContacts = AddToContacts;
+
+                 // You can also assign a delegate
+                 // that accepts a less derived parameter to a delegate
+                 // that accepts a more derived parameter.
+                 addEmployeeToContacts = addPersonToContacts;
+             }
+         }
+
+       CONTRAVARIANCE AND ANONYMOUS FUNCTIONS
+
+       When working with anonymous functions (lambda expressions), you might encounter counterintuitive behavior related to contravariance. Consider the following example:
+
+         public class Person
+         {
+             public virtual void ReadContact() { /*...*/ }
+         }
+
+         public class Employee : Person
+         {
+             public override void ReadContact() { /*...*/ }
+         }
+
+         class Program
+         {
+             private static void Main()
+             {
+                 var personReadContact = (Person p) => p.ReadContact();
+
+                 // This works - contravariance allows assignment.
+                 Action<Employee> employeeReadContact = personReadContact;
+
+                 // This causes a compile error: CS1661.
+                 // Action<Employee> employeeReadContact2 = (Person p) => p.ReadContact();
+             }
+         }
+
+       This behavior seems contradictory: if contravariance allows assigning a delegate that accepts a base type (Person) to a delegate variable expecting a derived type (Employee), why does direct assignment of the lambda expression fail?
+
+       The key difference is type inference. In the first case, the lambda expression is first assigned to a variable with type var, which causes the compiler to infer the lambda's type as Action. The subsequent assignment to Action succeeds because of contravariance rules for delegates.
+
+       In the second case, the compiler cannot directly infer that the lambda expression (Person p) => p.ReadContact() should have type Action when it's being assigned to Action. The type inference rules for anonymous functions don't automatically apply contravariance during the initial type determination.
+
+       WORKAROUNDS
+
+       To make direct assignment work, you can use explicit casting:
+
+         // Explicit cast to the desired delegate type.
+         Action<Employee> employeeReadContact = (Action<Person>)((Person p) => p.ReadContact());
+
+         // Or specify the lambda parameter type that matches the target delegate.
+         Action<Employee> employeeReadContact2 = (Employee e) => e.ReadContact();
+
+       This behavior illustrates the difference between delegate contravariance (which works after types are established) and lambda expression type inference (which occurs during compilation).
+
+       SEE ALSO
+
+        * Covariance and Contravariance (C#)
+        * Generics
+
+C# manual                               from the official documentation

@@ -1,0 +1,33 @@
+SHELLCHECK.SC2022(1)             Sandbox manual             SHELLCHECK.SC2022(1)
+
+       NAME
+
+       Note that unlike globs, o here matches ooo but not oscar. - grep 'foo'
+
+       NOTE THAT UNLIKE GLOBS, O HERE MATCHES OOO BUT NOT OSCAR
+
+       NOTE THAT UNLIKE GLOBS, O HERE MATCHES OOO BUT NOT OSCAR
+
+       PROBLEMATIC CODE
+
+         grep 'foo*'
+
+       when wanting to match food and foosball, but not mofo or keyfob.
+
+       CORRECT CODE
+
+         grep '^foo'
+
+       RATIONALE
+
+       As a glob, foo* means "Any string starting with foo", e.g. food and foosball.
+
+       As a regular expression, "foo*" means "f followed by 1 or more o's, anywhere", e.g. "mofo" or "keyfob".
+
+       This construct is way more common as a glob than as a regex, so ShellCheck notifies you about it.
+
+       EXCEPTIONS
+
+       If you're aware of the above, you can ignore this message. If you'd like shellcheck to be quiet, use a [[directive]] or 'fo[o]*'.
+
+ShellCheck manual                       from the official documentation

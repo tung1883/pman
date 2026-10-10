@@ -1,0 +1,66 @@
+CSHARP.WHEN(1)                   Sandbox manual                   CSHARP.WHEN(1)
+
+       NAME
+
+       when (C# reference) - when contextual keyword - C# reference
+
+       WHEN (C# REFERENCE)
+
+       Use the when contextual keyword to specify a filter condition in the following contexts:
+
+        * In a catch clause of a try-catch or try-catch-finally statement.
+        * As a case guard in the switch statement.
+        * As a case guard in the switch expression.
+
+       WHEN IN A CATCH CLAUSE
+
+       Use the when keyword in a catch clause to specify a condition that must be true for the handler for a specific exception to execute. Its syntax is:
+
+         catch (ExceptionType [e]) when (expr)
+
+       where expr is an expression that evaluates to a Boolean value. If it returns true, the exception handler executes; if false, it doesn't.
+
+       Exception filters with the when keyword provide several advantages over traditional exception handling approaches, including better debugging support and performance benefits. For a detailed explanation of how exception filters preserve the call stack and improve debugging, see Exception filters vs. traditional exception handling.
+
+       The following example uses the when keyword to conditionally execute handlers for an HttpRequestException depending on the text of the exception message.
+
+         ﻿using System;
+         using System.Net.Http;
+         using System.Threading.Tasks;
+
+         class Program
+         {
+             static void Main()
+             {
+                 Console.WriteLine(MakeRequest().Result);
+             }
+
+             public static async Task<string> MakeRequest()
+             {
+                 var client = new HttpClient();
+                 var streamTask = client.GetStringAsync("https://localHost:10000");
+                 try
+                 {
+                     var responseText = await streamTask;
+                     return responseText;
+                 }
+                 catch (HttpRequestException e) when (e.Message.Contains("301"))
+                 {
+                     return "Site Moved";
+                 }
+                 catch (HttpRequestException e) when (e.Message.Contains("404"))
+                 {
+                     return "Page Not Found";
+                 }
+                 catch (HttpRequestException e)
+                 {
+                     return e.Message;
+                 }
+             }
+         }
+
+       SEE ALSO
+
+        * C# keywords
+
+C# manual                               from the official documentation

@@ -1,0 +1,65 @@
+SHELLCHECK.SC1067(1)             Sandbox manual             SHELLCHECK.SC1067(1)
+
+       NAME
+
+       For indirection, use arrays, declare "var$n=value", or (for sh) read/eval - Note: Removed in v0.7.2 - 2021-04-20
+
+       FOR INDIRECTION, USE ARRAYS, DECLARE VAR N VALUE , OR (FOR SH) READ/EV
+
+       FOR INDIRECTION, USE ARRAYS, DECLARE VAR N VALUE , OR (FOR SH) READ/EV
+
+       Note: Removed in v0.7.2 - 2021-04-20
+
+       PROBLEMATIC CODE
+
+         n=1
+         var$n="hello"
+
+       CORRECT CODE
+
+       For integer indexing in ksh/bash, consider using an indexed array:
+
+         n=1
+         var[n]="hello"
+         echo "${var[n]}"
+
+       For string indexing in ksh/bash, use an associative array:
+
+         typeset -A var
+         n="greeting"
+         var[$n]="hello"
+         echo "${var[$n]}"
+
+       If you actually need a variable with the constructed name in bash, use declare:
+
+         n="Foo"
+         declare "var$n=42"
+         echo "$varFoo"
+
+       For sh, with single line contents, consider read:
+
+         n="Foo"
+         read -r "var$n" << EOF
+         hello
+         EOF
+         echo "$varFoo"
+
+       or with careful escaping, eval:
+
+         n=Foo
+         eval "var$n='hello'"
+         echo "$varFoo"
+
+       RATIONALE
+
+       var$n=value is not a valid way of assigning to a dynamically created variable name in any shell. Please use one of the other methods to assign to names via expanded strings. Wooledge BashFaq #6 has significantly more information on the subject.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Wooledge BashFaq #6: How can I use variable variables (indirect variables, pointers, references) or associative arrays?
+
+ShellCheck manual                       from the official documentation

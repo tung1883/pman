@@ -1,0 +1,157 @@
+APACHE.MOD_PROXY_FCGI(1)         Sandbox manual         APACHE.MOD_PROXY_FCGI(1)
+
+       EXAMPLES
+
+       Remember, in order to make the following examples work, you have to enable mod_proxy and mod_proxy_fcgi.
+
+       SINGLE APPLICATION INSTANCE
+
+         ProxyPass "/myapp/" "fcgi://localhost:4000/"
+
+       mod_proxy_fcgi disables connection reuse by default, so after a request has been completed the connection will NOT be held open by that httpd child process and won't be reused. If the FastCGI application is able to handle concurrent connections from httpd, you can opt-in to connection reuse as shown in the following example:
+
+       SINGLE APPLICATION INSTANCE, CONNECTION REUSE (2.4.11 AND LATER)
+
+         ProxyPass "/myapp/" "fcgi://localhost:4000/" enablereuse=on
+
+       ENABLE CONNECTION REUSE TO A FCGI BACKEND LIKE PHP-FPM
+
+       Please keep in mind that PHP-FPM (at the time of writing, February 2018) uses a prefork model, namely each of its worker processes can handle one connection at the time.  By default mod_proxy (configured with enablereuse=on) allows a connection pool of ThreadsPerChild connections to the backend for each httpd process when using a threaded mpm (like worker or event), so the following use cases should be taken into account:
+
+        * Under HTTP/1.1 load it will likely cause the creation of up to MaxRequestWorkers connections to the FCGI backend.
+        * Under HTTP/2 load, due to how mod_http2 is implemented, there are additional h2 worker threads that may force the creation of other backend connections. The overall count of connections in the pools may raise to more than MaxRequestWorkers.
+       The maximum number of PHP-FPM worker processes needs to be configured wisely, since there is the chance that they will all end up "busy" handling idle persistent connections, without any room for new ones to be established, and the end user experience will be a pile of HTTP request timeouts.
+
+       The following example passes the request URI as a filesystem path for the PHP-FPM daemon to run. The request URL is implicitly added to the 2nd parameter. The hostname and port following fcgi:// are where PHP-FPM is listening. Connection pooling/reuse is enabled.
+
+       PHP-FPM
+
+         ProxyPassMatch "^/myapp/.*\.php(/.*)?$" "fcgi://localhost:9000/var/www/" enablereuse=on
+
+       The following example passes the request URI as a filesystem path for the PHP-FPM daemon to run. In this case, PHP-FPM is listening on a unix domain socket (UDS). Requires 2.4.9 or later. With this syntax, the hostname and optional port following fcgi:// are ignored.
+
+       PHP-FPM WITH UDS
+
+         ProxyPassMatch "^/(.*\.php(/.*)?)$" "unix:/var/run/php5-fpm.sock|fcgi://localhost/var/www/"
+
+       The balanced gateway needs mod_proxy_balancer and at least one load balancer algorithm module, such as mod_lbmethod_byrequests, in addition to the proxy modules listed above. mod_lbmethod_byrequests is the default, and will be used for this example configuration.
+
+       BALANCED GATEWAY TO MULTIPLE APPLICATION INSTANCES
+
+         ProxyPass "/myapp/" "balancer://myappcluster/"
+         <Proxy "balancer://myappcluster/">
+             BalancerMember "fcgi://localhost:4000"
+             BalancerMember "fcgi://localhost:4001"
+         </Proxy>
+
+       You can also force a request to be handled as a reverse-proxy request, by creating a suitable Handler pass-through. The example configuration below will pass all requests for PHP scripts to the specified FastCGI server using reverse proxy. This feature is available in Apache HTTP Server 2.4.10 and later. For performance reasons, you will want to define a worker representing the same fcgi:// backend. The benefit of this form is that it allows the normal mapping of URI to filename to occur in the server, and the local filesystem result is passed to the backend. When FastCGI is configured this way, the server can calculate the most accurate PATH_INFO.
+
+       PROXY VIA HANDLER
+
+         <FilesMatch "\.php$">
+             # Note: The only part that varies is /path/to/app.sock
+             SetHandler  "proxy:unix:/path/to/app.sock|fcgi://localhost/"
+         </FilesMatch>
+
+         # Define a matching worker.
+         # The part that is matched to the SetHandler is the part that
+         # follows the pipe. If you need to distinguish, "localhost; can
+         # be anything unique.
+         <Proxy "fcgi://localhost/" enablereuse=on max=10>
+         </Proxy>
+
+         <FilesMatch ...>
+             SetHandler  "proxy:fcgi://localhost:9000"
+         </FilesMatch>
+
+         <FilesMatch ...>
+             SetHandler  "proxy:balancer://myappcluster/"
+         </FilesMatch>
+
+       ENVIRONMENT VARIABLES
+
+       In addition to the configuration directives that control the behavior of mod_proxy, there are a number of environment variables that control the FCGI protocol provider:
+
+         proxy-fcgi-pathinfo
+       When configured via ProxyPass or ProxyPassMatch, mod_proxy_fcgi will not set the PATH_INFO environment variable. This allows the backend FCGI server to correctly determine SCRIPT_NAME and Script-URI and be compliant with RFC 3875 section 3.3. If instead you need mod_proxy_fcgi to generate a "best guess" for PATH_INFO, set this env-var. This is a workaround for a bug in some FCGI implementations. This variable can be set to multiple values to tweak at how the best guess is chosen (In 2.4.11 and later only):
+
+         first-dot
+       PATH_INFO is split from the slash following the first "." in the URL.
+
+         last-dot
+       PATH_INFO is split from the slash following the last "." in the URL.
+
+         full
+       PATH_INFO is calculated by an attempt to map the URL to the local filesystem.
+
+         unescape
+       PATH_INFO is the path component of the URL, unescaped / decoded.
+
+         any other value
+       PATH_INFO is the same as the path component of the URL. Originally, this was the only proxy-fcgi-pathinfo option.
+
+       PROXYFCGIBACKENDTYPE DIRECTIVE
+
+         Description: | Specify the type of backend FastCGI application
+         Syntax: | ProxyFCGIBackendType FPM|GENERIC
+         Default: | ProxyFCGIBackendType FPM
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_proxy_fcgi
+         Compatibility: | Available in version 2.4.26 and later
+       This directive allows the type of backend FastCGI application to be specified. Some FastCGI servers, such as PHP-FPM, use historical quirks of environment variables to identify the type of proxy server being used. Set this directive to "GENERIC" if your non PHP-FPM application has trouble interpreting environment variables such as SCRIPT_FILENAME or PATH_TRANSLATED as set by the server.
+
+       One example of values that change based on the setting of this directive is SCRIPT_FILENAME. When using mod_proxy_fcgi historically, SCRIPT_FILENAME was prefixed with the string "proxy:fcgi://". This variable is what some generic FastCGI applications would read as their script input, but PHP-FPM would strip the prefix then remember it was talking to Apache. In 2.4.21 through 2.4.25, this prefix was automatically stripped by the server, breaking the ability of PHP-FPM to detect and interoperate with Apache in some scenarios.
+
+       PROXYFCGISETENVIF DIRECTIVE
+
+         Description: | Allow variables sent to FastCGI servers to be fixed up
+         Syntax: | ProxyFCGISetEnvIf conditional-expression [!]environment-variable-name [value-expression]
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_proxy_fcgi
+         Compatibility: | Available in version 2.4.26 and later
+       Just before passing a request to the configured FastCGI server, the core of the web server sets a number of environment variables based on details of the current request. FastCGI programs often uses these environment variables as inputs that determine what underlying scripts they will process, or what output they directly produce.
+
+       Examples of noteworthy environment variables are:
+
+        * SCRIPT_NAME
+        * SCRIPT_FILENAME
+        * REQUEST_URI
+        * PATH_INFO
+        * PATH_TRANSLATED
+       This directive allows the environment variables above, or any others of interest, to be overridden. This directive is evaluated after the initial values for these variables are set, so they can be used as input into both the condition expressions and value expressions.
+
+       Parameter syntax:
+
+         conditional-expression
+       Specifies an expression that controls whether the environment variable that follows will be modified. For information on the expression syntax, see the examples that follow or the full specification at the ap_expr documentation.
+
+         environment-variable-name
+       Specifies the CGI environment variable to change, such as PATH_INFO. If preceded by an exclamation point, the variable will be unset.
+
+         value-expression
+       Specifies the replacement value for the preceding environment variable. Backreferences, such as "$1", can be included from regular expression captures in conditional-expression. If omitted, the variable is set (or overridden) to an empty string — but see the Note below.
+
+         # A basic, unconditional override
+         ProxyFCGISetEnvIf "true" PATH_INFO "/example"
+
+         # Use an environment variable in the value
+         ProxyFCGISetEnvIf "true" PATH_INFO "%{reqenv:SCRIPT_NAME}"
+
+         # Use captures in the conditions and backreferences in the replacement
+         ProxyFCGISetEnvIf "reqenv('PATH_TRANSLATED') =~ m|(/.*prefix)(\d+)(.*)|" PATH_TRANSLATED "$1$3"
+
+       NOTE: UNSET VS. EMPTY
+
+       The following will unset VARIABLE, preventing it from being sent to the FastCGI server:
+
+         ProxyFCGISetEnvIf true !VARIABLE
+
+       Whereas the following will erase any existing value of VARIABLE (by setting it to the empty string), but the empty VARIABLE will still be sent to the server:
+
+         ProxyFCGISetEnvIf true VARIABLE
+
+       The CGI/1.1 specification does not distinguish (RFC 3875) between a variable with an empty value and a variable that does not exist. However, many CGI and FastCGI implementations distinguish (or allow scripts to distinguish) between the two. The choice of which to use is dependent upon your implementation and your reason for modifying the variable.
+
+Apache HTTP Server manual               bundled documentation

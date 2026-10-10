@@ -1,0 +1,132 @@
+WEBAPI.RTCDATACHANNEL(1)         Sandbox manual         WEBAPI.RTCDATACHANNEL(1)
+
+       NAME
+
+       RTCDataChannel - The RTCDataChannel interface represents a network channel which can be used for bidirectional peer-to-peer transfers of arbitrary data. Ever
+
+       RTCDATACHANNEL
+
+       The RTCDataChannel interface represents a network channel which can be used for bidirectional peer-to-peer transfers of arbitrary data. Every data channel is associated with an RTCPeerConnection, and each peer connection can have up to a theoretical maximum of 65,534 data channels (the actual limit may vary from browser to browser).
+
+       To create a data channel and ask a remote peer to join you, call the RTCPeerConnection's createDataChannel() method. The peer being invited to exchange data receives a datachannel event (which has type RTCDataChannelEvent) to let it know the data channel has been added to the connection.
+
+       RTCDataChannel is a transferable object.
+
+       INSTANCE PROPERTIES
+
+       _Also inherits properties from EventTarget._
+
+        * binaryType
+          * : A string specifying the type of object
+       that should be used to represent binary data received on the RTCDataChannel. Values are the same as allowed on the WebSocket.binaryType property: blob if Blob objects are being used, or arraybuffer if ArrayBuffer objects are being used. The default is arraybuffer.
+
+        * bufferedAmount (read-only)
+          * : Returns the number of bytes of data
+       currently queued to be sent over the data channel.
+
+        * bufferedAmountLowThreshold
+          * : Specifies the number of bytes of buffered outgoing data that is considered "low".
+       The default value is 0.
+
+        * id (read-only)
+          * : Returns an ID number (between 0 and 65,534)
+       which uniquely identifies the RTCDataChannel.
+
+        * label (read-only)
+          * : Returns a string that contains a name describing the data channel.
+       These labels are not required to be unique.
+
+        * maxPacketLifeTime (read-only)
+          * : Returns the amount of time,
+       in milliseconds, the browser is allowed to take to attempt to transmit a message, as set when the data channel was created, or null.
+
+        * maxRetransmits (read-only)
+          * : Returns the maximum number of times
+       the browser should try to retransmit a message before giving up, as set when the data channel was created, or null, which indicates that there is no maximum.
+
+        * negotiated (read-only)
+          * : Indicates
+       whether the RTCDataChannel's connection was negotiated by the Web app (true) or by the WebRTC layer (false). The default is false.
+
+        * ordered (read-only)
+          * : Indicates whether or not the data channel guarantees in-order delivery of messages;
+       the default is true, which indicates that the data channel is indeed ordered.
+
+        * priority (read-only) (experimental)
+          * : Returns a string indicating the priority of the data channel,
+       as set when the data channel was created, or as assigned by the user agent. Possible values are "very-low", "low", "medium", or "high".
+
+        * protocol (read-only)
+          * : Returns a string containing the name of the subprotocol in use.
+       If no protocol was specified when the data channel was created, then this property's value is the empty string ("").
+
+        * readyState (read-only)
+          * : Returns a string
+       which indicates the state of the data channel's underlying data connection. It can have one of the following values: connecting, open, closing, or closed.
+
+       OBSOLETE PROPERTIES
+
+        * reliable (read-only) (deprecated) {{Non-standard_Inline}}
+          * : Indicates whether or not the data channel is _reliable_.
+
+       INSTANCE METHODS
+
+       _Also inherits methods from EventTarget._
+
+        * close()
+          * : Closes the RTCDataChannel.
+       Either peer is permitted to call this method to initiate closure of the channel.
+
+        * send()
+          * : Sends data across the data channel to the remote peer.
+
+       EVENTS
+
+        * bufferedamountlow
+          * : Sent
+       when the number of bytes of data in the outgoing data buffer falls below the value specified by bufferedAmountLowThreshold.
+
+        * close
+          * : Sent when the underlying data transport closes.
+        * closing
+          * : Sent when the underlying data transport is about to start closing.
+        * error
+          * : Sent when an error occurs on the data channel.
+        * message
+          * : Sent when a message has been received from the remote peer.
+       The message contents can be found in the event's data property.
+
+        * open
+          * : Sent when the data channel is first opened,
+       or when an existing data channel's underlying connection re-opens.
+
+       DATA FORMAT
+
+       The underlying data format is defined by the IEEE specification SDP Offer/Answer Procedures for SCTP over DTLS Transport(RFC 8841). The current format specifies its protocol as either "UDP/DTLS/SCTP" (UDP carrying DTLS carrying SCTP) or "TCP/DTLS/SCTP" (TCP carrying DTLS carrying SCTP). Older browsers may only specify "DTLS/SCTP".
+
+       EXAMPLE
+
+         const pc = new RTCPeerConnection();
+         const dc = pc.createDataChannel("my channel");
+
+         dc.onmessage = (event) => {
+           console.log(`received: ${event.data}`);
+         };
+
+         dc.onopen = () => {
+           console.log("datachannel open");
+         };
+
+         dc.onclose = () => {
+           console.log("datachannel close");
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+
+Web APIs manual                         from the official documentation

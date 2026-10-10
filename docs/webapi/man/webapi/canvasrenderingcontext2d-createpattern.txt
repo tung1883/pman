@@ -1,0 +1,115 @@
+WEBAPI.CANVASRENDERINGCONTEXT2D-CREATEPATTERN(1) Sandbox manual WEBAPI.CANVASRENDERINGCONTEXT2D-CREATEPATTERN(1)
+
+       NAME
+
+       CanvasRenderingContext2D: createPattern() method - The CanvasRenderingContext2D.createPattern() method of the Canvas 2D API creates a pattern using the specified image and repetition.
+
+       CANVASRENDERINGCONTEXT2D: CREATEPATTERN() METHOD
+
+       The CanvasRenderingContext2D.createPattern() method of the Canvas 2D API creates a pattern using the specified image and repetition. This method returns a CanvasPattern.
+
+       This method doesn't draw anything to the canvas directly. The pattern it creates must be assigned to the CanvasRenderingContext2D.fillStyle or CanvasRenderingContext2D.strokeStyle properties, after which it is applied to any subsequent drawing.
+
+       SYNTAX
+
+         createPattern(image, repetition)
+
+       PARAMETERS
+
+        * image
+          * : An image to be used as the pattern's image.
+       It can be any of the following:
+
+            * HTMLImageElement ()
+            * SVGImageElement (image)
+            * HTMLVideoElement (, by using the capture of the video)
+            * HTMLCanvasElement ()
+            * ImageBitmap
+            * OffscreenCanvas
+            * VideoFrame
+        * repetition
+          * : A string indicating how to repeat the pattern's image.
+       Possible values are:
+
+            * "repeat" (both directions)
+            * "repeat-x" (horizontal only)
+            * "repeat-y" (vertical only)
+            * "no-repeat" (neither direction)
+       A null value is treated the same as the empty string (""): both are synonyms of "repeat".
+
+       RETURN VALUE
+
+       An opaque CanvasPattern describing a pattern.
+
+       If the image is not fully loaded (HTMLImageElement.complete is false), then null is returned.
+
+       EXAMPLES
+
+       CREATING A PATTERN FROM AN IMAGE
+
+       This example uses the createPattern() method to create a CanvasPattern with a repeating source image. Once created, the pattern is assigned to the canvas context's fill style and applied to a rectangle.
+
+       The original image looks like this:
+
+       
+
+       HTML
+
+         <canvas id="canvas" width="300" height="300"></canvas>
+
+       JAVASCRIPT
+
+         const canvas = document.getElementById("canvas");
+         const ctx = canvas.getContext("2d");
+
+         const img = new Image();
+         img.src = "canvas_create_pattern.png";
+         // Only use the image after it's loaded
+         img.onload = () => {
+           const pattern = ctx.createPattern(img, "repeat");
+           ctx.fillStyle = pattern;
+           ctx.fillRect(0, 0, 300, 300);
+         };
+
+       CREATING A PATTERN FROM A CANVAS
+
+       In this example we create a pattern from the contents of an offscreen canvas. We then apply it to the fill style of our primary canvas, and fill that canvas with the pattern.
+
+       JAVASCRIPT
+
+         // Create a pattern, offscreen
+         const patternCanvas = document.createElement("canvas");
+         const patternContext = patternCanvas.getContext("2d");
+
+         // Give the pattern a width and height of 50
+         patternCanvas.width = 50;
+         patternCanvas.height = 50;
+
+         // Give the pattern a background color and draw an arc
+         patternContext.fillStyle = "#ffeecc";
+         patternContext.fillRect(0, 0, patternCanvas.width, patternCanvas.height);
+         patternContext.arc(0, 0, 50, 0, 0.5 * Math.PI);
+         patternContext.stroke();
+
+         // Create our primary canvas and fill it with the pattern
+         const canvas = document.createElement("canvas");
+         const ctx = canvas.getContext("2d");
+         const pattern = ctx.createPattern(patternCanvas, "repeat");
+         ctx.fillStyle = pattern;
+         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+         // Add our primary canvas to the webpage
+         document.body.appendChild(canvas);
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The interface defining this method: CanvasRenderingContext2D
+        * CanvasPattern
+
+Web APIs manual                         from the official documentation

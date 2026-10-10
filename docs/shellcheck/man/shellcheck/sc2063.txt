@@ -1,0 +1,35 @@
+SHELLCHECK.SC2063(1)             Sandbox manual             SHELLCHECK.SC2063(1)
+
+       NAME
+
+       Grep uses regex, but this looks like a glob. - grep 'foo'
+
+       GREP USES REGEX, BUT THIS LOOKS LIKE A GLOB
+
+       GREP USES REGEX, BUT THIS LOOKS LIKE A GLOB
+
+       PROBLEMATIC CODE
+
+         grep '*foo*'
+
+       CORRECT CODE
+
+         grep 'foo'   # or more explicitly,  grep '.*foo.*'
+
+       RATIONALE
+
+       In globs, * matches any number of any character.
+
+       In regex, * matches any number of the preceding character.
+
+       grep uses regex, not globs, so this means that grep 'foo' is nonsensical because there's no preceding character for .
+
+       If the intention was to match "any number of characters followed by foo", use '.*foo'. Also note that since grep matches substrings, this will match "fishfood". Use anchors to prevent this, e.g. foo$.
+
+       This also means that f* will match "hello", because f* matches 0 (or more) "f"s and there are indeed 0 "f" characters in "hello". Again, use grep 'f' to find strings containing "f", or grep '^f' to find strings starting with "f".
+
+       EXCEPTIONS
+
+       If you're aware of the differences between globs and regex, you can ignore this message.
+
+ShellCheck manual                       from the official documentation

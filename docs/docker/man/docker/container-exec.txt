@@ -1,0 +1,114 @@
+DOCKER.CONTAINER-EXEC(1)         Sandbox manual         DOCKER.CONTAINER-EXEC(1)
+
+       NAME
+
+       docker container exec - Execute a command in a running container
+
+       DOCKER CONTAINER EXEC
+
+       Execute a command in a running container
+
+       USAGE
+
+         docker container exec [OPTIONS] CONTAINER COMMAND [ARG...]
+
+       Aliases: docker container exec, docker exec
+
+       DESCRIPTION
+
+       The docker exec command runs a new command in a running container.
+
+       The command you specify with docker exec only runs while the container's primary process (PID 1) is running, and it isn't restarted if the container is restarted.
+
+       The command runs in the default working directory of the container.
+
+       The command must be an executable. A chained or a quoted command doesn't work.
+
+        * This works: docker exec -it my_container sh -c "echo a && echo b"
+        * This doesn't work: docker exec -it my_container "echo a && echo b"
+
+       OPTIONS
+
+        * --detach, -d (bool): Detached mode: run command in the background
+        * --detach-keys (string): Override the key sequence for detaching a container
+        * --env, -e (list): Set environment variables
+        * --env-file (list): Read in a file of environment variables
+        * --interactive, -i (bool): Keep STDIN open even if not attached
+        * --privileged (bool): Give extended privileges to the command
+        * --tty, -t (bool): Allocate a pseudo-TTY
+        * --user, -u (string): Username or UID (format: [:])
+        * --workdir, -w (string): Working directory inside the container
+
+       EXAMPLES
+
+       RUN DOCKER EXEC ON A RUNNING CONTAINER
+
+       First, start a container.
+
+         $ docker run --name mycontainer -d -i -t alpine /bin/sh
+
+       This creates and starts a container named mycontainer from an alpine image with an sh shell as its main process. The -d option (shorthand for --detach) sets the container to run in the background, in detached mode, with a pseudo-TTY attached (-t). The -i option is set to keep STDIN attached (-i), which prevents the sh process from exiting immediately.
+
+       Next, execute a command on the container.
+
+         $ docker exec -d mycontainer touch /tmp/execWorks
+
+       This creates a new file /tmp/execWorks inside the running container mycontainer, in the background.
+
+       Next, execute an interactive sh shell on the container.
+
+         $ docker exec -it mycontainer sh
+
+       This starts a new shell session in the container mycontainer.
+
+       SET ENVIRONMENT VARIABLES FOR THE EXEC PROCESS (--ENV, -E) #ENV
+
+       Next, set environment variables in the current bash session.
+
+       The docker exec command inherits the environment variables that are set at the time the container is created. Use the --env (or the -e shorthand) to override global environment variables, or to set additional environment variables for the process started by docker exec.
+
+       The following example creates a new shell session in the container mycontainer, with environment variables $VAR_A set to 1, and $VAR_B set to 2. These environment variables are only valid for the sh process started by that docker exec command, and aren't available to other processes running inside the container.
+
+         $ docker exec -e VAR_A=1 -e VAR_B=2 mycontainer env
+         PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+         HOSTNAME=f64a4851eb71
+         VAR_A=1
+         VAR_B=2
+         HOME=/root
+
+       ESCALATE CONTAINER PRIVILEGES (--PRIVILEGED) #PRIVILEGED
+
+       See docker run --privileged.
+
+       SET THE WORKING DIRECTORY FOR THE EXEC PROCESS (--WORKDIR, -W) #WORKDI
+
+       By default docker exec command runs in the same working directory set when the container was created.
+
+         $ docker exec -it mycontainer pwd
+         /
+
+       You can specify an alternative working directory for the command to execute using the --workdir option (or the -w shorthand):
+
+         $ docker exec -it -w /root mycontainer pwd
+         /root
+
+       TRY TO RUN DOCKER EXEC ON A PAUSED CONTAINER
+
+       If the container is paused, then the docker exec command fails with an error:
+
+         $ docker pause mycontainer
+         mycontainer
+
+         $ docker ps
+
+         CONTAINER ID   IMAGE     COMMAND     CREATED          STATUS                   PORTS     NAMES
+         482efdf39fac   alpine    "/bin/sh"   17 seconds ago   Up 16 seconds (Paused)             mycontainer
+
+         $ docker exec mycontainer sh
+
+         Error response from daemon: Container mycontainer is paused, unpause the container before exec
+
+         $ echo $?
+         1
+
+Docker manual                           from the official documentation

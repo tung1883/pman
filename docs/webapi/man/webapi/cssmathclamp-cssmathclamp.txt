@@ -1,0 +1,59 @@
+WEBAPI.CSSMATHCLAMP-CSSMATHCLAMP(1) Sandbox manual WEBAPI.CSSMATHCLAMP-CSSMATHCLAMP(1)
+
+       NAME
+
+       CSSMathClamp: CSSMathClamp() constructor - The CSSMathClamp() constructor creates a new CSSMathClamp object representing a CSS clamp() function.
+
+       CSSMATHCLAMP: CSSMATHCLAMP() CONSTRUCTOR
+
+       The CSSMathClamp() constructor creates a new CSSMathClamp object representing a CSS clamp() function.
+
+       SYNTAX
+
+         new CSSMathClamp(lower, value, upper)
+
+       PARAMETERS
+
+        * lower
+          * : A number or CSSNumericValue that represents the minimum value.
+        * value
+          * : A number or CSSNumericValue that represents the preferred value.
+        * upper
+          * : A number or CSSNumericValue that represents the maximum value.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the parameters have conflicting unit types.
+       For example, mixing a length value with a time value.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The following code creates a CSSMathClamp instance from three lengths, then reads back its lower, value, and upper properties.
+
+         const clamp = new CSSMathClamp(CSS.px(10), CSS.percent(50), CSS.px(500));
+
+         console.log(clamp.constructor.name); // "CSSMathClamp"
+         console.log(clamp.lower); // CSSUnitValue {value: 10, unit: "px"}
+         console.log(clamp.value); // CSSUnitValue {value: 50, unit: "percent"}
+         console.log(clamp.upper); // CSSUnitValue {value: 500, unit: "px"}
+
+       HANDLING INCOMPATIBLE TYPES
+
+       The constructor throws a TypeError if the three arguments don't resolve to a compatible type. In the following code we mix a length with a time, and log the error.
+
+         try {
+           // Mixes a length (px) with a time (s): incompatible types
+           new CSSMathClamp(CSS.px(10), CSS.s(2), CSS.px(500));
+         } catch (e) {
+           console.log(e instanceof TypeError); // true
+           console.log(e.message);
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,120 @@
+APACHE.MOD_NEGOTIATION(1)        Sandbox manual        APACHE.MOD_NEGOTIATION(1)
+
+       TYPE MAPS
+
+       A type map has a format similar to RFC822 mail headers. It contains document descriptions separated by blank lines, with lines beginning with a hash character ('#') treated as comments. A document description consists of several header records; records may be continued on multiple lines if the continuation lines start with spaces. The leading space will be deleted and the lines concatenated. A header record consists of a keyword name, which always ends in a colon, followed by a value. Whitespace is allowed between the header name and value, and between the tokens of value. The headers allowed are:
+
+         Content-Encoding:
+       The encoding of the file. Apache only recognizes encodings that are defined by an AddEncoding directive. This normally includes the encodings x-compress for compress'd files, and x-gzip for gzip'd files. The x- prefix is ignored for encoding comparisons.
+
+         Content-Language:
+       The language(s) of the variant, as an Internet standard language tag (RFC 1766). An example is en, meaning English. If the variant contains more than one language, they are separated by a comma.
+
+         Content-Length:
+       The length of the file, in bytes. If this header is not present, then the actual length of the file is used.
+
+         Content-Type:
+       The MIME media type of the document, with optional parameters. Each variant should include a Content-Type header; negotiation will not work correctly for variants that lack one. Parameters are separated from the media type and from one another by a semi-colon, with a syntax of name=value. Common parameters include:
+
+         level
+       an integer specifying the version of the media type. For text/html this defaults to 2, otherwise 0.
+
+         qs
+       a floating-point number with a value in the range 0[.000] to 1[.000], indicating the relative 'quality' of this variant compared to the other available variants, independent of the client's capabilities. For example, a jpeg file is usually of higher source quality than an ascii file if it is attempting to represent a photograph. However, if the resource being represented is ascii art, then an ascii file would have a higher source quality than a jpeg file. All qs values are therefore specific to a given resource.
+
+       EXAMPLE
+
+       Content-Type: image/jpeg; qs=0.8
+
+         URI:
+       uri of the file containing the variant (of the given media type, encoded with the given content encoding). These are interpreted as URLs relative to the map file; they must be on the same server, and they must refer to files to which the client would be granted access if they were to be requested directly.
+
+         Body:
+       The actual content of the resource may be included in the type-map file using the Body header. This header must contain a string that designates a delimiter for the body content. Then all following lines in the type map file will be considered part of the resource body until the delimiter string is found.
+
+       EXAMPLE
+
+       Body:----xyz----  <html>  <body>  <p>Content of the page.</p>  </body>  </html>  ----xyz----
+
+       Consider, for example, a resource called document.html which is available in English, French, and German. The files for each of these are called document.html.en, document.html.fr, and document.html.de, respectively. The type map file will be called document.html.var, and will contain the following:
+
+       URI: document.html    Content-language: en  Content-type: text/html  URI: document.html.en    Content-language: fr  Content-type: text/html  URI: document.html.fr    Content-language: de  Content-type: text/html  URI: document.html.de
+
+       All four of these files should be placed in the same directory, and the .var file should be associated with the type-map handler with an AddHandler directive:
+
+         AddHandler type-map .var
+
+       A request for document.html.var in this directory will result in choosing the variant which most closely matches the language preference specified in the user's Accept-Language request header.
+
+       If Multiviews is enabled, and MultiviewsMatch is set to "handlers" or "any", a request to document.html will discover document.html.var and continue negotiating with the explicit type map.
+
+       Other configuration directives, such as Alias can be used to map document.html to document.html.var.
+
+       MULTIVIEWS
+
+       A Multiviews search is enabled by the Multiviews Options. If the server receives a request for /some/dir/foo and /some/dir/foo does not exist, then the server reads the directory looking for all files named foo.*, and effectively fakes up a type map which names all those files, assigning them the same media types and content-encodings it would have if the client had asked for one of them by name. It then chooses the best match to the client's requirements, and returns that document.
+
+       The MultiviewsMatch directive configures whether Apache will consider files that do not have content negotiation meta-information assigned to them when choosing files.
+
+       CACHENEGOTIATEDDOCS DIRECTIVE
+
+         Description: | Allows content-negotiated documents to be cached by proxy servers
+         Syntax: | CacheNegotiatedDocs On|Off
+         Default: | CacheNegotiatedDocs Off
+         Context: | server config, virtual host
+         Status: | Base
+         Module: | mod_negotiation
+       If set, this directive allows content-negotiated documents to be cached by proxy servers. This could mean that clients behind those proxies could retrieve versions of the documents that are not the best match for their abilities, but it will make caching more efficient.
+
+       This directive only applies to requests which come from HTTP/1.0 browsers. HTTP/1.1 provides much better control over the caching of negotiated documents, and this directive has no effect in responses to HTTP/1.1 requests.
+
+       FORCELANGUAGEPRIORITY DIRECTIVE
+
+         Description: | Action to take if a single acceptable document is not found
+         Syntax: | ForceLanguagePriority None|Prefer|Fallback [Prefer|Fallback]
+         Default: | ForceLanguagePriority Prefer
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_negotiation
+       The ForceLanguagePriority directive uses the given LanguagePriority to satisfy negotiation where the server could otherwise not return a single matching document.
+
+       ForceLanguagePriority Prefer uses LanguagePriority to serve a one valid result, rather than returning an HTTP result 300 (MULTIPLE CHOICES) when there are several equally valid choices. If the directives below were given, and the user's Accept-Language header assigned en and de each as quality .500 (equally acceptable) then the first matching variant, en, will be served.
+
+         LanguagePriority en fr de
+         ForceLanguagePriority Prefer
+
+       ForceLanguagePriority Fallback uses LanguagePriority to serve a valid result, rather than returning an HTTP result 406 (NOT ACCEPTABLE). If the directives below were given, and the user's Accept-Language only permitted an es language response, but such a variant isn't found, then the first variant from the LanguagePriority list below will be served.
+
+         LanguagePriority en fr de
+         ForceLanguagePriority Fallback
+
+       Both options, Prefer and Fallback, may be specified, so either the first matching variant from LanguagePriority will be served if more than one variant is acceptable, or first available document will be served if none of the variants matched the client's acceptable list of languages.
+
+       ForceLanguagePriority None disables both Prefer and Fallback behavior, so the server will return 300 (MULTIPLE CHOICES) or 406 (NOT ACCEPTABLE) as appropriate. None cannot be combined with Prefer or Fallback.
+
+       SEE ALSO
+
+        * AddLanguage
+
+       LANGUAGEPRIORITY DIRECTIVE
+
+         Description: | The precedence of language variants for cases where the client does not express a preference
+         Syntax: | LanguagePriority MIME-lang [MIME-lang] ...
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_negotiation
+       The LanguagePriority sets the precedence of language variants for the case where the client does not express a preference, when handling a Multiviews request. The list of MIME-lang are in order of decreasing preference.
+
+         LanguagePriority en fr de
+
+       For a request for foo.html, where foo.html.fr and foo.html.de both existed, but the browser did not express a language preference, then foo.html.fr would be returned.
+
+       Note that this directive only has an effect if a 'best' language cannot be determined by any other means or the ForceLanguagePriority directive is not None. In general, the client determines the language preference, not the server.
+
+       SEE ALSO
+
+        * AddLanguage
+
+Apache HTTP Server manual               bundled documentation

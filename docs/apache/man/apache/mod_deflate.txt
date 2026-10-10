@@ -1,0 +1,250 @@
+APACHE.MOD_DEFLATE(1)            Sandbox manual            APACHE.MOD_DEFLATE(1)
+
+       SUPPORTED ENCODINGS
+
+       The gzip encoding is the only one supported to ensure complete compatibility with old browser implementations. The deflate encoding is not supported, please check the zlib's documentation for a complete explanation.
+
+       SAMPLE CONFIGURATIONS
+
+       COMPRESSION AND TLS
+
+       Some web applications are vulnerable to an information disclosure attack when a TLS connection carries deflate compressed data. For more information, review the details of the "BREACH" family of attacks.
+
+       This is a simple configuration that compresses common text-based content types.
+
+       COMPRESS ONLY A FEW TYPES
+
+         AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+
+       ENABLING COMPRESSION
+
+       COMPRESSION AND TLS
+
+       Some web applications are vulnerable to an information disclosure attack when a TLS connection carries deflate compressed data. For more information, review the details of the "BREACH" family of attacks.
+
+       OUTPUT COMPRESSION
+
+       Compression is implemented by the DEFLATE filter. The following directive will enable compression for documents in the container where it is placed:
+
+         SetOutputFilter DEFLATE
+         SetEnvIfNoCase Request_URI "\.(?:gif|jpe?g|png)$" no-gzip
+
+       If you want to restrict the compression to particular MIME types in general, you may use the AddOutputFilterByType directive. Here is an example of enabling compression only for the html files of the Apache httpd documentation:
+
+         <Directory "/your-server-root/manual">
+             AddOutputFilterByType DEFLATE text/html
+         </Directory>
+
+       NOTE
+
+       The DEFLATE filter is always inserted after RESOURCE filters like PHP or SSI. It never touches internal subrequests.
+
+       NOTE
+
+       There is an environment variable force-gzip, set via SetEnv, which will ignore the accept-encoding setting of your browser and will send compressed output.
+
+       OUTPUT DECOMPRESSION
+
+       The mod_deflate module also provides a filter for inflating/uncompressing a gzip compressed response body. In order to activate this feature you have to insert the INFLATE filter into the output filter chain using SetOutputFilter or AddOutputFilter, for example:
+
+         <Location "/dav-area">
+             ProxyPass "http://example.com/"
+             SetOutputFilter INFLATE
+         </Location>
+
+       This example will uncompress gzip-compressed output from example.com, so other filters can do further processing with it.
+
+       INPUT DECOMPRESSION
+
+       The mod_deflate module also provides a filter for decompressing a gzip compressed request body. In order to activate this feature you have to insert the DEFLATE filter into the input filter chain using SetInputFilter or AddInputFilter, for example:
+
+         <Location "/dav-area">
+             SetInputFilter DEFLATE
+         </Location>
+
+       Now if a request contains a Content-Encoding: gzip header, the body will be automatically decompressed. Few browsers have the ability to gzip request bodies. However, some special applications actually do support request compression, for instance some WebDAV clients.
+
+       NOTE ON CONTENT-LENGTH
+
+       If you evaluate the request body yourself, don't trust the Content-Length header! The Content-Length header reflects the length of the incoming data from the client and not the byte count of the decompressed data stream.
+
+       DEALING WITH PROXY SERVERS
+
+       The mod_deflate module sends a Vary: Accept-Encoding HTTP response header to alert proxies that a cached response should be sent only to clients that send the appropriate Accept-Encoding request header. This prevents compressed content from being sent to a client that will not understand it.
+
+       If you use some special exclusions dependent on, for example, the User-Agent header, you must manually configure an addition to the Vary header to alert proxies of the additional restrictions. For example, in a typical configuration where the addition of the DEFLATE filter depends on the User-Agent, you should add:
+
+         Header append Vary User-Agent
+
+       If your decision about compression depends on other information than request headers (e.g. HTTP version), you have to set the Vary header to the value *. This prevents compliant proxies from caching entirely.
+
+       EXAMPLE
+
+         Header set Vary *
+
+       SERVING PRE-COMPRESSED CONTENT
+
+       Since mod_deflate re-compresses content each time a request is made, some performance benefit can be derived by pre-compressing the content and telling mod_deflate to serve them without re-compressing them. This may be accomplished using a configuration like the following:
+
+         <IfModule mod_headers.c>
+             # Serve gzip compressed CSS and JS files if they exist
+             # and the client accepts gzip.
+             RewriteCond "%{HTTP:Accept-encoding}" "gzip"
+             RewriteCond "%{REQUEST_FILENAME}\.gz" -s
+             RewriteRule "^(.*)\.(css|js)"         "$1\.$2\.gz" [QSA]
+
+             # Serve correct content types, and prevent mod_deflate double gzip.
+             RewriteRule "\.css\.gz$" "-" [T=text/css,E=no-gzip:1]
+             RewriteRule "\.js\.gz$"  "-" [T=text/javascript,E=no-gzip:1]
+
+             <FilesMatch "(\.js\.gz|\.css\.gz)$">
+               # Serve correct encoding type.
+               Header append Content-Encoding gzip
+
+               # Force proxies to cache gzipped &
+               # non-gzipped css/js files separately.
+               Header append Vary Accept-Encoding
+             </FilesMatch>
+         </IfModule>
+
+       DEFLATEALTERETAG DIRECTIVE
+
+         Description: | How the outgoing ETag header should be modified during compression
+         Syntax: | DeflateAlterETag AddSuffix|NoChange|Remove
+         Default: | DeflateAlterETag AddSuffix
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_deflate
+         Compatibility: | Available in Apache 2.4.58 and later
+       The DeflateAlterETag directive specifies how the ETag header should be altered when a response is compressed.
+
+         AddSuffix
+       Append the compression method onto the end of the ETag, causing compressed and uncompressed representations to have unique ETags. This has been the default since 2.4.0, but prevents serving "HTTP Not Modified" (304) responses to conditional requests for compressed content.
+
+         NoChange
+       Don't change the ETag on a compressed response. This was the default prior to 2.4.0, but does not satisfy the HTTP/1.1 property that all representations of the same resource have unique ETags.
+
+         Remove
+       Remove the ETag header from compressed responses. This prevents some conditional requests from being possible, but avoids the shortcomings of the preceding options.
+
+       DEFLATEBUFFERSIZE DIRECTIVE
+
+         Description: | Fragment size to be compressed at one time by zlib
+         Syntax: | DeflateBufferSize value
+         Default: | DeflateBufferSize 8096
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_deflate
+       The DeflateBufferSize directive specifies the size in bytes of the fragments that zlib should compress at one time. If the compressed response size is bigger than the one specified by this directive then httpd will switch to chunked encoding (HTTP header Transfer-Encoding set to Chunked), with the side effect of not setting any Content-Length HTTP header. This is particularly important when httpd works behind reverse caching proxies or when httpd is configured with mod_cache and mod_cache_disk because HTTP responses without any Content-Length header might not be cached.
+
+       DEFLATECOMPRESSIONLEVEL DIRECTIVE
+
+         Description: | How much compression do we apply to the output
+         Syntax: | DeflateCompressionLevel value
+         Default: | Zlib's default
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_deflate
+       The DeflateCompressionLevel directive specifies what level of compression should be used, the higher the value, the better the compression, but the more CPU time is required to achieve this.
+
+       The value must be between 1 (less compression) and 9 (more compression).
+
+       DEFLATEFILTERNOTE DIRECTIVE
+
+         Description: | Places the compression ratio in a note for logging
+         Syntax: | DeflateFilterNote [type] notename
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_deflate
+       The DeflateFilterNote directive specifies that a note about compression ratios should be attached to the request. The name of the note is the value specified for the directive. You can use that note for statistical purposes by adding the value to your access log.
+
+       EXAMPLE
+
+         DeflateFilterNote ratio
+
+         LogFormat '"%r" %b (%{ratio}n) "%{User-agent}i"' deflate
+         CustomLog "logs/deflate_log" deflate
+
+       If you want to extract more accurate values from your logs, you can use the type argument to specify the type of data left as a note for logging. type can be one of:
+
+         Input
+       Store the byte count of the filter's input stream in the note.
+
+         Output
+       Store the byte count of the filter's output stream in the note.
+
+         Ratio
+       Store the compression ratio (output/input * 100) in the note. This is the default, if the type argument is omitted.
+
+       Thus you may log it this way:
+
+       ACCURATE LOGGING
+
+         DeflateFilterNote Input instream
+         DeflateFilterNote Output outstream
+         DeflateFilterNote Ratio ratio
+
+         LogFormat '"%r" %{outstream}n/%{instream}n (%{ratio}n%%)' deflate
+         CustomLog "logs/deflate_log" deflate
+
+       SEE ALSO
+
+        * mod_log_config
+
+       DEFLATEINFLATELIMITREQUESTBODY DIRECTIVE
+
+         Description: | Maximum size of inflated request bodies
+         Syntax: | DeflateInflateLimitRequestBody value
+         Default: | None, but LimitRequestBody applies after deflation
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_deflate
+         Compatibility: | 2.4.10 and later
+       The DeflateInflateLimitRequestBody directive specifies the maximum size of an inflated request body. If it is unset, LimitRequestBody is applied to the inflated body. A value of 0 means no limit is applied to the inflated body size (but other limits such as LimitRequestBody may still apply).
+
+       DEFLATEINFLATERATIOBURST DIRECTIVE
+
+         Description: | Maximum number of times the inflation ratio for request bodies can be crossed
+         Syntax: | DeflateInflateRatioBurst value
+         Default: | DeflateInflateRatioBurst 3
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_deflate
+         Compatibility: | 2.4.10 and later
+       The DeflateInflateRatioBurst directive specifies the maximum number of times the DeflateInflateRatioLimit can be crossed before terminating the request.
+
+       DEFLATEINFLATERATIOLIMIT DIRECTIVE
+
+         Description: | Maximum inflation ratio for request bodies
+         Syntax: | DeflateInflateRatioLimit value
+         Default: | DeflateInflateRatioLimit 200
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_deflate
+         Compatibility: | 2.4.10 and later
+       The DeflateInflateRatioLimit directive specifies the maximum ratio of deflated to inflated size of an inflated request body. This ratio is checked as the body is streamed in, and if crossed more than DeflateInflateRatioBurst times, the request will be terminated.
+
+       DEFLATEMEMLEVEL DIRECTIVE
+
+         Description: | How much memory should be used by zlib for compression
+         Syntax: | DeflateMemLevel value
+         Default: | DeflateMemLevel 9
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_deflate
+       The DeflateMemLevel directive specifies how much memory should be used by zlib for compression (a value between 1 and 9).
+
+       DEFLATEWINDOWSIZE DIRECTIVE
+
+         Description: | Zlib compression window size
+         Syntax: | DeflateWindowSize value
+         Default: | DeflateWindowSize 15
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_deflate
+       The DeflateWindowSize directive specifies the zlib compression window size (a value between 1 and 15). Generally, the higher the window size, the higher can the compression ratio be expected.
+
+Apache HTTP Server manual               bundled documentation

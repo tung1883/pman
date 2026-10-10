@@ -1,0 +1,69 @@
+WEBAPI.DOCUMENT-PRERENDERING(1)  Sandbox manual  WEBAPI.DOCUMENT-PRERENDERING(1)
+
+       NAME
+
+       Document: prerendering property - The prerendering read-only property of the Document interface returns true if the document is currently in the process of prerendering, as i
+
+       DOCUMENT: PRERENDERING PROPERTY
+
+       The prerendering read-only property of the Document interface returns true if the document is currently in the process of prerendering, as initiated via the Speculation Rules API.
+
+       VALUE
+
+       A boolean. Returns true if the document is currently in the process of prerendering, and false if it is not. false will be returned for documents that have finished prerendering, and documents that were not prerendered.
+
+       EXAMPLES
+
+       To run an activity while the page is prerendering, you can check for the prerendering property. You could for example run some analytics:
+
+         if (document.prerendering) {
+           analytics.sendInfo("got this far during prerendering!");
+         }
+
+       When a prerendered document is activated, PerformanceNavigationTiming.activationStart is set to a DOMHighResTimeStamp value representing the time between when the prerender was started and the document was actually activated. The following function can check for prerendering _and_ prerendered pages:
+
+         function pagePrerendered() {
+           return (
+             document.prerendering ||
+             performance.getEntriesByType("navigation")[0]?.activationStart > 0
+           );
+         }
+
+       When the prerendered page is activated by the user viewing the page, the prerenderingchange event will fire. This can be used to enable activities that previously would be started by default on page load but which you wish to delay until the page is actually viewed by the user. The following code sets up an event listener to run a function once prerendering has finished, on a prerendered page, or runs it immediately on a non-prerendered page:
+
+         if (document.prerendering) {
+           document.addEventListener("prerenderingchange", initAnalytics, {
+             once: true,
+           });
+         } else {
+           initAnalytics();
+         }
+
+       > See the Speculation Rules API landing page and particularly the Unsafe speculative loading conditions section for more information on the kinds of activities you might wish to delay.
+       To measure how often a prerender is activated, combine all three APIs: document.prerendering to detect cases where the page is currently prerendering, prerenderingchange to watch for activations in that case, and activationStart to check for cases where the page was prerendered in the past.
+
+         if (document.prerendering) {
+           document.addEventListener(
+             "prerenderingchange",
+             () => {
+               console.log("Prerender activated after this script ran");
+             },
+             { once: true },
+           );
+         } else if (performance.getEntriesByType("navigation")[0]?.activationStart > 0) {
+           console.log("Prerender activated before this script ran");
+         } else {
+           console.log("This page load was not via prerendering");
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Speculation Rules API
+        * prerenderingchange event
+        * PerformanceNavigationTiming.activationStart property
+
+Web APIs manual                         from the official documentation

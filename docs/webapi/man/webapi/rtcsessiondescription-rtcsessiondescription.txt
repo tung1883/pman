@@ -1,0 +1,63 @@
+WEBAPI.RTCSESSIONDESCRIPTION-RTCSESSIONDESCRIPTION(1) Sandbox manual WEBAPI.RTCSESSIONDESCRIPTION-RTCSESSIONDESCRIPTION(1)
+
+       NAME
+
+       RTCSessionDescription: RTCSessionDescription() constructor - The RTCSessionDescription() constructor creates a new
+
+       RTCSESSIONDESCRIPTION: RTCSESSIONDESCRIPTION() CONSTRUCTOR
+
+       The RTCSessionDescription() constructor creates a new RTCSessionDescription with its properties initialized as described in the specified object.
+
+       > This constructor has been deprecated because
+       > RTCPeerConnection.setLocalDescription() and other methods which take
+       > SDP as input now directly accept an object containing the type and sdp properties, so you don't have to instantiate an
+       > RTCSessionDescription yourself.
+
+       SYNTAX
+
+         new RTCSessionDescription(options)
+
+       VALUES
+
+        * options
+          * : An object providing the default values for the session description. It should contain the following properties:
+            * type
+              * : Required. A string which is used to set the type property of the new RTCSessionDescription object. Must be one of the valid RTCSessionDescription.type values.
+            * sdp (optional)
+              * : A string containing a SDP message describing the session. This value is an empty string ("") by default and may not be null.
+
+       EXAMPLE
+
+       This example uses the constructor to convert an SDP offer into an RTCSessionDescription object.
+
+       > This is no longer necessary, however;
+       > RTCPeerConnection.setLocalDescription() and other methods which take
+       > SDP as input now directly accept plain objects, so you don't have to instantiate an
+       > RTCSessionDescription yourself.
+
+         navigator.getUserMedia({ video: true }, (stream) => {
+           pc.onaddstream({ stream });
+           // Adding a local stream won't trigger the onaddstream callback
+           pc.addStream(stream);
+
+           pc.createOffer((offer) => {
+             pc.setLocalDescription(
+               new RTCSessionDescription(offer),
+               () => {
+                 // send the offer to a server to be forwarded to the friend you're calling.
+               },
+               error,
+             );
+           }, error);
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * RTCSessionDescription
+
+Web APIs manual                         from the official documentation

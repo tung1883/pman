@@ -1,0 +1,50 @@
+SHELLCHECK.SC2073(1)             Sandbox manual             SHELLCHECK.SC2073(1)
+
+       NAME
+
+       Escape \< to prevent it redirecting (or switch to [[ .. ]]). - if [ "aardvark" < "zebra" ]
+
+       ESCAPE TO PREVENT IT REDIRECTING (OR SWITCH TO .. )
+
+       ESCAPE TO PREVENT IT REDIRECTING (OR SWITCH TO .. )
+
+       PROBLEMATIC CODE
+
+         if [ "aardvark" < "zebra" ]
+         then
+           echo "Alphabetical!"
+         fi
+
+       CORRECT CODE
+
+         if [ "aardvark" \< "zebra" ]
+         then
+           echo "Alphabetical!"
+         fi
+
+       or optionally in Bash/Ksh:
+
+         if [[ "aardvark" < "zebra" ]]
+         then
+           echo "Alphabetical!"
+         fi
+
+       RATIONALE
+
+       You are using the operator < or > in a [ test expression.
+
+       In this context, it will be considered a file redirection operator instead, so [ "aardvark" < "zebra" ] is equivalent to [ "aardvark" ] < ./zebra, which is true if there exists a readable file zebra in the current directory.
+
+       If you wanted to compare two strings lexicographically (alphabetically), escape the < or > with a backslash as in the correct example.
+
+       If you want to compare two numbers numerically, use -lt or -ge instead.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

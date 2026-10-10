@@ -1,0 +1,35 @@
+SHELLCHECK.SC2179(1)             Sandbox manual             SHELLCHECK.SC2179(1)
+
+       NAME
+
+       Use array+=("item") to append items to an array. - var=(one two)
+
+       USE ARRAY+ ( ITEM ) TO APPEND ITEMS TO AN ARRAY
+
+       USE ARRAY+ ( ITEM ) TO APPEND ITEMS TO AN ARRAY
+
+       PROBLEMATIC CODE
+
+         var=(one two)
+         var+=three
+
+       CORRECT CODE
+
+         var=(one two)
+         var+=( three )
+
+       RATIONALE
+
+       It looks like you are trying to append a string to an array with var+=string. This instead appends to the first element of the array (equivalent to var[0]+=three).
+
+       In the problematic code, the array will therefore contain onethree two.
+
+       Instead, append an array to the array with var+=( elements ). This will append the new items to the array.
+
+       In the correct code, it will contain one two three as expected.
+
+       EXCEPTIONS
+
+       If ShellCheck mistakenly thinks the variable is an array when it's not (e.g. because the same name was used in a different context), you can ignore this error.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,54 @@
+WEBAPI.CREATEMONITOR(1)          Sandbox manual          WEBAPI.CREATEMONITOR(1)
+
+       NAME
+
+       CreateMonitor - The CreateMonitor interface provides information on the progress of an AI model download, for example a language pack or some fine-tuning da
+
+       CREATEMONITOR
+
+       The CreateMonitor interface provides information on the progress of an AI model download, for example a language pack or some fine-tuning data.
+
+       It can be used via:
+
+        * LanguageDetector.create()
+        * LanguageModel.create()
+        * Summarizer.create()
+        * Translator.create()
+
+       EVENTS
+
+       _Inherits events from its parent, EventTarget._
+
+        * downloadprogress (experimental)
+          * : Fired when progress is made on the AI model download.
+
+       EXAMPLES
+
+       BASIC CREATEMONITOR USAGE
+
+       A CreateMonitor instance is used via the monitor property of an AI API's create() method (Summarizer.create() is shown below). The monitor property takes a callback function as a value, the argument of which is the CreateMonitor instance. You can then monitor download progress via the instance's downloadprogress event.
+
+         const summarizer = await Summarizer.create({
+           sharedContext:
+             "A general summary to help a user decide if the text is worth reading",
+           monitor(monitor) {
+             monitor.addEventListener("downloadprogress", (e) => {
+               console.log(`download progress: ${e.loaded}/${e.total}`);
+             });
+           },
+         });
+
+         const summary = await summarizer.summarize(myText);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Prompt API
+        * Using the Summarizer API
+        * Using the Translator and Language Detector APIs
+        * Web AI demos on chrome.dev.
+
+Web APIs manual                         from the official documentation

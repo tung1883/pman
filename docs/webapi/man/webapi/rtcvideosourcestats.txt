@@ -1,0 +1,80 @@
+WEBAPI.RTCVIDEOSOURCESTATS(1)    Sandbox manual    WEBAPI.RTCVIDEOSOURCESTATS(1)
+
+       NAME
+
+       RTCVideoSourceStats - The RTCVideoSourceStats dictionary of the WebRTC API provides statistics information about a video track (MediaStreamTrack) that is attached
+
+       RTCVIDEOSOURCESTATS
+
+       The RTCVideoSourceStats dictionary of the WebRTC API provides statistics information about a video track (MediaStreamTrack) that is attached to one or more senders (RTCRtpSender).
+
+       These statistics can be obtained by iterating the RTCStatsReport returned by RTCRtpSender.getStats() or RTCPeerConnection.getStats() until you find a report with the type of media-source and a kind of video.
+
+       > For video information about remotely sourced tracks (that are being received), see RTCInboundRtpStreamStats.
+
+       INSTANCE PROPERTIES
+
+        * frames (optional)
+          * : A positive number that indicates the total number of frames originating from this video source.
+        * framesPerSecond (optional)
+          * : A positive number that represents the number of frames originating from this video source in the last second.
+       This property is not defined on this stats object for the first second of its existence.
+
+        * height (optional)
+          * : A number that represents the height, in pixels, of the last frame originating from this source.
+       This property is not defined on this stats object until after the first frame has been produced.
+
+        * width (optional)
+          * : A number that represents the width, in pixels, of the most recent frame originating from this source.
+       This property is not defined on this stats object until after the first frame has been produced.
+
+       COMMON MEDIA-SOURCE PROPERTIES
+
+       The following properties are present in both RTCVideoSourceStats and RTCAudioSourceStats:
+
+        * trackIdentifier
+          * : A string that contains the id value of the MediaStreamTrack associated with the video source.
+        * kind
+          * : A string indicating whether this object represents stats for a video source or a media source. For an RTCVideoSourceStats this will always be video.
+
+       COMMON INSTANCE PROPERTIES
+
+       The following properties are common to all statistics objects.
+
+        * id
+          * : A string that uniquely identifies the object that is being monitored to produce this set of statistics.
+        * timestamp
+          * : A DOMHighResTimeStamp object indicating the time at which the sample was taken for this statistics object.
+        * type
+          * : A string with the value "media-source", indicating that the object is an instance of either RTCAudioSourceStats or RTCVideoSourceStats.
+
+       DESCRIPTION
+
+       The interface provides statistics about a video media source attached to one or more senders. The information includes an identifier for the associated MediaStreamTrack, along with the height and width of the last frame sent from the source, the number of frames sent from the source, and the frame rate.
+
+       EXAMPLES
+
+       This example shows how you might iterate the stats object returned from RTCRtpSender.getStats() to get the video-specific media-source stats.
+
+         // where sender is an RTCRtpSender
+         const stats = await sender.getStats();
+         let videoSourceStats = null;
+
+         for (const report of stats.values()) {
+           if (report.type === "media-source" && report.kind === "video") {
+             videoSourceStats = report;
+             break;
+           }
+         }
+
+         // videoSourceStats will be null if the report did not include video source stats
+         const frames = videoSourceStats?.frames;
+         const fps = videoSourceStats?.framesPerSecond;
+         const width = videoSourceStats?.width;
+         const height = videoSourceStats?.height;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

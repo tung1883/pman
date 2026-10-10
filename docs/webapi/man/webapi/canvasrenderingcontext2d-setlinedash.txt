@@ -1,0 +1,104 @@
+WEBAPI.CANVASRENDERINGCONTEXT2D-SETLINEDASH(1) Sandbox manual WEBAPI.CANVASRENDERINGCONTEXT2D-SETLINEDASH(1)
+
+       NAME
+
+       CanvasRenderingContext2D: setLineDash() method - The setLineDash() method of the Canvas 2D API's
+
+       CANVASRENDERINGCONTEXT2D: SETLINEDASH() METHOD
+
+       The setLineDash() method of the Canvas 2D API's CanvasRenderingContext2D interface sets the line dash pattern used when stroking lines. It uses an array of values that specify alternating lengths of lines and gaps which describe the pattern.
+
+       > To return to using solid lines, set the line dash list to an
+       > empty array.
+
+       SYNTAX
+
+         setLineDash(segments)
+
+       PARAMETERS
+
+        * segments
+          * : An Array of numbers that specify distances to alternately draw a
+       line and a gap (in coordinate space units). If the number of elements in the array is odd, the elements of the array get copied and concatenated. For example, [5, 15, 25] will become [5, 15, 25, 5, 15, 25]. If the array is empty, the line dash list is cleared and line strokes return to being solid.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       BASIC EXAMPLE
+
+       This example uses the setLineDash() method to draw a dashed line above a solid line.
+
+       HTML
+
+         <canvas id="canvas"></canvas>
+
+       JAVASCRIPT
+
+         const canvas = document.getElementById("canvas");
+         const ctx = canvas.getContext("2d");
+
+         // Dashed line
+         ctx.beginPath();
+         ctx.setLineDash([5, 15]);
+         ctx.moveTo(0, 50);
+         ctx.lineTo(300, 50);
+         ctx.stroke();
+
+         // Solid line
+         ctx.beginPath();
+         ctx.setLineDash([]);
+         ctx.moveTo(0, 100);
+         ctx.lineTo(300, 100);
+         ctx.stroke();
+
+       RESULT
+
+       SOME COMMON PATTERNS
+
+       This example illustrates a variety of common line dash patterns.
+
+       HTML
+
+         <canvas id="canvas"></canvas>
+
+       JAVASCRIPT
+
+       The drawDashedLine() function created below makes the drawing of multiple dashed lines simple. It receives a pattern array as its only parameter.
+
+         const canvas = document.getElementById("canvas");
+         const ctx = canvas.getContext("2d");
+         let y = 15;
+
+         function drawDashedLine(pattern) {
+           ctx.beginPath();
+           ctx.setLineDash(pattern);
+           ctx.moveTo(0, y);
+           ctx.lineTo(300, y);
+           ctx.stroke();
+           y += 20;
+         }
+
+         drawDashedLine([]);
+         drawDashedLine([1, 1]);
+         drawDashedLine([10, 10]);
+         drawDashedLine([20, 5]);
+         drawDashedLine([15, 3, 3, 3]);
+         drawDashedLine([20, 3, 3, 3, 3, 3, 3, 3]);
+         drawDashedLine([12, 3, 3]); // Equals [12, 3, 3, 12, 3, 3]
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The interface defining this method: CanvasRenderingContext2D
+        * CanvasRenderingContext2D.getLineDash()
+        * CanvasRenderingContext2D.lineDashOffset
+
+Web APIs manual                         from the official documentation

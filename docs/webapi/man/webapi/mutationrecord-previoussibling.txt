@@ -1,0 +1,71 @@
+WEBAPI.MUTATIONRECORD-PREVIOUSSIBLING(1) Sandbox manual WEBAPI.MUTATIONRECORD-PREVIOUSSIBLING(1)
+
+       NAME
+
+       MutationRecord: previousSibling property - The MutationRecord read-only property previousSibling is the previous sibling of an added or removed child node of the target of a MutationO
+
+       MUTATIONRECORD: PREVIOUSSIBLING PROPERTY
+
+       The MutationRecord read-only property previousSibling is the previous sibling of an added or removed child node of the target of a MutationObserver.
+
+       VALUE
+
+       If a node is added to or removed from the target of a MutationObserver, the value is the Node that is the previous sibling of the added or removed node: that is, the node immediately before this one in the parent's childNodes list.
+
+       The value is null if there are no added or removed nodes, or if the node is the first child of its parent.
+
+       EXAMPLES
+
+       LOG THE PREVIOUS SIBLING OF A MUTATION
+
+       This adds a node every time you click the button. Then the observer logs the textContent of the previousSibling of the added node.
+
+       HTML
+
+         <button id="add-nodes">Add a node</button>
+         <button id="reset">Reset</button>
+
+         <pre id="log" class="log">Previous sibling of added node:</pre>
+         <div id="target"><p>Node #0</p></div>
+
+         .log {
+           border: 1px dotted black;
+           padding: 0.5rem;
+         }
+
+       JAVASCRIPT
+
+         const addNodes = document.querySelector("#add-nodes");
+         const reset = document.querySelector("#reset");
+         const target = document.querySelector("#target");
+         let nodeNumber = 1;
+
+         addNodes.addEventListener("click", () => {
+           const newPara = document.createElement("p");
+           newPara.textContent = `Node #${nodeNumber}`;
+           nodeNumber++;
+           target.appendChild(newPara);
+         });
+
+         reset.addEventListener("click", () => self.location.reload());
+
+         function logPreviousSibling(records) {
+           for (const record of records) {
+             if (record.type === "childList") {
+               for (const newNode of record.addedNodes) {
+                 log.textContent = `Previous sibling of added node: ${newNode.previousSibling?.textContent}`;
+               }
+             }
+           }
+         }
+
+         const observer = new MutationObserver(logPreviousSibling);
+         observer.observe(target, { childList: true });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,256 @@
+APACHE.REWRITEMAP(1)             Sandbox manual             APACHE.REWRITEMAP(1)
+
+       INTRODUCTION
+
+       The RewriteMap directive defines an external function which can be called in the context of RewriteRule or RewriteCond directives to perform rewriting that is too complicated, or too specialized to be performed just by regular expressions. The source of this lookup can be any of the types listed in the sections below, and enumerated in the RewriteMap reference documentation.
+
+       The syntax of the RewriteMap directive is as follows:
+
+         RewriteMap MapName MapType:MapSource
+
+       The MapName is an arbitrary name that you assign to the map, and which you will use in directives later on. Arguments are passed to the map via the following syntax:
+
+       ${ MapName : LookupKey }   ${ MapName : LookupKey | DefaultValue }
+
+       When such a construct occurs, the map MapName is consulted and the key LookupKey is looked-up. If the key is found, the map-function construct is substituted by SubstValue. If the key is not found then it is substituted by DefaultValue or by the empty string if no DefaultValue was specified.
+
+       For example, you can define a RewriteMap as:
+
+         RewriteMap examplemap "txt:/path/to/file/map.txt"
+
+       You would then be able to use this map in a RewriteRule as follows:
+
+         RewriteRule "^/ex/(.*)" "${examplemap:$1}"
+
+       A default value can be specified in the event that nothing is found in the map:
+
+         RewriteRule "^/ex/(.*)" "${examplemap:$1|/not_found.html}"
+
+       PER-DIRECTORY AND .HTACCESS CONTEXT
+
+       The RewriteMap directive may not be used in <Directory> sections or .htaccess files. You must declare the map in server or virtualhost context. You may use the map, once created, in your RewriteRule and RewriteCond directives in those scopes. You just can't declare it in those scopes.
+
+       The sections that follow describe the various MapTypes that may be used, and give examples of each.
+
+       INT: INTERNAL FUNCTION
+
+       When a MapType of int is used, the MapSource is one of the available internal RewriteMap functions. Module authors can provide additional internal functions by registering them with the ap_register_rewrite_mapfunc API. The functions that are provided by default are:
+
+        * toupper:  Converts the key to all upper case.
+        * tolower:  Converts the key to all lower case.
+        * escape:  Translates special characters in the key to hex-encodings.
+        * unescape:  Translates hex-encodings in the key back to special characters.
+       To use one of these functions, create a RewriteMap referencing the int function, and then use that in your RewriteRule:
+
+       Redirect a URL-path to an all-lowercase version of itself
+
+         RewriteMap lc int:tolower
+         RewriteRule "(.*)" "${lc:$1}" [R]
+
+       Please note that the example offered here is for illustration purposes only, and is not a recommendation. If you want to make URLs case-insensitive, consider using mod_speling instead.
+
+       TXT: PLAIN TEXT MAPS
+
+       When a MapType of txt is used, the MapSource is a filesystem path to a plain-text mapping file, containing one space-separated key/value pair per line. Optionally, a line may contain a comment, starting with a '#' character.
+
+       A valid text rewrite map file will have the following syntax:
+
+       # Comment line  MatchingKey SubstValue  MatchingKey SubstValue # comment
+
+       When the RewriteMap is invoked the argument is looked for in the first argument of a line, and, if found, the substitution value is returned.
+
+       For example, we can use a mapfile to translate product names to product IDs for easier-to-remember URLs, using the following recipe:
+
+       Product to ID configuration
+
+         RewriteMap product2id "txt:/etc/apache2/productmap.txt"
+         RewriteRule "^/product/(.*)" "/prods.php?id=${product2id:$1|NOTFOUND}" [PT]
+
+       We assume here that the prods.php script knows what to do when it received an argument of id=NOTFOUND when a product is not found in the lookup map.
+
+       The file /etc/apache2/productmap.txt then contains the following:
+
+       PRODUCT TO ID MAP
+
+       ##  ## productmap.txt - Product to ID map file  ##    television 993  stereo 198  fishingrod 043  basketball 418  telephone 328
+
+       Thus, when http://example.com/product/television is requested, the RewriteRule is applied, and the request is internally mapped to /prods.php?id=993.
+
+       NOTE: .HTACCESS FILES
+
+       The example given is crafted to be used in server or virtualhost scope. If you're planning to use this in a .htaccess file, you'll need to remove the leading slash from the rewrite pattern in order for it to match anything:
+
+         RewriteRule "^product/(.*)" "/prods.php?id=${product2id:$1|NOTFOUND}" [PT]
+
+       CACHED LOOKUPS
+
+       The looked-up keys are cached by httpd until the mtime (modified time) of the mapfile changes, or the httpd server is restarted. This ensures better performance on maps that are called by many requests.
+
+       RND: RANDOMIZED PLAIN TEXT
+
+       When a MapType of rnd is used, the MapSource is a filesystem path to a plain-text mapping file, each line of which contains a key, and one or more values separated by |. One of these values will be chosen at random if the key is matched.
+
+       For example, you can use the following map file and directives to provide a random load balancing between several back-end servers, via a reverse-proxy. Images are sent to one of the servers in the 'static' pool, while everything else is sent to one of the 'dynamic' pool.
+
+       REWRITE MAP FILE
+
+       ##  ## map.txt -- rewriting map  ##    static www1|www2|www3|www4  dynamic www5|www6
+
+       Configuration directives
+
+         RewriteMap servers "rnd:/path/to/file/map.txt"
+
+         RewriteRule "^/(.*\.(png|gif|jpg))" "http://${servers:static}/$1"  [NC,P,L]
+         RewriteRule "^/(.*)"                "http://${servers:dynamic}/$1" [P,L]
+
+       So, when an image is requested and the first of these rules is matched, RewriteMap looks up the string static in the map file, which returns one of the specified hostnames at random, which is then used in the RewriteRule target.
+
+       If you wanted to have one of the servers more likely to be chosen (for example, if one of the server has more memory than the others, and so can handle more requests) simply list it more times in the map file.
+
+       static www1|www1|www2|www3|www4
+
+       DBM: DBM HASH FILE
+
+       When a MapType of dbm is used, the MapSource is a filesystem path to a DBM database file containing key/value pairs to be used in the mapping. This works exactly the same way as the txt map, but is much faster, because a DBM is indexed, whereas a text file is not. This allows more rapid access to the desired key.
+
+       You may optionally specify a particular dbm type:
+
+         RewriteMap examplemap "dbm=sdbm:/etc/apache/mapfile.dbm"
+
+       The type can be sdbm, gdbm, ndbm or db. However, it is recommended that you just use the httxt2dbm utility that is provided with Apache HTTP Server, as it will use the correct DBM library, matching the one that was used when httpd itself was built.
+
+       To create a dbm file, first create a text map file as described in the txt section. Then run httxt2dbm:
+
+       $ httxt2dbm -i mapfile.txt -o mapfile.map
+
+       You can then reference the resulting file in your RewriteMap directive:
+
+         RewriteMap mapname "dbm:/etc/apache/mapfile.map"
+
+       Note that with some dbm types, more than one file is generated, with a common base name. For example, you may have two files named mapfile.map.dir and mapfile.map.pag. This is normal, and you need only use the base name mapfile.map in your RewriteMap directive.
+
+       CACHED LOOKUPS
+
+       The looked-up keys are cached by httpd until the mtime (modified time) of the mapfile changes, or the httpd server is restarted. This ensures better performance on maps that are called by many requests.
+
+       PRG: EXTERNAL REWRITING PROGRAM
+
+       When a MapType of prg is used, the MapSource is a filesystem path to an executable program which will providing the mapping behavior. This can be a compiled binary file, or a program in an interpreted language such as Python or Perl.
+
+       This program is started once, when the Apache HTTP Server is started, and then communicates with the rewriting engine via STDIN and STDOUT. For each map function lookup, the key is written to the program's STDIN, followed by a newline character. The program should read one line from STDIN (up to and including the newline), and write its response as a single newline-terminated line on STDOUT. Keys will never contain newline characters; if a key containing a newline is encountered, the lookup will fail.
+
+       If there is no corresponding lookup value, the map program should return the four-character string "NULL" to indicate this. Note that this comparison is case-insensitive, so "null", "Null", etc. are also treated as a failed lookup. As a consequence, it is not possible for a mapping program to return the literal string "NULL" as a mapped value.
+
+       The program's STDERR is inherited from the httpd parent process, so anything the program writes to STDERR will end up in the same place as httpd's own error output (typically the ErrorLog).
+
+       External rewriting programs are not started if they're defined in a context that does not have RewriteEngine set to on.
+
+       By default, external rewriting programs are run as the user:group who started httpd. This can be changed on UNIX systems by passing user name and group name as third argument to RewriteMap in the username:groupname format.
+
+       This feature utilizes the rewrite-map mutex, which is required for reliable communication with the program. The mutex mechanism and lock file can be configured with the Mutex directive.
+
+       A simple example is shown here which will replace all dashes with underscores in a request URL-path.
+
+       Rewrite configuration
+
+         RewriteMap d2u "prg:/www/bin/dash2under.py" apache:apache
+         RewriteRule "-" "${d2u:%{REQUEST_URI}}"
+
+       dash2under.py
+
+         #!/usr/bin/env python3
+         import sys
+
+         for line in sys.stdin:
+             print(line.strip().replace('-', '_'), flush=True)
+
+       A more complete example shows the typical pattern for a prg: map program: read a line, look up the result, and write it back. Diagnostic output is written to STDERR, which ends up in the Apache error log.
+
+       Rewrite configuration
+
+         RewriteMap vhost2docroot "prg:/www/bin/vhost_lookup.py"
+         RewriteRule "^/(.*)$" "${vhost2docroot:%{HTTP_HOST}}/$1"
+
+       vhost_lookup.py
+
+         #!/usr/bin/env python3
+         """Map a hostname to its document root directory."""
+         import sys
+
+         VHOSTS = {
+             "example.com": "/srv/www/example",
+             "blog.example.com": "/srv/www/blog",
+         }
+
+         for line in sys.stdin:
+             host = line.strip().lower()
+             docroot = VHOSTS.get(host)
+             if docroot:
+                 print(docroot, flush=True)
+             else:
+                 # "NULL" tells mod_rewrite the lookup failed
+                 print("NULL", flush=True)
+                 print(f"vhost_lookup: no match for {host!r}", file=sys.stderr)
+
+       CAUTION
+
+        * Keep your rewrite map program as simple as possible. If the program hangs, it will cause httpd to wait indefinitely for a response from the map, which will, in turn, cause httpd to stop responding to requests.
+        * Be sure to turn off buffering in your program. In the Python example above, this is done by passing flush=True to print(). Buffered I/O will cause httpd to wait for the output, and so it will hang. This is the single most common cause of prg: maps appearing to "do nothing" — the program has the answer but httpd never sees it because it is stuck in a buffer.
+        * Remember that there is only one copy of the program, started at server startup. All requests will need to go through this one bottleneck. This can cause significant slowdowns if many requests must go through this process, or if the script itself is very slow.
+        * If the mapping program terminates, it will not be automatically restarted. Subsequent lookups will fail until the server is restarted.
+        * The mapping program is always killed and restarted on any server restart (graceful or otherwise), regardless of whether the related configuration directives have changed. On shutdown, the program is sent SIGTERM; if it does not exit within 3 seconds, it is sent SIGKILL.
+
+       DBD OR FASTDBD: SQL QUERY
+
+       When a MapType of dbd or fastdbd is used, the MapSource is a SQL SELECT statement that takes a single argument and returns a single value.
+
+       mod_dbd will need to be configured to point at the right database for this statement to be executed.
+
+       There are two forms of this MapType. Using a MapType of dbd causes the query to be executed with each map request, while using fastdbd caches the database lookups internally. So, while fastdbd is more efficient, and therefore faster, it won't pick up on changes to the database until the server is restarted.
+
+       If a query returns more than one row, a random row from the result set is used.
+
+       EXAMPLE
+
+         RewriteMap myquery "fastdbd:SELECT destination FROM rewrite WHERE source = %s"
+
+       NOTE
+
+       The query name is passed to the database driver as a label for an SQL prepared statement, and will therefore need to follow any rules (such as case-sensitivity) required for your database.
+
+       URL-BASED SHARDING ACROSS MULTIPLE BACKENDS
+
+         Description:
+       A common technique for distributing the burden of server load or storage space is called "sharding". When using this method, a front-end server will use the url to consistently "shard" users or objects to separate backend servers.
+
+         Solution:
+       A mapping is maintained, from users to target servers, in external map files. They look like:
+
+       user1 physical_host_of_user1  user2 physical_host_of_user2  # ... and so on
+
+       We put this into a map.users-to-hosts file. The aim is to map;
+
+       /u/user1/anypath
+
+       to
+
+       http://physical_host_of_user1/u/user/anypath
+
+       thus every URL path need not be valid on every backend physical host. The following ruleset does this for us with the help of the map files assuming that server0 is a default server which will be used if a user has no entry in the map:
+
+         RewriteEngine on
+         RewriteMap    users-to-hosts      "txt:/path/to/map.users-to-hosts"
+         RewriteRule   "^/u/([^/]+)/?(.*)" "http://${users-to-hosts:$1|server0}/u/$1/$2"
+
+         Discussion:
+       For distributing requests across backend servers, mod_proxy_balancer provides a more robust and configurable approach, with support for health checking, load weighting, and session stickiness. The txt: map approach shown here is simpler but lacks these features.
+
+       See the RewriteMap documentation for more discussion of the syntax of this directive.
+
+       SUMMARY
+
+       The RewriteMap directive can occur more than once. For each mapping-function use one RewriteMap directive to declare its rewriting mapfile.
+
+       While you cannot declare a map in per-directory context (.htaccess files or <Directory> blocks) it is possible to use this map in per-directory context.
+
+Apache HTTP Server manual               bundled documentation

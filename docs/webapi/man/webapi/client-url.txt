@@ -1,0 +1,49 @@
+WEBAPI.CLIENT-URL(1)             Sandbox manual             WEBAPI.CLIENT-URL(1)
+
+       NAME
+
+       Client: url property - service
+
+       CLIENT: URL PROPERTY
+
+       service
+
+       The url read-only property of the Client interface returns the URL of the current service worker client.
+
+       Note that the url property is not updated unless a new page is actually loaded. This means that it will not be updated if the user navigates within the same page using a URL fragment, or if a single-page app (SPA) intercepts a navigation event (for example, using the Navigation API) and updates the page content using client-side code.
+
+       VALUE
+
+       A string.
+
+       EXAMPLES
+
+         self.addEventListener("notificationclick", (event) => {
+           console.log("On notification click: ", event.notification.tag);
+           event.notification.close();
+
+           // This looks to see if the current is already open and
+           // focuses if it is
+           event.waitUntil(
+             clients
+               .matchAll({
+                 type: "window",
+               })
+               .then((clientList) => {
+                 for (const client of clientList) {
+                   if (client.url === "/" && "focus" in client) {
+                     return client.focus();
+                   }
+                 }
+                 if (clients.openWindow) {
+                   return clients.openWindow("/");
+                 }
+               }),
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

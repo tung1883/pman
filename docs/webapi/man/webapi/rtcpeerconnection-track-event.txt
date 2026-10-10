@@ -1,0 +1,62 @@
+WEBAPI.RTCPEERCONNECTION-TRACK-EVENT(1) Sandbox manual WEBAPI.RTCPEERCONNECTION-TRACK-EVENT(1)
+
+       NAME
+
+       RTCPeerConnection: track event - The track event is sent to the ontrack event handler on RTCPeerConnections after a new track has been added to an RTCRtpReceiver which is pa
+
+       RTCPEERCONNECTION: TRACK EVENT
+
+       The track event is sent to the ontrack event handler on RTCPeerConnections after a new track has been added to an RTCRtpReceiver which is part of the connection.
+
+       By the time this event is delivered, the new track has been fully added to the peer connection. See Track event types for details.
+
+       This event is not cancellable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("track", (event) => { })
+
+         ontrack = (event) => { }
+
+       EVENT TYPE
+
+       An RTCTrackEvent. Inherits from Event.
+
+       RTCTrackEvent
+
+       EXAMPLES
+
+       This example shows code that creates a new RTCPeerConnection, then adds a new track event handler.
+
+         pc = new RTCPeerConnection({
+           iceServers: [
+             {
+               urls: "turn:fake.turn-server.url",
+               username: "some username",
+               credential: "some-password",
+             },
+           ],
+         });
+
+         pc.addEventListener("track", (e) => {
+           videoElement.srcObject = e.streams[0];
+           hangupButton.disabled = false;
+         });
+
+       The event handler assigns the new track's first stream to an existing element, identified using the variable videoElement.
+
+       You can also assign the event handler function to the ontrack property, rather than use addEventListener().
+
+         pc.ontrack = (e) => {
+           videoElement.srcObject = e.streams[0];
+           hangupButton.disabled = false;
+           return false;
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

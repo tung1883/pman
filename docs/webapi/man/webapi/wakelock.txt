@@ -1,0 +1,41 @@
+WEBAPI.WAKELOCK(1)               Sandbox manual               WEBAPI.WAKELOCK(1)
+
+       NAME
+
+       WakeLock - The WakeLock interface of the Screen Wake Lock API can be used to request a lock that prevents device screens from dimming or locking when a
+
+       WAKELOCK
+
+       The WakeLock interface of the Screen Wake Lock API can be used to request a lock that prevents device screens from dimming or locking when an application needs to keep running.
+
+       This interface, and hence the system wake lock, is exposed through the Navigator.wakeLock property.
+
+       INSTANCE METHODS
+
+        * request()
+          * : Returns a Promise that fulfills with a WakeLockSentinel object if the screen wake lock is granted.
+
+       EXAMPLES
+
+       The following code awaits the request for a WakeLockSentinel object, and continues if the request is granted.
+
+       The WakeLock.request() method is wrapped in a try...catch statement to catch cases when the promise might be rejected, such as due to low device power.
+
+         try {
+           const wakeLock = await navigator.wakeLock.request("screen");
+         } catch (err) {
+           // the wake lock request fails - usually system related, such being low on battery
+           console.log(`${err.name}, ${err.message}`);
+         }
+
+       Note that the screen wake lock may be revoked by the device after it has been granted. The returned WakeLockSentinel can be used to check the status of the lock, and/or to manually cancel a held screen wake lock.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Stay awake with the Screen Wake Lock API
+
+Web APIs manual                         from the official documentation

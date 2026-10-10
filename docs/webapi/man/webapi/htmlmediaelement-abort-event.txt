@@ -1,0 +1,83 @@
+WEBAPI.HTMLMEDIAELEMENT-ABORT-EVENT(1) Sandbox manual WEBAPI.HTMLMEDIAELEMENT-ABORT-EVENT(1)
+
+       NAME
+
+       HTMLMediaElement: abort event - The abort event is fired when media resource loading is stopped before completion, but not as the result of an error.
+
+       HTMLMEDIAELEMENT: ABORT EVENT
+
+       The abort event is fired when media resource loading is stopped before completion, but not as the result of an error. This is usually achieved by removing the src attribute or setting it to the empty string (""), then calling load().
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("abort", (event) => { })
+
+         onabort = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       ABORT LOADING A MEDIA RESOURCE
+
+       The following example demonstrates how to abort a video. When you press the button it starts loading a video resource. After a short timeout it aborts the load by removing the src attribute and calling the load() method. If the video resource is still loading when load() is called, the abort event fires.
+
+       HTML
+
+         <video controls width="250"></video>
+
+         <button id="loadAndAbort">Load and abort video</button>
+
+         <pre id="log"></pre>
+
+       CSS
+
+         video,
+         button,
+         pre {
+           display: block;
+           margin-block: 1rem;
+         }
+
+       JAVASCRIPT
+
+         const video = document.querySelector("video");
+         const loadAndAbortButton = document.querySelector("#loadAndAbort");
+         const log = document.querySelector("#log");
+
+         video.addEventListener("abort", () => {
+           log.textContent += "Video loading aborted\n";
+         });
+
+         loadAndAbortButton.addEventListener("click", () => {
+           log.textContent = "Loading video...\n";
+
+           video.src = `/shared-assets/videos/flower.webm?nocache=${Date.now()}`;
+           video.load();
+
+           setTimeout(() => {
+             video.removeAttribute("src");
+             video.load();
+           }, 50);
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTMLAudioElement
+        * HTMLVideoElement
+        * 
+        * 
+
+Web APIs manual                         from the official documentation

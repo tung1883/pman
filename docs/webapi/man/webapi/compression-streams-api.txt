@@ -1,0 +1,48 @@
+WEBAPI.COMPRESSION-STREAMS-API(1) Sandbox manual WEBAPI.COMPRESSION-STREAMS-API(1)
+
+       NAME
+
+       Compression Streams API - The Compression Streams API provides a JavaScript API for compressing and decompressing streams of data using the gzip or deflate formats.
+
+       COMPRESSION STREAMS API
+
+       The Compression Streams API provides a JavaScript API for compressing and decompressing streams of data using the gzip or deflate formats.
+
+       Built-in compression means that JavaScript applications will not need to include a compression library, which makes the download size of the application smaller.
+
+       The Fetch API's Response can be used to convert streams to:
+
+        * ArrayBuffer
+        * Blob
+        * Uint8Array
+        * String
+        * JSON
+
+       INTERFACES
+
+        * CompressionStream
+          * : Compresses a stream of data.
+        * DecompressionStream
+          * : Decompresses a stream of data.
+
+       EXAMPLES
+
+       In this example a stream is compressed using gzip compression.
+
+         const compressedReadableStream = inputReadableStream.pipeThrough(
+           new CompressionStream("gzip"),
+         );
+
+       In the following example a function decompresses a blob using gzip.
+
+         async function DecompressBlob(blob) {
+           const ds = new DecompressionStream("gzip");
+           const decompressedStream = blob.stream().pipeThrough(ds);
+           return await new Response(decompressedStream).blob();
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

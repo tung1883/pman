@@ -1,0 +1,77 @@
+WEBAPI.TASKSIGNAL-PRIORITYCHANGE-EVENT(1) Sandbox manual WEBAPI.TASKSIGNAL-PRIORITYCHANGE-EVENT(1)
+
+       NAME
+
+       TaskSignal: prioritychange event - The prioritychange event is sent to a TaskSignal if its priority is changed.
+
+       TASKSIGNAL: PRIORITYCHANGE EVENT
+
+       The prioritychange event is sent to a TaskSignal if its priority is changed.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("prioritychange", (event) => { })
+
+         onprioritychange = (event) => { }
+
+       EVENT TYPE
+
+       A TaskPriorityChangeEvent. Inherits from Event.
+
+       TaskPriorityChangeEvent
+
+       EXAMPLES
+
+       The example below shows how to listen for the prioritychange event on a TaskSignal.
+
+         <textarea id="log"></textarea>
+
+         #log {
+           min-height: 70px;
+           width: 95%;
+         }
+
+         let log = document.getElementById("log");
+         function myLog(text) {
+           log.textContent += `${text}\n`;
+         }
+
+       First we create a controller, and add an event listener to its signal. When handling the event we use previousPriority on the event to get the original priority and TaskSignal.priority on the event target to get the new/current priority.
+
+       The task is then posted, passing in the signal, and then we immediately change the priority.
+
+         if ("scheduler" in this) {
+           // Declare a TaskController, setting its signal priority to 'user-blocking'
+           const controller = new TaskController({ priority: "user-blocking" });
+
+           // Listen for 'prioritychange' events on the controller's signal.
+           controller.signal.addEventListener("prioritychange", (event) => {
+             const previousPriority = event.previousPriority;
+             const newPriority = event.target.priority;
+             myLog(`Priority changed from ${previousPriority} to ${newPriority}.`);
+           });
+
+           // Post task using the controller's signal.
+           // The signal priority sets the initial priority of the task
+           scheduler.postTask(
+             () => {
+               myLog("Task 1");
+             },
+             { signal: controller.signal },
+           );
+
+           // Change the priority to 'background' using the controller
+           controller.setPriority("background");
+         }
+
+       > The code above uses a custom logging function myLog() to log to the text area below.
+       > This is hidden as it isn't relevant to the example.
+       The output below demonstrates shows that the task's priority changed from user-blocking to background. This happens before the task is executed, but could also happen when the task is running.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

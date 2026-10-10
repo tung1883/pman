@@ -1,0 +1,75 @@
+WEBAPI.BROWSERCAPTUREMEDIASTREAMTRACK-CROPTO(1) Sandbox manual WEBAPI.BROWSERCAPTUREMEDIASTREAMTRACK-CROPTO(1)
+
+       NAME
+
+       BrowserCaptureMediaStreamTrack: cropTo() method - The cropTo() method of the BrowserCaptureMediaStreamTrack interface crops a self-capture stream to the area in which a specified DOM element
+
+       BROWSERCAPTUREMEDIASTREAMTRACK: CROPTO() METHOD
+
+       The cropTo() method of the BrowserCaptureMediaStreamTrack interface crops a self-capture stream to the area in which a specified DOM element is rendered.
+
+       SYNTAX
+
+         cropTo(cropTarget)
+
+       PARAMETERS
+
+        * cropTarget
+          * : A CropTarget instance representing the element rendering area the stream should be cropped to, or null/undefined, in which case any previously-set cropping is removed from the track.
+
+       RETURN VALUE
+
+       A Promise that resolves to undefined.
+
+       The promise will reject if:
+
+        * The track kind is not "video", or its readyState is not "live".
+        * The crop target element no longer exists.
+        * The track being cropped is not a track captured from the user's screen.
+        * cropTarget is not a CropTarget instance, null, or undefined.
+        * cropTarget was created in a tab other than the one being captured.
+       > In Chromium, if a track has clones, cropTo() will reject (see Chrome issue 41482026).
+
+       EXAMPLES
+
+       BASIC CROPPING EXAMPLE
+
+         // Options for getDisplayMedia()
+         const displayMediaOptions = {
+           preferCurrentTab: true,
+         };
+
+         // Create crop target from DOM element
+         const demoElem = document.querySelector("#demo");
+         const cropTarget = await CropTarget.fromElement(demoElem);
+
+         // Capture video stream from user's webcam and isolate video track
+         const stream =
+           await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+         const [track] = stream.getVideoTracks();
+
+         // Crop video track
+         await track.cropTo(cropTarget);
+
+         // Broadcast cropped stream in <video> element
+         videoElem.srcObject = stream;
+
+       See Using the Element Capture and Region Capture APIs for in-context example code.
+
+       STOPPING THE CROPPING
+
+       You can stop the cropping by making a call to cropTo() on a previously-cropped track, passing an argument of null to it:
+
+         // Stop cropping
+         await track.cropTo(null);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Screen Capture API
+        * Using the Element Capture and Region Capture APIs
+
+Web APIs manual                         from the official documentation

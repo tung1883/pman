@@ -1,0 +1,132 @@
+WEBAPI.SANITIZER-REPLACEELEMENTWITHCHILDREN(1) Sandbox manual WEBAPI.SANITIZER-REPLACEELEMENTWITHCHILDREN(1)
+
+       NAME
+
+       Sanitizer: replaceElementWithChildren() method - The replaceElementWithChildren() method of the Sanitizer interface sets an element to be replaced by its child HTML elements when the saniti
+
+       SANITIZER: REPLACEELEMENTWITHCHILDREN() METHOD
+
+       The replaceElementWithChildren() method of the Sanitizer interface sets an element to be replaced by its child HTML elements when the sanitizer is used. This is primarily used for stripping styles from text.
+
+       SYNTAX
+
+         replaceElementWithChildren(element)
+
+       PARAMETERS
+
+        * element
+          * : A string indicating the name of the element to be replaced, or an object with the following properties:
+            * name
+              * : A string containing the name of the element.
+            * namespace (optional)
+              * : A string containing the namespace of the element.
+       The default namespace is "http://www.w3.org/1999/xhtml".
+
+       RETURN VALUE
+
+       A boolean value: true if the operation updated the Sanitizer configuration to replace the element with its children, and false otherwise.
+
+       The method returns false if the sanitizer is already configured to replace the given element, or if the resolved element is not allowed.
+
+       DESCRIPTION
+
+       The replaceElementWithChildren() method specifies an element that will be replaced by its child elements and/or text nodes when the sanitizer is used. This is primarily used for stripping styles from text.
+
+       DISALLOWED REPLACEMENT ELEMENTS
+
+       The following elements are not allowed as replacement elements:
+
+        * in the HTML namespace (http://www.w3.org/1999/xhtml).
+        * svg in the SVG namespace (http://www.w3.org/2000/svg).
+        * math in the MathML namespace (http://www.w3.org/1998/Math/MathML).
+       All the following method calls return false because the Sanitizer can't be updated for these elements:
+
+         const sanitizer = new Sanitizer();
+
+         sanitizer.replaceElementWithChildren("html");
+         sanitizer.replaceElementWithChildren({ name: "html" });
+         sanitizer.replaceElementWithChildren({
+           name: "html",
+           namespace: "http://www.w3.org/1999/xhtml",
+         });
+         sanitizer.replaceElementWithChildren({
+           name: "svg",
+           namespace: "http://www.w3.org/2000/svg",
+         });
+         sanitizer.replaceElementWithChildren({
+           name: "math",
+           namespace: "http://www.w3.org/1998/Math/MathML",
+         });
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       This example shows the basic usage of the method, configuring a Sanitizer that replaces the element in inputs with its child content.
+
+         // Create sanitizer (in this case the default)
+         const sanitizer = new Sanitizer();
+
+         // Replace <em> elements with their innerHTML
+         sanitizer.replaceElementWithChildren("em");
+
+       HOW TO STRIP STYLES FROM TEXT
+
+       This example shows how replaceElementWithChildren() can be used to strip styles from text.
+
+         <pre id="log"></pre>
+
+         #log {
+           height: 480px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.textContent += text;
+         }
+
+       JAVASCRIPT
+
+       The code first creates a new Sanitizer object that initially allows , , and elements. We then call replaceElementWithChildren() on the sanitizer specifying that elements should be replaced.
+
+       The code defines a string that has elements and uses Element.setHTML() with the sanitizer to inject the string. The original string, the sanitized HTML from the element, and the sanitizer are logged.
+
+         if ("Sanitizer" in window) {
+
+         // Create sanitizer using SanitizerConfig
+         const sanitizer = new Sanitizer({
+           elements: ["p", "em", "strong"],
+         });
+
+         // Replace the <strong> element
+         sanitizer.replaceElementWithChildren("strong");
+
+         const unsanitizedString = `<p>This is a with <strong>important</strong> text <em>highlighted</em>.</p>`;
+         log(`unsanitizedHTMLString:\n ${unsanitizedString}`);
+
+         // Create a <div> element
+         const divElement = document.createElement("div");
+
+         divElement.setHTML(unsanitizedString, { sanitizer });
+         log(`\n\nsanitizedHTML:\n ${divElement.innerHTML}`);
+
+         // Log the sanitizer configuration
+         const sanitizerConfig = sanitizer.get();
+         log(`\n\nsanitizerConfig:\n ${JSON.stringify(sanitizerConfig, null, 2)}`);
+
+         } else {
+           log("The HTML Sanitizer API is NOT supported in this browser.");
+         }
+
+       RESULTS
+
+       The original unsanitized HTML string, the sanitized string from the element, and the sanitizer are logged below. Note that the styling is stripped from the text, but the element is not. Note also that the element was originally in the elements list in the configuration, but was removed when it was added to the replaceWithChildrenElements list.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

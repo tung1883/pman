@@ -1,0 +1,229 @@
+K8S.TASKS-MANAGE-DAEMON-UPDATE-DAEMON-SET(1) Sandbox manual K8S.TASKS-MANAGE-DAEMON-UPDATE-DAEMON-SET(1)
+
+       NAME
+
+       Perform a Rolling Update on a DaemonSet - This page shows how to perform a rolling update on a DaemonSet.
+
+       PERFORM A ROLLING UPDATE ON A DAEMONSET
+
+       This page shows how to perform a rolling update on a DaemonSet.
+
+       ## PREREQUISITES
+
+       DAEMONSET UPDATE STRATEGY
+
+       DaemonSet has two update strategy types:
+
+        * OnDelete: With OnDelete update strategy, after you update a DaemonSet template, new
+       DaemonSet pods will only be created when you manually delete old DaemonSet pods. This is the same behavior of DaemonSet in Kubernetes version 1.5 or before.
+
+        * RollingUpdate: This is the default update strategy.
+       With RollingUpdate update strategy, after you update a DaemonSet template, old DaemonSet pods will be killed, and new DaemonSet pods will be created automatically, in a controlled fashion. At most one pod of the DaemonSet will be running on each node during the whole update process.
+
+       PERFORMING A ROLLING UPDATE
+
+       To enable the rolling update feature of a DaemonSet, you must set its .spec.updateStrategy.type to RollingUpdate.
+
+       You may want to set .spec.updateStrategy.rollingUpdate.maxUnavailable (default to 1), .spec.minReadySeconds (default to 0) and .spec.updateStrategy.rollingUpdate.maxSurge (defaults to 0) as well.
+
+       CREATING A DAEMONSET WITH ROLLINGUPDATE UPDATE STRATEGY
+
+       This YAML file specifies a DaemonSet with an update strategy as 'RollingUpdate'
+
+         apiVersion: apps/v1
+         kind: DaemonSet
+         metadata:
+           name: fluentd-elasticsearch
+           namespace: kube-system
+           labels:
+             k8s-app: fluentd-logging
+         spec:
+           selector:
+             matchLabels:
+               name: fluentd-elasticsearch
+           updateStrategy:
+             type: RollingUpdate
+             rollingUpdate:
+               maxUnavailable: 1
+           template:
+             metadata:
+               labels:
+                 name: fluentd-elasticsearch
+             spec:
+               tolerations:
+               # these tolerations are to have the daemonset runnable on control plane nodes
+               # remove them if your control plane nodes should not run pods
+               - key: node-role.kubernetes.io/control-plane
+                 operator: Exists
+                 effect: NoSchedule
+               - key: node-role.kubernetes.io/master
+                 operator: Exists
+                 effect: NoSchedule
+               containers:
+               - name: fluentd-elasticsearch
+                 image: quay.io/fluentd_elasticsearch/fluentd:v5.0.1
+                 volumeMounts:
+                 - name: varlog
+                   mountPath: /var/log
+                 - name: varlibdockercontainers
+                   mountPath: /var/lib/docker/containers
+                   readOnly: true
+               terminationGracePeriodSeconds: 30
+               volumes:
+               - name: varlog
+                 hostPath:
+                   path: /var/log
+               - name: varlibdockercontainers
+                 hostPath:
+                   path: /var/lib/docker/containers
+
+       After verifying the update strategy of the DaemonSet manifest, create the DaemonSet:
+
+         kubectl create -f https://k8s.io/examples/controllers/fluentd-daemonset.yaml
+
+       Alternatively, use kubectl apply to create the same DaemonSet if you plan to update the DaemonSet with kubectl apply.
+
+         kubectl apply -f https://k8s.io/examples/controllers/fluentd-daemonset.yaml
+
+       CHECKING DAEMONSET ROLLINGUPDATE UPDATE STRATEGY
+
+       Check the update strategy of your DaemonSet, and make sure it's set to RollingUpdate:
+
+         kubectl get ds/fluentd-elasticsearch -o go-template='{{.spec.updateStrategy.type}}{{"\n"}}' -n kube-system
+
+       If you haven't created the DaemonSet in the system, check your DaemonSet manifest with the following command instead:
+
+         kubectl apply -f https://k8s.io/examples/controllers/fluentd-daemonset.yaml --dry-run=client -o go-template='{{.spec.updateStrategy.type}}{{"\n"}}'
+
+       The output from both commands should be:
+
+         RollingUpdate
+
+       If the output isn't RollingUpdate, go back and modify the DaemonSet object or manifest accordingly.
+
+       UPDATING A DAEMONSET TEMPLATE
+
+       Any updates to a RollingUpdate DaemonSet .spec.template will trigger a rolling update. Let's update the DaemonSet by applying a new YAML file. This can be done with several different kubectl commands.
+
+         apiVersion: apps/v1
+         kind: DaemonSet
+         metadata:
+           name: fluentd-elasticsearch
+           namespace: kube-system
+           labels:
+             k8s-app: fluentd-logging
+         spec:
+           selector:
+             matchLabels:
+               name: fluentd-elasticsearch
+           updateStrategy:
+             type: RollingUpdate
+             rollingUpdate:
+               maxUnavailable: 1
+           template:
+             metadata:
+               labels:
+                 name: fluentd-elasticsearch
+             spec:
+               tolerations:
+               # these tolerations are to have the daemonset runnable on control plane nodes
+               # remove them if your control plane nodes should not run pods
+               - key: node-role.kubernetes.io/control-plane
+                 operator: Exists
+                 effect: NoSchedule
+               - key: node-role.kubernetes.io/master
+                 operator: Exists
+                 effect: NoSchedule
+               containers:
+               - name: fluentd-elasticsearch
+                 image: quay.io/fluentd_elasticsearch/fluentd:v5.0.1
+                 resources:
+                   limits:
+                     memory: 200Mi
+                   requests:
+                     cpu: 100m
+                     memory: 200Mi
+                 volumeMounts:
+                 - name: varlog
+                   mountPath: /var/log
+                 - name: varlibdockercontainers
+                   mountPath: /var/lib/docker/containers
+                   readOnly: true
+               terminationGracePeriodSeconds: 30
+               volumes:
+               - name: varlog
+                 hostPath:
+                   path: /var/log
+               - name: varlibdockercontainers
+                 hostPath:
+                   path: /var/lib/docker/containers
+
+       DECLARATIVE COMMANDS
+
+       If you update DaemonSets using configuration files, use kubectl apply:
+
+         kubectl apply -f https://k8s.io/examples/controllers/fluentd-daemonset-update.yaml
+
+       IMPERATIVE COMMANDS
+
+       If you update DaemonSets using imperative commands, use kubectl edit :
+
+         kubectl edit ds/fluentd-elasticsearch -n kube-system
+
+       UPDATING ONLY THE CONTAINER IMAGE
+
+       If you only need to update the container image in the DaemonSet template, i.e. .spec.template.spec.containers[*].image, use kubectl set image:
+
+         kubectl set image ds/fluentd-elasticsearch fluentd-elasticsearch=quay.io/fluentd_elasticsearch/fluentd:v2.6.0 -n kube-system
+
+       WATCHING THE ROLLING UPDATE STATUS
+
+       Finally, watch the rollout status of the latest DaemonSet rolling update:
+
+         kubectl rollout status ds/fluentd-elasticsearch -n kube-system
+
+       When the rollout is complete, the output is similar to this:
+
+         daemonset "fluentd-elasticsearch" successfully rolled out
+
+       TROUBLESHOOTING
+
+       DAEMONSET ROLLING UPDATE IS STUCK
+
+       Sometimes, a DaemonSet rolling update may be stuck. Here are some possible causes:
+
+       SOME NODES RUN OUT OF RESOURCES
+
+       The rollout is stuck because new DaemonSet pods can't be scheduled on at least one node. This is possible when the node is running out of resources.
+
+       When this happens, find the nodes that don't have the DaemonSet pods scheduled on by comparing the output of kubectl get nodes and the output of:
+
+         kubectl get pods -l name=fluentd-elasticsearch -o wide -n kube-system
+
+       Once you've found those nodes, delete some non-DaemonSet pods from the node to make room for new DaemonSet pods.
+
+       > Note:
+       This will cause service disruption when deleted pods are not controlled by any controllers or pods are not replicated. This does not respect PodDisruptionBudget either.
+
+       BROKEN ROLLOUT
+
+       If the recent DaemonSet template update is broken, for example, the container is crash looping, or the container image doesn't exist (often due to a typo), DaemonSet rollout won't progress.
+
+       To fix this, update the DaemonSet template again. New rollout won't be blocked by previous unhealthy rollouts.
+
+       CLOCK SKEW
+
+       If .spec.minReadySeconds is specified in the DaemonSet, clock skew between master and nodes will make DaemonSet unable to detect the right rollout progress.
+
+       CLEAN UP
+
+       Delete DaemonSet from a namespace :
+
+         kubectl delete ds fluentd-elasticsearch -n kube-system
+
+       ## WHATSNEXT
+
+        * See Performing a rollback on a DaemonSet
+        * See Creating a DaemonSet to adopt existing DaemonSet pods
+
+Kubernetes manual                       from the official documentation

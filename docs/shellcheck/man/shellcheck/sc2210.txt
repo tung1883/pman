@@ -1,0 +1,42 @@
+SHELLCHECK.SC2210(1)             Sandbox manual             SHELLCHECK.SC2210(1)
+
+       NAME
+
+       This is a file redirection. Was it supposed to be a comparison or fd operation? - if x > 5; then echo "true"; fi
+
+       THIS IS A FILE REDIRECTION. WAS IT SUPPOSED TO BE A COMPARISON OR FD O
+
+       THIS IS A FILE REDIRECTION. WAS IT SUPPOSED TO BE A COMPARISON OR FD O
+
+       PROBLEMATIC CODE
+
+         if x > 5; then echo "true"; fi
+
+       or
+
+         foo > /dev/null 2>1
+
+       CORRECT CODE
+
+         if (( x > 5 )); then echo "true"; fi
+
+       or
+
+         foo > /dev/null 2>&1
+
+       RATIONALE
+
+       You are redirecting to or from a filename that is an integer. For example, ls > file where file happens to be 3.
+
+       This is not likely to be intentional. The most common causes are:
+
+        1. Trying to compare two numbers, as in x > 5. This should instead be [ "$x" -gt 5 ] or (( x > 5 )).
+        1. Trying similarly to compare command output, as in grep -c foo file > 100 instead of [ "$(grep -c foo file)" -gt 100 ]
+        1. Malformed FD operations, such as writing 1>2 instead of 1>&2.
+       If you do want to create a file named 4, you can quote it to silence shellcheck and make it more clear to humans that it's not supposed to be taken numerically.
+
+       EXCEPTIONS
+
+       If you use the &> form of redirection, as in foo > /dev/null 2&>1, it will trigger this warning. You can safely ignore this warning if that is what triggered it, or change your redirection operator to the semantically preferable >&.
+
+ShellCheck manual                       from the official documentation

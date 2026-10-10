@@ -1,0 +1,56 @@
+WEBAPI.MEDIASTREAMTRACKPROCESSOR-DISCARDEDFRAMES(1) Sandbox manual WEBAPI.MEDIASTREAMTRACKPROCESSOR-DISCARDEDFRAMES(1)
+
+       NAME
+
+       MediaStreamTrackProcessor: discardedFrames property - The discardedFrames property of the MediaStreamTrackProcessor interface returns a number indicating how many frames have been dropped by the
+
+       MEDIASTREAMTRACKPROCESSOR: DISCARDEDFRAMES PROPERTY
+
+       The discardedFrames property of the MediaStreamTrackProcessor interface returns a number indicating how many frames have been dropped by the processor.
+
+       VALUE
+
+       A number.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+         async function init() {
+           try {
+             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+             const [track] = stream.getVideoTracks();
+
+             const processor = new MediaStreamTrackProcessor({
+               track,
+               maxBufferSize: 1,
+             });
+             const reader = processor.readable.getReader();
+
+             while (true) {
+               const { value: frame, done } = await reader.read();
+               if (done) break;
+
+               // Do something with frame...
+               frame.close();
+
+               console.log(
+                 `total: ${processor.totalFrames}, discarded: ${processor.discardedFrames}`,
+               );
+             }
+           } catch (e) {
+             console.error(e.name, e.message);
+           }
+         }
+
+         document.querySelector("button").addEventListener("click", init);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * MediaStreamTrackProcessor.totalFrames
+
+Web APIs manual                         from the official documentation

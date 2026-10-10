@@ -1,0 +1,88 @@
+WEBAPI.MUTATIONRECORD-ATTRIBUTENAME(1) Sandbox manual WEBAPI.MUTATIONRECORD-ATTRIBUTENAME(1)
+
+       NAME
+
+       MutationRecord: attributeName property - The MutationRecord read-only property attributeName contains the name of a changed attribute belonging to a node that is observed by a Mutat
+
+       MUTATIONRECORD: ATTRIBUTENAME PROPERTY
+
+       The MutationRecord read-only property attributeName contains the name of a changed attribute belonging to a node that is observed by a MutationObserver.
+
+       VALUE
+
+       If the record's type is attributes, this is a string representing the name of the mutated attribute of the mutation target.
+
+       If the record's type is not attributes, this is null.
+
+       EXAMPLES
+
+       GET LAST UPDATED ATTRIBUTE NAME
+
+       In the following example, there are four buttons: two change the style attribute of the h1 element, and two change the class attribute of the h1 element. The script uses a MutationObserver to detect the changes and will update the text below to the name of the last attribute that was changed.
+
+       HTML
+
+         <h1 class="blue" id="hiMom">Hi, Mom!</h1>
+
+         <button id="redButton">Set class to "red"</button>
+         <button id="blueButton">Set class to "blue"</button>
+         <button id="whiteButton">Set style to "color:white;"</button>
+         <button id="blackButton">Set style to "color:black;"</button>
+
+         <p id="log">Updated attribute name:</p>
+
+       CSS
+
+         .red {
+           background-color: red;
+         }
+
+         .blue {
+           background-color: blue;
+         }
+
+       JAVASCRIPT
+
+         const hiMom = document.querySelector("#hiMom");
+         const redButton = document.querySelector("#redButton");
+         const blueButton = document.querySelector("#blueButton ");
+         const whiteButton = document.querySelector("#whiteButton");
+         const blackButton = document.querySelector("#blackButton");
+         const log = document.querySelector("#log");
+
+         redButton.addEventListener("click", () => {
+           hiMom.classList.add("red");
+           hiMom.classList.remove("blue");
+         });
+
+         blueButton.addEventListener("click", () => {
+           hiMom.classList.add("blue");
+           hiMom.classList.remove("red");
+         });
+
+         whiteButton.addEventListener("click", () => {
+           hiMom.style.color = "white";
+         });
+
+         blackButton.addEventListener("click", () => {
+           hiMom.style.color = "black";
+         });
+
+         function logLastAttr(mutationRecordArray) {
+           for (const record of mutationRecordArray) {
+             if (record.type === "attributes") {
+               log.textContent = `Updated attribute name: ${record.attributeName}`;
+             }
+           }
+         }
+
+         const observer = new MutationObserver(logLastAttr);
+         observer.observe(hiMom, { attributes: true });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

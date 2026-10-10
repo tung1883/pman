@@ -1,0 +1,41 @@
+SHELLCHECK.SC2333(1)             Sandbox manual             SHELLCHECK.SC2333(1)
+
+       NAME
+
+       You probably wanted || here, otherwise it's always false. - if [[ $answer == yes && $answer = auto ]]
+
+       YOU PROBABLY WANTED HERE, OTHERWISE IT'S ALWAYS FALSE
+
+       YOU PROBABLY WANTED HERE, OTHERWISE IT'S ALWAYS FALSE
+
+       PROBLEMATIC CODE
+
+         if [[ $answer == yes && $answer = auto ]]
+         then
+           echo "Feature Enabled"
+         fi
+
+       CORRECT CODE
+
+         if [[ $answer == yes || $answer = auto ]]
+         then
+           echo "Feature Enabled"
+         fi
+
+       RATIONALE
+
+       The problematic condition will never trigger because of a logic error.
+
+       In English one think say "I want to check for the answers yes and auto", but the test ends up checking that the answer is both "yes" and "auto" at the same time, which it can't be (if the answer is "yes", it's necessarily not "auto", and vice versa).
+
+       The correct check is "if the answer is yes or if the answer is auto", which will be true if the user enters either "yes" or "auto".
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

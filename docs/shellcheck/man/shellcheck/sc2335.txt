@@ -1,0 +1,53 @@
+SHELLCHECK.SC2335(1)             Sandbox manual             SHELLCHECK.SC2335(1)
+
+       NAME
+
+       Use [ "$var" -ne 1 ] instead of [ ! "$var" -eq 1 ] - and other binary operators such as
+
+       USE VAR -NE 1 INSTEAD OF VAR -EQ 1
+
+       USE VAR -NE 1 INSTEAD OF VAR -EQ 1
+
+       and other binary operators such as
+
+        * = and != (string)
+        * -le and -gt, and so forth (arithmetic)
+
+       OPTIONAL - AVOID-NEGATED-CONDITIONS
+
+       This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for more details. In short, you have to enable it with the long name instead of the "SC" code like you would with a normal rule:
+
+       SHELLCHECKRC
+
+         enable=avoid-negated-conditions # SC2335
+
+       PROBLEMATIC CODE
+
+         if [ ! "$var" -eq 1 ]; then :; fi
+         if ! [ "$var" = foo ]; then :; fi
+
+       CORRECT CODE
+
+         if [ "$var" -ne 1 ]; then :; fi
+         if [ "$var" != foo ]; then :; fi
+
+       RATIONALE
+
+       Double negation of such binary operators is unnecessary.
+
+       EXCEPTIONS
+
+       This is a stylistic issue that does not affect correctness. If you prefer the original expression, you can [[Ignore]] it with a directive or flag.
+
+       This rule is not applied to the followings:
+
+        * < and > (lexicographical)
+        * -nt and -ot (file timestamp)
+        * =~ (regular expression)
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+        * [[SC2236]] and [[SC2237]] for unary operators -n and -z
+
+ShellCheck manual                       from the official documentation

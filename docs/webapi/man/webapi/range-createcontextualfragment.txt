@@ -1,0 +1,94 @@
+WEBAPI.RANGE-CREATECONTEXTUALFRAGMENT(1) Sandbox manual WEBAPI.RANGE-CREATECONTEXTUALFRAGMENT(1)
+
+       NAME
+
+       Range: createContextualFragment() method - > [!WARNING]
+
+       RANGE: CREATECONTEXTUALFRAGMENT() METHOD
+
+       > This method parses its input as HTML or XML, writing the result into a DocumentFragment that might subsequently be injected into the DOM.
+       > APIs like this are known as injection sinks, and are potentially a vector for cross-site scripting (XSS) attacks, if the input originally came from an attacker.
+       > You can reduce the risk by assigning TrustedHTML objects instead of strings, and enforcing trusted types using the require-trusted-types-for CSP directive.
+       > This ensures that the input is passed through a transformation function, which has the chance to sanitize the input to remove potentially dangerous markup, such as elements and event handler attributes.
+       The Range.createContextualFragment() method of the Range interface returns a DocumentFragment representing the parsed input HTML or XML.
+
+       SYNTAX
+
+         createContextualFragment(input)
+
+       PARAMETERS
+
+        * input
+          * : A TrustedHTML instance or string that represents the text and tags to be converted to a document fragment.
+
+       RETURN VALUE
+
+       A DocumentFragment object.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the property is set to a string when Trusted Types are enforced by a CSP and no default policy is defined.
+
+       DESCRIPTION
+
+       The Range.createContextualFragment() method returns a DocumentFragment by invoking the HTML fragment parsing algorithm or the XML fragment parsing algorithm with the start of the range (the _parent_ of the selected node) as the context node.
+
+       The HTML fragment parsing algorithm is used if the range belongs to a Document whose HTMLness bit is set. In the HTML case, if the context node would be html, for historical reasons the fragment parsing algorithm is invoked with body as the context instead.
+
+       SECURITY CONSIDERATIONS
+
+       The method does not perform any sanitization of the input to remove XSS-unsafe elements such as , or event handler content attributes. If the input is provided by a user, and the returned DocumentFragment is subsequently injected into the DOM, this method can become a vector for cross-site scripting (XSS) attacks.
+
+       For example, the following code would inject the potentially dangerous user-provided string into the DOM.
+
+         const untrustedCode = "<script>alert('Potentially evil code!');</script>";
+
+         const range = document.createRange();
+         // Make the parent of the first div in the document become the context node
+         range.selectNode(document.getElementsByTagName("div").item(0));
+         const documentFragment = range.createContextualFragment(untrustedCode);
+         document.body.appendChild(documentFragment);
+
+       When inserting HTML into a page using createContextualFragment(), you should pass TrustedHTML objects instead of strings, and enforce trusted types using the require-trusted-types-for CSP directive. This ensures that the input is passed through a transformation function, which has the chance to sanitize the input to remove potentially dangerous markup before it is injected.
+
+       EXAMPLES
+
+       USING CREATECONTEXTUALFRAGMENT() WITH TRUSTEDHTML
+
+       Trusted types are not yet supported on all browsers, so first we define the trusted types tinyfill. This acts as a transparent replacement for the Trusted Types JavaScript API:
+
+         if (typeof trustedTypes === "undefined")
+           trustedTypes = { createPolicy: (n, rules) => rules };
+
+       Next we define a policy named some-content-policy to create TrustedHTML objects from the input (we should also enforce the some-content-policy using CSP). The code implements a no-op policy in order to allow this example to work without a third-party dependency. Your own application code should use a third-party library such as the "DOMPurify" library to return sanitized content from the untrusted input.
+
+         const policy = trustedTypes.createPolicy("some-content-policy", {
+           createHTML(input) {
+             return input; // Do not do this in your own code!
+             // Instead do something like:
+             // return DOMPurify.sanitize(input);
+           },
+         });
+
+         const unsafeText = "<script>alert('Potentially evil code!');</script>";
+         const trustedHTML = policy.createHTML(unsafeText);
+
+       We can then create a DocumentFragment using our trusted version of the original text, and safely append it to the document:
+
+         const range = document.createRange();
+
+         // Make the parent of the first div in the document become the context node
+         range.selectNode(document.getElementsByTagName("div").item(0));
+         const documentFragment = range.createContextualFragment(trustedHTML);
+         document.body.appendChild(documentFragment);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The DOM interfaces index
+
+Web APIs manual                         from the official documentation

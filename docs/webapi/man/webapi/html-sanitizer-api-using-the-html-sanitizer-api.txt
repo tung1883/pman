@@ -1,0 +1,502 @@
+WEBAPI.HTML-SANITIZER-API-USING-THE-HTML-SANITIZER-API(1) Sandbox manual WEBAPI.HTML-SANITIZER-API-USING-THE-HTML-SANITIZER-API(1)
+
+       NAME
+
+       Using the HTML Sanitizer API - The HTML Sanitizer API provides methods that allow developers to safely inject untrusted HTML into an Element, a ShadowRoot, or a Document.
+
+       USING THE HTML SANITIZER API
+
+       The HTML Sanitizer API provides methods that allow developers to safely inject untrusted HTML into an Element, a ShadowRoot, or a Document. The API also gives developers the flexibility to further restrict or expand what HTML entities are allowed if needed.
+
+       SAFE SANITIZATION BY DEFAULT
+
+       The most common use case for the API is to safely inject a user-provided string into an Element. Unless the string to be injected _needs_ to contain unsafe HTML entities, you can use Element.setHTML() as a drop in replacement for Element.innerHTML.
+
+       For example, the following code will remove all XSS-unsafe elements and attributes in the input string (in this case the element), along with any elements that aren't permitted as children of the target element by the HTML specification:
+
+         const untrustedString = "abc <script>alert(1)<" + "/script> def";
+         const someElement = document.getElementById("target");
+
+         // someElement.innerHTML = untrustedString;
+         someElement.setHTML(untrustedString);
+
+         console.log(someElement.innerHTML); // abc def
+
+       The other XSS-safe methods, ShadowRoot.setHTML() and Document.parseHTML(), are used in the same way.
+
+       USING A SANITIZER CONFIGURATION
+
+       All of the sanitization methods can be passed a Sanitizer or SanitizerConfig, which defines what elements, attributes and comments are either allowed, or should be removed, when inserting strings of HTML.
+
+       The Sanitizer is essentially a wrapper around a SanitizerConfig, performing some optimizations and normalizations that make it easier and safer to use, share and modify,
+
+       USING SAFE METHODS WITH A SANITIZER
+
+       The XSS-safe methods always remove any unsafe HTML elements or attributes (as discussed in Safe sanitization by default above).
+
+       You can pass a sanitizer as the second argument to the safe methods to allow the same or fewer entities than the default configuration. For example, if you know that only and elements are expected in the context of someElement below, you might create a sanitizer configuration that allows only those elements:
+
+         const sanitizerOne = new Sanitizer({ elements: ["p", "a"] });
+         sanitizerOne.allowAttribute("href");
+         someElement.setHTML(untrustedString, { sanitizer: sanitizerOne });
+
+       ALLOWING UNSAFE SANITIZATION
+
+       Sometimes you might want to inject input that needs to contain potentially unsafe elements or attributes. In this case you could use one of the API XSS-unsafe methods: Element.setHTMLUnsafe(), ShadowRoot.setHTMLUnsafe(), and Document.parseHTMLUnsafe().
+
+       To somewhat reduce the risk, you might first construct the default sanitizer, which only allows XSS-safe elements, and then allow just those unsafe entities that are expected in the input.
+
+       For example, in the following sanitizer all safe elements are allowed, and we further allow the unsafe onclick handler on button elements (only).
+
+         const untrustedString = '<button onclick="alert(1)">Button text</button>';
+         const someElement = document.getElementById("target");
+
+         const sanitizerOne = new Sanitizer(); // Default sanitizer
+         sanitizerOne.allowElement({ name: "button", attributes: ["onclick"] });
+         someElement.setHTMLUnsafe(untrustedString, { sanitizer: sanitizerOne });
+
+       With this code the alert(1) would be allowed, and there is a potential issue that the attribute might be used for malicious purposes. However we know that all other XSS unsafe HTML entities have been removed, so we only need to worry about this one case, and can put in other mitigations.
+
+       The unsafe methods will use any sanitizer configuration you supply (or none), so you need to be careful when using them. Minimally you should enforce Trusted Types and pass TrustedHTML instead of strings into the methods.
+
+       ALLOW CONFIGURATIONS
+
+       You can build an "allow" sanitizer configuration by specifying just the set of HTML elements and attributes you want to allow to be injected when using the sanitizer. This form of configuration is easy to understand, and is useful if you know exactly what HTML entities are should be permitted in the target context.
+
+       For example, the following configuration "allows" the and elements and attributes cite and onclick. It also replaces elements with their contents (this is a form of "allowing", since the element contents are not removed).
+
+         const sanitizer = new Sanitizer({
+           elements: ["p", "div"],
+           attributes: ["cite", "onclick"],
+           replaceWithChildrenElements: ["b"],
+         });
+
+       ALLOWING ELEMENTS
+
+       The allowed elements can be specified using the elements property of the SanitizerConfig instance passed to the Sanitizer() constructor (or directly to the sanitization methods).
+
+       The simplest way to use the property is to specify an array of element names:
+
+         const sanitizer = new Sanitizer({
+           elements: ["div", "span"],
+         });
+
+       But you can also specify each of the allowed elements using an object that defines its name and namespace, as shown below (Sanitizer will automatically infer a namespace if it is able).
+
+         const sanitizer = new Sanitizer({
+           elements: [
+             {
+               name: "div",
+               namespace: "http://www.w3.org/1999/xhtml",
+             },
+             {
+               name: "span",
+               namespace: "http://www.w3.org/1999/xhtml",
+             },
+           ],
+         });
+
+       You can also add the elements to a Sanitizer using Sanitizer.allowElement(). Here we add the same elements to an empty sanitizer:
+
+         const sanitizer = new Sanitizer({});
+         sanitizer.allowElement("div");
+         sanitizer.allowElement({
+           name: "span",
+           namespace: "http://www.w3.org/1999/xhtml",
+         });
+
+       ALLOWING GLOBAL ATTRIBUTES
+
+       To allow attributes globally, on any element where allowed by the HTML specification, you can use the attributes property of the SanitizerConfig.
+
+       The simplest way to use the attributes property is to specify an array of attribute names:
+
+         const sanitizer = new Sanitizer({
+           attributes: ["cite", "onclick"],
+         });
+
+       You can also specify each attribute with the name and namespace properties, just like elements:
+
+         const sanitizer = new Sanitizer({
+           attributes: [
+             {
+               name: "cite",
+               namespace: null,
+             },
+             {
+               name: "onclick",
+               namespace: null,
+             },
+           ],
+         });
+
+       You can also add each of the allowed attributes to a Sanitizer using the Sanitizer.allowAttribute() method:
+
+         const sanitizer = new Sanitizer({});
+         sanitizer.allowAttribute("cite");
+         sanitizer.allowAttribute("onclick");
+
+       ALLOWING/REMOVING ATTRIBUTES ON A PARTICULAR ELEMENT
+
+       You can also allow or remove attributes on a particular element. Note that this is part of an "allow configuration", because you are in this case still allowing the element to be injected.
+
+       To allow an attribute on an element you can specify the element as an object with the name and attributes properties. The attributes property contains an array of the allowed attributes on the element.
+
+       Below we show a sanitizer where the , , and elements are allowed, and the element additionally allows the href, rel, hreflang and type attributes.
+
+         const sanitizer = new Sanitizer({
+           elements: [
+             "div",
+             { name: "a", attributes: ["href", "rel", "hreflang", "type"] },
+             "span",
+           ],
+         });
+
+       Similarly we can specify the attributes that are not allowed on an element using an element object with the removeAttributes property. For example, the following sanitizer would strip the type attribute from all elements.
+
+         const sanitizer = new Sanitizer({
+           elements: ["div", { name: "a", removeAttributes: ["type"] }],
+         });
+
+       In both cases you can also specify each attribute as an object with name and namespace properties. You can also use set the attribute properties using the same element object passed to Sanitizer.allowElement().
+
+       Note that it is impossible to define per-element attribute behavior on a Sanitizer with a remove configuration, as the (needed) elements array is not present. Other restrictions on per-element attributes are covered in Valid configurations
+
+       REPLACING CHILD ELEMENTS
+
+       You can specify an array of elements to replace with their inner content. This is most commonly used to strip styles from elements.
+
+       For example, the following code uses the replaceWithChildrenElements property of the SanitizerConfig to specify that the element should be replaced:
+
+         const replaceBoldSanitizer = new Sanitizer({
+           replaceWithChildrenElements: ["b"],
+         });
+
+         targetElement.setHTML("This <b>highlighting</b> isn't needed", {
+           sanitizer: replaceBoldSanitizer,
+         });
+
+         // Log the result
+         console.log(targetElement.innerHTML); // This highlighting isn't needed
+
+       As with elements and attributes, you can also specify the replacement elements with a namespace, or use the Sanitizer.replaceElementWithChildren() method:
+
+         const sanitizer = new Sanitizer({});
+         sanitizer.replaceElementWithChildren("b");
+         sanitizer.replaceElementWithChildren({
+           name: "i",
+           namespace: "http://www.w3.org/1999/xhtml",
+         });
+
+       REMOVE CONFIGURATIONS
+
+       You can build a "remove" sanitizer configuration by specifying the set of HTML elements and attributes you want to remove from the input when using the sanitizer. All other elements and attributes are allowed by the configuration, although they may be removed if you use the configuration in a safe sanitization method.
+
+       > A sanitizer configuration can include allow lists or remove lists, but not both.
+       For example, the following configuration removes the , and elements and also the onclick attribute.
+
+         const sanitizer = new Sanitizer({
+           removeElements: ["script", "div", "span"],
+           removeAttributes: ["onclick"],
+         });
+
+       Specifying elements to remove is more useful when you want to tweak an existing configuration. For example consider the case where we are using the (safe) default sanitizer, but want to also ensure that some other elements are removed.
+
+         const sanitizer = new Sanitizer();
+         sanitizer.removeElement("div");
+
+       REMOVING ELEMENTS
+
+       The removeElements property of a SanitizerConfig instance can be used the elements to remove.
+
+       The simplest way to use the property is to specify an array of element names:
+
+         const sanitizer = new Sanitizer({
+           removeElements: ["div", "span"],
+         });
+
+       As when allowing element you can also specify each of the elements to remove using an object that defines its name and namespace. You can also configure the removed elements using the using the Sanitizer API as shown:
+
+         const sanitizer = new Sanitizer({});
+         sanitizer.removeElement("div");
+         sanitizer.removeElement({
+           name: "span",
+           namespace: "http://www.w3.org/1999/xhtml",
+         });
+
+       REMOVING ATTRIBUTES
+
+       The removeElements property of the SanitizerConfig can be used to specify attributes to be globally removed.
+
+       The simplest way to use the property is to specify an array of element names:
+
+         const sanitizer = new Sanitizer({
+           removeAttributes: ["onclick", "lang"],
+         });
+
+       You can also specify each of the elements using an object that defines its name and namespace, and also use Sanitizer.removeAttribute() to add an attribute to be removed from all elements.
+
+         const sanitizer = new Sanitizer({});
+         sanitizer.removeAttribute("onclick");
+         sanitizer.removeAttribute("lang");
+
+       COMMENTS AND DATA ATTRIBUTES
+
+       The SanitizerConfig can also be used to specify whether comments will be filtered from injected content, using the comments property, and whether data- attributes are allowed without having to add them to the attributes array using the dataAttributes boolean property.
+
+       To allow comments and all data-* attributes you might use a configuration like this:
+
+         const sanitizer = new Sanitizer({
+           comments: true,
+           dataAttributes: true,
+         });
+
+       You can similarly set the comments or data-attributes properties on an existing sanitizer using Sanitizer.setComments() and Sanitizer.setDataAttributes():
+
+         const sanitizer = new Sanitizer({});
+         sanitizer.setComments(true);
+         sanitizer.setDataAttributes(true);
+
+       SANITIZER VS SANITIZERCONFIG
+
+       All the sanitization methods can be passed a sanitizer configuration that is either a Sanitizer or SanitizerConfig instance.
+
+       The SanitizerConfig provides a compact method for specifying multiple elements or attributes that should be allowed or removed at the same time. Some care may be required when modifying this object to ensure that it remains a valid configuration.
+
+       The Sanitizer object is a wrapper around SanitizerConfig that provides additional useful functionality:
+
+        * The default constructor creates a configuration that allows all XSS-safe elements and attributes, and which is therefore a good starting point for creating either slightly more or slightly less restrictive sanitizers.
+        * The Sanitizer methods ensure that the underlying SanitizerConfig remains a valid configuration.
+       For example, if you call allowElement() to allow an element then the element would also be removed from the underlying replaceWithChildrenElements array (if present). The normalizations make the configuration more efficient.
+
+        * The Sanitizer.removeUnsafe() method can be used to remove all XSS-unsafe entities from an existing configuration.
+        * You can export the configuration to see exactly what entities are allowed and dropped.
+       Note that if you can use the safe sanitization methods, then you may not need to define a sanitizer configuration at all.
+
+       EXAMPLES
+
+       For other examples see the HTML Sanitizer API and the individual methods of the Sanitizer interface.
+
+       SANITIZER DEMO
+
+       This example shows how you can use the Sanitizer methods to update a sanitizer. The result is a demonstration interface where you can add elements and attributes to the allow and remove lists and see their effects when the sanitizer is used with Element.setHTML() and Element.setHTMLUnsafe().
+
+       HTML
+
+       First we define buttons to reset the default sanitizer or an empty sanitizer.
+
+         <div class="button-group">
+           <button id="defaultSanitizerBtn">Default Sanitizer</button>
+           <button id="emptySanitizerBtn">Empty Sanitizer</button>
+         </div>
+
+       This is followed by elements to allow users to choose elements to add to the allow and remove lists for elements and attributes.
+
+         <div class="select-group">
+           <label for="allowElementSelect">allowElement:</label>
+           <select id="allowElementSelect">
+             <option value="">--Choose element--</option>
+             <option value="h1">h1</option>
+             <option value="div">div</option>
+             <option value="span">span</option>
+             <option value="script">script</option>
+             <option value="p">p</option>
+             <option value="button">button</option>
+             <option value="img">img</option>
+           </select>
+
+           <label for="removeElementSelect">removeElement:</label>
+           <select id="removeElementSelect">
+             <option value="">--Choose element--</option>
+             <option value="h1">h1</option>
+             <option value="div">div</option>
+             <option value="span">span</option>
+             <option value="script">script</option>
+             <option value="p">p</option>
+             <option value="button">button</option>
+             <option value="img">img</option>
+           </select>
+         </div>
+         <div class="select-group">
+           <label for="allowAttributeSelect">allowAttribute:</label>
+           <select id="allowAttributeSelect">
+             <option value="">--Choose attribute--</option>
+             <option value="class">class</option>
+             <option value="autocapitalize">autocapitalize</option>
+             <option value="hidden">hidden</option>
+             <option value="lang">lang</option>
+             <option value="title">title</option>
+             <option value="onclick">onclick</option>
+           </select>
+           <label for="removeAttributeSelect">removeAttribute:</label>
+           <select id="removeAttributeSelect">
+             <option value="">--Choose attribute--</option>
+             <option value="class">class</option>
+             <option value="autocapitalize">autocapitalize</option>
+             <option value="hidden">hidden</option>
+             <option value="lang">lang</option>
+             <option value="title">title</option>
+             <option value="onclick">onclick</option>
+           </select>
+         </div>
+
+       Then we add buttons to toggle comments and data attributes to be allowed/removed.
+
+         <div class="button-group">
+           <button id="toggleCommentsBtn">Toggle comments</button>
+           <button id="toggleDataAttributesBtn">Toggle data-attributes</button>
+         </div>
+
+       The remaining elements display the string to be parsed (editable) and the result of those two strings when injected into an element using setHTML() and setHMLUnsafe(), respectively:
+
+         <div>
+           <p>Original string (Editable)</p>
+           <pre contenteditable id="unmodified"></pre>
+           <p>setHTML() (HTML as string)</p>
+           <pre id="setHTML"></pre>
+           <p>setHTMLUnsafe() (HTML as string)</p>
+           <pre id="setHTMLUnsafe"></pre>
+         </div>
+
+         <pre id="log"></pre>
+
+         #log {
+           height: 430px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+       JAVASCRIPT
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.textContent = text;
+         }
+
+       The code first tests whether the Sanitizer interface is supported. It then defines a string of "unsafe HTML", which contains a mixture of XSS-safe and XSS-unsafe elements (such as ). This is inserted into the first text area as text. The text area is editable, so users can change the text later if they want.
+
+       We then get the elements for the setHTML and setHTMLUnsafe text areas where we will write the parsed HTML, and create an empty Sanitizer configuration. The applySanitizer() method is called with the new sanitizer to log the result of sanitizing the initial string using both a safe and unsafe sanitizer.
+
+         if ("Sanitizer" in window) {
+           // Define unsafe string of HTML
+           const initialHTMLString =
+             `<div id="mainDiv"><!-- HTML comment -->
+             <p data-test="true">This is a paragraph. <button onclick="alert('You clicked the button!')">Click me</button></p>
+             <p>Be <b>bold</b> and brave!</p>
+             <script>alert(1)<` + "/script></div>";
+
+           // Set unsafe string as a text node of first element
+           const unmodifiedElement = document.querySelector("#unmodified");
+           unmodifiedElement.innerText = initialHTMLString;
+           unsafeHTMLString = unmodifiedElement.innerText;
+
+           const setHTMLElement = document.querySelector("#setHTML");
+           const setHTMLUnsafeElement = document.querySelector("#setHTMLUnsafe");
+           // Create and apply default sanitizer when we start
+           let sanitizer = new Sanitizer({});
+           applySanitizer(sanitizer);
+
+       The applySanitizer() logging method is shown below. This gets the initial content of the "untrusted string" from the first text area, and parses it using the Element.setHTML() and Element.setHTMLUnsafe() methods with the passed sanitizer argument into the respective text areas. In each case the injected HTML is then read from the element with innerHTML and written back into the element as innerText (so that it is human readable).
+
+       The code then logs the current sanitizer configuration, which it obtains with Sanitizer.get().
+
+         function applySanitizer(sanitizer) {
+           // Get string to parse into element
+           unsafeHTMLString = unmodifiedElement.innerText;
+
+           // Sanitize string using safe method and then display as text
+           setHTMLElement.setHTML(unsafeHTMLString, { sanitizer });
+           setHTMLElement.innerText = setHTMLElement.innerHTML;
+
+           // Sanitize string using unsafe method and then display as text
+           setHTMLUnsafeElement.setHTMLUnsafe(unsafeHTMLString, { sanitizer });
+           setHTMLUnsafeElement.innerText = setHTMLUnsafeElement.innerHTML;
+
+           // Display sanitizer configuration
+           const sanitizerConfig = sanitizer.get();
+           log(JSON.stringify(sanitizerConfig, null, 2));
+         }
+
+       Next we get elements for each of the buttons and selection lists.
+
+         const defaultSanitizerBtn = document.querySelector("#defaultSanitizerBtn");
+         const emptySanitizerBtn = document.querySelector("#emptySanitizerBtn");
+         const allowElementSelect = document.querySelector("#allowElementSelect");
+         const removeElementSelect = document.querySelector("#removeElementSelect");
+         const allowAttributeSelect = document.querySelector("#allowAttributeSelect");
+         const removeAttributeSelect = document.querySelector("#removeAttributeSelect");
+
+         const toggleCommentsBtn = document.querySelector("#toggleCommentsBtn");
+         const toggleDataAttributesBtn = document.querySelector(
+           "#toggleDataAttributesBtn",
+         );
+
+       The handlers for the first two button create the default and empty sanitizer respectively. The applySanitizer() method we showed before is used to run the sanitizer and update the logs.
+
+         defaultSanitizerBtn.addEventListener("click", () => {
+           sanitizer = new Sanitizer();
+           applySanitizer(sanitizer);
+         });
+
+         emptySanitizerBtn.addEventListener("click", () => {
+           sanitizer = new Sanitizer({});
+           applySanitizer(sanitizer);
+         });
+
+       The handlers for the selection lists are shown next. These call the associated sanitizer method on the current sanitizer whenever a new element or attribute is selected. For example, the listener for the allowElementSelect calls Sanitizer.allowElement() to add the selected element to the allowed elements. In each case, applySanitizer() logs the results using the current sanitizer.
+
+         allowElementSelect.addEventListener("change", (event) => {
+           if (event.target.value !== "") {
+             sanitizer.allowElement(event.target.value);
+             applySanitizer(sanitizer);
+           }
+         });
+         removeElementSelect.addEventListener("change", (event) => {
+           if (event.target.value !== "") {
+             sanitizer.removeElement(event.target.value);
+             applySanitizer(sanitizer);
+           }
+         });
+         allowAttributeSelect.addEventListener("change", (event) => {
+           if (event.target.value !== "") {
+             sanitizer.allowAttribute(event.target.value);
+             applySanitizer(sanitizer);
+           }
+         });
+         removeAttributeSelect.addEventListener("change", (event) => {
+           if (event.target.value !== "") {
+             sanitizer.removeAttribute(event.target.value);
+             applySanitizer(sanitizer);
+           }
+         });
+
+       The handlers for the last two buttons are shown below. These toggle the value of the dataAttributesActive and commentsActive variables and then use these values in Sanitizer.setComments() and Sanitizer.setDataAttributes() Note that if the comments are initially disabled, the first press of the button may have no effect!
+
+         let dataAttributesActive = true;
+         let commentsActive = true;
+
+         toggleCommentsBtn.addEventListener("click", () => {
+           commentsActive = !commentsActive;
+           sanitizer.setComments(commentsActive);
+           applySanitizer(sanitizer);
+         });
+
+         toggleDataAttributesBtn.addEventListener("click", () => {
+           dataAttributesActive = !dataAttributesActive;
+           sanitizer.setDataAttributes(dataAttributesActive);
+           applySanitizer(sanitizer);
+         });
+
+         } else {
+           log("The HTML Sanitizer API is NOT supported in this browser.");
+           // Provide fallback or alternative behavior
+         }
+
+       RESULTS
+
+       The result is shown below. Select the top buttons to set a new default or empty sanitizer, respectively. You can then use the selection lists to add some elements and attributes to the respective sanitizer allow and remove lists, and the other buttons to toggle comments on and off. The current sanitizer configuration is logged. The text in the top text area is sanitized using the current sanitizer configuration and parsed with setHTML() and setHTMLUnsafe().
+
+       Note that adding elements and attributes to the allow lists removes them from the remove lists, and vice versa. Also note that you can allow elements in sanitizer that will be injected with the unsafe methods, but not the safe methods.
+
+Web APIs manual                         from the official documentation

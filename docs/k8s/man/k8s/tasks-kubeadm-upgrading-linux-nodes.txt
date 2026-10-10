@@ -1,0 +1,94 @@
+K8S.TASKS-KUBEADM-UPGRADING-LINUX-NODES(1) Sandbox manual K8S.TASKS-KUBEADM-UPGRADING-LINUX-NODES(1)
+
+       NAME
+
+       replace x in .x- with the latest patch version - This page explains how to upgrade a Linux Worker Nodes created with kubeadm.
+
+       REPLACE X IN .X- WITH THE LATEST PATCH VERSION
+
+       This page explains how to upgrade a Linux Worker Nodes created with kubeadm.
+
+       ## PREREQUISITES
+
+        * Familiarize yourself with [the process for upgrading the rest of your kubeadm
+       cluster](/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade). You will want to upgrade the control plane nodes before upgrading your Linux Worker nodes.
+
+       CHANGING THE PACKAGE REPOSITORY
+
+       If you're using the community-owned package repositories (pkgs.k8s.io), you need to enable the package repository for the desired Kubernetes minor release. This is explained in Changing the Kubernetes package repository document.
+
+       UPGRADING WORKER NODES
+
+       UPGRADE KUBEADM AND KUBECTL
+
+       Upgrade kubeadm and kubectl:
+
+       > Note:
+       kubectl must be within one minor version of kube-apiserver as per the version skew policy. If you are upgrading the control plane across multiple minor versions before upgrading worker nodes, the node-local kubectl may fall outside the allowed skew. Upgrading kubectl alongside kubeadm here ensures it stays within the supported version range throughout the node upgrade process.
+
+         # replace x in .x-* with the latest patch version
+         sudo apt-mark unhold kubeadm kubectl && \
+         sudo apt-get update && sudo apt-get install -y kubeadm='.x-*' kubectl='.x-*' && \
+         sudo apt-mark hold kubeadm kubectl
+
+       For systems with DNF4 (Fedora < 41, RHEL/Centos < 10):
+
+         # replace x in .x-* with the latest patch version
+         sudo dnf install -y kubeadm-'.x-*' kubectl-'.x-*' --disableexcludes=kubernetes
+
+       For systems with DNF5:
+
+         # replace x in .x-* with the latest patch version
+         sudo dnf install -y kubeadm-'.x-*' kubectl-'.x-*' --setopt=disable_excludes=kubernetes
+
+       CALL KUBEADM UPGRADE
+
+       For worker nodes this upgrades the local kubelet configuration:
+
+         sudo kubeadm upgrade node
+
+       DRAIN THE NODE
+
+       Prepare the node for maintenance by marking it unschedulable and evicting the workloads:
+
+         # execute this command on a control plane node
+         # replace <node-to-drain> with the name of your node you are draining
+         kubectl drain <node-to-drain> --ignore-daemonsets
+
+       UPGRADE KUBELET
+
+        1. Upgrade the kubelet:
+
+            # replace x in .x-* with the latest patch version
+            sudo apt-mark unhold kubelet && \
+            sudo apt-get update && sudo apt-get install -y kubelet='.x-*' && \
+            sudo apt-mark hold kubelet
+
+       For systems with DNF4 (Fedora < 41, RHEL/CentOS < 10):
+
+            # replace x in .x-* with the latest patch version
+            sudo dnf install -y kubelet-'.x-*' --disableexcludes=kubernetes
+
+       For systems with DNF5:
+
+            # replace x in .x-* with the latest patch version
+            sudo dnf install -y kubelet-'.x-*' --setopt=disable_excludes=kubernetes
+
+        1. Restart the kubelet:
+
+            sudo systemctl daemon-reload
+            sudo systemctl restart kubelet
+
+       UNCORDON THE NODE
+
+       Bring the node back online by marking it schedulable:
+
+         # execute this command on a control plane node
+         # replace <node-to-uncordon> with the name of your node
+         kubectl uncordon <node-to-uncordon>
+
+       ## WHATSNEXT
+
+        * See how to Upgrade Windows nodes.
+
+Kubernetes manual                       from the official documentation

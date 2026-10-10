@@ -1,0 +1,39 @@
+SHELLCHECK.SC2035(1)             Sandbox manual             SHELLCHECK.SC2035(1)
+
+       NAME
+
+       Use ./glob or -- glob so names with dashes won't become options. - rm
+
+       USE ./GLOB OR -- GLOB SO NAMES WITH DASHES WON'T BECOME OPTIONS
+
+       USE ./GLOB OR -- GLOB SO NAMES WITH DASHES WON'T BECOME OPTIONS
+
+       PROBLEMATIC CODE
+
+       rm *
+
+       CORRECT CODE
+
+       rm ./*
+
+       or
+
+       rm -- *
+
+       RATIONALE
+
+       Since files and arguments are strings passed the same way, programs can't properly determine which is which, and rely on dashes to determine what's what.
+
+       A file named -f (touch -- -f) will not be deleted by the problematic code. It will instead be interpreted as a command line option, and rm will even report success.
+
+       Using ./* will instead cause the glob to be expanded into ./-f, which no program will treat as an option.
+
+       Similarly, -- by convention indicates the end of options, and nothing after it will be treated like flags (except for some programs possibly still special casing - as e.g. stdin).
+
+       Note that changing to ./ in GNU Tar parameters will add ./ prefix to path names in the created archive. This may cause subtle problems (eg. to search for a specific file in archive, the ./ prefix must be specified as well). So using -- * is a safer fix for GNU Tar commands.
+
+       echo and printf do not have issues unless the glob is the first word in the command. ShellCheck 0.7.2+ does not warn for these commands.
+
+       For more information, see "Filenames and Pathnames in Shell: How to do it Correctly".
+
+ShellCheck manual                       from the official documentation

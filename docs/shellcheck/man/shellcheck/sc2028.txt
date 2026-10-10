@@ -1,0 +1,35 @@
+SHELLCHECK.SC2028(1)             Sandbox manual             SHELLCHECK.SC2028(1)
+
+       NAME
+
+       echo won't expand escape sequences. Consider printf. - echo "Name:\t$value"
+
+       ECHO WON'T EXPAND ESCAPE SEQUENCES. CONSIDER PRINTF
+
+       ECHO WON'T EXPAND ESCAPE SEQUENCES. CONSIDER PRINTF
+
+       PROBLEMATIC CODE
+
+         echo "Name:\t$value"
+
+       CORRECT CODE
+
+         printf 'Name:\t%s\n' "$value"
+
+       RATIONALE
+
+       Backslash escapes like \t and \n are not expanded by echo, and become literal backslash-t, backslash-n.
+
+       printf does expand these sequences, and should be used instead.
+
+       Other, non-portable methods include echo -e '\t' and echo $'\t'. ShellCheck will warn if this is used in a script with shebang #!/bin/sh.
+
+       If you actually wanted a literal backslash-t, use
+
+         echo "\\t"
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

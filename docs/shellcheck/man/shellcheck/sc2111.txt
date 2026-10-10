@@ -1,0 +1,51 @@
+SHELLCHECK.SC2111(1)             Sandbox manual             SHELLCHECK.SC2111(1)
+
+       NAME
+
+       ksh does not allow function keyword and () at the same time. - function foo() {
+
+       KSH DOES NOT ALLOW FUNCTION KEYWORD AND () AT THE SAME TIME
+
+       KSH DOES NOT ALLOW FUNCTION KEYWORD AND () AT THE SAME TIME
+
+       PROBLEMATIC CODE
+
+         #!/bin/ksh
+         function foo() {
+           echo "Hello World"
+         }
+
+       CORRECT CODE
+
+         foo() {
+           echo "Hello World"
+         }
+
+       or
+
+         # ksh extended function
+         function foo {
+           echo "Hello World"
+         }
+
+       RATIONALE
+
+       Ksh allows two ways of defining functions: POSIX sh style foo() { ..; } and Ksh specific function foo { ..; }.
+
+       ShellCheck found a function definition that uses both at the same time, function foo() { ..; } which is not allowed. Use one or the other.
+
+       Note that the two are not identical, for example:
+
+        * Using typeset in a function foo will create a local variable, while in foo() it will create a global variable.
+        * function foo has its own trap context, while foo() shares them with the current process.
+        * function foo will set $0 to foo, while foo() will inherit $0 from the current process.
+
+       EXCEPTIONS
+
+       In Bash, function foo() { ..; } is allowed, and function foo and foo() are identical. This warning does not trigger when the shebang is e.g. #!/bin/bash.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

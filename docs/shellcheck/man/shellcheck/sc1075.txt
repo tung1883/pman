@@ -1,0 +1,51 @@
+SHELLCHECK.SC1075(1)             Sandbox manual             SHELLCHECK.SC1075(1)
+
+       NAME
+
+       Use elif instead of else if. - if [ "$#" -eq 0 ]
+
+       USE ELIF INSTEAD OF ELSE IF
+
+       USE ELIF INSTEAD OF ELSE IF
+
+       PROBLEMATIC CODE
+
+         if [ "$#" -eq 0 ]
+         then
+           echo "Usage: ..."
+         else if [ "$#" -lt 2 ]
+         then
+           echo "Missing operand"
+         fi
+
+       CORRECT CODE
+
+         if [ "$#" -eq 0 ]
+         then
+           echo "Usage: ..."
+         elif [ "$#" -lt 2 ]
+         then
+           echo "Missing operand"
+         fi
+
+       RATIONALE
+
+       Many languages allow alternate branches with else if, but sh is not one of them. Use elif instead.
+
+       EXCEPTIONS
+
+       else if is a valid (though confusing) way of nesting an if statement in a parent's else. If this is your intention, consider using canonical formatting by putting a linefeed between else and if.
+
+       This does not change the behavior of the script, but merely makes it more obvious to ShellCheck (and other humans) that you didn't expect the else if to behave the way it does in C. Alternatively, you can [[ignore]] it with no ill effects.
+
+         if x
+         then
+           echo "x"
+         else     # line break here
+           if y
+           then
+             echo "y"
+            fi
+         fi
+
+ShellCheck manual                       from the official documentation

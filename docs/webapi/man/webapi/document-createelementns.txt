@@ -1,0 +1,122 @@
+WEBAPI.DOCUMENT-CREATEELEMENTNS(1) Sandbox manual WEBAPI.DOCUMENT-CREATEELEMENTNS(1)
+
+       NAME
+
+       Document: createElementNS() method - The createElementNS() method of the Document interface creates a new element with the specified namespace URI and qualified name.
+
+       DOCUMENT: CREATEELEMENTNS() METHOD
+
+       The createElementNS() method of the Document interface creates a new element with the specified namespace URI and qualified name.
+
+       This is useful in mixed-namespace documents, such as SVG or MathML embedded in HTML, where the parser cannot reliably infer the namespace.
+
+       The createElement() method is simpler if you want to create a plain HTML element.
+
+       SYNTAX
+
+         createElementNS(namespaceURI, qualifiedName)
+         createElementNS(namespaceURI, qualifiedName, options)
+
+       PARAMETERS
+
+        * namespaceURI
+          * : A string that specifies the namespaceURI to associate with the element. Some important namespace URIs are:
+            * HTML
+              * : http://www.w3.org/1999/xhtml
+            * SVG
+              * : http://www.w3.org/2000/svg
+            * MathML
+              * : http://www.w3.org/1998/Math/MathML
+        * qualifiedName
+          * : A string containing the qualified name of the new element.
+       The nodeName property of the created element is initialized with this value.
+
+       The format of the qualified name is prefix:localName or localName, where the parts are defined as:
+
+            * prefix (optional)
+              * : A "short alias" for the namespace.
+       The prefix is optional, but if it is specified the namespaceURI parameter must also be specified. If the prefix is set to xml or xmlns, the namespaceURI must be set to http://www.w3.org/XML/1998/namespace or http://www.w3.org/2000/xmlns/, respectively.
+
+       The value is used to initialize the new element's prefix property. Defaults to null.
+
+            * localName
+              * : The local name of the element.
+       The value is used to initialize the new element's localName property.
+
+        * options (optional)
+          * : An object with the following optional properties (note that only one of is and customElementRegistry may be set):
+            * is (optional)
+              * : A string defining the tag name for a custom element previously defined using customElements.define().
+       The new element will be given an is attribute whose value is the custom element's tag name.
+
+            * customElementRegistry (optional)
+              * : A CustomElementRegistry that sets the Scoped custom element registry of a custom element.
+       For backward compatibility, some browsers allow you to pass a string here instead of an object, where the string's value is the custom element's tag name. See Extending native HTML elements for more information on how to use this parameter.
+
+       RETURN VALUE
+
+       The new Element.
+
+       EXCEPTIONS
+
+        * NamespaceError DOMException
+          * : Thrown if the namespaceURI value is:
+            * not a valid namespace URI.
+            * set to the empty string when prefix has a value.
+            * not the value http://www.w3.org/XML/1998/namespace or http://www.w3.org/2000/xmlns/ when prefix is set to xml or xmlns, respectively.
+        * InvalidCharacterError DOMException
+          * : Thrown if either the prefix or localName is not valid:
+            * The prefix must have at least one character, and cannot contain ASCII whitespace, NULL, /, or > (U+0000, U+002F, or U+003E, respectively).
+            * The localName is a valid element name if it has a length of at least 1 and:
+              * it starts with an alphabet character and does not contain ASCII whitespace, NULL, /, or > (U+0000, U+002F, or U+003E, respectively).
+              * it starts with : (U+003A), _ (U+005F), or any characters in the range U+0080 to U+10FFFF (inclusive), _and_ the remaining code points only include those same characters along with the ASCII alphanumeric characters, - (U+002D), and . (U+002E),
+       > Earlier versions of the specification were more restrictive, requiring that the qualifiedName be a valid XML name.
+        * NotSupportedError DOMException
+          * : Thrown if both the is and customElementRegistry options are specified.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       This shows how to create a new element in the XHTML namespace.
+
+         const divElementXHTML = document.createElementNS(
+           "http://www.w3.org/1999/xhtml",
+           "div",
+         );
+
+         // This is equivalent!
+         const divElementHTML = document.createElement("div");
+
+       CREATE AN SVG ELEMENT
+
+       This example shows how you might create an SVG element (SVGSVGElement) and append it to the HTML element.
+
+       Using createElementNS() with the SVG namespace is necessary when working with an HTML document. If you were to call createElement(\, an HTMLUnknownElement would be returned, and the SVG would not be rendered.
+
+         const svgNS = "http://www.w3.org/2000/svg";
+
+         const svg = document.createElementNS(svgNS, "svg");
+         svg.setAttribute("width", "100");
+         svg.setAttribute("height", "100");
+
+         const circle = document.createElementNS(svgNS, "circle");
+         circle.setAttribute("cx", "50");
+         circle.setAttribute("cy", "50");
+         circle.setAttribute("r", "40");
+         circle.setAttribute("fill", "steelblue");
+
+         svg.appendChild(circle);
+         document.body.appendChild(svg);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * document.createElement()
+        * document.createTextNode()
+        * Element.namespaceURI
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,140 @@
+ARCH.INIT(1)                     Sandbox manual                     ARCH.INIT(1)
+
+       Warning Arch Linux only has official support for systemd. [1] When using a different init system, please mention so in support requests.
+
+       Init is the first process started during system boot. It is a daemon process that continues running until the system is shut down. Init is the direct or indirect ancestor of all other processes, and automatically adopts all orphaned processes. It is started by the kernel using a hard-coded filename; if the kernel is unable to start it, panic will result. Init is typically assigned process identifier 1.
+
+       The init scripts (or rc) are launched by the init process to guarantee basic functionality on system start and shutdown. This includes (un)mounting of file systems and launching of daemons. A service manager takes this one step further by providing active control over launched processes, or process supervision. An example is to monitor for crashes and restart processes accordingly.
+
+       These components combine to the init system. Some inits include the service manager in the init process, or have init scripts in close relation to them. These inits are below referred to as integrated, though entries in different categories may explicitly depend on each other.
+
+       INITS (INTEGRATED)
+
+        * anopa — Init system built around the s6 supervision suite.
+       https://jjacky.com/anopa/ || anopaAUR
+
+        * GNU Shepherd — Init system written in Guile.
+       https://www.gnu.org/software/shepherd/ || shepherdAUR
+
+        * OpenRC — Dependency-based init system.
+       https://www.gentoo.org/proj/en/base/openrc/ || openrcAUR openrc-arch-services-gitAUR
+
+        * systemd — Dependency-based init system with aggressive parallelization, process supervision using cgroups, and the ability to depend on a given mount point or dbus service.
+       https://systemd.io/ || systemd
+
+       INITS
+
+        * BusyBox — Utilities for rescue and embedded systems.
+       https://busybox.net/ || busybox
+
+        * sinit — Simple init initially based on Rich Felker’s minimal init.
+       https://core.suckless.org/sinit || sinitAUR
+
+       INIT SCRIPTS
+
+        * kisslinux-init — Init framework of KISS Linux.
+       https://github.com/kisslinux/init || kisslinux-initAUR
+
+       SERVICE MANAGERS
+
+        * Monit — Monit is a process supervision tool for Unix and Linux. With monit, system status can be viewed directly from the command line, or via the native HTTP(S) web server.
+       https://mmonit.com/monit/ || monit
+
+        * perp — Persistent process (service) supervisor and management framework for UNIX.
+       http://b0llix.net/perp/ || perpAUR
+
+        * runit — UNIX init scheme with service supervision, a replacement for SysVinit, and other init schemes.
+       https://smarden.org/runit/ || busybox
+
+        * s6 — Small suite of programs for UNIX, designed to allow service supervision in the line of daemontools and runit.
+       https://skarnet.org/software/s6/ || s6AUR
+
+        * Supervisor — A system that allows its users to monitor and control processes on UNIX-like operating systems.
+       https://supervisord.org/ || supervisor
+
+       CONFIGURATION
+
+       MIGRATE RUNNING SERVICES
+
+       To run daemons under the new init, save a list of running daemons:
+
+         $ systemctl list-units --state=running "*.service" > daemons.list
+
+       and configure the #Init scripts accordingly. See also [2].
+
+       Note systemd-tmpfiles(8), kernel modules and sysctl may also need configuration.
+
+       LOGIND
+
+       logind requires systemd to be the init process. [3] As such, local sessions and other functionality is not available.
+
+       DEVICE PERMISSIONS
+
+       Add users to respective user groups for device access and reboot. Current group membership should first be checked with id user.
+
+         # usermod -a -G video,audio,power,disk,storage,optical,lp,scanner,input user
+
+       See also Users and groups#Pre-systemd groups. To create group rules for use with Polkit, see Polkit#Bypass password prompt.
+
+       ROOTLESS X
+
+       As Xorg.wrap does not check if logind is active [4], root rights for Xorg need be enabled manually.
+
+       POWER MANAGEMENT
+
+       See pm-utilsAUR and acpid to replace Power management with systemd.
+
+       SCHEDULED TASKS
+
+       Arch uses timer files instead of cron by default.
+
+       DBUS
+
+       User instances of dbus-daemon are launched by systemd/User [5]. When requiring IPC between desktop applications, restore 30-dbus.sh:
+
+         /etc/X11/xinit/xinitrc.d/30-dbus.sh
+
+         #!/bin/bash
+
+         # launches a session dbus instance
+         if [ -z "${DBUS_SESSION_BUS_ADDRESS-}" ] && type dbus-launch >/dev/null; then
+           eval $(dbus-launch --sh-syntax --exit-with-session)
+         fi
+
+       TIPS AND TRICKS
+
+       SYSTEMD-NSPAWN
+
+       systemd-nspawn is a tool for systemd systems. Since Linux 2.6.19, it is possible, however, to run systemd on a non-systemd system by using PID namespace. For it, the kernel needs to be configured with CONFIG_PID_NS and CONFIG_NAMESPACES).
+
+       The PID namespace creates a new hierarchy of processes starting with PID 1. In addition to this, systemd requires a chrooted root filesystem to be mounted. Hence, you have to at least make a bind mount, because otherwise some services will fail with
+
+         "Failed at step NAMESPACE spawning" due to "Invalid operation"
+
+       as systemd tries to remount the root with private option.
+
+       To setup a chroot with a new PID namespace, you can use jchroot.[6] [7]. Make sure not to mount /proc inside the new root before chrooting, otherwise systemd will detect the chroot environment. You can mount it later once systemd is running.
+
+       REPLACING UDEV
+
+       Warning Replacing udev is not required as systemd-udev is functional without systemd as PID 1. Some replacements can also not coexist with systemd—ensure an alternative init is booted prior to their installation.
+
+        * mdev — Device manager for usage in embedded systems.
+       https://git.busybox.net/busybox/plain/docs/mdev.txt || busybox
+
+        * smdev — smdev is a simple program to manage device nodes. It is mostly compatible with mdev but does not have all of its features.
+       https://git.suckless.org/smdev/ || smdevAUR
+
+       SEE ALSO
+
+        * Debian:Debate/initsystem
+        * How to run s6-svscan as process 1
+        * Replace systemd with busybox + minirc
+        * Init vs. runsv
+        * Demystifying the init system
+        * A history of modern init systems (1992-2015)
+        * Gentoo:Comparison of init systems
+        * InitWare: Contributors' Study Guide
+        * The nosh package
+
+ArchWiki manual                         bundled documentation

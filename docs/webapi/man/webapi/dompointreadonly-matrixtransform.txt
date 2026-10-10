@@ -1,0 +1,61 @@
+WEBAPI.DOMPOINTREADONLY-MATRIXTRANSFORM(1) Sandbox manual WEBAPI.DOMPOINTREADONLY-MATRIXTRANSFORM(1)
+
+       NAME
+
+       DOMPointReadOnly: matrixTransform() method - The matrixTransform() method of the DOMPointReadOnly interface applies a matrix transform specified as an object to the DOMPointReadOnly obj
+
+       DOMPOINTREADONLY: MATRIXTRANSFORM() METHOD
+
+       The matrixTransform() method of the DOMPointReadOnly interface applies a matrix transform specified as an object to the DOMPointReadOnly object, creating and returning a new DOMPointReadOnly object. Neither the matrix nor the point are altered.
+
+       If the matrix passed as a parameter is 2D (the is2D is true) then this is a 2D transformation and the point's z coordinate will be 0 and point's w perspective will be 1. Otherwise this is a 3D transformation.
+
+       You can also create a new DOMPoint with a point and matrix with the DOMMatrixReadOnly.transformPoint() method.
+
+       SYNTAX
+
+         matrixTransform()
+         matrixTransform(matrix)
+
+       PARAMETERS
+
+        * matrix
+          * : A DOMMatrix or DOMMatrixReadOnly object.
+
+       RETURN VALUE
+
+       A new DOMPoint object.
+
+       EXAMPLES
+
+       2D TRANSFORM
+
+       In this example, we apply a 2D matrix transform to a DOMPointReadOnly, creating a new DOMPoint:
+
+         const originalPoint = new DOMPointReadOnly(10, 20); // DOMPointReadOnly {x: 10, y: 20, z: 0, w: 1}
+         const matrix = new DOMMatrix([1, 0, 0, 1, 15, 30]);
+
+         const transformedPoint = originalPoint.matrixTransform(matrix); // DOMPoint {x: 25, y: 50, z: 0, w: 1}
+
+         console.log(transformedPoint.toJSON()); // output: {x: 25, y: 50, z: 0, w: 1}
+
+       3D TRANSFORM
+
+       In this example, we apply a 3D matrix transform to a DOMPointReadOnly:
+
+         const point = new DOMPointReadOnly(5, 10); // DOMPointReadOnly {x: 5, y: 10, z: 0, w: 1}
+         const matrix3D = new DOMMatrix().translate(0, 0, 10);
+         const transformedPoint = point.matrixTransform(matrix3D); // DOMPoint {x: 5, y: 10, z: 10, w: 1}
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * DOMPoint
+        * DOMMatrix
+        * DOMMatrixReadOnly.transformPoint()
+        * CSS matrix() and matrix3d() functions
+
+Web APIs manual                         from the official documentation

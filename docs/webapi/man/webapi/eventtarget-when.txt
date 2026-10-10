@@ -1,0 +1,85 @@
+WEBAPI.EVENTTARGET-WHEN(1)       Sandbox manual       WEBAPI.EVENTTARGET-WHEN(1)
+
+       NAME
+
+       EventTarget: when() method - The when() method of the EventTarget interface returns an Observable object representing a stream of events fired on the event target it is 
+
+       EVENTTARGET: WHEN() METHOD
+
+       The when() method of the EventTarget interface returns an Observable object representing a stream of events fired on the event target it is called on.
+
+       You can call subscribe() on the resulting observable to subscribe to the event stream.
+
+       The returned observable uses an event listener in the background, the same as listeners created by EventTarget.addEventListener(). This listener's creation, sharing among observers, and removal follow the same lifecycle as the Subscriber object for a custom observable.
+
+       > This shared-subscription behavior may change. A proposal to give each observer its own Subscriber would make each subscription start a separate execution instead of reusing an active subscription.
+
+       SYNTAX
+
+         when(type)
+         when(type, options)
+
+       PARAMETERS
+
+        * type
+          * : A case-sensitive string representing the event type to listen for.
+        * options (optional)
+          * : An object that specifies characteristics about the event listener. The available options are:
+            * capture (optional)
+              * : A boolean value indicating that events of the specified type will be dispatched to the listener registered in the background before being dispatched to any EventTarget beneath it in the DOM tree. If not specified, defaults to false.
+            * passive (optional)
+              * : A boolean value that, if true, indicates that callbacks processing the events will never call preventDefault(). If a passive listener calls preventDefault(), nothing will happen and a console warning may be generated.
+       If this option is not specified, it defaults to the same value as for addEventListener(). See Using passive listeners to learn more.
+
+       RETURN VALUE
+
+       An Observable.
+
+       EXAMPLES
+
+       USING WHEN()
+
+       This example is a simple click counter app.
+
+       HTML
+
+       The markup contains a element to click, and a element to display the number of clicks.
+
+         <button>Click me</button>
+         <p>Click count: 0</p>
+
+       JAVASCRIPT
+
+       We call when("click") on the btn, which obtains an observable for the click event stream. We then chain a subscribe() call onto the observable to subscribe the increment() function to the observable, so it is called each time the button is clicked.
+
+         const btn = document.querySelector("button");
+         const para = document.querySelector("p");
+
+         let countValue = 0;
+
+         function increment() {
+           countValue++;
+           para.textContent = `Click count: ${countValue}`;
+         }
+
+         btn.when("click").subscribe(increment);
+
+       > For this particular example, .when("click").subscribe(increment) and .addEventListener("click", increment) are almost exactly equivalent. However, using when() allows you to compose event streams using observables. The Using observables guide has more examples.
+
+       RESULT
+
+       The rendered result is as follows:
+
+       Try clicking the button to see the click count increment.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using observables
+        * EventTarget.addEventListener()
+        * Observable explainer
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,79 @@
+APACHE.MOD_CHARSET_LITE(1)       Sandbox manual       APACHE.MOD_CHARSET_LITE(1)
+
+       COMMON PROBLEMS
+
+       INVALID CHARACTER SET NAMES
+
+       The character set name parameters of CharsetSourceEnc and CharsetDefault must be acceptable to the translation mechanism used by APR on the system where mod_charset_lite is deployed. These character set names are not standardized and are usually not the same as the corresponding values used in http headers. Currently, APR can only use iconv(3), so you can easily test your character set names using the iconv(1) program, as follows:
+
+       iconv -f charsetsourceenc-value -t charsetdefault-value
+
+       MISMATCH BETWEEN CHARACTER SET OF CONTENT AND TRANSLATION RULES
+
+       If the translation rules don't make sense for the content, translation can fail in various ways, including:
+
+        * The translation mechanism may return a bad return code, and the connection will be aborted.
+        * The translation mechanism may silently place special characters (e.g., question marks) in the output buffer when it cannot translate the input buffer.
+
+       CHARSETDEFAULT DIRECTIVE
+
+         Description: | Charset to translate into
+         Syntax: | CharsetDefault charset
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Extension
+         Module: | mod_charset_lite
+       The CharsetDefault directive specifies the charset that content in the associated container should be translated to.
+
+       The value of the charset argument must be accepted as a valid character set name by the character set support in APR. Generally, this means that it must be supported by iconv.
+
+       EXAMPLE
+
+         <Directory "/export/home/trawick/apacheinst/htdocs/convert">
+             CharsetSourceEnc  UTF-16BE
+             CharsetDefault    ISO-8859-1
+         </Directory>
+
+       Specifying the same charset for both CharsetSourceEnc and CharsetDefault disables translation. The charset need not match the charset of the response, but it must be a valid charset on the system.
+
+       CHARSETOPTIONS DIRECTIVE
+
+         Description: | Configures charset translation behavior
+         Syntax: | CharsetOptions option [option] ...
+         Default: | CharsetOptions ImplicitAdd
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Extension
+         Module: | mod_charset_lite
+       The CharsetOptions directive configures certain behaviors of mod_charset_lite. Option can be one of
+
+         ImplicitAdd | NoImplicitAdd
+       The ImplicitAdd keyword specifies that mod_charset_lite should implicitly insert its filter when the configuration specifies that the character set of content should be translated. If the filter chain is explicitly configured using the AddOutputFilter directive, NoImplicitAdd should be specified so that mod_charset_lite doesn't add its filter.
+
+         TranslateAllMimeTypes | NoTranslateAllMimeTypes
+       Normally, mod_charset_lite will only perform translation on a small subset of possible mimetypes. When the TranslateAllMimeTypes keyword is specified for a given configuration section, translation is performed without regard for mimetype.
+
+       CHARSETSOURCEENC DIRECTIVE
+
+         Description: | Source charset of files
+         Syntax: | CharsetSourceEnc charset
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Extension
+         Module: | mod_charset_lite
+       The CharsetSourceEnc directive specifies the source charset of files in the associated container.
+
+       The value of the charset argument must be accepted as a valid character set name by the character set support in APR. Generally, this means that it must be supported by iconv.
+
+       EXAMPLE
+
+         <Directory "/export/home/trawick/apacheinst/htdocs/convert">
+             CharsetSourceEnc  UTF-16BE
+             CharsetDefault    ISO-8859-1
+         </Directory>
+
+       The character set names in this example work with the iconv translation support in Solaris 8.
+
+       Specifying the same charset for both CharsetSourceEnc and CharsetDefault disables translation. The charset need not match the charset of the response, but it must be a valid charset on the system.
+
+Apache HTTP Server manual               bundled documentation

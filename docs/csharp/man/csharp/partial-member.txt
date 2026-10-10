@@ -1,0 +1,150 @@
+CSHARP.PARTIAL-MEMBER(1)         Sandbox manual         CSHARP.PARTIAL-MEMBER(1)
+
+       NAME
+
+       Partial member (C# Reference) - Partial members are members that can be declared in one partial type declaration and defined in a separate partial type declaration.
+
+       PARTIAL MEMBER (C# REFERENCE)
+
+       A partial member has one declaring declaration and often one implementing declaration. The declaring declaration doesn't include a body. The implementing declaration provides the body of the member. Partial members enable class designers to provide member hooks for tooling such as source generators to implement. Partial types and members provide a way for human developers to write part of a type while tools write other parts of the type. If the developer doesn't supply an optional implementing declaration, the compiler can remove the declaring declaration at compile time. The following conditions apply to partial members:
+
+        * Declarations must begin with the contextual keyword partial.
+        * Signatures in both parts of the partial type must match.
+       The partial keyword isn't allowed on static constructors, finalizers, or overloaded operators. Before C# 14, partial wasn't allowed on instance constructors or event declarations. Before C# 13, partial wasn't allowed on properties or indexers.
+
+       A partial method isn't required to have an implementing declaration in the following cases:
+
+        * It doesn't have any accessibility modifiers (including the default private).
+        * It returns void.
+        * It doesn't have any out parameters.
+        * It doesn't have any of the following modifiers virtual, override, sealed, new, or extern.
+       The following example shows a partial method that conforms to the preceding restrictions:
+
+         partial class MyPartialClass
+         {
+             // Declaring definition
+             partial void OnSomethingHappened(string s);
+         }
+
+         // This part can be in a separate file.
+         partial class MyPartialClass
+         {
+             // Comment out this method and the program
+             // will still compile.
+             partial void OnSomethingHappened(string s) =>
+                 Console.WriteLine($"Something happened: {s}");
+         }
+
+       Any member that doesn't conform to all those restrictions (for example, public virtual partial void method), must provide an implementation.
+
+       Partial properties, indexers, and events can't use auto-implemented syntax for the implementing declaration. The defining declaration uses the same syntax. The implementing declaration must include at least one implemented accessor. That accessor can be a field-backed property. The implementing declaration for a partial event must define the add and remove handlers.
+
+       Partial members can also be useful in combination with source generators. For example a regex could be defined using the following pattern:
+
+         public partial class RegExSourceGenerator
+         {
+             [GeneratedRegex("cat|dog", RegexOptions.IgnoreCase, "en-US")]
+             private static partial Regex CatOrDogGeneratedRegex();
+
+             private static void EvaluateText(string text)
+             {
+                 if (CatOrDogGeneratedRegex().IsMatch(text))
+                 {
+                     // Take action with matching text
+                 }
+             }
+         }
+
+       The preceding example shows a partial method that must have an implementing declaration. As part of a build, the Regular expression source generator creates the implementing declaration.
+
+       The following example shows a declaring declaration and an implementing declaration for a class. Because the method's return type isn't void (it's string) and its access is public, the method must have an implementing declaration:
+
+         // Declaring declaration
+         public partial class PartialExamples
+         {
+             /// <summary>
+             /// Gets or sets the number of elements that the List can contain.
+             /// </summary>
+             public partial int Capacity { get; set; }
+
+             /// <summary>
+             /// Gets or sets the element at the specified index.
+             /// </summary>
+             /// <param name="index">The index</param>
+             /// <returns>The string stored at that index</returns>
+             public partial string this[int index] { get; set; }
+
+             public partial string? TryGetAt(int index);
+         }
+
+         public partial class PartialExamples
+         {
+             private List<string> _items = [
+                 "one",
+                 "two",
+                 "three",
+                 "four",
+                 "five"
+                 ];
+
+             // Implementing declaration
+
+             /// <summary>
+             /// Gets or sets the number of elements that the List can contain.
+             /// </summary>
+             /// <remarks>
+             /// If the value is less than the current capacity, the list will shrink to the
+             /// new value. If the value is negative, the list isn't modified.
+             /// </remarks>
+             public partial int Capacity
+             {
+                 get => _items.Count;
+                 set
+                 {
+                     if ((value != _items.Count) && (value >= 0))
+                     {
+                         _items.Capacity = value;
+                     }
+                 }
+             }
+
+             public partial string this[int index]
+             {
+                 get => _items[index];
+                 set => _items[index] = value;
+             }
+
+             /// <summary>
+             /// Gets the element at the specified index.
+             /// </summary>
+             /// <param name="index">The index</param>
+             /// <returns>The string stored at that index, or null if out of bounds</returns>
+             public partial string? TryGetAt(int index)
+             {
+                 if (index < _items.Count)
+                 {
+                     return _items[index];
+                 }
+                 return null;
+             }
+         }
+
+       The preceding example illustrates rules on how the two declarations are combined:
+
+        * Signature matches: In general, the signatures for the declaring and implementing declarations must match. This rule includes the accessibility modifier on methods, properties, indexers, and individual accessors. It includes the parameter type and ref-kind modifiers on all parameters. The return type and any ref-kind modifier must match. Tuple member names must match. However, some rules are flexible:
+          * The declaring and implementing declarations can have different nullable annotations settings. Meaning that one can be nullable oblivious and the other nullable enabled.
+          * Nullability differences that don't involve oblivious nullability generates a warning.
+          * Default parameter values don't need to match. The compiler issues a warning if the implementing declaration of a method or indexer declares a default parameter value.
+          * The compiler issues a warning when parameter names don't match. The emitted IL contains the declaring declaration's parameter names.
+        * Documentation comments: Documentation comments can be included from either declaration. If both the declaring and implementing declarations include documentation comments, the comments from the implementing declaration are included. In the preceding example, the documentation comments include:
+          * For the Capacity property, the comments are taken from the implementing declaration. The implementing declaration comments are used when both declarations have /// comments.
+          * For the indexer, the comments are taken from the declaring declaration. The implementing declaration doesn't include any /// comments.
+          * For TryGetAt, the comments are taken from the implementing declaration. The declaring declaration doesn't include any /// comments.
+          * The generated XML has documentation comments for all public members.
+        * Most Attribute declarations are combined. However, all caller info attributes are defined with AllowMultiple=false. The compiler recognizes any caller info attribute on the declaring declaration. All caller info attributes on the implementing declaration are ignored. The compiler issues a warning if you add caller info attributes on the implementing declaration.
+
+       SEE ALSO
+
+        * partial type
+
+C# manual                               from the official documentation

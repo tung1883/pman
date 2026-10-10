@@ -1,0 +1,63 @@
+WEBAPI.WRITABLESTREAMDEFAULTWRITER-ABORT(1) Sandbox manual WEBAPI.WRITABLESTREAMDEFAULTWRITER-ABORT(1)
+
+       NAME
+
+       WritableStreamDefaultWriter: abort() method - The abort() method of the
+
+       WRITABLESTREAMDEFAULTWRITER: ABORT() METHOD
+
+       The abort() method of the WritableStreamDefaultWriter interface aborts the stream, signaling that the producer can no longer successfully write to the stream and it is to be immediately moved to an error state, with any queued writes discarded.
+
+       If the writer is active, the abort() method behaves the same as that for the associated stream (WritableStream.abort()). If not, it returns a rejected promise.
+
+       SYNTAX
+
+         abort()
+         abort(reason)
+
+       PARAMETERS
+
+        * reason (optional)
+          * : A string representing a human-readable reason for the abort.
+
+       RETURN VALUE
+
+       A Promise, which fulfills to undefined when the stream is aborted, or rejects with an error if the writer was inactive or the receiver stream is invalid.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : The stream you are trying to abort is not a WritableStream, or it is
+       locked.
+
+       EXAMPLES
+
+         const writableStream = new WritableStream(
+           {
+             write(chunk) {
+               // …
+             },
+             close() {
+               // …
+             },
+             abort(err) {
+               // …
+             },
+           },
+           queuingStrategy,
+         );
+
+         // …
+
+         const writer = writableStream.getWriter();
+
+         // …
+
+         // abort the stream when desired
+         await writer.abort("WritableStream aborted. Reason: ...");
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

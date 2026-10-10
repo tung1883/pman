@@ -1,0 +1,48 @@
+SHELLCHECK.SC2324(1)             Sandbox manual             SHELLCHECK.SC2324(1)
+
+       NAME
+
+       var+=1 will append, not increment. Use (( var += 1 )), declare -i var, or quote number to silence. - var=2 n=3
+
+       VAR+ 1 WILL APPEND, NOT INCREMENT. USE (( VAR + 1 )), DECLARE -I VAR
+
+       VAR+ 1 WILL APPEND, NOT INCREMENT. USE (( VAR + 1 )), DECLARE -I VAR
+
+       PROBLEMATIC CODE
+
+         var=2 n=3
+         var+=$n
+
+       CORRECT CODE
+
+       In bash/ksh, use an (( arithmetic context ))
+
+         (( var += n ))
+
+       or declare the variable as an integer type:
+
+         declare -i var=2
+         n=4
+         var+=$n
+
+       For POSIX sh, use an $((arithmetic expansion)):
+
+         var=$((var+n))
+
+       RATIONALE
+
+       The problematic code attempts to add 2 and 3 to get 5.
+
+       Instead, += on a string variable will concatenate, so the result is 23.
+
+       EXCEPTIONS
+
+       If you do want to concatenate a number, for example to append trailing zeroes, you can silence the warning by quoting the number:
+
+         var+="000"
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

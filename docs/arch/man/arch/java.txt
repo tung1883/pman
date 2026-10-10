@@ -1,0 +1,375 @@
+ARCH.JAVA(1)                     Sandbox manual                     ARCH.JAVA(1)
+
+       From the Wikipedia article:
+
+       Java is a programming language originally developed by Sun Microsystems and released in 1995 as a core component of Sun Microsystems' Java platform. The language derives much of its syntax from C and C++ but has a simpler object model and fewer low-level facilities. Java applications are typically compiled to bytecode that can run on any Java virtual machine (JVM) regardless of computer architecture.
+
+       Arch Linux officially supports the open source OpenJDK versions 8, 11, 17, 21, and 25 — Long-Term Support (LTS) versions, and 27 — the latest released version. All these JVMs can be installed without conflict and switched between using helper script archlinux-java (installed with java-runtime-common package). Several other Java environments are available in Arch User Repository but are not officially supported.
+
+       INSTALLATION
+
+       Note
+
+        * Arch Linux officially supports the OpenJDK implementations only.
+        * After installation, the Java environment will need to be recognized by the shell ($PATH variable). This can be done by sourcing /etc/profile from the command line, by logging out/in again of the Desktop environment, or by rebooting.
+       Two common packages are respectively pulled as dependency, named java-runtime-common (containing common files for Java Runtime Environments) and java-environment-common (containing common files for Java Development Kits).
+
+       The provided /etc/profile.d/jre.sh and /etc/profile.d/jre.csh files point to a linked location /usr/lib/jvm/default/bin, set by the archlinux-java helper script.
+
+       Tip The /usr/lib/jvm/default and /usr/lib/jvm/default-runtime symbolic links should always be edited with archlinux-java, which is used to display and point to a working default Java runtime environment.
+
+       Most executables of the Java installation are provided by direct links in /usr/bin/, while others are available in $PATH.
+
+       Arch does not use JAVA_HOME. If a program explicitly requires JAVA_HOME, set JAVA_HOME=/usr/lib/jvm/default.
+
+       OPENJDK
+
+       OpenJDK is an open-source implementation of the Java Platform, Standard Edition (Java SE), designated as the official reference implementation. There are several distributors of OpenJDK builds such as Adoptium (formerly known as AdoptOpenJDK) and Amazon Corretto. The Arch Linux OpenJDK packages are built from the upstream OpenJDK source code.
+
+         Headless JRE
+       The minimal Java runtime environment—is needed for executing non-GUI Java programs.
+
+         Full JRE
+       Full Java runtime environment—is needed for executing GUI Java programs.
+
+         JDK
+       Java Development Kit—is needed for Java development.
+
+       JDK, full JRE and headless JRE conflict with each other, as the smaller packages are subsets:
+
+        * JDK conflicts and provides full JRE,
+        * full JRE conflicts and provides headless JRE.
+         Version | Headless JRE | Full JRE | JDK | Documentation | Sources
+         OpenJDK 27 | jre-openjdk-headless | jre-openjdk | jdk-openjdk | openjdk-doc | openjdk-src
+         OpenJDK 25 | jre25-openjdk-headless | jre25-openjdk | jdk25-openjdk | openjdk25-doc | openjdk25-src
+         OpenJDK 21 | jre21-openjdk-headless | jre21-openjdk | jdk21-openjdk | openjdk21-doc | openjdk21-src
+         OpenJDK 17 | jre17-openjdk-headless | jre17-openjdk | jdk17-openjdk | openjdk17-doc | openjdk17-src
+         OpenJDK 11 | jre11-openjdk-headless | jre11-openjdk | jdk11-openjdk | openjdk11-doc | openjdk11-src
+         OpenJDK 8 | jre8-openjdk-headless | jre8-openjdk | jdk8-openjdk | openjdk8-doc | openjdk8-src
+       IcedTea-Web — Java Web Start and the deprecated Java browser plugin.
+
+       https://icedtea.classpath.org/download/icedtea-web-docs/1.8/html/en/icedtea-web.html || icedtea-web
+
+       OpenJDK EA — OpenJDK Early-Access build for development version from Oracle.
+
+       https://jdk.java.net || java-openjdk-ea-binAUR
+
+       OpenJDK GA — OpenJDK General-Availability Release build from Oracle.
+
+       https://jdk.java.net || java-openjdk-binAUR
+
+       OpenJDK Wakefield — Support implementation in JDK for the Wayland display server.
+
+       https://openjdk.org/projects/wakefield/ || jdk-openjdk-wakefieldAUR
+
+       OPENJFX
+
+       OpenJFX is the open-source implementation of JavaFX. You do not need to install this package if you are using Oracle JDK. This package only concerns users of the open source implementation of Java (OpenJDK project), and its derivatives.
+
+         Version | Runtime Environment and Development Kit | Documentation | Sources
+         OpenJFX 28 | java-openjfxAUR | java-openjfx-docAUR | java-openjfx-srcAUR
+         OpenJFX 21 | java21-openjfxAUR | java21-openjfx-docAUR | java21-openjfx-srcAUR
+         OpenJFX 17 | java17-openjfxAUR | java17-openjfx-docAUR | java17-openjfx-srcAUR
+         OpenJFX 11 | java11-openjfxAUR | java11-openjfx-docAUR | java11-openjfx-srcAUR
+         OpenJFX 8 | java8-openjfxAUR | java8-openjfx-docAUR | java8-openjfx-srcAUR
+
+       OTHER IMPLEMENTATIONS
+
+        * AWS Corretto — Amazon Web Services' distribution of OpenJDK.
+       https://aws.amazon.com/corretto/ || amazon-corretto-8AUR amazon-corretto-11AUR amazon-corretto-17AUR amazon-corretto-21-binAUR
+
+        * Azul JDK — Azul's JDK implementations. Note that the Azul Zulu Builds of OpenJDK are open source, while The Azul Zulu Prime Builds of OpenJDK are a commercial product free for development and evaluation.
+       https://www.azul.com/downloads/ ||
+
+       Zulu: zulu-8-binAUR zulu-11-binAUR zulu-17-binAUR zulu-21-binAUR
+
+       Zulu Prime: zing-8-binAUR zing-17-binAUR zing-21-binAUR
+
+        * Eclipse Adoptium/Temurin — Eclipse's implementation of JRE/JDK, based on the Hotspot JVM (formerly AdoptOpenJDK). Note that the JRE is known as Eclipse Temurin.
+       https://adoptium.net/ || jdk-temurinAUR jdk17-temurinAUR jdk11-temurinAUR
+
+        * IBM Certified — IBM Semeru Runtime Certified Edition.
+       https://www.ibm.com/semeru-runtimes/downloads || jdk11-j9-binAUR
+
+        * IBM J9 — IBM's implementation of JRE, using OpenJ9 contributions.
+       https://www.ibm.com/support/pages/java-sdk-downloads || jdk8-j9-binAUR jdk7-j9-binAUR jdk7r1-j9-binAUR
+
+        * Liberica JDK — BellSoft's Liberica JDK implementation.
+       https://bell-sw.com/libericajdk/ || liberica-jre-8-full-binAUR liberica-jdk-8-full-binAUR liberica-jre-11-binAUR liberica-jre-11-full-binAUR liberica-jdk-11-binAUR liberica-jdk-11-full-binAUR liberica-jdk-17-full-binAUR liberica-jdk-21-full-binAUR
+
+        * Microsoft OpenJDK — Microsoft's distribution of OpenJDK.
+       https://www.microsoft.com/openjdk/ || microsoft-openjdk-11-binAUR microsoft-openjdk-17-binAUR microsoft-openjdk-21-binAUR
+
+        * OpenJ9 — Eclipse's implementation of JRE/JDK, based on the J9 JVM, contributed by IBM.
+       https://www.eclipse.org/openj9/ || jdk-openj9-binAUR jdk17-openj9-binAUR jdk11-openj9-binAUR jdk8-openj9-binAUR
+
+        * Oracle JDK — Oracle's commercially licensed build of OpenJDK. Note that some versions are only available via manual download, which requires to sign the OTN agreement and create an Oracle account.
+       https://www.oracle.com/java/technologies/downloads/ ||
+
+       JRE: jreAUR jre-ltsAUR jre11AUR jre8AUR jre7AUR
+
+       JDK: jdkAUR jdk-ltsAUR jdk11AUR jdk8AUR jdk7AUR
+
+       Tip 32-bit versions of Oracle JDK can be found by prefixing bin32-, e.g. bin32-jreAUR. They use java32-runtime-commonAUR, which functions as java-runtime-common by suffixing with 32, e.g. java32. The same analogy applies to java32-environment-commonAUR, which is only used by 32-bit JDK packages.
+
+       DEVELOPMENT TOOLS
+
+       For integrated development environments, see List of applications/Utilities#Integrated development environments and the Java IDEs subsection specifically.
+
+       To discourage reverse engineering an obfuscator like proguardAUR can be used.
+
+       DECOMPILERS
+
+        * CFR — Java decompiler, supporting modern features of Java 9, 10 and beyond.
+       https://www.benf.org/other/cfr/ || cfr
+
+        * Fernflower — Analytical decompiler for Java, developed as part of IntelliJ IDEA.
+       https://github.com/JetBrains/intellij-community/tree/master/plugins/java-decompiler/engine || fernflower-gitAUR
+
+        * Vineflower — Java decompiler forked from Fernflower, aiming to improve code quality. Also available as an IntelliJ IDEA plugin.
+       https://github.com/Vineflower/vineflower || vineflowerAUR
+
+        * Krakatau — Java decompiler, assembler, and disassembler.
+       https://github.com/Storyyeller/Krakatau || krakatau-gitAUR
+
+        * Procyon decompiler — Experimental Java decompiler, inspired by ILSpy and Mono.Cecil.
+       https://bitbucket.org/mstrobel/procyon/wiki/Java%20Decompiler || procyon-decompiler
+
+        * Java Decompiler (JD-Core) — Popular Java decompiler providing a GUI (see JD-GUI) and supporting Java 1-10.
+       https://java-decompiler.github.io/ || jd-core-javaAUR
+
+        * Jadx — Android DEX to Java decompiler with an optional GUI (see Jadx-GUI).
+       https://github.com/skylot/jadx || jadx
+
+        * JAD — Unmaintained Java decompiler (last release 2006).
+       https://varaneckas.com/jad || jad
+
+       GUI FRONTENDS
+
+        * Bytecode Viewer — Java reverse engineering suite, including a decompiler, editor and debugger; Frontend for CFR/Fernflower/Procyon.
+       https://bytecodeviewer.com || bytecode-viewerAUR
+
+        * Recaf — An easy to use modern Java bytecode editor that abstracts away the complexities of Java programs; Frontend for CFR/Fernflower/Procyon.
+       https://www.coley.software/Recaf/ || recaf-binAUR
+
+        * Java Decompiler (JD-GUI) — Popular Java decompiler providing a GUI and supporting Java 1-10; Frontend for JD-Core.
+       https://java-decompiler.github.io/ || jd-guiAUR
+
+        * Jadx-GUI — Android APK DEX to Java decompiler with an optional GUI; Frontend for Jadx.
+       https://github.com/skylot/jadx || jadx
+
+        * Luyten — An Open Source Java Decompiler Gui; Frontend for Procyon.
+       https://github.com/deathmarine/Luyten || luytenAUR
+
+       SWITCHING BETWEEN JVM
+
+       The helper script archlinux-java (package : java-runtime-common) provides such functionalities:
+
+         archlinux-java <COMMAND>
+
+         COMMAND:
+         status          List installed Java environments and enabled one
+         get             Return the short name of the Java environment set as default
+         set <JAVA_ENV>  Force <JAVA_ENV> as default
+         unset           Unset current default Java environment
+         fix             Fix an invalid/broken default Java environment configuration
+
+       LIST COMPATIBLE JAVA ENVIRONMENTS INSTALLED
+
+       Example:
+
+         $ archlinux-java status
+
+         Available Java environments:
+            java-11-openjdk (default)
+            java-8-openjdk/jre
+
+       Note the (default) denoting that java-11-openjdk is currently set as default. Invocation of java and other binaries will rely on this Java install. Also note on the previous output that only the JRE part of OpenJDK 8 is installed here.
+
+       CHANGE DEFAULT JAVA ENVIRONMENT
+
+         # archlinux-java set JAVA_ENV_NAME
+
+       Example:
+
+         # archlinux-java set java-8-openjdk/jre
+
+       Tip To see the available environment names, use archlinux-java status.
+
+       Note that archlinux-java will not let you set an invalid Java environment. In the previous example, jre8-openjdk is installed but jdk8-openjdk is not so trying to set java-8-openjdk will fail:
+
+         # archlinux-java set java-8-openjdk
+
+         '/usr/lib/jvm/java-8-openjdk' is not a valid Java environment path
+
+       UNSETTING THE DEFAULT JAVA ENVIRONMENT
+
+       There should be no need to unset a Java environment as packages providing them should take care of this. Still should you want to do so, just use command unset:
+
+         # archlinux-java unset
+
+       FIXING THE DEFAULT JAVA ENVIRONMENT
+
+       If an invalid Java environment link is set, calling the archlinux-java fix command tries to fix it. Also note that if no default Java environment is set, this will look for valid ones and try to set it for you. Officially supported package "OpenJDK 8" will be considered first in this order, then other installed environments.
+
+         # archlinux-java fix
+
+       LAUNCHING AN APPLICATION WITH THE NON-DEFAULT JAVA VERSION
+
+       If you want to launch an application with another version of Java than the default one (for example if you have both versions 18—the default—and 11 installed on your system, and you want to use Java 11), you can wrap your application in a small shell script to locally change the default path of Java:
+
+         #!/bin/sh
+
+         export PATH="/usr/lib/jvm/java-11-openjdk/bin/:$PATH"
+         exec /path/to/application "$@"
+
+       For a systemd service you can append JAVA_HOME to environment variables in the drop-in file:
+
+         /etc/systemd/system/unit.d/override.conf
+
+         [Service]
+         Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+
+       PACKAGE PRE-REQUISITES TO SUPPORT ARCHLINUX-JAVA
+
+       Note This info also applies to archlinux32-java for 32-bit Java packages, with the proper inclusion of 32 to the package/executable names, where applicable.
+
+       This section is targeted at packagers willing to provide packages in the AUR for an alternate JVM and be able to integrate with the Arch Linux JVM scheme (i.e. to be compatible with archlinux-java); to do so, packages should:
+
+        * Place all files under /usr/lib/jvm/java-${JAVA_MAJOR_VERSION}-${VENDOR_NAME}
+        * Ensure all executables for which java-runtime-common and java-environment-common provide links are available in the corresponding package
+        * Ship links from /usr/bin to executables, only if these links do not already belong to java-runtime-common and java-environment-common
+        * Suffix man pages with -${VENDOR_NAME}${JAVA_MAJOR_VERSION}  to prevent conflicts (see jre8-openjdk file list where man pages are suffixed with -openjdk8)
+        * Do not declare any conflicts nor replaces with other JDKs, java-runtime, java-runtime-headless nor java-environment
+        * Use script archlinux-java in install functions to set the Java environment as default if no other valid Java environment is already set (ie: package should not force install as default). See officially supported Java environment package sources for examples
+       Also please note that:
+
+        * Packages that need any Java environment should declare dependency on java-runtime, java-runtime-headless or java-environment as usual
+        * Packages that need a specific Java vendor should declare dependency on the corresponding package
+        * OpenJDK packages now declare provides="java-runtime-openjdk=${pkgver}" etc. This enables a third-party package to declare dependency on an OpenJDK without specifying a version
+
+       TIPS AND TRICKS
+
+       Note
+
+        * Suggestions in this section are applicable to all applications, using explicitly installed (external) Java runtime environment. Some applications are bundled with own (private) runtime environment or use own mechanics for GUI, font rendering, etc., so none of written below is guaranteed to work.
+        * Some applications, like remote JetBrains IDEs or code decompilers, will fail to start or run incorrectly with settings that change the Swing platform, Gtk version or the rendering pipeline.
+       Behavior of most Java applications can be controlled by supplying predefined environment variables to the Java runtime. A way to do it consists of adding the following environment variable:[1]
+
+         export JDK_JAVA_OPTIONS="-D<option 1> -D<option 2>..."
+
+       For example, to use system anti-aliased fonts and make swing use the GTK look and feel:
+
+         export JDK_JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel'
+
+       Three such variables exist, the options which are explained later in the table below take priority.
+
+         JAVA_TOOL_OPTIONS | Affects applications as well as tools like javac or the jshell.
+         JDK_JAVA_OPTIONS | Affects applications (everything started via the java command). Requires Java 9.
+         (command line options) | Arguments specified before the "class name" argument are Java options.
+         _JAVA_OPTIONS | The old way, affects applications and tools.
+
+       BETTER FONT RENDERING
+
+       Both closed source and open source implementations of Java are known to have improperly implemented anti-aliasing of fonts. This can be fixed with the following options: -Dawt.useSystemAAFontSettings=on, -Dswing.aatext=true
+
+       See Java Runtime Environment fonts for more detailed information.
+
+       SILENCE 'PICKED UP JDK_JAVA_OPTIONS' MESSAGE ON COMMAND LINE
+
+       Setting the JDK_JAVA_OPTIONS environment variable makes java (openjdk) write messages like 'Picked up JDK_JAVA_OPTIONS=...' to stderr. To suppress those messages in your terminal you can unset the environment variable and alias java in your shell configuration file to pass those same options as command line arguments:
+
+         SILENT_JAVA_OPTIONS="$JDK_JAVA_OPTIONS"
+         unset JDK_JAVA_OPTIONS
+         alias java='java "$SILENT_JAVA_OPTIONS"'
+
+       GTK LOOKANDFEEL
+
+       If your Java programs look ugly, you may want to set up the default look and feel for the swing components:
+
+         swing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel
+
+       Some Java programs insist on using the cross platform Metal look and feel. In some of these cases you can force these applications to use the GTK look and feel by setting the following property:
+
+         swing.crossplatformlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel
+
+       HIDPI
+
+       Depending on the GUI framework, HiDPI#Java applications can be enabled using different methods.
+
+       TROUBLESHOOTING
+
+       MYSQL
+
+       Since JDBC drivers often use the port in the URL to establish a connection to the database, it is considered "remote" (i.e., by default, MySQL does not listen on the port) even though they may be running on the same host. Thus, to use JDBC and MySQL, you should enable remote access to MySQL, following the instructions in MariaDB#Grant remote access.
+
+       INTELLIJ IDEA
+
+       If IntelliJ IDEA outputs The selected directory is not a valid home for JDK with the system Java SDK path, you may have to install a different JDK package and select it as IDEA's JDK.
+
+       IMPERSONATE ANOTHER WINDOW MANAGER
+
+       You may use the wmname from suckless.org to make the JVM believe you are running a different window manager. This may solve a rendering issue of Java GUIs occurring in window managers like Awesome or Dwm or Ratpoison. This works because the JVM contains a hard-coded list of known, non-re-parenting window managers. For maximum irony, some users prefer to impersonate LG3D, the non-re-parenting window manager written by Sun, in Java. Try setting compiz, Metacity or LG3D.
+
+         $ wmname window_manager_name
+
+       You must restart the application in question after issuing the wmname command.
+
+       Alternatively, the javaagent JavaMatePatch, created to set the WM name in MATE and resolve the bug with java swing apps working incorrectly when launched in full screen, can be used. Add -javaagent:JavaMatePatch-1.0.0-SNAPSHOT.jar=window_manager_name to the java options to use it.
+
+       ILLEGIBLE FONTS
+
+       In addition to the suggestions mentioned below in #Better font rendering, some fonts may still not be legible afterwards. If this is the case, there is a good chance Microsoft fonts are being used. Install ttf-ms-fontsAUR.
+
+       MISSING TEXT IN SOME APPLICATIONS
+
+       If some applications are completely missing texts it may help to use the options under #Tips and tricks as suggested in FS#40871.
+
+       GRAY WINDOW, APPLICATIONS NOT RESIZING WITH WM, MENUS IMMEDIATELY CLOS
+
+       The standard Java GUI toolkit has a hard-coded list of "non-reparenting" window managers. If using one that is not on that list, there can be some problems with running some Java applications. One of the most common problems is "gray blobs", when the Java application renders as a plain gray box instead of rendering the GUI. Another one might be menus responding to your click, but closing immediately.
+
+       There are several things that may help:
+
+        * See #Impersonate another window manager.
+        * Set the _JAVA_AWT_WM_NONREPARENTING=1 environment variable.
+        * For later versions, set the AWT_TOOLKIT=MToolkit environment variable.
+        * For xmonad, use SetWMName. However, its effect may be canceled when also using XMonad.Hooks.EwmhDesktops. In this case, appending >> setWMName "LG3D" to the LogHook may help.
+       For more information, see Problems with Java applications, Applet java console.
+
+       SYSTEM FREEZES WHEN DEBUGGING JAVAFX APPLICATIONS
+
+       If your system freezes while debugging a JavaFX Application, you can try to supply the JVM option -Dsun.awt.disablegrab=true.
+
+       See https://bugs.java.com/bugdatabase/view_bug?bug_id=6714678
+
+       JAVAFX'S MEDIAPLAYER CONSTRUCTOR THROWS AN EXCEPTION
+
+       Creating instance of MediaPlayer class from JavaFX's sound modules might throw following exception (both Oracle JDK and OpenJDK)
+
+         ... (i.e. FXMLLoader construction exceptions) ...
+         Caused by: MediaException: UNKNOWN : com.sun.media.jfxmedia.MediaException: Could not create player! : com.sun.media.jfxmedia.MediaException: Could not create player!
+          at javafx.scene.media.MediaException.exceptionToMediaException(MediaException.java:146)
+          at javafx.scene.media.MediaPlayer.init(MediaPlayer.java:511)
+          at javafx.scene.media.MediaPlayer.<init>(MediaPlayer.java:414)
+          at <constructor call>
+         ...
+
+       which is a result of some incompatibilities of JavaFX with modern ffmpeg build delivered within Arch Linux repository.
+
+       Working solution is to install ffmpeg-compat-55AUR. Alternatively, installing ffmpeg3.4AUR may work if the previous version fails to build.
+
+       See https://www.reddit.com/r/archlinux/comments/70o8o6/using_a_javafx_mediaplayer_in_arch/
+
+       JAVA APPLICATIONS CANNOT OPEN EXTERNAL LINKS
+
+       If a Java application is not able to open a link to, for example, your web browser, install gvfs. This is required by the Desktop.Action.BROWSE method. See [2] An application printing the error message java.lang.UnsupportedOperationException: The BROWSE action is not supported on the current platform! is a solid indicator for this problem.
+
+       ERROR INITIALIZING QUANTUMRENDERER: NO SUITABLE PIPELINE FOUND
+
+       Possible issues / solutions:
+
+        * GTK2 is missing. Install gtk2AUR
+        * OpenJFX is missing. Install java-openjfxAUR
+
+ArchWiki manual                         bundled documentation

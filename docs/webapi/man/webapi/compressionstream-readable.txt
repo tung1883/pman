@@ -1,0 +1,48 @@
+WEBAPI.COMPRESSIONSTREAM-READABLE(1) Sandbox manual WEBAPI.COMPRESSIONSTREAM-READABLE(1)
+
+       NAME
+
+       CompressionStream: readable property - The readable read-only property of the CompressionStream interface returns a ReadableStream that emits compressed data as Uint8Array chunks.
+
+       COMPRESSIONSTREAM: READABLE PROPERTY
+
+       The readable read-only property of the CompressionStream interface returns a ReadableStream that emits compressed data as Uint8Array chunks.
+
+       VALUE
+
+       A ReadableStream.
+
+       EXAMPLES
+
+       This example creates a CompressionStream that performs gzip compression. It writes some binary data to the writable stream, then reads the compressed data from the readable stream.
+
+         const stream = new CompressionStream("gzip");
+
+         // Write data to be compressed
+         const data = new TextEncoder().encode("Hello, world!");
+         const writer = stream.writable.getWriter();
+         writer.write(data);
+         writer.close();
+
+         // Read compressed data
+         const reader = stream.readable.getReader();
+         let done = false;
+         let output = [];
+         while (!done) {
+           const result = await reader.read();
+           if (result.value) {
+             output.push(...result.value);
+           }
+           done = result.done;
+         }
+         console.log(new Uint8Array(output).toBase64()); // H4sIAAAAAAAAE/NIzcnJ11Eozy/KSVEEAObG5usNAAAA
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * TransformStream.readable
+
+Web APIs manual                         from the official documentation

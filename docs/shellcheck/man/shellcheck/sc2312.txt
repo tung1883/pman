@@ -1,0 +1,118 @@
+SHELLCHECK.SC2312(1)             Sandbox manual             SHELLCHECK.SC2312(1)
+
+       NAME
+
+       Consider invoking this command separately to avoid masking its return value (or use '|| true' to ignore). - This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for mor
+
+       CONSIDER INVOKING THIS COMMAND SEPARATELY TO AVOID MASKING ITS RETURN
+
+       CONSIDER INVOKING THIS COMMAND SEPARATELY TO AVOID MASKING ITS RETURN
+
+       OPTIONAL - CHECK-EXTRA-MASKED-RETURNS
+
+       This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for more details. In short, you have to enable it with the long name instead of the "SC" code like you would with a normal rule:
+
+       SHELLCHECKRC
+
+         enable=check-extra-masked-returns # SC2312
+
+       PROBLEMATIC CODE 1
+
+         set -e
+         cd "$(get_chroot_dir)/etc"
+         tar xf "${config}"
+
+       CORRECT CODE 1
+
+         set -e
+         dir="$(get_chroot_dir)"
+         cd "${dir}/etc"
+         tar xf "${config}"
+
+       CORRECT CODE: (WITH CORRECTION)
+
+         set -e
+         dir="$(get_chroot_dir)"
+         [ -d "${dir}" ] || exit 1
+         cd "${dir}/etc"
+         tar xf "${config}"
+
+       PROBLEMATIC CODE 2
+
+         set -e
+         x="$(foo)/$(bar)"
+
+       CORRECT CODE 2
+
+         set -e
+         x="$(foo)"
+         x="$x/$(bar)"
+
+       RATIONALE
+
+       In the problematic code 1, the exit code for get_chroot_dir is ignored because it is used in a command substitution in the argument of another command.
+
+       If the command shows error: Can't determine chroot and exits with failure without outputting a directory, then the command being run will be cd "/etc" and the script will proceed to overwrite the host system's configuration.
+
+       In the problematic code 2, the exit code of the assignment is that of the last command executed viz. bar.
+
+       By assigning it to a variable first, the exit code of the command will propagate into the exit code of the assignment, so that it can be checked explicitly with if or implicitly with set -e.
+
+       EXCEPTIONS
+
+       If you don't care about the command's exit status, already handle it through a side channel like <(cmd; echo $? > status), or (in the case of background processes and process substitution) wait on the result like <(cmd) ; wait $!, then you can either [[ignore]] the suggestion with a directive, or use || true (or || :) to suppress it.
+
+       HANDLING PROCESS SUBSTITUTION FAILURES
+
+       Note that you can combine file descriptor duplication with wait to reference process substitution output (or input) while retaining the exit codes of those processes. For example:
+
+         generate_data() {
+             declare i
+             for (( i = 0 ; i < 5 ; ++i ))
+             do
+                 date -d "$RANDOM hours"
+             done
+         }
+
+         consume_data() {
+             declare line
+             while IFS= read -r line
+             do
+                 echo Consuming line: "$line"
+             done
+         }
+
+         declare \
+             input_file_descriptor \
+             process
+
+         # The following statement
+         #
+         # - uses process substitution to allow us to read the output of `generate_data`
+         #   via a filename and
+         # - duplicates the file descriptor for that file so that it is not
+         #   immediately closed
+         #
+         # Note that process substitution uses either `pipe(2)` or named pipes (FIFOs)
+         # with `O_RDONLY` or `O_WRONLY`, and so the file descriptor that is duplicated
+         # via `[N]<&WORD` is only opened for reads
+         exec {input_file_descriptor}< <(
+             generate_data
+         )
+         process=$!
+
+         # Returns non-zero if `consume_data` does
+         consume_data <&"$input_file_descriptor"
+
+         # Returns non-zero if `generate_data` does
+         wait "$process"
+
+       This can be particularly helpful with readarray for robust array handling
+
+       RELATED RESOURCES
+
+       https://mywiki.wooledge.org/BashPitfalls#cmd1_.26.26_cmd2_.7C.7C_cmd3
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

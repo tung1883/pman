@@ -1,0 +1,50 @@
+SHELLCHECK.SC1124(1)             Sandbox manual             SHELLCHECK.SC1124(1)
+
+       NAME
+
+       ShellCheck directives are only valid in front of complete commands like case statements, not individual case branches. - case $? in
+
+       SHELLCHECK DIRECTIVES ARE ONLY VALID IN FRONT OF COMPLETE COMMANDS LIK
+
+       SHELLCHECK DIRECTIVES ARE ONLY VALID IN FRONT OF COMPLETE COMMANDS LIK
+
+       PROBLEMATIC CODE
+
+         case $? in
+           0) echo "Success" ;;
+           # shellcheck disable=2154
+           *) echo "$cmd $flag returned failure" ;;
+         esac
+
+       CORRECT CODE
+
+         # shellcheck disable=2154
+         case $? in
+           0) echo "Success" ;;
+           *) echo "$cmd $flag returned failure" ;;
+         esac
+
+       or
+
+         case $? in
+           0) echo "Success" ;;
+           *)
+              # Applies to a single command within the `case`
+              # shellcheck disable=2154
+              echo "$cmd $flag returned failure"
+              ;;
+         esac
+
+       RATIONALE
+
+       You appear to have put a directive before a branch in a case statement.
+
+       ShellCheck directives can not be scoped to individual branches of case statements, only to the entire case, or to individual commands within it. Please move the directive as appropriate.
+
+       (It is possible to apply directives to all commands within a { ..: } command group, if you truly wish to apply a directive to multiple commands but not the full case statement.)
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

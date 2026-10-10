@@ -1,0 +1,116 @@
+WEBAPI.NAVIGATION-NAVIGATE(1)    Sandbox manual    WEBAPI.NAVIGATION-NAVIGATE(1)
+
+       NAME
+
+       Navigation: navigate() method - The navigate() method of the
+
+       NAVIGATION: NAVIGATE() METHOD
+
+       The navigate() method of the Navigation interface navigates to a specific URL, updating any provided state in the history entries list.
+
+       SYNTAX
+
+         navigate(url)
+         navigate(url, options)
+
+       PARAMETERS
+
+        * url
+          * : The destination URL to navigate to. Note that when calling navigate() on another window's navigation object, the URL will be resolved relative to the target window's URL, not the calling window's URL. This matches the behavior of the History API, but not the behavior of the Location API. Note also that javascript: URLs are not allowed for security reasons.
+        * options (optional)
+          * : An options object containing the following properties:
+            * state (optional)
+              * : Developer-defined information to be stored in the associated NavigationHistoryEntry once the navigation is complete, retrievable via getState(). This can be any data type. You might, for example, wish to store a page visit count for analytics purposes, or store UI state details so the view can be shown exactly as the user last left it. Any data stored in state must be structured-cloneable.
+            * info (optional)
+              * : Developer-defined information to be passed along to the navigate event, made available in NavigateEvent.info. This can be any data type. You might, for example, wish to display newly-navigated content with a different animation depending on how it was navigated to (swipe left, swipe right, or go home). A string indicating which animation to use could be passed in as info.
+            * history (optional)
+              * : An enumerated value that sets the history behavior of this navigation. The available values are:
+                * auto: The default value; will usually perform a push navigation but will perform a replace navigation under special circumstances (see the NotSupportedError description below).
+                * push: Will push a new NavigationHistoryEntry onto the entries list, or fail under special circumstances (see the NotSupportedError description below).
+                * replace: Will replace the current NavigationHistoryEntry.
+
+       RETURN VALUE
+
+       An object with the following properties:
+
+        * committed
+          * : A Promise which will fulfill when the visible URL has changed and a new NavigationHistoryEntry has been created.
+        * finished
+          * : A Promise which will fulfill when all promises returned by the intercept() handler are fulfilled. This is equivalent to the NavigationTransition.finished promise fulfilling, when the navigatesuccess event fires.
+       Either one of these promises rejects if the navigation has failed for some reason.
+
+       EXCEPTIONS
+
+        * DataCloneError DOMException
+          * : Thrown if the state parameter contains values that are not structured-cloneable.
+        * InvalidStateError DOMException
+          * : Thrown if the document is not currently active.
+        * SyntaxError DOMException
+          * : Thrown if the url parameter is not a valid URL.
+        * NotSupportedError DOMException
+          * : Thrown if:
+            * The history option is set to push, and the browser is currently showing the initial about:blank document.
+            * The url's scheme is javascript.
+
+       EXAMPLES
+
+       SET UP HOME BUTTON
+
+         function initHomeBtn() {
+           // Get the key of the first loaded entry
+           // so the user can always go back to this view.
+           const { key } = navigation.currentEntry;
+           backToHomeButton.onclick = () => {
+             navigation.traverseTo(key);
+           };
+         }
+         // Intercept navigate events, such as link clicks, and
+         // replace them with single-page navigations
+         navigation.addEventListener("navigate", (event) => {
+           event.intercept({
+             async handler() {
+               // Navigate to a different view,
+               // but the "home" button will always work.
+             },
+           });
+         });
+
+       A SMART BACK BUTTON
+
+       A page-supplied "back" button can take you back, even after reload, by inspecting the previous history entries:
+
+         backButtonEl.addEventListener("click", () => {
+           if (
+             navigation.entries()[navigation.currentEntry.index - 1]?.url ===
+             "/product-listing"
+           ) {
+             navigation.back();
+           } else {
+             // If the user arrived here in some other way
+             // e.g. by typing the URL directly:
+             navigation.navigate("/product-listing", { history: "replace" });
+           }
+         });
+
+       USING INFO AND STATE
+
+         async function navigateHandler() {
+           await navigation.navigate(url, {
+             info: { animation: "swipe-right" },
+             state: { infoPaneOpen: true },
+           }).finished;
+
+           // Update application state
+           // …
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+
+Web APIs manual                         from the official documentation

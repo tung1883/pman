@@ -1,0 +1,83 @@
+DOCKER.CONTAINER-RM(1)           Sandbox manual           DOCKER.CONTAINER-RM(1)
+
+       NAME
+
+       docker container rm - Remove one or more containers
+
+       DOCKER CONTAINER RM
+
+       Remove one or more containers
+
+       USAGE
+
+         docker container rm [OPTIONS] CONTAINER [CONTAINER...]
+
+       Aliases: docker container rm, docker container remove, docker rm
+
+       OPTIONS
+
+        * --force, -f (bool): Force the removal of a running container (uses SIGKILL)
+        * --link, -l (bool): Remove the specified link
+        * --volumes, -v (bool): Remove anonymous volumes associated with the container
+
+       EXAMPLES
+
+       REMOVE A CONTAINER
+
+       This removes the container referenced under the link /redis.
+
+         $ docker rm /redis
+
+         /redis
+
+       REMOVE A LINK SPECIFIED WITH --LINK ON THE DEFAULT BRIDGE NETWORK (--L
+
+       This removes the underlying link between /webapp and the /redis containers on the default bridge network, removing all network communication between the two containers. This does not apply when --link is used with user-specified networks.
+
+         $ docker rm --link /webapp/redis
+
+         /webapp/redis
+
+       FORCE-REMOVE A RUNNING CONTAINER (--FORCE) #FORCE
+
+       This command force-removes a running container.
+
+         $ docker rm --force redis
+
+         redis
+
+       The main process inside the container referenced under the link redis will receive SIGKILL, then the container will be removed.
+
+       REMOVE ALL STOPPED CONTAINERS
+
+       Use the docker container prune command to remove all stopped containers, or refer to the docker system prune command to remove unused containers in addition to other Docker resources, such as (unused) images and networks.
+
+       Alternatively, you can use the docker ps with the -q / --quiet option to generate a list of container IDs to remove, and use that list as argument for the docker rm command.
+
+       Combining commands can be more flexible, but is less portable as it depends on features provided by the shell, and the exact syntax may differ depending on what shell is used. To use this approach on Windows, consider using PowerShell or Bash.
+
+       The example below uses docker ps -q to print the IDs of all containers that have exited (--filter status=exited), and removes those containers with the docker rm command:
+
+         $ docker rm $(docker ps --filter status=exited -q)
+
+       Or, using the xargs Linux utility:
+
+         $ docker ps --filter status=exited -q | xargs docker rm
+
+       REMOVE A CONTAINER AND ITS VOLUMES (-V, --VOLUMES) #VOLUMES
+
+         $ docker rm --volumes redis
+         redis
+
+       This command removes the container and any volumes associated with it. Note that if a volume was specified with a name, it will not be removed.
+
+       REMOVE A CONTAINER AND SELECTIVELY REMOVE VOLUMES
+
+         $ docker create -v awesome:/foo -v /bar --name hello redis
+         hello
+
+         $ docker rm -v hello
+
+       In this example, the volume for /foo remains intact, but the volume for /bar is removed. The same behavior holds for volumes inherited with --volumes-from.
+
+Docker manual                           from the official documentation

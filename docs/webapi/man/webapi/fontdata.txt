@@ -1,0 +1,94 @@
+WEBAPI.FONTDATA(1)               Sandbox manual               WEBAPI.FONTDATA(1)
+
+       NAME
+
+       FontData - The FontData interface of the Local Font Access API represents a single local font face.
+
+       FONTDATA
+
+       The FontData interface of the Local Font Access API represents a single local font face.
+
+       INSTANCE PROPERTIES
+
+        * FontData.family (read-only) (experimental)
+          * : Returns the family of the font face.
+        * FontData.fullName (read-only) (experimental)
+          * : Returns the full name of the font face.
+        * FontData.postscriptName (read-only) (experimental)
+          * : Returns the PostScript name of the font face.
+        * FontData.style (read-only) (experimental)
+          * : Returns the style of the font face.
+
+       INSTANCE METHODS
+
+        * FontData.blob() (experimental)
+          * : Returns a Promise that fulfills with a Blob containing the raw bytes of the underlying font file.
+
+       EXAMPLES
+
+       For a live example, see our Local Font Access API demo.
+
+       FONT ENUMERATION
+
+       The following snippet will query for all available fonts, and log metadata. This could be used, for example, to populate a font-picker control.
+
+         async function logFontData() {
+           try {
+             const availableFonts = await window.queryLocalFonts();
+             for (const fontData of availableFonts) {
+               console.log(fontData.postscriptName);
+               console.log(fontData.fullName);
+               console.log(fontData.family);
+               console.log(fontData.style);
+             }
+           } catch (err) {
+             console.error(err.name, err.message);
+           }
+         }
+
+       ACCESSING LOW-LEVEL DATA
+
+       The blob() method provides access to low-level SFNT data — this is a font file format that can contain other font formats, such as PostScript, TrueType, OpenType, or Web Open Font Format (WOFF).
+
+         async function computeOutlineFormat() {
+           try {
+             const availableFonts = await window.queryLocalFonts({
+               postscriptNames: ["ComicSansMS"],
+             });
+             for (const fontData of availableFonts) {
+               // `blob()` returns a Blob containing valid and complete
+               // SFNT-wrapped font data.
+               const sfnt = await fontData.blob();
+               // Slice out only the bytes we need: the first 4 bytes are the SFNT
+               // version info.
+               // Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#organization-of-an-opentype-font
+               const sfntVersion = await sfnt.slice(0, 4).text();
+
+               let outlineFormat = "UNKNOWN";
+               switch (sfntVersion) {
+                 case "\x00\x01\x00\x00":
+                 case "true":
+                 case "typ1":
+                   outlineFormat = "truetype";
+                   break;
+                 case "OTTO":
+                   outlineFormat = "cff";
+                   break;
+               }
+               console.log("Outline format:", outlineFormat);
+             }
+           } catch (err) {
+             console.error(err.name, err.message);
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Use advanced typography with local fonts
+        * @font-face
+
+Web APIs manual                         from the official documentation

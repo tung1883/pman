@@ -1,0 +1,66 @@
+WEBAPI.VALIDITYSTATE-STEPMISMATCH(1) Sandbox manual WEBAPI.VALIDITYSTATE-STEPMISMATCH(1)
+
+       NAME
+
+       ValidityState: stepMismatch property - The read-only stepMismatch property of the ValidityState interface indicates if the value of an <input>, after having been edited by the use
+
+       VALIDITYSTATE: STEPMISMATCH PROPERTY
+
+       The read-only stepMismatch property of the ValidityState interface indicates if the value of an , after having been edited by the user, does not conform to the constraints set by the element's step attribute.
+
+       If the field is numeric in nature, including the , , , , , and types and the step value is not any, if the value don't doesn't conform to the constraints set by the step and min values, then stepMismatch will be true. If the remainder of the form control's value less the min value, divided by the step value (which defaults to 1 if omitted) is not zero, there is a mismatch.
+
+       VALUE
+
+       A boolean that is true if the ValidityState does not conform to the constraints.
+
+       EXAMPLES
+
+       INPUT WITH STEP MISMATCH
+
+       The following example checks the validity of a numeric input element. A constraint has been added using the step attribute which means the input expects increments of 5 as values. If the user enters a number that's not divisible by 5, the element fails constraint validation, and the styles matching :invalid CSS pseudo-class are applied.
+
+         input:invalid {
+           outline: red solid 3px;
+         }
+
+         body {
+           margin: 0.5rem;
+         }
+         pre {
+           padding: 1rem;
+           height: 2rem;
+           background-color: lightgrey;
+           outline: 1px solid grey;
+         }
+
+         <pre id="log">Validation logged here...</pre>
+         <input type="number" id="degrees" step="5" />
+
+         const userInput = document.getElementById("degrees");
+         const logElement = document.getElementById("log");
+
+         function log(text) {
+           logElement.innerText = text;
+         }
+
+         userInput.addEventListener("input", () => {
+           userInput.reportValidity();
+           if (userInput.validity.stepMismatch) {
+             log("Input must be divisible by 5");
+           } else {
+             log("Input is valid…");
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Constraint validation
+        * Forms: Data form validation
+        * step attribute
+
+Web APIs manual                         from the official documentation

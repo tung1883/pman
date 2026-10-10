@@ -1,0 +1,184 @@
+ROCKY.CMS-WORDPRESS-ON-LAMP(1)   Sandbox manual   ROCKY.CMS-WORDPRESS-ON-LAMP(1)
+
+       NAME
+
+       WordPress on LAMP - WordPress is an open source content management system (CMS) noted for its famous 5-minute install. It is commonly deployed on a LAMP (Linux,
+
+       WORDPRESS ON LAMP
+
+       PREREQUISITES
+
+        * A Rocky Linux 9.x system
+        * sudo privileges
+
+       INTRODUCTION
+
+       WordPress is an open source content management system (CMS) noted for its famous 5-minute install. It is commonly deployed on a LAMP (Linux, Apache, MySQL, PHP) stack. Although efficient local development tools such as XAMPP, Vagrant, and wp-env are widely available, manually installing WordPress on LAMP for local development provides a valuable hands-on approach for beginners seeking greater understanding.
+
+       This guide assumes you already have Rocky Linux 9.x installed, thereby covering the 'L' part of the LAMP stack.
+
+       This guide explores how to manually install WordPress with the LAMP stack on a Rocky Linux 9 machine. This is not a production-ready guide but a starting point to build on. The LAMP setup included in this guide is not recommended for anything other than local development without first taking proper security measures requiring additional configuration.
+
+       UPGRADE SYSTEM PACKAGES
+
+       Ensure your system's packages are up-to-date:
+
+             sudo dnf upgrade -y
+
+       INSTALL APACHE
+
+       Apache is a web server that will serve your WordPress site. Install it with the following:
+
+             sudo dnf install httpd -y
+
+       ENABLE APACHE TO START ON BOOT
+
+       After installing Apache, enable it so it starts automatically on boot:
+
+             sudo systemctl enable --now httpd
+
+       INSTALL MARIADB
+
+       WordPress stores dynamic content in a MySQL database. MariaDB is an open source fork of MySQL. Install it with the following:
+
+             sudo dnf install mariadb-server -y
+
+       ENABLE MARIADB SERVER
+
+       After installing MariaDB, enable it so it starts automatically on boot:
+
+             sudo systemctl enable --now mariadb
+
+       SECURE MARIADB
+
+       Run the mysql_secure_installation script:
+
+             sudo mysql_secure_installation --use-default
+
+       This script performs the following:
+
+        1. Sets a root password if one is not already set
+        2. Removes anonymous users
+        3. Disallows remote root login
+        4. Removes access to the test database
+        5. Reloads privileges
+
+       INSTALL PHP
+
+       PHP is the programming used to interact with the MySQL database and perform dynamic actions. It is heavily used in WordPress core, themes, and plugins.
+
+       Install PHP and necessary packages to connect to MySQL:
+
+             sudo dnf install php php-mysqlnd php-gd php-xml php-mbstring
+
+       After installing PHP, you must reload Apache to install it as an Apache module and read its configuration files:
+
+       RESTART APACHE
+
+             sudo systemctl restart httpd
+
+       FETCH AND UNPACK WORDPRESS
+
+       Use curl do download the latest version of WordPress:
+
+             curl -O https://wordpress.org/latest.tar.gz
+
+       Use tar to extract the downloaded archive:
+
+             tar -xzvf latest.tar.gz
+
+       Copy the WordPress files to Apache's default public directory:
+
+            sudo cp -r wordpress/* /var/www/html
+
+       SET OWNER
+
+       Make Apache the owner of the files:
+
+             sudo chown -R apache:apache /var/www/html/
+
+       Set permissions for the WordPress files:
+
+       SET PERMISSIONS
+
+             sudo chmod -R 755 /var/www/html/
+
+       Login to the MySQL cli:
+
+       CONFIGURE DATABASE
+
+             sudo mysql -u root -p
+
+       Create a new database for your WordPress website:
+
+       CREATE A NEW DATABASE
+
+             CREATE DATABASE LOCALDEVELOPMENTENV;
+
+       Create a user with a password for your database:
+
+       > Note:
+       It is highly recommended to use a stronger password.
+
+       CREATE A NEW USER AND PASSWORD
+
+             CREATE USER 'admin'@'localhost' IDENTIFIED BY 'password';
+
+       Grant all privileges to your WordPress database to the user you just created:
+
+             GRANT ALL PRIVILEGES ON LOCALDEVELOPMENTENV.* TO 'admin'@'localhost';
+
+       Flush privileges to ensure the application of changes:
+
+             FLUSH PRIVILEGES;
+
+       Exit the MySQL cli:
+
+             EXIT;
+
+       CONFIGURE WORDPRESS
+
+       Copy the wp-config-sample.php template and rename it:
+
+             sudo cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+
+       Open the wp-config.php file with your choice of text editor:
+
+             sudo vi /var/www/html/wp-config.php
+
+       REPLACE DATABASE SETTINGS
+
+       You must define the following constants in your wp-config.php file:
+
+             define ('DB_NAME', 'LOCALDEVELOPMENTENV');
+             define ('DB_USER', 'admin');
+             define ('DB_PASSWORD', 'password');
+
+       CONFIGURE FIREWALL
+
+       Open up HTTP and HTTPS services in your firewall:
+
+             sudo firewall-cmd --add-service=http --add-service=https
+
+       Reload firewalld to ensure changes to take effect:
+
+             sudo systemctl reload firewalld
+
+       SELINUX SETTINGS
+
+       To allow Apache read and write access to your WordPress files, run this command:
+
+            chcon -R -t httpd_sys_rw_content_t /var/www/html/
+
+       To allow Apache to make network connections, run this command:
+
+       > Note:
+       The -P flag makes this configuration persistent across reboots
+
+             setsebool -P httpd_can_network_connect true
+
+       CONCLUSION
+
+       To finish the installation, you should now be able to connect to WordPress across the network using the server's hostname or private IP address. Remember, this setup is primarily intended for local development purposes. For production use, you need to configure the following: set a domain name, install an SSL certificate, harden your Apache server, fine-tune your SELinux configuration, and implement backups. Nevertheless, following this guide has created a solid starting point for WordPress development on a LAMP stack.
+
+Rocky Linux manual                      from the official documentation

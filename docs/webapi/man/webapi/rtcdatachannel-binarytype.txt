@@ -1,0 +1,50 @@
+WEBAPI.RTCDATACHANNEL-BINARYTYPE(1) Sandbox manual WEBAPI.RTCDATACHANNEL-BINARYTYPE(1)
+
+       NAME
+
+       RTCDataChannel: binaryType property - The property binaryType on the
+
+       RTCDATACHANNEL: BINARYTYPE PROPERTY
+
+       The property binaryType on the RTCDataChannel interface is a string which specifies the type of object which should be used to represent binary data received on the RTCDataChannel. Values allowed by the WebSocket.binaryType property are also permitted here: blob if Blob objects are being used or arraybuffer if ArrayBuffer objects are being used. The default is arraybuffer.
+
+       When a binary message is received on the data channel, the resulting message event's MessageEvent.data property is an object of the type specified by the binaryType.
+
+       VALUE
+
+       A string that can have one of these values:
+
+        * "blob"
+          * : Received binary messages' contents will be contained in Blob objects.
+        * "arraybuffer"
+          * : Received binary messages' contents will be contained in ArrayBuffer
+       objects.
+
+       EXAMPLE
+
+       This code configures a data channel to receive binary data in ArrayBuffer objects, and establishes a listener for message events which constructs a string representing the received data as a list of hexadecimal byte values.
+
+         const dc = peerConnection.createDataChannel("Binary");
+         dc.binaryType = "arraybuffer";
+
+         dc.onmessage = (event) => {
+           const byteArray = new Uint8Array(event.data);
+           let hexString = "";
+
+           byteArray.forEach((byte) => {
+             hexString += `${byte.toString(16)} `;
+           });
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC
+        * Using WebRTC data channels
+        * RTCDataChannel
+        * RTCDataChannel.send()
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,260 @@
+WEBAPI.UI-EVENTS(1)              Sandbox manual              WEBAPI.UI-EVENTS(1)
+
+       NAME
+
+       UI Events - The UI Events API defines a system for handling user interactions such as mouse and keyboard input. This includes:
+
+       UI EVENTS
+
+       CONCEPTS AND USAGE
+
+       The UI Events API defines a system for handling user interactions such as mouse and keyboard input. This includes:
+
+        * events that are fired on specific user actions such key presses or mouse clicks. Most of these events fire on the Element interface, but the events relating to loading and unloading resources fire on the Window interface.
+        * event interfaces, which are passed into handlers for these events. These interfaces inherit from Event and provide extra information specific to the type of user interaction: for example, the KeyboardEvent is passed into a keydown event handler and provides information about the key that was pressed.
+
+       INTERFACES
+
+        * CompositionEvent
+          * : Passed into handlers for composition events. Composition events enable a user to enter characters that might not be available on the physical keyboard.
+        * FocusEvent
+          * : Passed into handlers for focus events, which are associated with elements receiving or losing focus.
+        * InputEvent
+          * : Passed into handlers for input events, which are associated with the user entering some input; for example, using an element.
+        * KeyboardEvent
+          * : Passed into handlers for keyboard up/down events.
+        * MouseEvent
+          * : Passed into event handlers for mouse events, including mouse move, mousing over and out, and mouse button up or down. Note that auxclick, click, and dblclick events are passed PointerEvent objects.
+        * MouseScrollEvent (deprecated)
+          * : Deprecated, Firefox-only, non-standard interface for scroll events. Use WheelEvent instead.
+        * MutationEvent (deprecated)
+          * : Passed into mutation event handlers, which were designed to allow notifications of changes to the DOM. Now deprecated: use MutationObserver instead.
+        * UIEvent
+          * : A base from which other UI events inherit, and also the event interface passed into some events such as load and unload.
+        * WheelEvent
+          * : Passed into the handler for the wheel event, which fires when the user rotates a mouse wheel or similar user interface component such as a touchpad.
+
+       EVENTS
+
+        * abort
+          * : Fired when loading a resource has been aborted (for example, because the user canceled it).
+        * auxclick
+          * : Fired when the user clicks the non-primary pointer button.
+        * beforeinput
+          * : Fired just before the DOM is about to be updated with some user input.
+        * blur
+          * : Fired when an element has lost focus.
+        * click
+          * : Fired when the user clicks the primary pointer button.
+        * compositionend
+          * : Fired when a text composition system (such as a speech-to-text processor) has finished its session; for example, because the user has closed it.
+        * compositionstart
+          * : Fired when the user has started a new session with a text composition system.
+        * compositionupdate
+          * : Fired when a text composition system updates its text with a new character, reflected in an update to the data property of the CompositionEvent.
+        * contextmenu
+          * : Fired just before a context menu is invoked.
+        * dblclick
+          * : Fired when the user double-clicks the primary pointer button.
+        * error
+          * : Fired when a resource fails to load or can't be processed (for example, if an image is invalid or a script has an error).
+        * focus
+          * : Fired when an element has received focus.
+        * focusin
+          * : Fired when an element is just about to receive focus.
+        * focusout
+          * : Fired when an element is just about to lose focus.
+        * input
+          * : Fired just after the DOM has been updated with some user input (for example, some text input).
+        * keydown
+          * : Fired when the user has pressed a key.
+        * keypress (deprecated)
+          * : Fired when the user has pressed a key, only if the key produces a character value. Use keydown instead.
+        * keyup
+          * : Fired when the user has released a key.
+        * load
+          * : Fired when the whole page has loaded, including all dependent resources such as stylesheets and images.
+        * mousedown
+          * : Fired when the user presses a button on a mouse or other pointing device, while the pointer is over the element.
+        * mouseenter
+          * : Fired when a mouse or other pointing device is moved inside the boundary of the element or one of its descendants.
+        * mouseleave
+          * : Fired when a mouse or other pointing device is moved outside the boundary of the element and all of its descendants.
+        * mousemove
+          * : Fired when a mouse or other pointing device is moved while over an element.
+        * mouseout
+          * : Fired when a mouse or other pointing device is moved outside the boundary of the element.
+        * mouseover
+          * : Fired when a mouse or other pointing device is moved over an element.
+        * mouseup
+          * : Fired when the user releases a button on a mouse or other pointing device, while the pointer is over the element.
+        * unload
+          * : Fired when the document or a child resource are being unloaded.
+        * wheel
+          * : Fired when the user rotates a mouse wheel or similar user interface component such as a touchpad.
+
+       EXAMPLES
+
+       MOUSE EVENTS
+
+       This example logs mouse events along with the X and Y coordinates at which the event was generated. Try moving the mouse into the yellow and red squares, and clicking or double-clicking.
+
+       HTML
+
+         <div id="outer">
+           <div id="inner"></div>
+         </div>
+
+         <div id="log">
+           <pre id="contents"></pre>
+           <button id="clear">Clear log</button>
+         </div>
+
+       CSS
+
+         body {
+           display: flex;
+           gap: 1rem;
+         }
+
+         #outer {
+           height: 200px;
+           width: 200px;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           background-color: yellow;
+         }
+
+         #inner {
+           height: 100px;
+           width: 100px;
+           background-color: red;
+         }
+
+         #contents {
+           height: 150px;
+           width: 250px;
+           border: 1px solid black;
+           padding: 0.5rem;
+           overflow: scroll;
+         }
+
+       JAVASCRIPT
+
+         const outer = document.querySelector("#outer");
+         const inner = document.querySelector("#inner");
+         const contents = document.querySelector("#contents");
+         const clear = document.querySelector("#clear");
+         let lines = 0;
+
+         outer.addEventListener("click", (event) => {
+           log(event);
+         });
+
+         outer.addEventListener("dblclick", (event) => {
+           log(event);
+         });
+
+         outer.addEventListener("mouseover", (event) => {
+           log(event);
+         });
+
+         outer.addEventListener("mouseout", (event) => {
+           log(event);
+         });
+
+         outer.addEventListener("mouseenter", (event) => {
+           log(event);
+         });
+
+         outer.addEventListener("mouseleave", (event) => {
+           log(event);
+         });
+
+         function log(event) {
+           const prefix = `${String(lines++).padStart(3, "0")}: `;
+           const line = `${event.type}(${event.clientX}, ${event.clientY})`;
+           contents.textContent = `${contents.textContent}${prefix}${line}\n`;
+           contents.scrollTop = contents.scrollHeight;
+         }
+
+         clear.addEventListener("click", () => {
+           contents.textContent = "";
+           lines = 0;
+         });
+
+       RESULT
+
+       KEYBOARD AND INPUT EVENTS
+
+       This example logs keydown, beforeinput and, input events. Try typing into the text area. Note that keys like Shift produce keydown events but not input events.
+
+       HTML
+
+         <textarea id="story" rows="5" cols="33"></textarea>
+
+         <div id="log">
+           <pre id="contents"></pre>
+           <button id="clear">Clear log</button>
+         </div>
+
+       CSS
+
+         body {
+           display: flex;
+           gap: 1rem;
+         }
+
+         #story {
+           padding: 0.5rem;
+         }
+
+         #contents {
+           height: 150px;
+           width: 250px;
+           border: 1px solid black;
+           padding: 0.5rem;
+           overflow: scroll;
+         }
+
+       JAVASCRIPT
+
+         const story = document.querySelector("#story");
+         const contents = document.querySelector("#contents");
+         const clear = document.querySelector("#clear");
+         let lines = 0;
+
+         story.addEventListener("keydown", (event) => {
+           log(`${event.type}(${event.key})`);
+         });
+
+         story.addEventListener("beforeinput", (event) => {
+           log(`${event.type}(${event.data})`);
+         });
+
+         story.addEventListener("input", (event) => {
+           log(`${event.type}(${event.data})`);
+         });
+
+         function log(line) {
+           const prefix = `${String(lines++).padStart(3, "0")}: `;
+           contents.textContent = `${contents.textContent}${prefix}${line}\n`;
+           contents.scrollTop = contents.scrollHeight;
+         }
+
+         clear.addEventListener("click", () => {
+           contents.textContent = "";
+           lines = 0;
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * Pointer Events API
+        * Touch Events
+
+Web APIs manual                         from the official documentation

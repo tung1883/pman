@@ -1,0 +1,54 @@
+SHELLCHECK.SC1143(1)             Sandbox manual             SHELLCHECK.SC1143(1)
+
+       NAME
+
+       This backslash is part of a comment and does not continue the line. - sed \
+
+       THIS BACKSLASH IS PART OF A COMMENT AND DOES NOT CONTINUE THE LINE
+
+       THIS BACKSLASH IS PART OF A COMMENT AND DOES NOT CONTINUE THE LINE
+
+       PROBLEMATIC CODE
+
+         sed \
+           -e "s/HOST/$HOSTNAME/g"   \
+           -e "s/ARCH/$(uname -m)/g" \
+           "$buildfile"
+
+       CORRECT CODE
+
+         sed \
+           -e "s/HOST/$HOSTNAME/g"   \
+           -e "s/ARCH/$(uname -m)/g" \
+           "$buildfile"
+
+         # This comment is moved out:
+         # -e "s/USER/$USER/g"       \
+
+       or using backticked, inlined comments:
+
+         sed \
+           -e "s/HOST/$HOSTNAME/g"   \
+         `# -e "s/USER/$USER/g"`     \
+           -e "s/ARCH/$(uname -m)/g" \
+           "$buildfile"
+
+       (ShellCheck recognizes this idiom and does not suggest quotes or $(), neither of which would have worked)
+
+       RATIONALE
+
+       ShellCheck found a line continuation followed by a commented line that appears to try to do the same.
+
+       Backslash line continuations are not respected in comments, and the line instead simply terminates. This is a problem when commenting out one line in a multi-line command like the example.
+
+       Instead, either move the line away from its statement, or use an # inline comment in an unquoted backtick command substitution.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

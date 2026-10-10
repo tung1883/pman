@@ -1,0 +1,67 @@
+WEBAPI.HTMLLINKELEMENT-IMAGESRCSET(1) Sandbox manual WEBAPI.HTMLLINKELEMENT-IMAGESRCSET(1)
+
+       NAME
+
+       HTMLLinkElement: imageSrcset property - The imageSrcset property of the HTMLLinkElement interface is a string which identifies one or more comma-separated image candidate strings. 
+
+       HTMLLINKELEMENT: IMAGESRCSET PROPERTY
+
+       The imageSrcset property of the HTMLLinkElement interface is a string which identifies one or more comma-separated image candidate strings. This property reflects the value of the element's imagesrcset attribute. This property can retrieve or set the imagesrcset attribute value.
+
+       Each image candidate string contains an image URL and an optional width and/or pixel density descriptor indicating the conditions under which that candidate image should be used.
+
+         "images/team-photo.jpg, images/team-photo-retina.jpg 2x, images/team-photo-large.jpg 1400w"
+
+       For HTML elements with rel="preload" and as="image" set, the imagesrcset attribute has similar syntax and semantics as the element's srcset attribute, which indicates to preload the appropriate resource used by an element with corresponding values for its srcset and sizes attributes.
+
+       If the imageSrcset property includes width descriptors, the imageSizes property must be non-null, or the imageSrcset value will be ignored.
+
+       VALUE
+
+       A string composed of a comma-separated list of one or more image candidate strings, or the empty string "" if unspecified..
+
+       EXAMPLES
+
+       Given the following element:
+
+         <link
+           rel="preload"
+           as="image"
+           imagesizes="50vw"
+           imagesrcset="bg-narrow.png, bg-wide.png 800w" />
+
+         <pre id="log"></pre>
+
+         #log {
+           padding: 0 0.25rem;
+           font-size: 1.2em;
+           line-height: 1.4;
+         }
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+       …we can access the imagesrcset attribute value, and update it, using the imageSrcset property:
+
+         const link = document.querySelector("link");
+         log(`Original: ${link.imageSrcset}`);
+
+         // add an image candidate string
+         link.imageSrcset += ", bg-huge.png 1200w";
+         log(`Updated: ${link.imageSrcset}`);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTMLLinkElement.imageSizes
+        * HTMLImageElement.srcset
+        * Speculative loading
+        * Responsive images
+
+Web APIs manual                         from the official documentation

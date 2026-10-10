@@ -1,0 +1,77 @@
+WEBAPI.RTCPEERCONNECTION-NEGOTIATIONNEEDED-EVENT(1) Sandbox manual WEBAPI.RTCPEERCONNECTION-NEGOTIATIONNEEDED-EVENT(1)
+
+       NAME
+
+       RTCPeerConnection: negotiationneeded event - A negotiationneeded event is sent to the RTCPeerConnection when negotiation of the connection through the signaling channel is required.
+
+       RTCPEERCONNECTION: NEGOTIATIONNEEDED EVENT
+
+       A negotiationneeded event is sent to the RTCPeerConnection when negotiation of the connection through the signaling channel is required. This occurs both during the initial setup of the connection and any time a change to the communication environment requires reconfiguring the connection.
+
+       The negotiationneeded event is first dispatched to the RTCPeerConnection when media is first added to the connection. This starts the process of ICE negotiation by instructing your code to begin exchanging ICE candidates through the signaling server. See Signaling transaction flow for a description of the signaling process that begins with a negotiationneeded event.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("negotiationneeded", (event) => { })
+
+         onnegotiationneeded = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       In this example, we use addEventListener() to create an event handler for negotiationneeded. Its role is to create an SDP offer and send it through the signaling channel to the remote peer.
+
+         pc.addEventListener("negotiationneeded", (ev) => {
+           pc.createOffer()
+             .then((offer) => pc.setLocalDescription(offer))
+             .then(() =>
+               sendSignalingMessage({
+                 type: "video-offer",
+                 sdp: pc.localDescription,
+               }),
+             )
+             .catch((err) => {
+               // handle error
+             });
+         });
+
+       After creating the offer, the local end is configured by calling RTCPeerConnection.setLocalDescription(); then a signaling message is created and sent to the remote peer through the signaling server, to share that offer with the other peer. The other peer should recognize this message and follow up by creating its own RTCPeerConnection, setting the remote description with setRemoteDescription(), and then creating an answer to send back to the offering peer.
+
+       You can also set an event handler for the negotiationneeded event by assigning the event handler function to the onnegotiationneeded property:
+
+         pc.onnegotiationneeded = (ev) => {
+           pc.createOffer()
+             .then((offer) => pc.setLocalDescription(offer))
+             .then(() =>
+               sendSignalingMessage({
+                 type: "video-offer",
+                 sdp: pc.localDescription,
+               }),
+             )
+             .catch((err) => {
+               // handle error
+             });
+         };
+
+       For a more detailed example, see Starting negotiation.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * Signaling and video calling
+        * Lifetime of a WebRTC session
+        * WebRTC connectivity
+        * Introduction to WebRTC protocols
+
+Web APIs manual                         from the official documentation

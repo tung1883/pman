@@ -1,0 +1,47 @@
+WEBAPI.MEDIASTREAM-GETAUDIOTRACKS(1) Sandbox manual WEBAPI.MEDIASTREAM-GETAUDIOTRACKS(1)
+
+       NAME
+
+       MediaStream: getAudioTracks() method - The getAudioTracks() method of the
+
+       MEDIASTREAM: GETAUDIOTRACKS() METHOD
+
+       The getAudioTracks() method of the MediaStream interface returns a sequence that represents all the MediaStreamTrack objects in this stream's track set where MediaStreamTrack.kind is audio.
+
+       SYNTAX
+
+         getAudioTracks()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       An array of MediaStreamTrack objects, one for each audio track contained in the stream. Audio tracks are those tracks whose kind property is audio. The array is empty if the stream contains no audio tracks.
+
+       > The order of the returned tracks is not defined by the
+       > specification and may, in fact, change from one call to getAudioTracks()
+       > to the next.
+       Early versions of this API included a special AudioStreamTrack interface which was used as the type for each entry in the list of audio streams; however, this has since been merged into the main MediaStreamTrack interface.
+
+       EXAMPLES
+
+       This example gets a webcam's audio and video in a stream using getUserMedia(), attaches the stream to a element, then sets a timer that, upon expiring, will stop the first audio track found on the stream.
+
+         navigator.mediaDevices
+           .getUserMedia({ audio: true, video: true })
+           .then((mediaStream) => {
+             document.querySelector("video").srcObject = mediaStream;
+             // Stop the audio stream after 5 seconds
+             setTimeout(() => {
+               const tracks = mediaStream.getAudioTracks();
+               tracks[0].stop();
+             }, 5000);
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

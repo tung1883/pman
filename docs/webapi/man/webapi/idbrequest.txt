@@ -1,0 +1,91 @@
+WEBAPI.IDBREQUEST(1)             Sandbox manual             WEBAPI.IDBREQUEST(1)
+
+       NAME
+
+       IDBRequest - The IDBRequest interface of the IndexedDB API provides access to results of asynchronous requests to databases and database objects using ev
+
+       IDBREQUEST
+
+       The IDBRequest interface of the IndexedDB API provides access to results of asynchronous requests to databases and database objects using event handler attributes.
+
+       INSTANCE PROPERTIES
+
+       _Also inherits properties from EventTarget._
+
+        * IDBRequest.error (read-only)
+          * : Returns a DOMException in the event of an unsuccessful request, indicating what went wrong.
+        * IDBRequest.result (read-only)
+          * : Returns the result of the request. If the request is not completed, the result is not available and an InvalidStateError exception is thrown.
+        * IDBRequest.source (read-only)
+          * : The source of the request, such as an IDBIndex or an IDBObjectStore. If no source exists (such as when calling IDBFactory.open), it returns null.
+        * IDBRequest.readyState (read-only)
+          * : The state of the request. Every request starts in the pending state. The state changes to done when the request completes successfully or when an error occurs.
+        * IDBRequest.transaction (read-only)
+          * : The transaction for the request. This property can be null for certain requests, for example those returned from IDBFactory.open unless an upgrade is needed. (You're just connecting to a database, so there is no transaction to return).
+
+       INSTANCE METHODS
+
+       _No methods, but inherits methods from EventTarget._
+
+       EVENTS
+
+       Listen to these events using addEventListener() or by assigning an event listener to the oneventname property of this interface.
+
+        * error
+          * : Fired when an error caused a request to fail.
+        * success
+          * : Fired when an IDBRequest succeeds.
+
+       DESCRIPTION
+
+       The results of all database read and write operations are reported using a request object of this type.
+
+       The request object does not initially contain any information about the result of the operation, but once information becomes available, an event is fired on the request, and the information becomes available through the properties of the IDBRequest instance.
+
+       All asynchronous operations immediately return an IDBRequest instance. Each request has a readyState that is set to the 'pending' state; this changes to 'done' when the request is completed or fails. When the state is set to done, every request returns a result and an error, and an event is fired on the request. When the state is still pending, any attempt to access the result or error raises an InvalidStateError exception.
+
+       In plain words, all asynchronous methods return a request object. If the request has been completed successfully, the result is made available through the result property and an event indicating success is fired at the request (success). If an error occurs while performing the operation, the exception is made available through the error property and an error event is fired (error). The data in result depends on the operation that was called.
+
+       The interface IDBOpenDBRequest is derived from IDBRequest.
+
+       EXAMPLE
+
+       BASIC USAGE
+
+       In the following code snippet, we open a database asynchronously and make a request; event listeners for error and success are included to handle the success and error cases. For a full working example, see our To-do Notifications app (view example live.)
+
+         let db;
+
+         // Let us open our database
+         const DBOpenRequest = window.indexedDB.open("toDoList", 4);
+
+         // Handle the case where there is an error opening the database
+         DBOpenRequest.addEventListener("error", (event) => {
+           note.appendChild(document.createElement("li")).textContent =
+             "Error loading database.";
+         });
+
+         // Handle the case where the database opens successfully
+         DBOpenRequest.addEventListener("success", (event) => {
+           note.appendChild(document.createElement("li")).textContent =
+             "Database initialized.";
+
+           // store the result of opening the database.
+           db = DBOpenRequest.result;
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

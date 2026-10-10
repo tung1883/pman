@@ -1,0 +1,102 @@
+CSHARP.PROTECTED-INTERNAL(1)     Sandbox manual     CSHARP.PROTECTED-INTERNAL(1)
+
+       NAME
+
+       protected internal (C# reference) - protected internal - C# Reference
+
+       PROTECTED INTERNAL (C# REFERENCE)
+
+       The protected internal keyword combination is a member access modifier. You can access a protected internal member from the current assembly or from types that are derived from the containing class. For a comparison of protected internal with the other access modifiers, see Accessibility Levels.
+
+       Any type within the containing assembly can access a protected internal member of a base class. A derived class located in another assembly can access the member only if the access occurs through a variable of the derived class type. For example, consider the following code segment:
+
+         // Assembly1.cs
+         // Compile with: /target:library
+         public class BaseClass
+         {
+            protected internal int myValue = 0;
+         }
+
+         class TestAccess
+         {
+             void Access()
+             {
+                 var baseObject = new BaseClass();
+                 baseObject.myValue = 5;
+             }
+         }
+
+         // Assembly2.cs
+         // Compile with: /reference:Assembly1.dll
+         class DerivedClass : BaseClass
+         {
+             static void Main()
+             {
+                 var baseObject = new BaseClass();
+                 var derivedObject = new DerivedClass();
+
+                 // Error CS1540, because myValue can only be accessed by
+                 // classes derived from BaseClass.
+                 // baseObject.myValue = 10;
+
+                 // OK, because this class derives from BaseClass.
+                 derivedObject.myValue = 10;
+             }
+         }
+
+       This example contains two files, Assembly1.cs and Assembly2.cs. The first file contains a public base class, BaseClass, and another class, TestAccess. BaseClass owns a protected internal member, myValue, which the TestAccess type accesses because they're in the same assembly. In the second file, an attempt to access myValue through an instance of BaseClass produces an error, while an access to this member through an instance of a derived class, DerivedClass succeeds. This access rule shows that protected internal allows access from any class within the same assembly or derived classes in any assembly, making it the most permissive of the protected access modifiers.
+
+       Struct members can't be protected internal because the struct can't be inherited.
+
+       OVERRIDING PROTECTED INTERNAL MEMBERS
+
+       When you override a virtual member, the accessibility modifier of the overridden method depends on the assembly where you define the derived class.
+
+       When you define the derived class in the same assembly as the base class, all overridden members have protected internal access. If you define the derived class in a different assembly from the base class, overridden members have protected access.
+
+         // Assembly1.cs
+         // Compile with: /target:library
+         public class BaseClass
+         {
+             protected internal virtual int GetExampleValue()
+             {
+                 return 5;
+             }
+         }
+
+         public class DerivedClassSameAssembly : BaseClass
+         {
+             // Override to return a different example value, accessibility modifiers remain the same.
+             protected internal override int GetExampleValue()
+             {
+                 return 9;
+             }
+         }
+
+         // Assembly2.cs
+         // Compile with: /reference:Assembly1.dll
+         class DerivedClassDifferentAssembly : BaseClass
+         {
+             // Override to return a different example value, since this override
+             // method is defined in another assembly, the accessibility modifiers
+             // are only protected, instead of protected internal.
+             protected override int GetExampleValue()
+             {
+                 return 2;
+             }
+         }
+
+       C# LANGUAGE SPECIFICATION
+
+       SEE ALSO
+
+        * C# Keywords
+        * Access Modifiers
+        * Accessibility Levels
+        * Modifiers
+        * public
+        * private
+        * internal
+        * Security concerns for internal virtual keywords)
+
+C# manual                               from the official documentation

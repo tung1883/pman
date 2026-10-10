@@ -1,0 +1,88 @@
+HTTP.GUIDE-USER-AGENT-REDUCTION(1) Sandbox manual HTTP.GUIDE-USER-AGENT-REDUCTION(1)
+
+       NAME
+
+       User-Agent reduction - User-Agent reduction is a broadly accepted browser initiative to reduce the amount of privacy-sensitive information provided in user agent (
+
+       USER-AGENT REDUCTION
+
+       User-Agent reduction is a broadly accepted browser initiative to reduce the amount of privacy-sensitive information provided in user agent (UA) strings.
+
+       This article shows the differences in UA strings as a result of User-Agent reduction, and explains how you can access both redacted and additional UA information when needed.
+
+       BACKGROUND
+
+       The user agent (UA) string — available in the User-Agent HTTP header and in related API features such as Navigator.userAgent, Navigator.appVersion, and Navigator.platform — allows servers and network peers identify the application, operating system, vendor, and/or version of the requesting user agent.
+
+       BROWSER DETECTION
+
+       Theoretically the UA string is useful for detecting the browser and serving code to work around browser-specific bugs or lack of feature support. However, this is unreliable and is not recommended:
+
+        * Future browsers will fix bugs and add support for new features, so your browser detection code will need to be regularly updated to avoid locking out browsers that do actually support the features you are testing for. Feature detection is a much more reliable strategy.
+        * You really have no guarantee that the user agent advertised by this property is really the one your site is loaded in. Browser vendors can basically do what they like with the UA string, and historically would return fake values from such properties in order not to be locked out of some websites.
+        * Some browsers enable users to change the value of this field if they want (UA spoofing).
+       The following are much more reliable strategies for working around bugs and differing browser support:
+
+        * Feature detection: Detecting support for a feature, rather than the browser version.
+        * Progressive enhancement: Providing a baseline of essential content and functionality to as many users as possible, while delivering the best possible experience to browsers that can run all the required code.
+       Also see Browser detection using the user agent for more information on why serving different content to different browsers is usually a bad idea.
+
+       PRIVACY CONCERNS
+
+       In addition, the information exposed in the UA string has historically raised privacy concerns — it can be used to identify a particular user agent, and can therefore be used for fingerprinting.
+
+       To mitigate such concerns, supporting browsers implement user-agent reduction, which updates the User-agent header and related API features to provide a reduced set of information.
+
+       UA STRING CHANGES AFTER REDUCTION
+
+       In supporting browsers, User-Agent reduction removes three pieces of information from the UA string — the exact platform/OS version, device model, and minor browser version.
+
+       Let's look at an example so you can see what this looks like. Whereas previously the UA string for Chrome running on Android might have looked like this:
+
+         Mozilla/5.0 (Linux; Android 16; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.12.45 Mobile Safari/537.36
+
+       After the User-Agent reduction update, it now looks like this:
+
+         Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36
+
+       The below sections provide more detail about each of the US string changes.
+
+       PLATFORM/OS VERSION AND DEVICE MODEL
+
+       The platform version and device model are always represented by fixed values:
+
+        * Android 10; K on Android.
+        * Macintosh; Intel Mac OS X 10_15_7 on macOS.
+        * Windows NT 10.0; Win64; x64 on Windows.
+        * X11; CrOS x86_64 14541.0.0 on ChromeOS.
+        * X11; Linux x86_64 on Linux.
+
+       MINOR BROWSER VERSION
+
+       The major browser version number shows correctly, but the minor version numbers are always shown as zeros — 0.0.0.
+
+       REQUESTING UA INFORMATION VIA CLIENT HINTS
+
+       You may still have code that relies on detailed UA string data, which can't be converted to use feature detection or progressive enhancement. Examples include fine-grained logging, fraud prevention measures, or a software help site that serves different content based on the user's device type.
+
+       If this is the case, you can still access detailed UA string data via Sec-CH-UA-* headers (also known as User-Agent client hints). The headers provide a safer, more privacy-preserving way to send such information because servers have to opt in to the pieces of information they want, rather it being sent all the time through the User-Agent string. It also provides access to a wider selection of information.
+
+       For more information, see User-Agent client hints.
+
+       ACCESSING CLIENT HINTS VIA JAVASCRIPT
+
+       The User-Agent Client Hints API allows you to access client-hint information via JavaScript. The Navigator.userAgentData property provides access to the NavigatorUAData object, which contains properties representing the low-entropy client hints.
+
+       To access high-entropy hints like Sec-CH-UA-Model and Sec-CH-UA-Form-Factors, you need to use the NavigatorUAData.getHighEntropyValues() method.
+
+       For more information, see the User-Agent Client Hints API.
+
+       SEE ALSO
+
+        * User-Agent
+        * Navigator.userAgent, Navigator.appVersion, and Navigator.platform
+        * HTTP Client hints
+        * Implementing feature detection
+        * https://developer.chrome.com/docs/privacy-security/user-agent-client-hints on developer.chrome.com (2020)
+
+HTTP manual                             from the official documentation

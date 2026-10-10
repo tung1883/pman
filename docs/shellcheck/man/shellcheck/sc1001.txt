@@ -1,0 +1,42 @@
+SHELLCHECK.SC1001(1)             Sandbox manual             SHELLCHECK.SC1001(1)
+
+       NAME
+
+       This \o will be a regular 'o' in this context. - echo Yay \o/
+
+       THIS O WILL BE A REGULAR 'O' IN THIS CONTEXT
+
+       THIS O WILL BE A REGULAR 'O' IN THIS CONTEXT
+
+       PROBLEMATIC CODE
+
+         echo Yay \o/
+
+         # Want other characters
+         bell=\a
+
+       CORRECT CODE
+
+         echo 'Yay \o/'
+
+         bell="$(printf '\a')"
+
+       RATIONALE
+
+       You have escaped something that has no special meaning when escaped. The backslash will be simply be ignored.
+
+       If the backslash was supposed to be literal, single quote or escape it.
+
+       If you wanted it to expand to something, rewrite the expression to use printf (or in bash, $'\t'). If the sequence in question is \n, \t or \r, you instead get a [[SC1012]] that describes this.
+
+       EXCEPTIONS
+
+       None. ShellCheck (as of 2017-07-03, commit 31bb02d6) will not warn when the first letter of a command is unnecessarily escaped, as this is frequently used to suppress aliases interactively.
+
+       RELATED RESOURCES
+
+        * https://www.gnu.org/software/bash/manual/html_node/Aliases.html
+        * https://www.gnu.org/software/bash/manual/html_node/Quoting.html
+        * https://tiswww.case.edu/php/chet/bash/bash.html
+
+ShellCheck manual                       from the official documentation

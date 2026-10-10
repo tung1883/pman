@@ -1,0 +1,58 @@
+WEBAPI.SOURCEBUFFER-UPDATE-EVENT(1) Sandbox manual WEBAPI.SOURCEBUFFER-UPDATE-EVENT(1)
+
+       NAME
+
+       SourceBuffer: update event - windowanddedicated
+
+       SOURCEBUFFER: UPDATE EVENT
+
+       window_and_dedicated
+
+       The update event of the SourceBuffer interface signals the successful completion of an appendBuffer() or remove() operation. The updating attribute transitions from true to false. This event is fired before the updateend event.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("update", (event) => { })
+
+         onupdate = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       HANDLING THE UPDATE EVENT AFTER APPENDING DATA
+
+       This example demonstrates how to handle the update event after a successful appendBuffer() operation.
+
+         const sourceBuffer = source.addSourceBuffer(mimeCodec);
+         sourceBuffer.addEventListener("error", () => {
+           downloadStatus.textContent = "Error occurred during decoding";
+         });
+         sourceBuffer.addEventListener("update", () => {
+           downloadStatus.textContent = "Done";
+         });
+         sourceBuffer.addEventListener("updateend", () => {
+           source.endOfStream();
+         });
+         downloadStatus.textContent = "Downloading...";
+         fetch(assetURL)
+           .then((response) => response.arrayBuffer())
+           .then((data) => {
+             downloadStatus.textContent = "Decoding...";
+             sourceBuffer.appendBuffer(data);
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * SourceBuffer.appendBuffer()
+        * SourceBuffer.remove()
+
+Web APIs manual                         from the official documentation

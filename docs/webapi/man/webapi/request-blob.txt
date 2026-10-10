@@ -1,0 +1,54 @@
+WEBAPI.REQUEST-BLOB(1)           Sandbox manual           WEBAPI.REQUEST-BLOB(1)
+
+       NAME
+
+       Request: blob() method - The blob() method of the Request interface
+
+       REQUEST: BLOB() METHOD
+
+       The blob() method of the Request interface reads the request body and returns it as a promise that resolves with a Blob.
+
+       SYNTAX
+
+         blob()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A promise that resolves with a Blob whose data is the body's bytes and the media type is the request's Content-Type header's value.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown for one of the following reasons:
+            * The request body is disturbed or locked.
+            * There was an error decoding the body content (for example, because the Content-Encoding header is incorrect).
+
+       EXAMPLES
+
+         const obj = { hello: "world" };
+         const myBlob = new Blob([JSON.stringify(obj, null, 2)], {
+           type: "application/json",
+         });
+
+         const request = new Request("/myEndpoint", {
+           method: "POST",
+           body: myBlob,
+         });
+
+         request.blob().then((myBlob) => {
+           // do something with the blob sent in the request
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Response.blob()
+
+Web APIs manual                         from the official documentation

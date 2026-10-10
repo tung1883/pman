@@ -1,0 +1,65 @@
+WEBAPI.TEXTUPDATEEVENT(1)        Sandbox manual        WEBAPI.TEXTUPDATEEVENT(1)
+
+       NAME
+
+       TextUpdateEvent - The TextUpdateEvent interface is a DOM event that represents a text or selection update in an editable text region that's attached to an Edi
+
+       TEXTUPDATEEVENT
+
+       The TextUpdateEvent interface is a DOM event that represents a text or selection update in an editable text region that's attached to an EditContext instance.
+
+       This interface inherits properties from Event.
+
+       CONSTRUCTOR
+
+        * TextUpdateEvent() (experimental)
+          * : Creates a new TextUpdateEvent object.
+
+       INSTANCE PROPERTIES
+
+        * TextUpdateEvent.updateRangeStart (read-only) (experimental)
+          * : Returns the index of the first character in the range of text that was updated.
+        * TextUpdateEvent.updateRangeEnd (read-only) (experimental)
+          * : Returns the index of the last character in the range of text that was updated.
+        * TextUpdateEvent.text (read-only) (experimental)
+          * : Returns the text that was inserted in the updated range.
+        * TextUpdateEvent.selectionStart (read-only) (experimental)
+          * : Returns the index of the first character in the new selection range, after the update.
+        * TextUpdateEvent.selectionEnd (read-only) (experimental)
+          * : Returns the index of the last character in the new selection range, after the update.
+
+       EXAMPLES
+
+       RENDERING THE UPDATED TEXT IN AN EDITABLE CANVAS
+
+       In the following example, the EditContext API is used to render editable text in a element, and the textupdate event is used to render the text when the user is typing.
+
+         <canvas id="editor-canvas"></canvas>
+
+         const canvas = document.getElementById("editor-canvas");
+         const ctx = canvas.getContext("2d");
+         const editContext = new EditContext();
+         canvas.editContext = editContext;
+
+         function render() {
+           // Clear the canvas.
+           ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+           // Render the text.
+           ctx.fillText(editContext.text, 10, 10);
+         }
+
+         editContext.addEventListener("textupdate", (e) => {
+           // Re-render the editor view when the user is entering text.
+           render();
+
+           console.log(
+             `The user entered ${e.text}. Rendering the entire text: ${editContext.text}`,
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

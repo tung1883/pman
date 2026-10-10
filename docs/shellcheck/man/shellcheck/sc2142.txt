@@ -1,0 +1,34 @@
+SHELLCHECK.SC2142(1)             Sandbox manual             SHELLCHECK.SC2142(1)
+
+       NAME
+
+       Aliases can't use positional parameters. Use a function. - alias archive='mv "$@" /backup'
+
+       ALIASES CAN'T USE POSITIONAL PARAMETERS. USE A FUNCTION
+
+       ALIASES CAN'T USE POSITIONAL PARAMETERS. USE A FUNCTION
+
+       PROBLEMATIC CODE
+
+         alias archive='mv "$@" /backup'
+
+       CORRECT CODE
+
+         archive() { mv "$@" /backup; }
+
+       RATIONALE
+
+       Aliases just substitute the start of a command with something else. They therefore can't use positional parameters, such as $1. Rewrite your alias as a function.
+
+       EXCEPTIONS
+
+       If your alias ends up quoting the value, e.g. alias cut_first="awk '{print \$1}'", you can technically [[ignore]] this error. However, you should consider turning this alias into a more readable function instead: cut_first() { awk '{print $1}' "$@"; }
+
+       You can also [[ignore]] this warning if you intentionally referenced the positional parameters of its relevant context, knowing that it won't refer to the parameters of the alias itself. For example, alias whatisthis='echo "This is $0 -$-" #' will show the shell name with flags, i.e. This is dash -smi or This is bash -himBs, and is correct usage because it does not intend for $0 to reflect anything related to the whatisthis alias or its invocation.
+
+       RELATED RESOURCES
+
+        * BashFaq: How can I make an alias that takes an argument?
+        * StackOverflow: Make a Bash alias that takes a parameter?
+
+ShellCheck manual                       from the official documentation

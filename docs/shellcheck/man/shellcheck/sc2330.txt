@@ -1,0 +1,42 @@
+SHELLCHECK.SC2330(1)             Sandbox manual             SHELLCHECK.SC2330(1)
+
+       NAME
+
+       BusyBox [[ .. ]] does not support glob matching. Use a case statement. - if [[ $1 == https: ]]
+
+       BUSYBOX .. DOES NOT SUPPORT GLOB MATCHING. USE A CASE STATEMENT
+
+       BUSYBOX .. DOES NOT SUPPORT GLOB MATCHING. USE A CASE STATEMENT
+
+       PROBLEMATIC CODE
+
+         #!/bin/busybox sh
+         if [[ $1 == https:* ]]
+         then
+           echo "Using URL $1"
+         fi
+
+       CORRECT CODE
+
+         #!/bin/busybox sh
+         case "$1" in
+           https:*)
+             echo "Using URL $1"
+             ;;
+         esac
+
+       RATIONALE
+
+       You are using [[ .. ]] in BusyBox sh to match against a glob pattern. This is supported in Bash and Ksh, but not in BusyBox.
+
+       Rewrite the match to use a case statement instead.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

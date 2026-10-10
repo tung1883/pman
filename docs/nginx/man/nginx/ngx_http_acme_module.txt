@@ -1,0 +1,231 @@
+NGINX.NGX_HTTP_ACME_MODULE(1)    Sandbox manual    NGINX.NGX_HTTP_ACME_MODULE(1)
+
+       MODULE NGX_HTTP_ACME_MODULE
+
+         Example Configuration Directives  acme_issuer  uri  account_key  challenge  common_name_in_csr  contact  external_account_key  preferred_chain  profile  ssl_trusted_certificate  ssl_verify  state_path  accept_terms_of_service  acme_shared_zone  acme_certificate Embedded Variables
+       The ngx_http_acme_module module implements the automatic certificate management (ACMEv2) protocol.
+
+       The source code of the module is available here. Download and install instructions are available here.
+
+       The module is also available in a prebuilt nginx-module-acme package and in nginx-plus-module-acme package as part of our commercial subscription since 1.29.0.
+
+       EXAMPLE CONFIGURATION
+
+         resolver 127.0.0.1:53;
+
+         acme_issuer example {
+             uri         https://acme.example.com/directory;
+             contact     admin@example.test;
+             state_path  /var/cache/nginx/acme-example;
+             accept_terms_of_service;
+         }
+
+         acme_shared_zone zone=ngx_acme_shared:1M;
+
+         server {
+             listen 443 ssl;
+             server_name  .example.test;
+
+             acme_certificate example;
+
+             ssl_certificate       $acme_certificate;
+             ssl_certificate_key   $acme_certificate_key;
+
+             # do not parse the certificate on each request
+             ssl_certificate_cache max=2;
+         }
+
+         server {
+             # listener on port 80 is required to process ACME HTTP-01 challenges
+             listen 80;
+
+             location / {
+                 return 404;
+             }
+         }
+
+       DIRECTIVES
+
+       ACME_ISSUER
+
+         Syntax: | acme_issuer name { ... }
+         Default: | —
+         Context: | http
+       Defines an ACME certificate issuer object.
+
+       URI
+
+         Syntax: | uri uri;
+         Default: | —
+         Context: | acme_issuer
+       The directory URL of the ACME server. This directive is mandatory.
+
+       ACCOUNT_KEY
+
+         Syntax: | account_key alg[:size] | file;
+         Default: | —
+         Context: | acme_issuer
+       The account's private key used for request authentication.
+
+       Accepted values:
+
+        * ecdsa:256/384/521 for ES256, ES384, or ES512 JSON Web Signature algorithms
+        * rsa:2048/3072/4096 for RS256.
+        * File path for an existing key, using one of the algorithms above.
+       The generated account keys are preserved across reloads, but will be lost on restart unless state_path is configured.
+
+       CHALLENGE
+
+         Syntax: | challenge type;
+
+         challenge http-01;
+
+       Default:
+
+         Context: | acme_issuer
+       This directive appeared in version 0.2.0.
+
+       Specifies the ACME challenge type to be used for the issuer.
+
+       Accepted values:
+
+        * http-01 (http)
+        * tls-alpn-01 (tls-alpn)
+       > ACME challenges are versioned. If an unversioned name is specified, the module automatically selects the latest implemented version.
+
+       COMMON_NAME_IN_CSR
+
+         Syntax: | common_name_in_csr on | off;
+
+         common_name_in_csr off;
+
+       Default:
+
+         Context: | acme_issuer
+       This directive appeared in version 0.4.0.
+
+       If enabled, sets the Subject Common Name in the certificate request to the first DNS name or the first IP address provided.
+
+       > Enabling this option may result in rejected certificate requests.
+
+       > Prior to version 0.4.0, the Subject Common Name was always set.
+
+       CONTACT
+
+         Syntax: | contact URL;
+         Default: | —
+         Context: | acme_issuer
+       Sets an array of URLs that the ACME server can use to contact the client regarding account issues. The mailto: scheme will be used unless specified explicitly.
+
+       EXTERNAL_ACCOUNT_KEY
+
+         Syntax: | external_account_key kid file;
+         Default: | —
+         Context: | acme_issuer
+       This directive appeared in version 0.2.0.
+
+       Specifies a key identifier kid and a file with the MAC key for  external account authorization.
+
+       The value data:key can be specified instead of the file, which loads a key directly from the configuration without using intermediate files.
+
+       In both cases, the key is expected to be encoded in  base64url.
+
+       PREFERRED_CHAIN
+
+         Syntax: | preferred_chain name;
+         Default: | —
+         Context: | acme_issuer
+       This directive appeared in version 0.3.0.
+
+       Specifies the preferred certificate chain.
+
+       If the ACME server offers multiple certificate chains, prefer the chain with the topmost certificate issued from the Subject Common Name name. If there are no matches, the default chain will be used.
+
+       PROFILE
+
+         Syntax: | profile name [require];
+         Default: | —
+         Context: | acme_issuer
+       This directive appeared in version 0.3.0.
+
+       Requests the  certificate profile name from the ACME server.
+
+       The require parameter will cause certificate renewals to fail if the server does not support the specified profile.
+
+       SSL_TRUSTED_CERTIFICATE
+
+         Syntax: | ssl_trusted_certificate file;
+         Default: | —
+         Context: | acme_issuer
+       Specifies a file with trusted CA certificates in the PEM format used to verify the certificate of the ACME server.
+
+       SSL_VERIFY
+
+         Syntax: | ssl_verify on | off;
+
+         ssl_verify on;
+
+       Default:
+
+         Context: | acme_issuer
+       Enables or disables verification of the ACME server certificate.
+
+       STATE_PATH
+
+         Syntax: | state_path path | off;
+
+         state_path acme_<issuer>;
+
+       Default:
+
+         Context: | acme_issuer
+       Defines a directory for storing the module data that can be persisted across restarts. This can improve the load time by skipping some requests on startup, and avoid hitting request rate limits on the ACME server.
+
+       The directory contains sensitive content, such as the account key, issued certificates, and private keys.
+
+       The off parameter (0.2.0) disables storing the account information and issued certificates on disk.
+
+       > Prior to version 0.2.0, the state directory was not created by default.
+
+       ACCEPT_TERMS_OF_SERVICE
+
+         Syntax: | accept_terms_of_service;
+         Default: | —
+         Context: | acme_issuer
+       Agrees to the terms of service under which the ACME server will be used. Some servers require accepting the terms of service before account registration. The terms are usually available on the ACME server's website, and the URL will be printed to the error log if necessary.
+
+       ACME_SHARED_ZONE
+
+         Syntax: | acme_shared_zone zone=name:size;
+
+         acme_shared_zone zone=ngx_acme_shared:256k;
+
+       Default:
+
+         Context: | http
+       Allows increasing the size of in-memory storage of the module. The shared memory zone will be used to store the issued certificates, keys and challenge data for all the configured certificate issuers.
+
+       The default zone size is sufficient to hold approximately 50 ECDSA prime256v1 keys or 35 RSA 2048 keys.
+
+       ACME_CERTIFICATE
+
+         Syntax: | acme_certificate issuer [identifier ...] [key=alg[:size]];
+         Default: | —
+         Context: | server
+       Defines a certificate with the list of identifiers requested from issuer issuer.
+
+       The explicit list of identifiers can be omitted. In this case, the identifiers will be taken from the server_name directive in the same server block. Not all values accepted in the server_name are valid certificate identifiers: regular expressions and wildcards are not supported.
+
+       The key parameter sets the type of a generated private key. Supported key algorithms and sizes: ecdsa:256 (default), ecdsa:384, ecdsa:521, rsa:2048, rsa:3072, rsa:4096.
+
+       EMBEDDED VARIABLES
+
+       The ngx_http_acme_module module supports embedded variables, valid in the server block with the acme_certificate directive:
+
+         $acme_certificate
+       SSL certificate that can be passed to the ssl_certificate
+
+         $acme_certificate_key
+       SSL certificate private key that can be passed to ssl_certificate_key
+
+nginx manual                            bundled documentation

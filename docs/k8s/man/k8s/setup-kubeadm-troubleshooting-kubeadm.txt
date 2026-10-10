@@ -1,0 +1,425 @@
+K8S.SETUP-KUBEADM-TROUBLESHOOTING-KUBEADM(1) Sandbox manual K8S.SETUP-KUBEADM-TROUBLESHOOTING-KUBEADM(1)
+
+       NAME
+
+       kubectl get pods - As with any program, you might run into an error installing or running kubeadm.
+
+       KUBECTL GET PODS
+
+       As with any program, you might run into an error installing or running kubeadm. This page lists some common failure scenarios and have provided steps that can help you understand and fix the problem.
+
+       If your problem is not listed below, please follow the following steps:
+
+        * If you think your problem is a bug with kubeadm:
+          * Go to github.com/kubernetes/kubeadm and search for existing issues.
+          * If no issue exists, please open one and follow the issue template.
+        * If you are unsure about how kubeadm works, you can ask on Slack in #kubeadm,
+       or open a question on StackOverflow. Please include relevant tags like #kubernetes and #kubeadm so folks can help you.
+
+       NOT POSSIBLE TO JOIN A V1.18 NODE TO A V1.17 CLUSTER DUE TO MISSING RB
+
+       In v1.18 kubeadm added prevention for joining a Node in the cluster if a Node with the same name already exists. This required adding RBAC for the bootstrap-token user to be able to GET a Node object.
+
+       However this causes an issue where kubeadm join from v1.18 cannot join a cluster created by kubeadm v1.17.
+
+       To workaround the issue you have two options:
+
+       Execute kubeadm init phase bootstrap-token on a control-plane node using kubeadm v1.18. Note that this enables the rest of the bootstrap-token permissions as well.
+
+       or
+
+       Apply the following RBAC manually using kubectl apply -f ...:
+
+         apiVersion: rbac.authorization.k8s.io/v1
+         kind: ClusterRole
+         metadata:
+           name: kubeadm:get-nodes
+         rules:
+           - apiGroups:
+               - ""
+             resources:
+               - nodes
+             verbs:
+               - get
+         ---
+         apiVersion: rbac.authorization.k8s.io/v1
+         kind: ClusterRoleBinding
+         metadata:
+           name: kubeadm:get-nodes
+         roleRef:
+           apiGroup: rbac.authorization.k8s.io
+           kind: ClusterRole
+           name: kubeadm:get-nodes
+         subjects:
+           - apiGroup: rbac.authorization.k8s.io
+             kind: Group
+             name: system:bootstrappers:kubeadm:default-node-token
+
+       EBTABLES OR SOME SIMILAR EXECUTABLE NOT FOUND DURING INSTALLATION
+
+       If you see the following warnings while running kubeadm init
+
+         [preflight] WARNING: ebtables not found in system path
+         [preflight] WARNING: ethtool not found in system path
+
+       Then you may be missing ebtables, ethtool or a similar executable on your node. You can install them with the following commands:
+
+        * For Ubuntu/Debian users, run apt install ebtables ethtool.
+        * For CentOS/Fedora users, run dnf install ebtables ethtool.
+
+       KUBEADM BLOCKS WAITING FOR CONTROL PLANE DURING INSTALLATION
+
+       If you notice that kubeadm init hangs after printing out the following line:
+
+         [apiclient] Created API client, waiting for the control plane to become ready
+
+       This may be caused by a number of problems. The most common are:
+
+        * network connection problems. Check that your machine has full network connectivity before continuing.
+        * control plane containers are crashlooping or hanging. You can check this by running docker ps
+       and investigating each container by running docker logs. For other container runtime, see Debugging Kubernetes nodes with crictl.
+
+       KUBEADM BLOCKS WHEN REMOVING MANAGED CONTAINERS
+
+       The following could happen if the container runtime halts and does not remove any Kubernetes-managed containers:
+
+         sudo kubeadm reset
+
+         [preflight] Running pre-flight checks
+         [reset] Stopping the kubelet service
+         [reset] Unmounting mounted directories in "/var/lib/kubelet"
+         [reset] Removing kubernetes-managed containers
+         (block)
+
+       A possible solution is to restart the container runtime and then re-run kubeadm reset. You can also use crictl to debug the state of the container runtime. See Debugging Kubernetes nodes with crictl.
+
+       PODS IN RUNCONTAINERERROR, CRASHLOOPBACKOFF OR ERROR STATE
+
+       Right after kubeadm init there should not be any pods in these states.
+
+        * If there are pods in one of these states _right after_ kubeadm init, please open an
+       issue in the kubeadm repo. coredns (or kube-dns) should be in the Pending state until you have deployed the network add-on.
+
+        * If you see Pods in the RunContainerError, CrashLoopBackOff or Error state
+       after deploying the network add-on and nothing happens to coredns (or kube-dns), it's very likely that the Pod Network add-on that you installed is somehow broken. You might have to grant it more RBAC privileges or use a newer version. Please file an issue in the Pod Network providers' issue tracker and get the issue triaged there.
+
+       COREDNS IS STUCK IN THE PENDING STATE
+
+       This is expected and part of the design. kubeadm is network provider-agnostic, so the admin should install the pod network add-on of choice. You have to install a Pod Network before CoreDNS may be deployed fully. Hence the Pending state before the network is set up.
+
+       HOSTPORT SERVICES DO NOT WORK
+
+       The HostPort and HostIP functionality is available depending on your Pod Network provider. Please contact the author of the Pod Network add-on to find out whether HostPort and HostIP functionality are available.
+
+       Calico, Canal, and Flannel CNI providers are verified to support HostPort.
+
+       For more information, see the CNI portmap documentation.
+
+       If your network provider does not support the portmap CNI plugin, you may need to use the NodePort feature of services or use HostNetwork=true.
+
+       PODS ARE NOT ACCESSIBLE VIA THEIR SERVICE IP
+
+        * Many network add-ons do not yet enable hairpin mode
+       which allows pods to access themselves via their Service IP. This is an issue related to CNI. Please contact the network add-on provider to get the latest status of their support for hairpin mode.
+
+        * If you are using VirtualBox (directly or via Vagrant), you will need to
+       ensure that hostname -i returns a routable IP address. By default, the first interface is connected to a non-routable host-only network. A work around is to modify /etc/hosts, see this Vagrantfile for an example.
+
+       TLS CERTIFICATE ERRORS
+
+       The following error indicates a possible certificate mismatch.
+
+         # kubectl get pods
+         Unable to connect to the server: x509: certificate signed by unknown authority (possibly because of "crypto/rsa: verification error" while trying to verify candidate authority certificate "kubernetes")
+
+        * Verify that the $HOME/.kube/config file contains a valid certificate, and
+       regenerate a certificate if necessary. The certificates in a kubeconfig file are base64 encoded. The base64 --decode command can be used to decode the certificate and openssl x509 -text -noout can be used for viewing the certificate information.
+
+        * Unset the KUBECONFIG environment variable using:
+
+           unset KUBECONFIG
+
+       Or set it to the default KUBECONFIG location:
+
+           export KUBECONFIG=/etc/kubernetes/admin.conf
+
+        * Another workaround is to overwrite the existing kubeconfig for the "admin" user:
+
+           mv $HOME/.kube $HOME/.kube.bak
+           mkdir $HOME/.kube
+           sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+           sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+       KUBELET CLIENT CERTIFICATE ROTATION FAILS #KUBELET-CLIENT-CERT
+
+       By default, kubeadm configures a kubelet with automatic rotation of client certificates by using the /var/lib/kubelet/pki/kubelet-client-current.pem symlink specified in /etc/kubernetes/kubelet.conf. If this rotation process fails you might see errors such as x509: certificate has expired or is not yet valid in kube-apiserver logs. To fix the issue you must follow these steps:
+
+        1. Backup and delete /etc/kubernetes/kubelet.conf and /var/lib/kubelet/pki/kubelet-client* from the failed node.
+        1. From a working control plane node in the cluster that has /etc/kubernetes/pki/ca.key execute
+       kubeadm kubeconfig user --org system:nodes --client-name system:node:$NODE > kubelet.conf. $NODE must be set to the name of the existing failed node in the cluster. Modify the resulted kubelet.conf manually to adjust the cluster name and server endpoint, or pass kubeconfig user --config (see Generating kubeconfig files for additional users). If your cluster does not have the ca.key you must sign the embedded certificates in the kubelet.conf externally.
+
+        1. Copy this resulted kubelet.conf to /etc/kubernetes/kubelet.conf on the failed node.
+        1. Restart the kubelet (systemctl restart kubelet) on the failed node and wait for
+       /var/lib/kubelet/pki/kubelet-client-current.pem to be recreated.
+
+        1. Manually edit the kubelet.conf to point to the rotated kubelet client certificates, by replacing
+       client-certificate-data and client-key-data with:
+
+            client-certificate: /var/lib/kubelet/pki/kubelet-client-current.pem
+            client-key: /var/lib/kubelet/pki/kubelet-client-current.pem
+
+        1. Restart the kubelet.
+        1. Make sure the node becomes Ready.
+
+       DEFAULT NIC WHEN USING FLANNEL AS THE POD NETWORK IN VAGRANT
+
+       The following error might indicate that something was wrong in the pod network:
+
+         Error from server (NotFound): the server could not find the requested resource
+
+        * If you're using flannel as the pod network inside Vagrant, then you will have to
+       specify the default interface name for flannel.
+
+       Vagrant typically assigns two interfaces to all VMs. The first, for which all hosts are assigned the IP address 10.0.2.15, is for external traffic that gets NATed.
+
+       This may lead to problems with flannel, which defaults to the first interface on a host. This leads to all hosts thinking they have the same public IP address. To prevent this, pass the --iface eth1 flag to flannel so that the second interface is chosen.
+
+       NON-PUBLIC IP USED FOR CONTAINERS
+
+       In some situations kubectl logs and kubectl run commands may return with the following errors in an otherwise functional cluster:
+
+         Error from server: Get https://10.19.0.41:10250/containerLogs/default/mysql-ddc65b868-glc5m/mysql: dial tcp 10.19.0.41:10250: getsockopt: no route to host
+
+        * This may be due to Kubernetes using an IP that can not communicate with other IPs on
+       the seemingly same subnet, possibly by policy of the machine provider.
+
+        * DigitalOcean assigns a public IP to eth0 as well as a private one to be used internally
+       as anchor for their floating IP feature, yet kubelet will pick the latter as the node's InternalIP instead of the public one.
+
+       Use ip addr show to check for this scenario instead of ifconfig because ifconfig will not display the offending alias IP address. Alternatively an API endpoint specific to DigitalOcean allows you to query for the anchor IP from the droplet:
+
+           curl http://169.254.169.254/metadata/v1/interfaces/public/0/anchor_ipv4/address
+
+       The workaround is to tell kubelet which IP to use using --node-ip. When using DigitalOcean, it can be the public one (assigned to eth0) or the private one (assigned to eth1) should you want to use the optional private network. The kubeletExtraArgs section of the kubeadm NodeRegistrationOptions structure can be used for this.
+
+       Then restart kubelet:
+
+           systemctl daemon-reload
+           systemctl restart kubelet
+
+       COREDNS PODS HAVE CRASHLOOPBACKOFF OR ERROR STATE
+
+       If you have nodes that are running SELinux with an older version of Docker, you might experience a scenario where the coredns pods are not starting. To solve that, you can try one of the following options:
+
+        * Upgrade to a newer version of Docker.
+        * Disable SELinux.
+        * Modify the coredns deployment to set allowPrivilegeEscalation to true:
+
+         kubectl -n kube-system get deployment coredns -o yaml | \
+           sed 's/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | \
+           kubectl apply -f -
+
+       Another cause for CoreDNS to have CrashLoopBackOff is when a CoreDNS Pod deployed in Kubernetes detects a loop. A number of workarounds are available to avoid Kubernetes trying to restart the CoreDNS Pod every time CoreDNS detects the loop and exits.
+
+       > Note:
+       Disabling SELinux or setting allowPrivilegeEscalation to true can compromise the security of your cluster.
+
+       ETCD PODS RESTART CONTINUALLY
+
+       If you encounter the following error:
+
+         rpc error: code = 2 desc = oci runtime error: exec failed: container_linux.go:247: starting container process caused "process_linux.go:110: decoding init error from pipe caused \"read parent: connection reset by peer\""
+
+       This issue appears if you run CentOS 7 with Docker 1.13.1.84. This version of Docker can prevent the kubelet from executing into the etcd container.
+
+       To work around the issue, choose one of these options:
+
+        * Roll back to an earlier version of Docker, such as 1.13.1-75
+
+           dnf downgrade docker-1.13.1-75.git8633870.el7.centos.x86_64 docker-client-1.13.1-75.git8633870.el7.centos.x86_64 docker-common-1.13.1-75.git8633870.el7.centos.x86_64
+
+        * Install one of the more recent recommended versions, such as 18.06:
+
+           sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+           dnf install docker-ce-18.06.1.ce-3.el7.x86_64
+
+       NOT POSSIBLE TO PASS A COMMA SEPARATED LIST OF VALUES TO ARGUMENTS INS
+
+       kubeadm init flags such as --component-extra-args allow you to pass custom arguments to a control-plane component like the kube-apiserver. However, this mechanism is limited due to the underlying type used for parsing the values (mapStringString).
+
+       If you decide to pass an argument that supports multiple, comma-separated values such as --apiserver-extra-args "enable-admission-plugins=LimitRanger,NamespaceExists" this flag will fail with flag: malformed pair, expect string=string. This happens because the list of arguments for --apiserver-extra-args expects key=value pairs and in this case NamespacesExists is considered as a key that is missing a value.
+
+       Alternatively, you can try separating the key=value pairs like so: --apiserver-extra-args "enable-admission-plugins=LimitRanger,enable-admission-plugins=NamespaceExists" but this will result in the key enable-admission-plugins only having the value of NamespaceExists.
+
+       A known workaround is to use the kubeadm configuration file.
+
+       KUBE-PROXY SCHEDULED BEFORE NODE IS INITIALIZED BY CLOUD-CONTROLLER-MA
+
+       In cloud provider scenarios, kube-proxy can end up being scheduled on new worker nodes before the cloud-controller-manager has initialized the node addresses. This causes kube-proxy to fail to pick up the node's IP address properly and has knock-on effects to the proxy function managing load balancers.
+
+       The following error can be seen in kube-proxy Pods:
+
+         server.go:610] Failed to retrieve node IP: host IP unknown; known addresses: []
+         proxier.go:340] invalid nodeIP, initializing kube-proxy with 127.0.0.1 as nodeIP
+
+       A known solution is to patch the kube-proxy DaemonSet to allow scheduling it on control-plane nodes regardless of their conditions, keeping it off of other nodes until their initial guarding conditions abate:
+
+         kubectl -n kube-system patch ds kube-proxy -p='{
+           "spec": {
+             "template": {
+               "spec": {
+                 "tolerations": [
+                   {
+                     "key": "CriticalAddonsOnly",
+                     "operator": "Exists"
+                   },
+                   {
+                     "effect": "NoSchedule",
+                     "key": "node-role.kubernetes.io/control-plane"
+                   }
+                 ]
+               }
+             }
+           }
+         }'
+
+       The tracking issue for this problem is here.
+
+       USR IS MOUNTED READ-ONLY ON NODES #USR-MOUNTED-READ-ONLY
+
+       On Linux distributions such as Fedora CoreOS or Flatcar Container Linux, the directory /usr is mounted as a read-only filesystem. For flex-volume support, Kubernetes components like the kubelet and kube-controller-manager use the default path of /usr/libexec/kubernetes/kubelet-plugins/volume/exec/, yet the flex-volume directory _must be writeable_ for the feature to work.
+
+       > Note:
+       FlexVolume was deprecated in the Kubernetes v1.23 release.
+
+       To workaround this issue, you can configure the flex-volume directory using the kubeadm configuration file.
+
+       On the primary control-plane Node (created using kubeadm init), pass the following file using --config:
+
+         apiVersion: kubeadm.k8s.io/v1beta4
+         kind: InitConfiguration
+         nodeRegistration:
+           kubeletExtraArgs:
+           - name: "volume-plugin-dir"
+             value: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
+         ---
+         apiVersion: kubeadm.k8s.io/v1beta4
+         kind: ClusterConfiguration
+         controllerManager:
+           extraArgs:
+           - name: "flex-volume-plugin-dir"
+             value: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
+
+       On joining Nodes:
+
+         apiVersion: kubeadm.k8s.io/v1beta4
+         kind: JoinConfiguration
+         nodeRegistration:
+           kubeletExtraArgs:
+           - name: "volume-plugin-dir"
+             value: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
+
+       Alternatively, you can modify /etc/fstab to make the /usr mount writeable, but please be advised that this is modifying a design principle of the Linux distribution.
+
+       KUBEADM UPGRADE PLAN PRINTS OUT CONTEXT DEADLINE EXCEEDED ERROR MESSAG
+
+       This error message is shown when upgrading a Kubernetes cluster with kubeadm in the case of running an external etcd. This is not a critical bug and happens because older versions of kubeadm perform a version check on the external etcd cluster. You can proceed with kubeadm upgrade apply ....
+
+       This issue is fixed as of version 1.19.
+
+       KUBEADM RESET UNMOUNTS /VAR/LIB/KUBELET
+
+       If /var/lib/kubelet is being mounted, performing a kubeadm reset will effectively unmount it.
+
+       To workaround the issue, re-mount the /var/lib/kubelet directory after performing the kubeadm reset operation.
+
+       This is a regression introduced in kubeadm 1.15. The issue is fixed in 1.20.
+
+       CANNOT USE THE METRICS-SERVER SECURELY IN A KUBEADM CLUSTER
+
+       In a kubeadm cluster, the metrics-server can be used insecurely by passing the --kubelet-insecure-tls to it. This is not recommended for production clusters.
+
+       If you want to use TLS between the metrics-server and the kubelet there is a problem, since kubeadm deploys a self-signed serving certificate for the kubelet. This can cause the following errors on the side of the metrics-server:
+
+         x509: certificate signed by unknown authority
+         x509: certificate is valid for IP-foo not IP-bar
+
+       See Enabling signed kubelet serving certificates to understand how to configure the kubelets in a kubeadm cluster to have properly signed serving certificates.
+
+       Also see How to run the metrics-server securely.
+
+       UPGRADE FAILS DUE TO ETCD HASH NOT CHANGING
+
+       Only applicable to upgrading a control plane node with a kubeadm binary v1.28.3 or later, where the node is currently managed by kubeadm versions v1.28.0, v1.28.1 or v1.28.2.
+
+       Here is the error message you may encounter:
+
+         [upgrade/etcd] Failed to upgrade etcd: couldn't upgrade control plane. kubeadm has tried to recover everything into the earlier state. Errors faced: static Pod hash for component etcd on Node kinder-upgrade-control-plane-1 did not change after 5m0s: timed out waiting for the condition
+         [upgrade/etcd] Waiting for previous etcd to become available
+         I0907 10:10:09.109104    3704 etcd.go:588] [etcd] attempting to see if all cluster endpoints ([https://172.17.0.6:2379/ https://172.17.0.4:2379/ https://172.17.0.3:2379/]) are available 1/10
+         [upgrade/etcd] Etcd was rolled back and is now available
+         static Pod hash for component etcd on Node kinder-upgrade-control-plane-1 did not change after 5m0s: timed out waiting for the condition
+         couldn't upgrade control plane. kubeadm has tried to recover everything into the earlier state. Errors faced
+         k8s.io/kubernetes/cmd/kubeadm/app/phases/upgrade.rollbackOldManifests
+         	cmd/kubeadm/app/phases/upgrade/staticpods.go:525
+         k8s.io/kubernetes/cmd/kubeadm/app/phases/upgrade.upgradeComponent
+         	cmd/kubeadm/app/phases/upgrade/staticpods.go:254
+         k8s.io/kubernetes/cmd/kubeadm/app/phases/upgrade.performEtcdStaticPodUpgrade
+         	cmd/kubeadm/app/phases/upgrade/staticpods.go:338
+         ...
+
+       The reason for this failure is that the affected versions generate an etcd manifest file with unwanted defaults in the PodSpec. This will result in a diff from the manifest comparison, and kubeadm will expect a change in the Pod hash, but the kubelet will never update the hash.
+
+       There are two way to workaround this issue if you see it in your cluster:
+
+        * The etcd upgrade can be skipped between the affected versions and v1.28.3 (or later) by using:
+
+           kubeadm upgrade {apply|node} [version] --etcd-upgrade=false
+
+       This is not recommended in case a new etcd version was introduced by a later v1.28 patch version.
+
+        * Before upgrade, patch the manifest for the etcd static pod, to remove the problematic defaulted attributes:
+
+           diff --git a/etc/kubernetes/manifests/etcd_defaults.yaml b/etc/kubernetes/manifests/etcd_origin.yaml
+           index d807ccbe0aa..46b35f00e15 100644
+           --- a/etc/kubernetes/manifests/etcd_defaults.yaml
+           +++ b/etc/kubernetes/manifests/etcd_origin.yaml
+           @@ -43,7 +43,6 @@ spec:
+                   scheme: HTTP
+                 initialDelaySeconds: 10
+                 periodSeconds: 10
+           -      successThreshold: 1
+                 timeoutSeconds: 15
+               name: etcd
+               resources:
+           @@ -59,26 +58,18 @@ spec:
+                   scheme: HTTP
+                 initialDelaySeconds: 10
+                 periodSeconds: 10
+           -      successThreshold: 1
+                 timeoutSeconds: 15
+           -    terminationMessagePath: /dev/termination-log
+           -    terminationMessagePolicy: File
+               volumeMounts:
+               - mountPath: /var/lib/etcd
+                 name: etcd-data
+               - mountPath: /etc/kubernetes/pki/etcd
+                 name: etcd-certs
+           -  dnsPolicy: ClusterFirst
+           -  enableServiceLinks: true
+             hostNetwork: true
+             priority: 2000001000
+             priorityClassName: system-node-critical
+           -  restartPolicy: Always
+           -  schedulerName: default-scheduler
+             securityContext:
+               seccompProfile:
+                 type: RuntimeDefault
+           -  terminationGracePeriodSeconds: 30
+             volumes:
+             - hostPath:
+                 path: /etc/kubernetes/pki/etcd
+
+       More information can be found in the tracking issue for this bug.
+
+Kubernetes manual                       from the official documentation

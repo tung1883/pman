@@ -1,0 +1,33 @@
+SHELLCHECK.SC2061(1)             Sandbox manual             SHELLCHECK.SC2061(1)
+
+       NAME
+
+       Quote the parameter to -name so the shell won't interpret it. - find . -name .txt
+
+       QUOTE THE PARAMETER TO -NAME SO THE SHELL WON'T INTERPRET IT
+
+       QUOTE THE PARAMETER TO -NAME SO THE SHELL WON'T INTERPRET IT
+
+       PROBLEMATIC CODE
+
+         find . -name *.txt
+
+       CORRECT CODE
+
+         find . -name '*.txt'
+
+       RATIONALE
+
+       Several find options take patterns to match against, including -ilname, -iname, -ipath, -iregex, -iwholename, -lname, -name, -path, -regex and -wholename.
+
+       These compete with the shell's pattern expansion, and must therefore be quoted so that they are passed literally to find.
+
+       The example command may end up executing as find . -name README.txt after the shell has replaced the *.txt with a matching file README.txt from the current directory.
+
+       This may happen today or suddenly in the future.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

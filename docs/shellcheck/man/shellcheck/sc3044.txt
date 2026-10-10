@@ -1,0 +1,60 @@
+SHELLCHECK.SC3044(1)             Sandbox manual             SHELLCHECK.SC3044(1)
+
+       NAME
+
+       In POSIX sh, declare is undefined. - In addition to declare, the following also cause SC3044 failures as of v0.11.0: let, caller, builtin, complete, compgen, dirs, disown, enabl
+
+       IN POSIX SH, DECLARE IS UNDEFINED
+
+       IN POSIX SH, DECLARE IS UNDEFINED
+
+       In addition to declare, the following also cause SC3044 failures as of v0.11.0: let, caller, builtin, complete, compgen, dirs, disown, enable, mapfile, readarray, pushd, popd, shopt, suspend, and typeset.
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         declare var="value"
+
+       or
+
+         #!/bin/sh
+         declare -r readonly
+
+       or
+
+         #!/bin/sh
+         declare ...
+
+       CORRECT CODE
+
+       If assigning a simple variable outside of a function, skip declare all together:
+
+         var="value"
+
+       If declaring a variable read-only:
+
+         var=value
+         readonly var
+
+       If you are unable to find a suitable replacement, consider switching to a shell that supports declare:
+
+         #!/bin/bash
+         declare ...
+
+       Indexed arrays, associative arrays, local variables, namerefs, and integer variables are not supported in POSIX sh. Either write around them, or switch to a shell that supports them.
+
+       RATIONALE
+
+       The declare command is non-standard, and most of its functionality is not available across shells.
+
+       Either find a POSIX replacement, or switch to a shell that is guaranteed to support them.
+
+       EXCEPTIONS
+
+       If your declare command is guarded by a check of the shell version, such as inspecting $BASH_VERSION, you can ignore this message.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

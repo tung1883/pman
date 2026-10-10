@@ -1,0 +1,52 @@
+WEBAPI.SHAREDSTORAGE-APPEND(1)   Sandbox manual   WEBAPI.SHAREDSTORAGE-APPEND(1)
+
+       NAME
+
+       SharedStorage: append() method - The append() method of the SharedStorage interface appends a string to the value of an existing key-value pair in the current origin's share
+
+       SHAREDSTORAGE: APPEND() METHOD
+
+       {{non-standard_header}}
+
+       The append() method of the SharedStorage interface appends a string to the value of an existing key-value pair in the current origin's shared storage.
+
+       SYNTAX
+
+         append(key, value)
+
+       PARAMETERS
+
+        * key
+          * : A string representing the key of the key-value pair to which you want to append a value.
+        * value
+          * : A string that you want to append to the existing value of the key-value pair.
+       > If the specified key isn't found in the shared storage, the append() operation is equivalent to set(), that is, a new key-value pair with the specified key is added to the shared storage.
+
+       RETURN VALUE
+
+       A Promise that fulfills with undefined.
+
+       EXCEPTIONS
+
+        * The Promise rejects with a TypeError if:
+          * The appended entry was not successfully stored in the database due to shared storage not being available (for example it is disabled using a browser setting).
+          * key and/or value exceed the browser-defined maximum length.
+          * The calling site does not have the Shared Storage API included in a successful privacy sandbox enrollment process.
+        * In the case of WorkletSharedStorage, the Promise rejects with a TypeError if the worklet module has not been added with SharedStorageWorklet.addModule().
+       > In the case of WindowSharedStorage, if the append() operation doesn't successfully write to the database for a reason other than shared storage not being available, no error is thrown — the operation still fulfills with undefined.
+
+       EXAMPLES
+
+         window.sharedStorage
+           .append("integer-list", ",9")
+           .then(() => console.log("Value appended to integer list"));
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Shared Storage API
+
+Web APIs manual                         from the official documentation

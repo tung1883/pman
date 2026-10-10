@@ -1,0 +1,49 @@
+WEBAPI.AUDIOPROCESSINGEVENT-PLAYBACKTIME(1) Sandbox manual WEBAPI.AUDIOPROCESSINGEVENT-PLAYBACKTIME(1)
+
+       NAME
+
+       AudioProcessingEvent: playbackTime property - The playbackTime read-only property of the AudioProcessingEvent interface represents the time when the audio will be played. It is in the sa
+
+       AUDIOPROCESSINGEVENT: PLAYBACKTIME PROPERTY
+
+       The playbackTime read-only property of the AudioProcessingEvent interface represents the time when the audio will be played. It is in the same coordinate system as the time used by the AudioContext.
+
+       VALUE
+
+       A number that doesn't need to be an integer.
+
+       EXAMPLES
+
+         const audioContext = new AudioContext();
+         const processor = audioContext.createScriptProcessor(256, 2, 2);
+
+         processor.addEventListener("audioprocess", (event) => {
+           const inputBuffer = event.inputBuffer;
+           const outputBuffer = event.outputBuffer;
+
+           for (let channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
+             const inputData = inputBuffer.getChannelData(channel);
+             const outputData = outputBuffer.getChannelData(channel);
+
+             // Log the corresponding time for this audio buffer
+             console.log(`Received audio data to be played at ${event.playbackTime}`);
+
+             // Process the audio data here
+             for (let i = 0; i < outputBuffer.length; i++) {
+               outputData[i] = inputData[i] * 0.5;
+             }
+           }
+         });
+
+         processor.connect(audioContext.destination);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * AudioProcessingEvent
+        * ScriptProcessorNode
+
+Web APIs manual                         from the official documentation

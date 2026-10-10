@@ -1,0 +1,68 @@
+WEBAPI.SPEECHSYNTHESIS-GETVOICES(1) Sandbox manual WEBAPI.SPEECHSYNTHESIS-GETVOICES(1)
+
+       NAME
+
+       SpeechSynthesis: getVoices() method - The getVoices() method of the
+
+       SPEECHSYNTHESIS: GETVOICES() METHOD
+
+       The getVoices() method of the SpeechSynthesis interface returns a list of SpeechSynthesisVoice objects representing all the available voices on the current device.
+
+       SYNTAX
+
+         getVoices()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A list (array) of SpeechSynthesisVoice objects.
+
+       EXAMPLES
+
+       JAVASCRIPT
+
+         function populateVoiceList() {
+           if (typeof speechSynthesis === "undefined") {
+             return;
+           }
+
+           const voices = speechSynthesis.getVoices();
+
+           for (const voice of voices) {
+             const option = document.createElement("option");
+             option.textContent = `${voice.name} (${voice.lang})`;
+
+             if (voice.default) {
+               option.textContent += " — DEFAULT";
+             }
+
+             option.setAttribute("data-lang", voice.lang);
+             option.setAttribute("data-name", voice.name);
+             document.getElementById("voiceSelect").appendChild(option);
+           }
+         }
+
+         populateVoiceList();
+         if (
+           typeof speechSynthesis !== "undefined" &&
+           speechSynthesis.onvoiceschanged !== undefined
+         ) {
+           speechSynthesis.onvoiceschanged = populateVoiceList;
+         }
+
+       HTML
+
+         <select id="voiceSelect"></select>
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Speech API
+
+Web APIs manual                         from the official documentation

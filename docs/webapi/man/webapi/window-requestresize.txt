@@ -1,0 +1,118 @@
+WEBAPI.WINDOW-REQUESTRESIZE(1)   Sandbox manual   WEBAPI.WINDOW-REQUESTRESIZE(1)
+
+       NAME
+
+       Window: requestResize() method - The requestResize() method of the Window interface updates the size information shared by an embedded document with its embedding parent, bu
+
+       WINDOW: REQUESTRESIZE() METHOD
+
+       The requestResize() method of the Window interface updates the size information shared by an embedded document with its embedding parent, but only if the embedded document has opted in to sharing its size information via the meta tag.
+
+       SYNTAX
+
+         requestResize()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * NotAllowedError DOMException
+          * : Thrown if:
+            * The requestResize() method was called from a top-level (non-embedded) document.
+            * The embedding element is not an .
+            * The embedded document has not opted in to sharing its layout size by including a tag.
+       > If the parent document doesn't set the frame-sizing CSS property on the embedding , no exception is thrown, but the will not be resized.
+
+       DESCRIPTION
+
+       For security and privacy reasons, elements do not by default expose any information to the parent document about the size of the content in the document they are embedding.
+
+       To enable responsive sizing of elements based on their content, the tag can be included in an embedded document to opt it in to sharing its size information with the parent document. The frame-sizing CSS property can then be set on the to cause it to adopt the same horizontal or vertical size as the embedded document's actual layout size (termed the internal layout intrinsic size in the spec). This ensures that the document content fits seamlessly into its embedding , avoiding unnecessary scrollbars.
+
+       The embedded document's layout size is automatically reported once when its DOMContentLoaded event fires, and again when the Window object's load event fires.
+
+       In other circumstances, you can call the requestResize() method from the embedded document to make it report an updated layout size; this is typically done from within the event handler that caused the embedded content to change size. If the is sized using frame-sizing, it will then update its size automatically so that it still neatly contains the embedded content.
+
+       EXAMPLES
+
+       USING REQUESTRESIZE()
+
+       This example shows how the requestResize() method can be used to automatically resize an when the layout size of its embedded document content changes.
+
+       We have two documents, the main index.html document, and the embedded frame.html document.
+
+       THE MAIN INDEX.HTML
+
+       The index.html document's HTML contains a heading and an , into which is embedded the frame.html document:
+
+         <h1>Responsive iframes — basic example</h1>
+
+         <iframe src="frame.html"></iframe>
+
+       In the index.html CSS, we give the a frame-sizing value of content-block-size. Because the has a horizontal writing-mode, its height will be set to the embedded document's layout height.
+
+         iframe {
+           frame-sizing: content-block-size;
+           border: 2px solid gray;
+         }
+
+       THE EMBEDDED FRAME.HTML
+
+       The frame.html document includes a element with a tabindex value of 0 set so that it is focusable. It contains a heading and some paragraphs. The document also includes the tag, which opts it in to sharing its content layout size with the parent document. Finally, we include a element containing some JavaScript to control the demo.
+
+         <head>
+           <!-- ... -->
+
+           <meta name="responsive-embedded-sizing" />
+
+           <!-- ... -->
+         </head>
+         <body>
+           <div tabindex="0">
+             <h1>This is my frame</h1>
+             <p>This is the content of my discontent.</p>
+             <p>This is some more content.</p>
+           </div>
+           <script>
+             /* ... */
+           </script>
+         </body>
+
+       The script inside frame.html starts by grabbing a reference to the element. It then sets click and keydown event listeners on the , both of which run a custom function called addParagraph() when the event fires.
+
+         const divElem = document.querySelector("div");
+         divElem.addEventListener("click", addParagraph);
+         window.addEventListener("keydown", addParagraph);
+
+       The addParagraph() function generates a new paragraph element and appends it to the end of the as a child, increasing its height. It then calls requestResize() so that the new size is reported to the parent document.
+
+         function addParagraph() {
+           const para = document.createElement("p");
+           para.textContent = "New content.";
+           divElem.appendChild(para);
+           window.requestResize();
+         }
+
+       RESULT
+
+       Open our requestResize() demo in a separate tab to see it in action (see the source code).
+
+       Even though no explicit height has been set on the , it is sized to the right height to exactly contain its embedded document, with no scroll bars. Try clicking on the content or focusing it and pressing a key on the keyboard. As a new paragraph is added to the , the grows in height, but the also grows in height to match it.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * frame-sizing CSS property
+        * CSS box sizing module
+        * 
+
+Web APIs manual                         from the official documentation

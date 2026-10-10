@@ -1,0 +1,67 @@
+ROCKY.INTEROPERABILITY-IMPORT_ROCKY_TO_WSL(1) Sandbox manual ROCKY.INTEROPERABILITY-IMPORT_ROCKY_TO_WSL(1)
+
+       NAME
+
+       Import Rocky Linux to WSL or WSL2 - If you are looking for WSL instructions for another version of Rocky Linux, select the version you want from the top menu and then refer to
+
+       IMPORT ROCKY LINUX TO WSL OR WSL2
+
+       > Images for other versions:
+       If you are looking for WSL instructions for another version of Rocky Linux, select the version you want from the top menu and then refer to the WSL instructions under "Interoperability."
+
+       PREREQUISITES
+
+       You must enable the Windows-Subsystem for Linux feature. Do this with one of these options:
+
+        * A newer WSL version with extra features is available in the Microsoft Store. Use this newer version whenever possible.
+        * Open an administrative Terminal (either PowerShell or Command-Prompt) and
+       run wsl --install (ref.)
+
+        * Go to the graphical Windows Settings and enable the optional feature Windows-Subsystem for Linux
+       This feature should be available on every supported version of Windows 10 and 11 currently.
+
+       > Wsl version:
+       Ensure that your WSL version is up to date, as some features were only introduced in later versions. If you are unsure, run wsl --update.
+
+       STEPS
+
+       INSTALLABLE WSL IMAGES (PREFERRED)
+
+        1. Download the WSL image from the CDN or another mirror closer to you:
+            * 10: x86_64 or aarch64
+        2. There are multiple options for installing a .wsl image:
+            * Double-click the image and it will be installed with the images default name
+            * Install the image via command line:
+
+                 wsl --install --from-file <path-to/Rocky-10-WSL-Base.latest.x86_64.wsl> --name <machine-name>
+
+       CONVENTIONAL CONTAINER IMAGES
+
+        1. Get the container rootfs. This is possible in multiple ways:
+            * Download the image from the CDN:
+                * 10: Base x86_64, Minimal x86_64, UBI x86_64, Base aarch64, Minimal aarch64, UBI aarch64
+            * Extract the image from either Docker Hub or Quay.io (ref.)
+
+                 <podman/docker> export rockylinux:10 > rocky-10-image.tar
+
+        2. (optional) You will have to extract the .tar file from the .tar.xz file if you are using one of the latest WSL versions
+        3. Create the directory where the WSL will store its files (mostly somewhere in the user profile)
+        4. Finally, import the image into WSL (ref.):
+            * WSL:
+
+                 wsl --import <machine-name> <path-to-vm-dir> <path-to/rocky-10-image.tar.xz> --version 1
+
+            * WSL 2:
+
+                 wsl --import <machine-name> <path-to-vm-dir> <path-to/rocky-10-image.tar.xz> --version 2
+
+       > Wsl vs. wsl 2:
+       Generally speaking, WSL 2 should be faster than WSL, although this may vary depending on the use case.
+
+       > Windows terminal:
+       If you have Windows Terminal installed, the new WSL distro name will appear as an option on the pull-down menu, which is quite handy for launching in the future. You can then customize it with colors, fonts, and other elements.
+
+       > Systemd:
+       The WSL image is systemd-enabled by default. If you want to use the container images or build your own, you will only need to add systemd=true to the boot section in the /etc/wsl.conf file. (ref.)
+
+Rocky Linux manual                      from the official documentation

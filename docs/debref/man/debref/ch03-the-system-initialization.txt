@@ -1,0 +1,486 @@
+DEBREF.CH03-THE-SYSTEM-INITIALIZATION(1) Sandbox manual DEBREF.CH03-THE-SYSTEM-INITIALIZATION(1)
+
+       CHAPTER 3. THE SYSTEM INITIALIZATION
+
+       It is wise for you as the system administrator to know roughly how the Debian system is started and configured. Although the exact details are in the source files of the packages installed and their documentations, it is a bit overwhelming for most of us.
+
+       Here is a rough overview of the key points of the Debian system initialization. Since the Debian system is a moving target, you should refer to the latest documentation.
+
+        * Debian Linux Kernel Handbook is the primary source of information on the Debian kernel.
+        * bootup(7) describes the system bootup process based on systemd . (Recent Debian)
+        * boot(7) describes the system bootup process based on UNIX System V Release 4. (Older Debian)
+
+       3.1. AN OVERVIEW OF THE BOOT STRAP PROCESS
+
+       The computer system undergoes several phases of boot strap processes from the power-on event until it offers the fully functional operating system (OS) to the user.
+
+       For simplicity, I limit discussion to the typical PC platform with the default installation.
+
+       The typical boot strap process is like a four-stage rocket. Each stage rocket hands over the system control to the next stage one.
+
+        * Section 3.1.1, “Stage 1: the UEFI”
+        * Section 3.1.2, “Stage 2: the boot loader”
+        * Section 3.1.3, “Stage 3: the mini-Debian system”
+        * Section 3.1.4, “Stage 4: the normal Debian system”
+       Of course, these can be configured differently. For example, if you compiled your own kernel, you may be skipping the step with the mini-Debian system. So please do not assume this is the case for your system until you check it yourself.
+
+       3.1.1. STAGE 1: THE UEFI
+
+       The Unified Extensible Firmware Interface (UEFI) defines a boot manager as part of the UEFI specification. When a computer is powered on, the boot manager is the 1st stage of the boot process which checks the boot configuration and based on its settings, then executes the specified OS boot loader or operating system kernel (usually boot loader). The boot configuration is defined by variables stored in NVRAM, including variables that indicate the file system paths to OS loaders or OS kernels.
+
+       An EFI system partition (ESP) is a data storage device partition that is used in computers adhering to the UEFI specification. Accessed by the UEFI firmware when a computer is powered up, it stores UEFI applications and the files these applications need to run, including operating system boot loaders. (On the legacy PC system, BIOS stored in the MBR may be used instead.)
+
+       3.1.2. STAGE 2: THE BOOT LOADER
+
+       The boot loader is the 2nd stage of the boot process which is started by the UEFI. It loads the system kernel image and the initrd image to the memory and hands control over to them. This initrd image is the root filesystem image and its support depends on the bootloader used.
+
+       The Debian system normally uses the Linux kernel as the default system kernel. The initrd image for the current 5.x Linux kernel is technically the initramfs (initial RAM filesystem) image.
+
+       There are many boot loaders and configuration options available.
+
+       Table 3.1. List of boot loaders
+
+         package | popcon | size | initrd | bootloader | description
+         grub-efi-amd64 | I:459 | 142 | Supported | GRUB UEFI | This is smart enough to understand disk partitions and filesystems such as vfat, ext4, …. (UEFI)
+         grub-pc | V:16, I:518 | 479 | Supported | GRUB 2 | This is smart enough to understand disk partitions and filesystems such as vfat, ext4, …. (BIOS)
+         grub-rescue-pc | V:0.06, I:0.63 | 7273 | Supported | GRUB 2 | This is GRUB 2 bootable rescue images (CD and floppy) (PC/BIOS version)
+         grml-rescueboot | V:0.1, I:1.1 | 36 | N/A | GRUB 2 plug-in | grml-rescueboot adds live Linux ISO images to the grub2 boot menu
+         syslinux | V:3, I:31 | 325 | Supported | Isolinux | This understands the ISO9660 filesystem. This is used by the boot CD.
+         syslinux | V:3, I:31 | 325 | Supported | Syslinux | This understands the MSDOS filesystem (FAT). This is used by the boot floppy.
+         loadlin | V:0.04, I:0.42 | 87 | Supported | Loadlin | New system is started from the FreeDOS/MSDOS system.
+         mbr | V:0.2, I:2.8 | 47 | Not supported | MBR by Neil Turton | This is free software which substitutes MSDOS MBR. This only understands disk partitions.
+       For UEFI system, GRUB2 first reads the ESP partition and uses UUID specified for search.fs_uuid in "/boot/efi/EFI/debian/grub.cfg" to determine the partition of the GRUB2 menu configuration file "/boot/grub/grub.cfg".
+
+       The key part of the GRUB2 menu configuration file looks like:
+
+         menuentry 'Debian GNU/Linux' ... {
+                 load_video
+                 insmod gzio
+                 insmod part_gpt
+                 insmod ext2
+                 search --no-floppy --fs-uuid --set=root fe3e1db5-6454-46d6-a14c-071208ebe4b1
+                 echo    'Loading Linux 5.10.0-6-amd64 ...'
+                 linux   /boot/vmlinuz-5.10.0-6-amd64 root=UUID=fe3e1db5-6454-46d6-a14c-071208ebe4b1 ro quiet
+                 echo    'Loading initial ramdisk ...'
+                 initrd  /boot/initrd.img-5.10.0-6-amd64
+         }
+
+       For this part of /boot/grub/grub.cfg, this menu entry means the following.
+
+       Table 3.2. The meaning of the menu entry of the above part of /boot/grub/grub.cfg
+
+         setting | value
+         GRUB2 modules loaded | gzio, part_gpt, ext2
+         root file system partition used | partition identified by UUID=fe3e1db5-6454-46d6-a14c-071208ebe4b1
+         kernel image path in the root file system | /boot/vmlinuz-5.10.0-6-amd64
+         kernel boot parameter used | "root=UUID=fe3e1db5-6454-46d6-a14c-071208ebe4b1 ro quiet"
+         initrd image path in the root file system | /boot/initrd.img-5.10.0-6-amd64
+       On Debian system, "/boot/grub/grub.cfg" is managed by the installed GRUB package (e.g. grub-efi-amd64) and direct user modification to this file is deprecated. You should customize configuration files in "/etc/grub.d/" and "/etc/default/grub", instead. Then configure the GRUB configuration files and update NVRAM variables to automatically boot into Debian by:
+
+         # dpkg-reconfigure grub-efi-amd64
+
+         Tip
+       You can show kernel boot log messages by removing "quiet" from the "GRUB_CMDLINE_LINUX_DEFAULT" value in "/etc/default/grub".
+
+         Tip
+       You can add GRUB splash background by placing its image file in "/boot/grub/".
+
+       See "info grub", grub-install(8), grub-mkconfig(8).
+
+       3.1.3. STAGE 3: THE MINI-DEBIAN SYSTEM
+
+       The mini-Debian system is the 3rd stage of the boot process which is started by the boot loader. It runs the system kernel with its root filesystem on the memory. This is an optional preparatory stage of the boot process.
+
+         Note
+       The term "the mini-Debian system" is coined by the author to describe this 3rd stage boot process for this document. This system is commonly referred as the initrd or initramfs system. Similar system on the memory is used by the Debian Installer.
+
+       The "/init" program is executed as the first program in this root filesystem on the memory. It is a program which initializes the kernel in user space and hands control over to the next stage. This mini-Debian system offers flexibility to the boot process such as adding kernel modules before the main boot process or mounting the root filesystem as an encrypted one.
+
+        * The "/init" program is a shell script program if initramfs was created by initramfs-tools.
+          * You can interrupt this part of the boot process to gain root shell by providing "break=init" etc. to the kernel boot parameter. See the "/init" script for more break conditions. This shell environment is sophisticated enough to make a good inspection of your machine's hardware.
+          * Commands available in this mini-Debian system are stripped down ones and mainly provided by a GNU tool called busybox(1).
+        * The "/init" program is a binary systemd program if initramfs was created by dracut.
+          * Commands available in this mini-Debian system are stripped down systemd(1) environment.
+         Caution
+       You need to use "-n" option for mount command when you are on the readonly root filesystem.
+
+       3.1.4. STAGE 4: THE NORMAL DEBIAN SYSTEM
+
+       The normal Debian system is the 4th stage of the boot process which is started by the mini-Debian system. The system kernel for the mini-Debian system continues to run in this environment. The root filesystem is switched from the one on the memory to the one on the physical storage device.
+
+       The init program is executed as the first program with PID=1 to perform the main boot process of starting many programs. The default file path for the init program is "/usr/sbin/init" but it can be changed by the kernel boot parameter as "init=/path/to/init_program".
+
+       "/usr/sbin/init" is symlinked to "/lib/systemd/systemd" after Debian 8 Jessie (released in 2015).
+
+         Tip
+       The actual init command on your system can be verified by the "ps --pid 1 -f" command.
+
+       Table 3.3. List of boot utilities for the Debian system
+
+         package | popcon | size | description
+         systemd | V:920, I:979 | 11013 | event-based init(8) daemon for concurrency (alternative to sysvinit)
+         cloud-init | V:3.6, I:6.7 | 3267 | initialization system for infrastructure cloud instances
+         systemd-sysv | V:912, I:981 | 76 | the manual pages and links needed for systemd to replace sysvinit
+         init-system-helpers | V:585, I:988 | 131 | helper tools for switching between sysvinit and systemd
+         initscripts | V:16, I:59 | 197 | scripts for initializing and shutting down the system
+         sysvinit-core | V:3.4, I:3.8 | 365 | System-V-like init(8) utilities
+         sysv-rc | V:31, I:63 | 85 | System-V-like runlevel change mechanism
+         sysvinit-utils | V:722, I:1000 | 100 | System-V-like utilities (startpar(8), bootlogd(8), …)
+         lsb-base | V:217, I:320 | 12 | Linux Standard Base 3.2 init script functionality
+         insserv | V:35, I:62 | 132 | tool to organize boot sequence using LSB init.d script dependencies
+         kexec-tools | V:1.4, I:5.4 | 320 | kexec tool for kexec(8) reboots (warm reboot)
+         systemd-bootchart | V:0.20, I:0.60 | 131 | boot process performance analyser
+         mingetty | V:0.1, I:2.5 | 36 | console-only getty(8)
+         mgetty | V:0.15, I:0.50 | 318 | smart modem getty(8) replacement
+         Tip
+       See Debian wiki: BootProcessSpeedup for the latest tips to speed up the boot process.
+
+       3.2. RESCUE SYSTEM
+
+         Warning
+       Do not perform system administration tasks around the boot strap process without having a rescue system.
+
+       Availability of a rescue system enables us to perform challenging tasks such as:
+
+        * Booting a system from a broken boot loader installation
+        * Fixing a broken boot loader installation
+        * Extracting data from a broken unbootable system
+        * Editing filesystems, disk partitions, and LVM volumes involving the root filesystem
+       Typically, a rescue system is provided as a ISO image file and written to a removable storage media such as:
+
+        * USB flash drive prepared as Section 9.7.2, “Writing directly to the disk”
+        * CD / DVD prepared as Section 9.7.7, “Writing directly to the CD/DVD-R/RW”
+       For simplicity, USB flash drive cases are mentioned as examples below but CD or DVD may be used as well.
+
+         Tip
+       You may need to change some UEFI NVRAM variables to boot arbitrary boot loaders on the removable storage media.
+
+       3.2.1. GRUB UEFI RESCUE SYSTEM ON USB
+
+       The GRUB UEFI rescue system with menu can be started by turning on system power with the "GRUB UEFI rescue system on USB" inserted.
+
+       This "GRUB UEFI rescue system on USB" is prepared by writing the Super Grub2 Disk ISO image to USB flash drive in advance.
+
+       In case of broken boot loader configuration by the installation of another operating system etc., you can fix this by:
+
+        * Start the GRUB UEFI rescue system to discover bootable installed systems automatically.
+        * Start the installed Debian system from the GRUB menu.
+        * At Linux root shell prompt:
+
+         # dpkg-reconfigure grub-efi-amd64
+
+         Note
+       The bootable GRUB rescue ISO image can be generated by following "info grub-mkrescue", too. It offers a CLI GRUB shell prompt but doesn't offer automatic discovery of bootable installed systems.
+
+       3.2.2. LINUX LIVE RESCUE SYSTEM ON USB
+
+       The Linux live rescue system can be started by turning on system power with the "Linux live rescue system on USB" inserted.
+
+       This "Linux live rescue system on USB" can be prepared by writing one of Linux live ISO images based on Debian to a USB flash drive in advance. Here are some examples of such Linux live images.
+
+        * Debian Live images
+        * Kali Linux Live
+        * Grml Live Linux
+       Here are some use cases of this Linux live rescue system:
+
+        * Fix the broken boot loader configuration caused by the installation of another operating system etc.:
+          * Start the Linux live rescue system.
+          * Mount the partition containing the root filesystem of the unbootable installed Debian system to "/mnt".
+          * At Linux root shell prompt:
+
+         # chroot /mnt; dpkg-reconfigure grub-efi-amd64
+
+        * Fix the broken dpkg package:
+          * Start the Linux live rescue system.
+          * Mount the partition containing the root filesystem of the installed Debian system with the broken dpkg package to "/mnt".
+          * At Linux root shell prompt:
+
+         # dpkg --root /mnt -i /mnt/var/cache/apt/archives/dpkg_old_version_amd64.deb
+
+        * Perform normally prohibited changes such as filesystem operations to the installed system (see Section 9.6, “Data storage tips”).
+         Warning
+       Your GUI screen of the Linux live system may be locked after the inactivity.
+
+         Tip
+        * It's a good idea to set your password as soon as you start a Linux live system.
+        * You may set your password for example by "sudo passwd user" from the user's shell prompt on the Linux virtual consoles (see Section 1.1.6, “Virtual consoles”).
+        * Some Linux live systems may set their default "user/password": "Debian Live" = "user/live", "Kali Linux Live" = "kali/kali"
+
+       3.2.3. LINUX LIVE RESCUE SYSTEM FROM GRUB
+
+       The Linux live rescue system can be started from the GRUB menu entry. The GRUB configuration for this is prepared by the following:
+
+        * Install the grml-rescueboot package
+        * Find a Linux live ISO image which has "/boot/grub/loopback.cfg" in its image.
+          * ISO images mentioned in Section 3.2.2, “Linux live rescue system on USB” have "/boot/grub/loopback.cfg" in their image.
+        * Copy some of these Linux live ISO images to the "/boot/grml/" directory.
+        * Update GRUB menu by:
+
+         # dpkg-reconfigure grub-efi-amd64
+
+       Upon turning on system power, the GRUB displays menu with candidates for Linux live rescue systems.
+
+       3.3. SYSTEMD
+
+       3.3.1. SYSTEMD INIT
+
+       When the Debian system starts, /usr/sbin/init symlinked to /usr/lib/systemd is started as the init system process (PID=1) owned by root (UID=0). See systemd(1).
+
+       The systemd init process spawns processes in parallel based on the unit configuration files (see systemd.unit(5)) which are written in declarative style instead of SysV-like procedural style.
+
+       The spawned processes are placed in individual Linux control groups named after the unit which they belong to in the private systemd hierarchy (see cgroups and Section 4.7.5, “Linux security features”).
+
+       Units for the system mode are loaded from the "System Unit Search Path" described in systemd.unit(5). The main ones are as follows in the order of priority:
+
+        * "/etc/systemd/system/*": System units created by the administrator
+        * "/run/systemd/system/*": Runtime units
+        * "/lib/systemd/system/*": System units installed by the distribution package manager
+       Their inter-dependencies are specified by the directives "Wants=", "Requires=", "Before=", "After=", … (see "MAPPING OF UNIT PROPERTIES TO THEIR INVERSES" in systemd.unit(5)). The resource controls are also defined (see systemd.resource-control(5)).
+
+       The suffix of the unit configuration file encodes their types as:
+
+        * *.service describes the process controlled and supervised by systemd. See systemd.service(5).
+        * *.device describes the device exposed in the sysfs(5) as udev(7) device tree. See systemd.device(5).
+        * *.mount describes the file system mount point controlled and supervised by systemd. See systemd.mount(5).
+        * *.automount describes the file system auto mount point controlled and supervised by systemd. See systemd.automount(5).
+        * *.swap describes the swap device or file controlled and supervised by systemd. See systemd.swap(5).
+        * *.path describes the path monitored by systemd for path-based activation. See systemd.path(5).
+        * *.socket describes the socket controlled and supervised by systemd for socket-based activation. See systemd.socket(5).
+        * *.timer describes the timer controlled and supervised by systemd for timer-based activation. See systemd.timer(5).
+        * *.slice manages resources with the cgroups(7). See systemd.slice(5).
+        * *.scope is created programmatically using the bus interfaces of systemd to manages a set of system processes. See systemd.scope(5).
+        * *.target groups other unit configuration files to create the synchronization point during start-up. See systemd.target(5).
+       Upon system start up (i.e., init), the systemd process tries to start the "/lib/systemd/system/default.target (normally symlinked to "graphical.target"). First, some special target units (see systemd.special(7)) such as "local-fs.target", "swap.target" and "cryptsetup.target" are pulled in to mount the filesystems. Then, other target units are also pulled in by the target unit dependencies. For details, read bootup(7).
+
+       systemd offers backward compatibility features. SysV-style boot scripts in "/etc/init.d/rc[0123456S].d/[KS]name" are still parsed and telinit(8) is translated into systemd unit activation requests.
+
+         Caution
+       Emulated runlevel 2 to 4 are all symlinked to the same "multi-user.target".
+
+       3.3.2. SYSTEMD LOGIN
+
+       When a user logins to the Debian system via gdm3(8), sshd(8), etc., /lib/systemd/system --user is started as the user service manager process owned by the corresponding user. See systemd(1).
+
+       The systemd user service manager process spawns processes in parallel based on the declarative unit configuration files (see systemd.unit(5) and user@.service(5)).
+
+       Units for the user mode are loaded from the "User Unit Search Path" described in systemd.unit(5). The main ones are as follows in the order of priority:
+
+        * "~/.config/systemd/user/*": User configuration units
+        * "/etc/systemd/user/*": User units created by the administrator
+        * "/run/systemd/user/*": Runtime units
+        * "/lib/systemd/user/*": User units installed by the distribution package manager
+       These are managed in the same way as Section 3.3.1, “Systemd init”.
+
+       3.4. THE KERNEL MESSAGE
+
+       The kernel error message displayed to the console can be configured by setting its threshold level.
+
+         # dmesg -n3
+
+       Table 3.4. List of kernel error levels
+
+         error level value | error level name | meaning
+         0 | KERN_EMERG | system is unusable
+         1 | KERN_ALERT | action must be taken immediately
+         2 | KERN_CRIT | critical conditions
+         3 | KERN_ERR | error conditions
+         4 | KERN_WARNING | warning conditions
+         5 | KERN_NOTICE | normal but significant condition
+         6 | KERN_INFO | informational
+         7 | KERN_DEBUG | debug-level messages
+
+       3.5. THE SYSTEM MESSAGE
+
+       Under systemd, both kernel and system messages are logged by the journal service systemd-journald.service (a.k.a journald) either into a persistent binary data below "/var/log/journal" or into a volatile binary data below "/run/log/journal/". These binary log data are accessed by the journalctl(1) command. For example, you can display log from the last boot as:
+
+         $ journalctl -b
+
+       Table 3.5. List of typical journalctl command snippets
+
+         Operation | Command snippets
+         View log for system services and kernel from the last boot | "journalctl -b --system"
+         View log for services of the current user from the last boot | "journalctl -b --user"
+         View job log of "$unit" from the last boot | "journalctl -b -u $unit"
+         View job log of "$unit" ("tail -f" style) from the last boot | "journalctl -b -u $unit -f"
+       Under systemd, the system logging utility rsyslogd(8) may be uninstalled. If it is installed, it changes its behavior to read the volatile binary log data (instead of pre-systemd default "/dev/log") and to create traditional permanent ASCII system log data. This can be customized by "/etc/default/rsyslog" and "/etc/rsyslog.conf" for both the log file and on-screen display. See rsyslogd(8) and rsyslog.conf(5). See also Section 9.3.2, “Log analyzer”.
+
+       3.6. SYSTEM MANAGEMENT
+
+       The systemd offers not only init system but also generic system management operations with the systemctl(1) command.
+
+       Table 3.6. List of typical systemctl command snippets
+
+         Operation | Command snippets
+         List all available unit types | "systemctl list-units --type=help"
+         List all target units in memory | "systemctl list-units --type=target"
+         List all service units in memory | "systemctl list-units --type=service"
+         List all device units in memory | "systemctl list-units --type=device"
+         List all mount units in memory | "systemctl list-units --type=mount"
+         List all socket units in memory | "systemctl list-sockets"
+         List all timer units in memory | "systemctl list-timers"
+         Start "$unit" | "systemctl start $unit"
+         Stop "$unit" | "systemctl stop $unit"
+         Reload service-specific configuration | "systemctl reload $unit"
+         Stop and start all "$unit" | "systemctl restart $unit"
+         Start "$unit" and stop all others | "systemctl isolate $unit"
+         Switch to "graphical" (GUI system) | "systemctl isolate graphical"
+         Switch to "multi-user" (CLI system) | "systemctl isolate multi-user"
+         Switch to "rescue" (single user CLI system) | "systemctl isolate rescue"
+         Send kill signal to "$unit" | "systemctl kill $unit"
+         Check if "$unit" service is active | "systemctl is-active $unit"
+         Check if "$unit" service is failed | "systemctl is-failed $unit"
+         Check status of "$unit|$PID|device" | "systemctl status $unit|$PID|$device"
+         Show properties of "$unit|$job" | "systemctl show $unit|$job"
+         Reset failed "$unit" | "systemctl reset-failed $unit"
+         List dependency of all unit services | "systemctl list-dependencies --all"
+         List unit files installed on the system | "systemctl list-unit-files"
+         Enable "$unit" (add symlink) | "systemctl enable $unit"
+         Disable "$unit" (remove symlink) | "systemctl disable $unit"
+         Unmask "$unit" (remove symlink to "/dev/null") | "systemctl unmask $unit"
+         Mask "$unit" (add symlink to "/dev/null") | "systemctl mask $unit"
+         Get default-target setting | "systemctl get-default"
+         Set default-target to "graphical" (GUI system) | "systemctl set-default graphical"
+         Set default-target to "multi-user" (CLI system) | "systemctl set-default multi-user"
+         Show job environment | "systemctl show-environment"
+         Set job environment "variable" to "value" | "systemctl set-environment variable=value"
+         Unset job environment "variable" | "systemctl unset-environment variable"
+         Reload all unit files and daemons | "systemctl daemon-reload"
+         Shut down the system | "systemctl poweroff"
+         Shut down and reboot the system | "systemctl reboot"
+         Suspend the system | "systemctl suspend"
+         Hibernate the system | "systemctl hibernate"
+       Here, "$unit" in the above examples may be a single unit name (suffix such as .service and .target are optional) or, in many cases, multiple unit specifications (shell-style globs "*", "?", "[]" using fnmatch(3) which will be matched against the primary names of all units currently in memory).
+
+       System state changing commands in the above examples are typically preceded by the "sudo" to attain the required administrative privilege.
+
+       The output of the "systemctl status $unit|$PID|$device" uses color of the dot ("●") to summarize the unit state at a glance.
+
+        * White "●" indicates an "inactive" or "deactivating" state.
+        * Red "●" indicates a "failed" or "error" state.
+        * Green "●" indicates an "active", "reloading" or "activating" state.
+
+       3.7. OTHER SYSTEM MONITORS
+
+       Here are a list of other monitoring command snippets under systemd. Please read the pertinent manpages including cgroups(7).
+
+       Table 3.7. List of other monitoring command snippets under systemd
+
+         Operation | Command snippets
+         Show time spent for each initialization steps | "systemd-analyze time"
+         List of all units by the time to initialize | "systemd-analyze blame"
+         Load and detect errors in "$unit" file | "systemd-analyze verify $unit"
+         Show terse runtime status information of the user of the caller's session | "loginctl user-status"
+         Show terse runtime status information of the caller's session | "loginctl session-status"
+         Track boot process by the cgroups | "systemd-cgls"
+         Track boot process by the cgroups | "ps xawf -eo pid,user,cgroup,args"
+         Track boot process by the cgroups | Read sysfs under "/sys/fs/cgroup/"
+
+       3.8. SYSTEM CONFIGURATION
+
+       3.8.1. THE HOSTNAME
+
+       The kernel maintains the system hostname. The system unit started by systemd-hostnamed.service sets the system hostname at boot time to the name stored in "/etc/hostname". This file should contain only the system hostname, not a fully qualified domain name.
+
+       To print out the current hostname run hostname(1) without an argument.
+
+       3.8.2. THE FILESYSTEM
+
+       The mount options of normal disk and network filesystems are set in "/etc/fstab". See fstab(5) and Section 9.6.7, “Optimization of filesystem by mount options”.
+
+       The configuration of the encrypted filesystem is set in "/etc/crypttab". See crypttab(5)
+
+       The configuration of software RAID with mdadm(8) is set in "/etc/mdadm/mdadm.conf". See mdadm.conf(5).
+
+         Warning
+       After mounting all the filesystems, temporary files in "/tmp", "/var/lock", and "/var/run" are cleaned for each boot up.
+
+       3.8.3. NETWORK INTERFACE INITIALIZATION
+
+       Network interfaces are typically initialized in "networking.service" for the lo interface and "NetworkManager.service" for other interfaces on modern Debian desktop system under systemd.
+
+       See Chapter 5, Network setup for how to configure them.
+
+       3.8.4. CLOUD SYSTEM INITIALIZATION
+
+       The cloud system instance may be launched as a clone of "Debian Official Cloud Images" or similar images. For such system instance, personalities such as hostname, filesystem, networking, locale, SSH keys, users and groups may be configured using functionalities provided by cloud-init and netplan.io packages with multiple data sources such as files placed in the original system image and external data provided during its launch. These packages enable the declarative system configuration using YAML data.
+
+       See more at "Cloud Computing with Debian and its descendants", "Cloud-init documentation" and Section 5.4, “The modern network configuration for cloud”.
+
+       3.8.5. CUSTOMIZATION EXAMPLE TO TWEAK SSHD SERVICE
+
+       With default installation, many network services (see Chapter 6, Network applications) are started as daemon processes after network.target at boot time by systemd. The "sshd" is no exception. Let's change this to on-demand start of "sshd" as a customization example.
+
+       First, disable system installed service unit.
+
+          $ sudo systemctl stop sshd.service
+          $ sudo systemctl mask sshd.service
+
+       The on-demand socket activation system of the classic Unix services was through the inetd (or xinetd) superserver. Under systemd, the equivalent can be enabled by adding *.socket and *.service unit configuration files.
+
+       sshd.socket for specifying a socket to listen on
+
+         [Unit]
+         Description=SSH Socket for Per-Connection Servers
+
+         [Socket]
+         ListenStream=22
+         Accept=yes
+
+         [Install]
+         WantedBy=sockets.target
+
+       sshd@.service as the matching service file of sshd.socket
+
+         [Unit]
+         Description=SSH Per-Connection Server
+
+         [Service]
+         ExecStart=-/usr/sbin/sshd -i
+         StandardInput=socket
+
+       Then reload.
+
+          $ sudo systemctl daemon-reload
+
+       3.9. THE UDEV SYSTEM
+
+       The udev system provides mechanism for the automatic hardware discovery and initialization (see udev(7)) since Linux kernel 2.6. Upon discovery of each device by the kernel, the udev system starts a user process which uses information from the sysfs filesystem (see Section 1.2.12, “procfs and sysfs”), loads required kernel modules supporting it using the modprobe(8) program (see Section 3.10, “The kernel module initialization”), and creates corresponding device nodes.
+
+         Tip
+       If "/lib/modules/kernel-version/modules.dep" was not generated properly by depmod(8) for some reason, modules may not be loaded as expected by the udev system. Execute "depmod -a" to fix it.
+
+       For mounting rules in "/etc/fstab", device nodes do not need to be static ones. You can use UUID to mount devices instead of device names such as "/dev/sda". See Section 9.6.3, “Accessing partition using UUID”.
+
+       Since the udev system is somewhat a moving target, I leave details to other documentations and describe the minimum information here.
+
+         Warning
+       Don't try to run long running programs such as backup script with RUN in udev rules as mentioned in udev(7). Please create a proper systemd.service(5) file and activate it, instead. See Section 10.2.3.2, “Mount event triggered backup”.
+
+       3.10. THE KERNEL MODULE INITIALIZATION
+
+       The modprobe(8) program enables us to configure running Linux kernel from user process by adding and removing kernel modules. The udev system (see Section 3.9, “The udev system”) automates its invocation to help the kernel module initialization.
+
+       There are non-hardware modules and special hardware driver modules as the following which need to be pre-loaded by listing them in the "/etc/modules" file (see modules(5)).
+
+        * TUN/TAP modules providing virtual Point-to-Point network device (TUN) and virtual Ethernet network device (TAP),
+        * netfilter modules providing netfilter firewall capabilities (iptables(8), Section 5.7, “Netfilter infrastructure”), and
+        * watchdog timer driver modules.
+       The configuration files for the modprobe(8) program are located under the "/etc/modprobes.d/" directory as explained in modprobe.conf(5). (If you want to avoid some kernel modules to be auto-loaded, consider to blacklist them in the "/etc/modprobes.d/blacklist" file.)
+
+       The "/lib/modules/version/modules.dep" file generated by the depmod(8) program describes module dependencies used by the modprobe(8) program.
+
+         Note
+       If you experience module loading issues with boot time module loading or with modprobe(8), "depmod -a" may resolve these issues by reconstructing "modules.dep".
+
+       The modinfo(8) program shows information about a Linux kernel module.
+
+       The lsmod(8) program nicely formats the contents of the "/proc/modules", showing what kernel modules are currently loaded.
+
+         Tip
+       You can identify exact hardware on your system. See Section 9.5.3, “Hardware identification”.
+
+       You may configure hardware at boot time to activate expected hardware features. See Section 9.5.4, “Hardware configuration”.
+
+       You can probably add support for your special device by recompiling the kernel. See Section 9.10, “The kernel”.
+
+Debian Reference manual                 bundled documentation

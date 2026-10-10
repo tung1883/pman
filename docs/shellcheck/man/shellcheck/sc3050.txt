@@ -1,0 +1,38 @@
+SHELLCHECK.SC3050(1)             Sandbox manual             SHELLCHECK.SC3050(1)
+
+       NAME
+
+       In POSIX sh, printf %q is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, PRINTF Q IS UNDEFINED
+
+       IN POSIX SH, PRINTF Q IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         ssh host "cat $(printf "%q" "$remotefile")"
+
+       CORRECT CODE
+
+       There is not really a good, built-in way to escape a string for a remote shell in POSIX sh. However, you can replace each ' in the input with '\'' and then wrap the whole results in single quotes:
+
+         escape() { printf "'%s'\\n" "$(printf '%s' "$1" | sed -e "s/'/'\\\\''/g")"; }
+         ssh host "cat $(escape "$remotefile")"
+
+       Alternatively, switch to a shell that does support printf %q like ksh or bash.
+
+       RATIONALE
+
+       printf %q is a bash and ksh extension. It's not supported on POSIX sh or dash.
+
+       EXCEPTIONS
+
+       If the command is gated by a check for the correct shell, you can [[ignore]] this warning.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

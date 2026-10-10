@@ -1,0 +1,37 @@
+SHELLCHECK.SC2323(1)             Sandbox manual             SHELLCHECK.SC2323(1)
+
+       NAME
+
+       a[(x)] is the same as a[x]. Prefer not wrapping in additional parentheses. - Similarly $(( (x) )) is the same as $(( x )), (( (x) )) is the same as (( x )).
+
+       A (X) IS THE SAME AS A X . PREFER NOT WRAPPING IN ADDITIONAL PARENTHES
+
+       A (X) IS THE SAME AS A X . PREFER NOT WRAPPING IN ADDITIONAL PARENTHES
+
+       Similarly $(( (x) )) is the same as $(( x )), (( (x) )) is the same as (( x )).
+
+       PROBLEMATIC CODE
+
+         array[(x+1)]=val
+         echo $(( (x+1) ))
+
+       CORRECT CODE
+
+         array[x+1]=val
+         echo $((x+1))
+
+       RATIONALE
+
+       ShellCheck found an entire arithmetic expression wrapped in parentheses. This does not serve a purpose since the expression is already clearly delimited by the construct it's in, such as array[..]= or $((..)) in the example.
+
+       Note: ShellCheck does not warn about redundant parentheses in subexpressions, such as (a*b)+c. Feel free to use parentheses to clarify the order of operations any way you'd like. ShellCheck only emits this suggestion when the entire expression is wrapped twice.
+
+       EXCEPTIONS
+
+       If you prefer having an extra layer of parentheses for stylistic reasons, you can [[ignore]] this message.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,213 @@
+WEBAPI.SVGGRAPHICSELEMENT-GETBBOX(1) Sandbox manual WEBAPI.SVGGRAPHICSELEMENT-GETBBOX(1)
+
+       NAME
+
+       SVGGraphicsElement: getBBox() method - The getBBox() method of the SVGGraphicsElement interface returns the smallest rectangle that contains the element. The rectangle is measured
+
+       SVGGRAPHICSELEMENT: GETBBOX() METHOD
+
+       The getBBox() method of the SVGGraphicsElement interface returns the smallest rectangle that contains the element. The rectangle is measured in the user coordinate system of the element, with the geometry attributes of the element and its descendants applied.
+
+       By default, the rectangle covers only the shape of the element. The options parameter lets you include the stroke and the markers as well, and limit the rectangle to the part of the element that its clipping path leaves visible.
+
+       > getBBox() returns the bounding box as it is at the time of the call, even if the element hasn't been rendered yet. It also doesn't account for any transformation applied to the element or its parents.
+       > getBBox() returns different values than getBoundingClientRect(), because the latter returns values relative to the viewport.
+
+       SYNTAX
+
+         getBBox()
+         getBBox(options)
+
+       PARAMETERS
+
+        * options (experimental) (optional)
+          * : An object that controls which parts of the element are included in the bounding box. It can have the following properties:
+            * fill (optional)
+              * : A boolean value indicating whether the shape of the element is included in the bounding box. Defaults to true. The shape is included even when the element has no fill, so an element with fill set to none still contributes to the bounding box.
+            * stroke (optional)
+              * : A boolean value indicating whether the stroke of the element is included in the bounding box, together with its line caps and line joins. Defaults to false. It has no effect when the stroke property is none.
+            * markers (optional)
+              * : A boolean value indicating whether the markers of the element are included in the bounding box. Defaults to false. Each marker contributes the shapes drawn inside it, rather than the entire area defined by its markerWidth and markerHeight attributes.
+            * clipped (optional)
+              * : A boolean value indicating whether the bounding box is limited to the part of the element that its clip-path leaves visible. Defaults to false.
+
+       RETURN VALUE
+
+       A DOMRect object describing the bounding box in the user coordinate system of the element, regardless of any transformation applied to the element or its parents.
+
+       > Browsers currently return an SVGRect object defined in SVG 1.1, which has the same x, y, width, and height properties, but isn't a DOMRect instance.
+
+       EXAMPLES
+
+       COMPARING BOUNDING BOXES
+
+       This example outlines the same g element twice. The green outline is an SVG rect placed with the rectangle returned by getBBox(), and the red one is an absolutely positioned placed with the rectangle returned by getBoundingClientRect(). Both outlines cover the same text, but the values below them differ: getBBox() reports user units, while getBoundingClientRect() reports CSS pixels relative to the viewport.
+
+       HTML
+
+         <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+           <g id="greeting">
+             <text x="5" y="16" transform="scale(2, 2)">Hello World!</text>
+             <text x="8" y="32" transform="translate(0 20) scale(1.25 1)">
+               Hello World Again!
+             </text>
+           </g>
+           <rect id="bbox" stroke="green" stroke-width="2" fill="none" />
+         </svg>
+
+         <div id="client-rect"></div>
+         <ul id="legend"></ul>
+
+       CSS
+
+         svg {
+           max-width: 400px;
+         }
+
+         #client-rect {
+           position: absolute;
+           box-sizing: border-box;
+           border: 2px dashed red;
+         }
+
+         ul {
+           padding-inline-start: 1em;
+           font-family: monospace;
+           line-height: 1.5;
+         }
+
+       JAVASCRIPT
+
+         const greeting = document.querySelector("#greeting");
+         const legend = document.querySelector("#legend");
+
+         const bbox = greeting.getBBox();
+         const outline = document.querySelector("#bbox");
+         outline.setAttribute("x", bbox.x);
+         outline.setAttribute("y", bbox.y);
+         outline.setAttribute("width", bbox.width);
+         outline.setAttribute("height", bbox.height);
+
+         const clientRect = greeting.getBoundingClientRect();
+         const overlay = document.querySelector("#client-rect");
+         overlay.style.left = `${clientRect.x + window.scrollX}px`;
+         overlay.style.top = `${clientRect.y + window.scrollY}px`;
+         overlay.style.width = `${clientRect.width}px`;
+         overlay.style.height = `${clientRect.height}px`;
+
+         for (const [label, rect] of [
+           ["getBBox()", bbox],
+           ["getBoundingClientRect()", clientRect],
+         ]) {
+           const item = document.createElement("li");
+           item.textContent = `${label} → ${rect.x.toFixed(1)}, ${rect.y.toFixed(1)}, ${rect.width.toFixed(1)}, ${rect.height.toFixed(1)}`;
+           legend.append(item);
+         }
+
+       RESULT
+
+       BOUNDING BOX OPTIONS
+
+       This example draws a path with a thick stroke, a marker at each end, and a clipping path. Each call to getBBox() turns on one more option, and each resulting rectangle is outlined in a different color: the shape alone in red, the stroke added in green, the markers added in orange, and the result clipped in black.
+
+       HTML
+
+         <svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+           <defs>
+             <marker
+               id="dot"
+               viewBox="0 0 10 10"
+               refX="5"
+               refY="5"
+               markerUnits="userSpaceOnUse"
+               markerWidth="30"
+               markerHeight="30">
+               <circle cx="5" cy="5" r="5" fill="rebeccapurple" />
+             </marker>
+             <clipPath id="clip">
+               <rect x="40" y="40" width="120" height="80" />
+             </clipPath>
+           </defs>
+
+           <path
+             id="chevron"
+             d="M 50 100 L 100 50 L 150 100"
+             fill="none"
+             stroke="cornflowerblue"
+             stroke-width="20"
+             marker-start="url(#dot)"
+             marker-end="url(#dot)"
+             clip-path="url(#clip)" />
+
+           <g fill="none" stroke-width="1">
+             <rect id="fill-box" stroke="red" />
+             <rect id="stroke-box" stroke="green" />
+             <rect id="markers-box" stroke="orange" />
+             <rect id="clipped-box" stroke="black" />
+           </g>
+         </svg>
+
+         <ul id="legend"></ul>
+
+       CSS
+
+         svg {
+           max-width: 400px;
+         }
+
+         ul {
+           padding-inline-start: 1em;
+           font-family: monospace;
+           line-height: 1.5;
+         }
+
+       JAVASCRIPT
+
+         const chevron = document.querySelector("#chevron");
+         const legend = document.querySelector("#legend");
+
+         const variants = [
+           { id: "fill-box", label: "getBBox()", options: {} },
+           {
+             id: "stroke-box",
+             label: "getBBox({ stroke: true })",
+             options: { stroke: true },
+           },
+           {
+             id: "markers-box",
+             label: "getBBox({ stroke: true, markers: true })",
+             options: { stroke: true, markers: true },
+           },
+           {
+             id: "clipped-box",
+             label: "getBBox({ stroke: true, markers: true, clipped: true })",
+             options: { stroke: true, markers: true, clipped: true },
+           },
+         ];
+
+         for (const { id, label, options } of variants) {
+           const box = chevron.getBBox(options);
+
+           const outline = document.querySelector(`#${id}`);
+           outline.setAttribute("x", box.x);
+           outline.setAttribute("y", box.y);
+           outline.setAttribute("width", box.width);
+           outline.setAttribute("height", box.height);
+
+           const item = document.createElement("li");
+           item.style.color = outline.getAttribute("stroke");
+           item.textContent = `${label} → ${box.x.toFixed(1)}, ${box.y.toFixed(1)}, ${box.width.toFixed(1)}, ${box.height.toFixed(1)}`;
+           legend.append(item);
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * getBBox in SVG Primer
+
+Web APIs manual                         from the official documentation

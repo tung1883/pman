@@ -1,0 +1,59 @@
+WEBAPI.CSSUNPARSEDVALUE-CSSUNPARSEDVALUE(1) Sandbox manual WEBAPI.CSSUNPARSEDVALUE-CSSUNPARSEDVALUE(1)
+
+       NAME
+
+       CSSUnparsedValue: CSSUnparsedValue() constructor - The CSSUnparsedValue() constructor creates a new CSSUnparsedValue object, which represents a property value that can't be parsed into a more
+
+       CSSUNPARSEDVALUE: CSSUNPARSEDVALUE() CONSTRUCTOR
+
+       The CSSUnparsedValue() constructor creates a new CSSUnparsedValue object, which represents a property value that can't be parsed into a more specific type — typically the value of a custom property.
+
+       SYNTAX
+
+         new CSSUnparsedValue(members)
+
+       PARAMETERS
+
+        * members
+          * : An array whose values must be either a string or a CSSVariableReferenceValue.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+         const value = new CSSUnparsedValue(["4deg"]);
+         const values = new CSSUnparsedValue(["1em", "#445566", "-45px"]);
+
+         console.log(value); // CSSUnparsedValue {0: "4deg", length: 1}
+         console.log(values); // CSSUnparsedValue {0: "1em", 1: "#445566", 2: "-45px", length: 3}
+
+       CSSUNPARSEDVALUE WITH A VARIABLE REFERENCE
+
+       A member can also be a CSSVariableReferenceValue, representing a var() reference embedded in the value. This example builds a CSSUnparsedValue for a declaration equivalent to 10px var(--bar, blue).
+
+         const fallback = new CSSUnparsedValue(["blue"]);
+         const varRef = new CSSVariableReferenceValue("--bar", fallback);
+
+         const value = new CSSUnparsedValue(["10px ", varRef]);
+
+         console.log(value.length); // 2
+         console.log(value[0]); // "10px "
+         console.log(value[1].variable); // "--bar"
+         console.log(value[1].fallback[0]); // "blue"
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * CSSVariableReferenceValue
+        * CSSUnparsedValue.entries()
+        * CSSUnparsedValue.forEach()
+        * CSSUnparsedValue.keys()
+        * CSSUnparsedValue.length
+        * CSSUnparsedValue.values()
+        * Using the CSS Typed OM
+        * CSS Typed Object Model API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,180 @@
+ARCH.OPENSSL(1)                  Sandbox manual                  ARCH.OPENSSL(1)
+
+       OpenSSL is an open-source implementation of the SSL and TLS protocols, designed to be as flexible as possible. It is supported on a variety of platforms, including BSD, Linux, OpenVMS, Solaris and Windows.
+
+       INSTALLATION
+
+       openssl is installed by default on Arch Linux (as a dependency of coreutils).
+
+       There are various OpenSSL library bindings available for developers:
+
+        * python-pyopenssl
+        * perl-net-ssleay
+        * lua-sec, lua52-sec, lua51-sec
+        * haskell-hsopenssl
+        * haskell-openssl-streams
+
+       CONFIGURATION
+
+       On Arch Linux the OPENSSLDIR is /etc/ssl.
+
+       The OpenSSL configuration file, conventionally placed in /etc/ssl/openssl.cnf, may appear complicated at first. Remember that variables may be expanded in assignments, much like how shell scripts work. For a thorough explanation of the configuration file format, see config(5ssl).
+
+       REQ SECTION
+
+       Settings related to generating keys, requests and self-signed certificates.
+
+       The req section is responsible for the DN prompts. A general misconception is the Common Name (CN) prompt, which suggests that it should have the user's proper name as a value. End-user certificates need to have the machine hostname as CN, whereas CA should not have a valid TLD, so that there is no chance that, between the possible combinations of certified end-users' CN and the CA certificate's, there is a match that could be misinterpreted by some software as meaning that the end-user certificate is self-signed. Some CA certificates do not even have a CN, for example:
+
+         $ openssl x509 -subject -noout -in /etc/ssl/certs/AC_RAIZ_FNMT-RCM.pem
+
+         subject=C=ES, O=FNMT-RCM, OU=AC RAIZ FNMT-RCM
+
+       USAGE
+
+       This sections assumes you have read Transport Layer Security#Obtaining a certificate.
+
+       Note CA/Browser Forum Baseline Requirements for TLS Server Certificates do not permit algorithms other than RSA and ECDSA.
+
+       GENERATE AN ECDSA PRIVATE KEY
+
+         $ openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out filename
+
+       GENERATE AN RSA PRIVATE KEY
+
+       With openssl-genpkey(1ssl), which supersedes genrsa according to openssl(1ssl):
+
+         $ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out filename
+
+       If an encrypted key is desired, use the -aes-256-cbc option.
+
+       GENERATE AN ED25519 PRIVATE KEY
+
+         $ openssl genpkey -algorithm ed25519 -out filename
+
+       GENERATE A CERTIFICATE SIGNING REQUEST
+
+       Use openssl-req(1ssl):
+
+         $ openssl req -new -sha256 -key private_key -out filename
+
+       SHOW A CERTIFICATE SIGNING REQUEST
+
+       Certificate signing requests are stored in an encoded format. To view the request in human readable format:
+
+         $ openssl req -noout -text -in filename
+
+       GENERATE A SELF-SIGNED CERTIFICATE
+
+         $ openssl req -key private_key -x509 -new -days days -out filename
+
+       GENERATE A SELF-SIGNED CERTIFICATE WITH PRIVATE KEY IN A SINGLE COMMAN
+
+       You can combine the above command in OpenSSL into a single command which might be convenient in some cases.
+
+       ECDSA:
+
+         $ openssl req -x509 -newkey ec -pkeyopt 'ec_paramgen_curve:P-256' -days days -keyout key_filename -out cert_filename
+
+       RSA:
+
+         $ openssl req -x509 -newkey rsa:4096 -days days -keyout key_filename -out cert_filename
+
+       SIGN A CERTIFICATE SIGNING REQUEST WITH A CA CERTIFICATE
+
+         $ openssl x509 -req -in cert_req_filename -days days -CA CA_cert -CAkey CA_cert_private_key -CAserial CA_cert_serial_file -out cert_out
+
+       GENERATE DIFFIEHELLMAN PARAMETERS
+
+       DH, Diffie–Hellman, key exchange is a protocol to negotiate a shared secret between two parties, where the negotiation itself is held securely over public networks. (Wikipedia article). The resulted shared secret can be used for secret communication for exchanging data over a public network. The DH protocol establishes a method for both parties to contribute to the eventual shared secret by communicating over public networks in a way a passive listener will not be able to reconstruct the resulted shared secret. The other common way to achieve a shared secret by communicating over public networks is have one party use some long-term asymmetric key to encrypt the secret and send it to the owner of the key (like in an RSA key exchange)[1]. Other algorithms are consequently used for encryption itself[2]. In order to set demands that will be raised while negotiating, each party can a priory define a set of demands. These demands are the Diffie–Hellman parameters. The common way to define these parameters is by mathematical functions. There are two functions commonly used: exponentiation modulo prime (forming Finite Field Diffie-Hellman, or FFDH) and point multiplication over elliptic curve, forming Elliptic Curve Diffie-Hellman (ECDH).
+
+       Current best practice is to use one of the standard DH groups from RFC:7919, eg. ffdhe2048.
+
+       Alternatively you can generate a random group of your own:
+
+         $ openssl dhparam -out filename 2048
+
+       Tip To speed up generating, especially when not on high-end hardware, add the -dsaparam option [3].
+
+       SHOW CERTIFICATE INFORMATION
+
+         $ openssl x509 -text -in cert_filename
+
+       To view a server's certificate, use openssl-s_client(1ssl):
+
+         $ openssl s_client -showcerts -connect hostname:port </dev/null | openssl x509 -text
+
+       SHOW CERTIFICATE FINGERPRINT
+
+         $ openssl x509 -noout -in cert_filename -fingerprint -digest
+
+       -digest is optional and one of -md5, -sha1, -sha256, or -sha512. See "-digest" in x509(1ssl) § Input, Output, and General Purpose Options for when the digest is unspecified.
+
+       CONVERT CERTIFICATE FORMAT
+
+       Use openssl x509 to convert certificates from binary (DER) format to PEM format (the text format with BEGIN CERTIFICATE headers)：
+
+         $ openssl x509 -inform DER -in myCA.crt -out myCA_pem.crt
+
+       USE THIRD-PARTY PROVIDERS
+
+       OpenSSL 3 introduced providers as a new concept for OpenSSL plugability. It is possible to use algorithms not included in OpenSSL without having to recompile it.
+
+       OQSPROVIDER
+
+       To test the NIST Post-Quantum Cryptography algorithms, you can install the Open Quantum Safe provider oqsproviderAUR. As an example, you can generate a quantum-safe self-signed certificate with private key using one of the variants of ML-DSA (formerly CRYSTALS-Dilithium):
+
+         $ openssl req -provider default -provider oqsprovider -x509 -newkey mldsa65 -days days -keyout key -out cert
+
+       TPM2-OPENSSL
+
+       To store ECDSA and RSA private keys in the TPM, install tpm2-openssl. See its README for documentation on how to use it.
+
+       TROUBLESHOOTING
+
+       BAD DECRYPT WHILE DECRYPTING
+
+       OpenSSL 1.1.0 changed the default digest algorithm for the dgst and enc commands from MD5 to SHA256. [4]
+
+       Therefore if a file has been encrypted using OpenSSL 1.0.2 or older, trying to decrypt it with an up to date version may result in an error like:
+
+         error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt:crypto/evp/evp_enc.c:540
+
+       Supplying the -md md5 option should solve the issue:
+
+         $ openssl enc -d -md md5 -in encrypted -out decrypted
+
+       PYTHON 3.10 AND CA MD TOO WEAK ERRORS
+
+       In Python 3.10 by default there is a hardcoded list of allowed OpenSSL ciphers. Some of the less secure, like MD5, have been disabled at the ssl module level, ignoring the system-wide configuration of OpenSSL. It results sometimes in strange errors on older certificates, sometimes even when establishing https connections, like:
+
+         requests.exceptions.SSLError: HTTPSConnectionPool(host='a.kind.of.example.com', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLError(398, '[SSL: CA_MD_TOO_WEAK] ca md too weak (_ssl.c:3862)')))
+
+       To make Python follow the system configuration, you may have to rebuild it, adding --with-ssl-default-suites=openssl parameter to ./configure. The issue has been also reported as FS#73549.
+
+       ERROR SETTING CIPHER XXX
+
+       If you try to use a "retired" cipher, you'll get an error of this type:
+
+         $ openssl bf -d -in cipher_file -K passphrase
+         Error setting cipher BF-CBC
+         4087A97A8A7F0000:error:0308010C:digital envelope routines:inner_evp_generic_fetch:unsupported:crypto/evp/evp_fetch.c:341:Global default library context, Algorithm (BF-CBC : 12)
+
+       Since OpenSSL 3.0, crypto algorithms are supplied through "providers". Oldest or least used algorithms belong to the legacy provider. [5]
+
+       If you need to use retired algorithms like DES, RC4, Blowfish, etc., you must add the option -provider legacy in your command line.
+
+       Here is a complete example for decoding a Blowfish cipher.
+
+         $ openssl bf -d -in cipher_file -provider legacy -provider default -K passphrase
+
+       SEE ALSO
+
+        * Wikipedia page on OpenSSL, with background information.
+        * OpenSSL's wiki is intended to collect, organize, and refine useful information about OpenSSL that is currently strewn among multiple locations and formats.
+        * FreeBSD Handbook
+        * Step-by-step guide to create a signed SSL certificate
+        * OpenSSL Certificate Authority: A guide demonstrating how to act as your own certificate authority.
+        * Bulletproof SSL and TLS by Ivan Ristić, a more formal introduction to SSL/TLS
+
+ArchWiki manual                         bundled documentation

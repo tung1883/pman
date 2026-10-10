@@ -1,0 +1,1735 @@
+NODE.DEPRECATIONS(1)             Sandbox manual             NODE.DEPRECATIONS(1)
+
+       NAME
+
+       deprecations - Deprecated APIs
+
+       DEPRECATED APIS
+
+       Node.js APIs might be deprecated for any of the following reasons:
+
+        * Use of the API is unsafe.
+        * An improved alternative API is available.
+        * Breaking changes to the API are expected in a future major release.
+       Node.js uses four kinds of deprecations:
+
+        * Documentation-only
+        * Application (non-node_modules code only)
+        * Runtime (all code)
+        * End-of-Life
+       A Documentation-only deprecation is one that is expressed only within the Node.js API docs. These generate no side-effects while running Node.js. Some Documentation-only deprecations trigger a runtime warning when launched with --pending-deprecation flag (or its alternative, NODE_PENDING_DEPRECATION=1 environment variable), similarly to Runtime deprecations below. Documentation-only deprecations that support that flag are explicitly labeled as such in the list of Deprecated APIs.
+
+       An Application deprecation for only non-node_modules code will, by default, generate a process warning that will be printed to stderr the first time the deprecated API is used in code that's not loaded from node_modules. When the --throw-deprecation command-line flag is used, a Runtime deprecation will cause an error to be thrown. When --pending-deprecation is used, warnings will also be emitted for code loaded from node_modules.
+
+       A runtime deprecation for all code is similar to the runtime deprecation for non-node_modules code, except that it also emits a warning for code loaded from node_modules.
+
+       An End-of-Life deprecation is used when functionality is or will soon be removed from Node.js.
+
+       REVOKING DEPRECATIONS
+
+       Occasionally, the deprecation of an API might be reversed. In such situations, this document will be updated with information relevant to the decision. However, the deprecation identifier will not be modified.
+
+       LIST OF DEPRECATED APIS
+
+       DEP0001: HTTP.OUTGOINGMESSAGE.PROTOTYPE.FLUSH
+
+       Type: End-of-Life
+
+       OutgoingMessage.prototype.flush() has been removed. Use OutgoingMessage.prototype.flushHeaders() instead.
+
+       DEP0002: REQUIRE('_LINKLIST')
+
+       Type: End-of-Life
+
+       The _linklist module is deprecated. Please use a userland alternative.
+
+       DEP0003: _WRITABLESTATE.BUFFER
+
+       Type: End-of-Life
+
+       The _writableState.buffer has been removed. Use _writableState.getBuffer() instead.
+
+       DEP0004: CRYPTOSTREAM.PROTOTYPE.READYSTATE
+
+       Type: End-of-Life
+
+       The CryptoStream.prototype.readyState property was removed.
+
+       DEP0005: BUFFER() CONSTRUCTOR
+
+       Type: Application (non-node_modules code only)
+
+       The Buffer() function and new Buffer() constructor are deprecated due to API usability issues that can lead to accidental security issues.
+
+       As an alternative, use one of the following methods of constructing Buffer objects:
+
+        * [Buffer.alloc(size[, fill[, encoding]])][alloc]: Create a Buffer with
+       _initialized_ memory.
+
+        * Buffer.allocUnsafe(size): Create a Buffer with
+       _uninitialized_ memory.
+
+        * Buffer.allocUnsafeSlow(size): Create a Buffer with _uninitialized_
+       memory.
+
+        * Buffer.from(array): Create a Buffer with a copy of array
+        * [Buffer.from(arrayBuffer[, byteOffset[, length]])][from_arraybuffer] -
+       Create a Buffer that wraps the given arrayBuffer.
+
+        * Buffer.from(buffer): Create a Buffer that copies buffer.
+        * [Buffer.from(string[, encoding])][from_string_encoding]: Create a Buffer
+       that copies string.
+
+       Without --pending-deprecation, runtime warnings occur only for code not in node_modules. This means there will not be deprecation warnings for Buffer() usage in dependencies. With --pending-deprecation, a runtime warning results no matter where the Buffer() usage occurs.
+
+       DEP0006: CHILD_PROCESS OPTIONS.CUSTOMFDS
+
+       Type: End-of-Life
+
+       Within the child_process module's spawn(), fork(), and exec() methods, the options.customFds option is deprecated. The options.stdio option should be used instead.
+
+       DEP0007: REPLACE CLUSTER WORKER.SUICIDE WITH WORKER.EXITEDAFTERDISCONN
+
+       Type: End-of-Life
+
+       In an earlier version of the Node.js cluster, a boolean property with the name suicide was added to the Worker object. The intent of this property was to provide an indication of how and why the Worker instance exited. In Node.js 6.0.0, the old property was deprecated and replaced with a new worker.exitedAfterDisconnect property. The old property name did not precisely describe the actual semantics and was unnecessarily emotion-laden.
+
+       DEP0008: REQUIRE('NODE:CONSTANTS')
+
+       Type: Documentation-only
+
+       The node:constants module is deprecated. When requiring access to constants relevant to specific Node.js builtin modules, developers should instead refer to the constants property exposed by the relevant module. For instance, require('node:fs').constants and require('node:os').constants.
+
+       DEP0009: CRYPTO.PBKDF2 WITHOUT DIGEST
+
+       Type: End-of-Life
+
+       Use of the crypto.pbkdf2() API without specifying a digest was deprecated in Node.js 6.0 because the method defaulted to using the non-recommended 'SHA1' digest. Previously, a deprecation warning was printed. Starting in Node.js 8.0.0, calling crypto.pbkdf2() or crypto.pbkdf2Sync() with digest set to undefined will throw a TypeError.
+
+       Beginning in Node.js 11.0.0, calling these functions with digest set to null would print a deprecation warning to align with the behavior when digest is undefined.
+
+       Now, however, passing either undefined or null will throw a TypeError.
+
+       DEP0010: CRYPTO.CREATECREDENTIALS
+
+       Type: End-of-Life
+
+       The crypto.createCredentials() API was removed. Please use tls.createSecureContext() instead.
+
+       DEP0011: CRYPTO.CREDENTIALS
+
+       Type: End-of-Life
+
+       The crypto.Credentials class was removed. Please use tls.SecureContext instead.
+
+       DEP0012: DOMAIN.DISPOSE
+
+       Type: End-of-Life
+
+       Domain.dispose() has been removed. Recover from failed I/O actions explicitly via error event handlers set on the domain instead.
+
+       DEP0013: FS ASYNCHRONOUS FUNCTION WITHOUT CALLBACK
+
+       Type: End-of-Life
+
+       Calling an asynchronous function without a callback throws a TypeError in Node.js 10.0.0 onwards. See .
+
+       DEP0014: FS.READ LEGACY STRING INTERFACE
+
+       Type: End-of-Life
+
+       The fs.read() legacy String interface is deprecated. Use the Buffer API as mentioned in the documentation instead.
+
+       DEP0015: FS.READSYNC LEGACY STRING INTERFACE
+
+       Type: End-of-Life
+
+       The fs.readSync() legacy String interface is deprecated. Use the Buffer API as mentioned in the documentation instead.
+
+       DEP0016: GLOBAL/ROOT
+
+       Type: End-of-Life
+
+       The GLOBAL and root aliases for the global property were deprecated in Node.js 6.0.0 and have since been removed.
+
+       DEP0017: INTL.V8BREAKITERATOR
+
+       Type: End-of-Life
+
+       Intl.v8BreakIterator was a non-standard extension and has been removed. See Intl.Segmenter.
+
+       DEP0018: UNHANDLED PROMISE REJECTIONS
+
+       Type: End-of-Life
+
+       Unhandled promise rejections are deprecated. By default, promise rejections that are not handled terminate the Node.js process with a non-zero exit code. To change the way Node.js treats unhandled rejections, use the --unhandled-rejections command-line option.
+
+       DEP0019: REQUIRE('.') RESOLVED OUTSIDE DIRECTORY
+
+       Type: End-of-Life
+
+       In certain cases, require('.') could resolve outside the package directory. This behavior has been removed.
+
+       DEP0020: SERVER.CONNECTIONS
+
+       Type: End-of-Life
+
+       The Server.connections property was deprecated in Node.js 0.9.7 and has been removed. Please use the Server.getConnections() method instead.
+
+       DEP0021: SERVER.LISTENFD
+
+       Type: End-of-Life
+
+       The Server.listenFD() method was deprecated and removed. Please use Server.listen({fd: }) instead.
+
+       DEP0022: OS.TMPDIR()
+
+       Type: End-of-Life
+
+       The os.tmpDir() API was deprecated in Node.js 7.0.0 and has since been removed. Please use os.tmpdir() instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/tmpDir-to-tmpdir
+
+       DEP0023: OS.GETNETWORKINTERFACES()
+
+       Type: End-of-Life
+
+       The os.getNetworkInterfaces() method is deprecated. Please use the os.networkInterfaces() method instead.
+
+       DEP0024: REPLSERVER.PROTOTYPE.CONVERTTOCONTEXT()
+
+       Type: End-of-Life
+
+       The REPLServer.prototype.convertToContext() API has been removed.
+
+       DEP0025: REQUIRE('NODE:SYS')
+
+       Type: Runtime
+
+       The node:sys module is deprecated. Please use the util module instead.
+
+       DEP0026: UTIL.PRINT()
+
+       Type: End-of-Life
+
+       util.print() has been removed. Please use console.log() instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-print-to-console-log
+
+       DEP0027: UTIL.PUTS()
+
+       Type: End-of-Life
+
+       util.puts() has been removed. Please use console.log() instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-print-to-console-log
+
+       DEP0028: UTIL.DEBUG()
+
+       Type: End-of-Life
+
+       util.debug() has been removed. Please use console.error() instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-print-to-console-log
+
+       DEP0029: UTIL.ERROR()
+
+       Type: End-of-Life
+
+       util.error() has been removed. Please use console.error() instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-print-to-console-log
+
+       DEP0030: SLOWBUFFER
+
+       Type: End-of-Life
+
+       The SlowBuffer class has been removed. Please use Buffer.allocUnsafeSlow(size) instead.
+
+       An automated migration is available (source).
+
+         npx codemod@latest @nodejs/slow-buffer-to-buffer-alloc-unsafe-slow
+
+       DEP0031: ECDH.SETPUBLICKEY()
+
+       Type: Runtime
+
+       The ecdh.setPublicKey() method is now deprecated as its inclusion in the API is not useful.
+
+       DEP0032: NODE:DOMAIN MODULE
+
+       Type: Runtime
+
+       The domain module is deprecated and should not be used. Loading the module emits a runtime deprecation warning.
+
+       DEP0033: EVENTEMITTER.LISTENERCOUNT()
+
+       Type: Revoked
+
+       The events.listenerCount(emitter, eventName) API was deprecated, as it provided identical functionality to emitter.listenerCount(eventName). The deprecation was revoked because this function has been repurposed to also accept {EventTarget} arguments.
+
+       DEP0034: FS.EXISTS(PATH, CALLBACK)
+
+       Type: Documentation-only
+
+       The fs.exists(path, callback) API is deprecated. Please use fs.stat() or fs.access() instead.
+
+       DEP0035: FS.LCHMOD(PATH, MODE, CALLBACK)
+
+       Type: Documentation-only
+
+       The fs.lchmod(path, mode, callback) API is deprecated.
+
+       DEP0036: FS.LCHMODSYNC(PATH, MODE)
+
+       Type: Documentation-only
+
+       The fs.lchmodSync(path, mode) API is deprecated.
+
+       DEP0037: FS.LCHOWN(PATH, UID, GID, CALLBACK)
+
+       Type: Deprecation revoked
+
+       The fs.lchown(path, uid, gid, callback) API was deprecated. The deprecation was revoked because the requisite supporting APIs were added in libuv.
+
+       DEP0038: FS.LCHOWNSYNC(PATH, UID, GID)
+
+       Type: Deprecation revoked
+
+       The fs.lchownSync(path, uid, gid) API was deprecated. The deprecation was revoked because the requisite supporting APIs were added in libuv.
+
+       DEP0039: REQUIRE.EXTENSIONS
+
+       Type: Documentation-only
+
+       The require.extensions property is deprecated.
+
+       DEP0040: NODE:PUNYCODE MODULE
+
+       Type: Application (non-node_modules code only)
+
+       The punycode module is deprecated. Please use a userland alternative instead.
+
+       DEP0041: NODE_REPL_HISTORY_FILE ENVIRONMENT VARIABLE
+
+       Type: End-of-Life
+
+       The NODE_REPL_HISTORY_FILE environment variable was removed. Please use NODE_REPL_HISTORY instead.
+
+       DEP0042: TLS.CRYPTOSTREAM
+
+       Type: End-of-Life
+
+       The tls.CryptoStream class was removed. Please use tls.TLSSocket instead.
+
+       DEP0043: TLS.SECUREPAIR
+
+       Type: End-of-Life
+
+       The tls.SecurePair class is deprecated. Please use tls.TLSSocket instead.
+
+       DEP0044: UTIL.ISARRAY()
+
+       Type: Runtime
+
+       The util.isArray() API is deprecated. Please use Array.isArray() instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0045: UTIL.ISBOOLEAN()
+
+       Type: End-of-Life
+
+       The util.isBoolean() API has been removed. Please use typeof arg === 'boolean' instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0046: UTIL.ISBUFFER()
+
+       Type: End-of-Life
+
+       The util.isBuffer() API has been removed. Please use Buffer.isBuffer() instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0047: UTIL.ISDATE()
+
+       Type: End-of-Life
+
+       The util.isDate() API has been removed. Please use arg instanceof Date instead.
+
+       Also for stronger approaches, consider using: Date.prototype.toString.call(arg) === '[object Date]' && !isNaN(arg). This can also be used in a try/catch block to handle invalid date objects.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0048: UTIL.ISERROR()
+
+       Type: End-of-Life
+
+       The util.isError() API has been removed. Please use Error.isError(arg).
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0049: UTIL.ISFUNCTION()
+
+       Type: End-of-Life
+
+       The util.isFunction() API has been removed. Please use typeof arg === 'function' instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0050: UTIL.ISNULL()
+
+       Type: End-of-Life
+
+       The util.isNull() API has been removed. Please use arg === null instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0051: UTIL.ISNULLORUNDEFINED()
+
+       Type: End-of-Life
+
+       The util.isNullOrUndefined() API has been removed. Please use arg === null || arg === undefined instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0052: UTIL.ISNUMBER()
+
+       Type: End-of-Life
+
+       The util.isNumber() API has been removed. Please use typeof arg === 'number' instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0053: UTIL.ISOBJECT()
+
+       Type: End-of-Life
+
+       The util.isObject() API has been removed. Please use arg && typeof arg === 'object' instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0054: UTIL.ISPRIMITIVE()
+
+       Type: End-of-Life
+
+       The util.isPrimitive() API has been removed. Please use Object(arg) !== arg instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0055: UTIL.ISREGEXP()
+
+       Type: End-of-Life
+
+       The util.isRegExp() API has been removed. Please use arg instanceof RegExp instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0056: UTIL.ISSTRING()
+
+       Type: End-of-Life
+
+       The util.isString() API has been removed. Please use typeof arg === 'string' instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0057: UTIL.ISSYMBOL()
+
+       Type: End-of-Life
+
+       The util.isSymbol() API has been removed. Please use typeof arg === 'symbol' instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0058: UTIL.ISUNDEFINED()
+
+       Type: End-of-Life
+
+       The util.isUndefined() API has been removed. Please use arg === undefined instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-is
+
+       DEP0059: UTIL.LOG()
+
+       Type: End-of-Life
+
+       The util.log() API has been removed because it's an unmaintained legacy API that was exposed to user land by accident. Instead, consider the following alternatives based on your specific needs:
+
+        * Third-Party Logging Libraries
+        * Use console.log(new Date().toLocaleString(), message)
+       By adopting one of these alternatives, you can transition away from util.log() and choose a logging strategy that aligns with the specific requirements and complexity of your application.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-log-to-console-log
+
+       DEP0060: UTIL._EXTEND()
+
+       Type: Runtime
+
+       The util._extend() API is deprecated because it's an unmaintained legacy API that was exposed to user land by accident. Please use target = Object.assign(target, source) instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/util-extend-to-object-assign
+
+       DEP0061: FS.SYNCWRITESTREAM
+
+       Type: End-of-Life
+
+       The fs.SyncWriteStream class was never intended to be a publicly accessible API and has been removed. No alternative API is available. Please use a userland alternative.
+
+       DEP0062: NODE --DEBUG
+
+       Type: End-of-Life
+
+       --debug activates the legacy V8 debugger interface, which was removed as of V8 5.8. It is replaced by Inspector which is activated with --inspect instead.
+
+       DEP0063: SERVERRESPONSE.PROTOTYPE.WRITEHEADER()
+
+       Type: End-of-Life
+
+       The node:http module ServerResponse.prototype.writeHeader() API is deprecated. Please use ServerResponse.prototype.writeHead() instead.
+
+       The ServerResponse.prototype.writeHeader() method was never documented as an officially supported API.
+
+       DEP0064: TLS.CREATESECUREPAIR()
+
+       Type: End-of-Life
+
+       The tls.createSecurePair() API was deprecated in documentation in Node.js 0.11.3. Users should use tls.Socket instead.
+
+       An automated migration is available (source):
+
+         npx codemod @nodejs/tls-create-secure-pair-to-tls-socket
+
+       DEP0065: REPL.REPL_MODE_MAGIC AND NODE_REPL_MODE MAGIC
+
+       Type: End-of-Life
+
+       The node:repl module's REPL_MODE_MAGIC constant, used for replMode option, has been removed. Its behavior has been functionally identical to that of REPL_MODE_SLOPPY since Node.js 6.0.0, when V8 5.0 was imported. Please use REPL_MODE_SLOPPY instead.
+
+       The NODE_REPL_MODE environment variable is used to set the underlying replMode of an interactive node session. Its value, magic, is also removed. Please use sloppy instead.
+
+       DEP0066: OUTGOINGMESSAGE.PROTOTYPE._HEADERS, OUTGOINGMESSAGE.PROTOTYPE
+
+       Type: End-of-Life
+
+       The node:http module OutgoingMessage.prototype._headers and OutgoingMessage.prototype._headerNames properties are deprecated. Use one of the public methods (e.g. OutgoingMessage.prototype.getHeader(), OutgoingMessage.prototype.getHeaders(), OutgoingMessage.prototype.getHeaderNames(), OutgoingMessage.prototype.getRawHeaderNames(), OutgoingMessage.prototype.hasHeader(), OutgoingMessage.prototype.removeHeader(), OutgoingMessage.prototype.setHeader()) for working with outgoing headers.
+
+       The OutgoingMessage.prototype._headers and OutgoingMessage.prototype._headerNames properties were never documented as officially supported properties.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/http-outgoingmessage-headers
+
+       DEP0067: OUTGOINGMESSAGE.PROTOTYPE._RENDERHEADERS
+
+       Type: Documentation-only
+
+       The node:http module OutgoingMessage.prototype._renderHeaders() API is deprecated.
+
+       The OutgoingMessage.prototype._renderHeaders property was never documented as an officially supported API.
+
+       DEP0068: NODE DEBUG
+
+       Type: End-of-Life
+
+       node debug corresponds to the legacy CLI debugger which has been replaced with a V8-inspector based CLI debugger available through node inspect.
+
+       DEP0069: VM.RUNINDEBUGCONTEXT(STRING)
+
+       Type: End-of-Life
+
+       DebugContext has been removed in V8 and is not available in Node.js 10+.
+
+       DebugContext was an experimental API.
+
+       DEP0070: ASYNC_HOOKS.CURRENTID()
+
+       Type: End-of-Life
+
+       async_hooks.currentId() was renamed to async_hooks.executionAsyncId() for clarity.
+
+       This change was made while async_hooks was an experimental API.
+
+       DEP0071: ASYNC_HOOKS.TRIGGERID()
+
+       Type: End-of-Life
+
+       async_hooks.triggerId() was renamed to async_hooks.triggerAsyncId() for clarity.
+
+       This change was made while async_hooks was an experimental API.
+
+       DEP0072: ASYNC_HOOKS.ASYNCRESOURCE.TRIGGERID()
+
+       Type: End-of-Life
+
+       async_hooks.AsyncResource.triggerId() was renamed to async_hooks.AsyncResource.triggerAsyncId() for clarity.
+
+       This change was made while async_hooks was an experimental API.
+
+       DEP0073: SEVERAL INTERNAL PROPERTIES OF NET.SERVER
+
+       Type: End-of-Life
+
+       Accessing several internal, undocumented properties of net.Server instances with inappropriate names is deprecated.
+
+       As the original API was undocumented and not generally useful for non-internal code, no replacement API is provided.
+
+       DEP0074: REPLSERVER.BUFFEREDCOMMAND
+
+       Type: End-of-Life
+
+       The REPLServer.bufferedCommand property was deprecated in favor of REPLServer.clearBufferedCommand().
+
+       DEP0075: REPLSERVER.PARSEREPLKEYWORD()
+
+       Type: End-of-Life
+
+       REPLServer.parseREPLKeyword() was removed from userland visibility.
+
+       DEP0076: TLS.PARSECERTSTRING()
+
+       Type: End-of-Life
+
+       tls.parseCertString() was a trivial parsing helper that was made public by mistake. While it was supposed to parse certificate subject and issuer strings, it never handled multi-value Relative Distinguished Names correctly.
+
+       Earlier versions of this document suggested using querystring.parse() as an alternative to tls.parseCertString(). However, querystring.parse() also does not handle all certificate subjects correctly and should not be used.
+
+       DEP0077: MODULE._DEBUG()
+
+       Type: End-of-Life
+
+       Module._debug() has been removed.
+
+       The Module._debug() function was never documented as an officially supported API.
+
+       DEP0078: REPLSERVER.TURNOFFEDITORMODE()
+
+       Type: End-of-Life
+
+       REPLServer.turnOffEditorMode() was removed from userland visibility.
+
+       DEP0079: CUSTOM INSPECTION FUNCTION ON OBJECTS VIA .INSPECT()
+
+       Type: End-of-Life
+
+       Using a property named inspect on an object to specify a custom inspection function for util.inspect() is deprecated. Use util.inspect.custom instead. For backward compatibility with Node.js prior to version 6.4.0, both can be specified.
+
+       DEP0080: PATH._MAKELONG()
+
+       Type: Documentation-only
+
+       The internal path._makeLong() was not intended for public use. However, userland modules have found it useful. The internal API is deprecated and replaced with an identical, public path.toNamespacedPath() method.
+
+       DEP0081: FS.TRUNCATE() USING A FILE DESCRIPTOR
+
+       Type: End-of-Life
+
+       fs.truncate() fs.truncateSync() usage with a file descriptor is deprecated. Please use fs.ftruncate() or fs.ftruncateSync() to work with file descriptors.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/fs-truncate-fd-deprecation
+
+       DEP0082: REPLSERVER.PROTOTYPE.MEMORY()
+
+       Type: End-of-Life
+
+       REPLServer.prototype.memory() is only necessary for the internal mechanics of the REPLServer itself. Do not use this function.
+
+       DEP0083: DISABLING ECDH BY SETTING ECDHCURVE TO FALSE
+
+       Type: End-of-Life
+
+       The ecdhCurve option to tls.createSecureContext() and tls.TLSSocket could be set to false to disable ECDH entirely on the server only. This mode was deprecated in preparation for migrating to OpenSSL 1.1.0 and consistency with the client and is now unsupported. Use the ciphers parameter instead.
+
+       DEP0084: REQUIRING BUNDLED INTERNAL DEPENDENCIES
+
+       Type: End-of-Life
+
+       Since Node.js versions 4.4.0 and 5.2.0, several modules only intended for internal usage were mistakenly exposed to user code through require(). These modules were:
+
+        * v8/tools/codemap
+        * v8/tools/consarray
+        * v8/tools/csvparser
+        * v8/tools/logreader
+        * v8/tools/profile_view
+        * v8/tools/profile
+        * v8/tools/SourceMap
+        * v8/tools/splaytree
+        * v8/tools/tickprocessor-driver
+        * v8/tools/tickprocessor
+        * node-inspect/lib/_inspect (from 7.6.0)
+        * node-inspect/lib/internal/inspect_client (from 7.6.0)
+        * node-inspect/lib/internal/inspect_repl (from 7.6.0)
+       The v8/* modules do not have any exports, and if not imported in a specific order would in fact throw errors. As such there are virtually no legitimate use cases for importing them through require().
+
+       On the other hand, node-inspect can be installed locally through a package manager, as it is published on the npm registry under the same name. No source code modification is necessary if that is done.
+
+       DEP0085: ASYNCHOOKS SENSITIVE API
+
+       Type: End-of-Life
+
+       The AsyncHooks sensitive API was never documented and had various minor issues. Use the AsyncResource API instead. See .
+
+       DEP0086: REMOVE RUNINASYNCIDSCOPE
+
+       Type: End-of-Life
+
+       runInAsyncIdScope doesn't emit the 'before' or 'after' event and can thus cause a lot of issues. See .
+
+       DEP0089: REQUIRE('NODE:ASSERT')
+
+       Type: Deprecation revoked
+
+       Importing assert directly was not recommended as the exposed functions use loose equality checks. The deprecation was revoked because use of the node:assert module is not discouraged, and the deprecation caused developer confusion.
+
+       DEP0090: INVALID GCM AUTHENTICATION TAG LENGTHS
+
+       Type: End-of-Life
+
+       Node.js used to support all GCM authentication tag lengths which are accepted by OpenSSL when calling decipher.setAuthTag(). Beginning with Node.js v11.0.0, only authentication tag lengths of 128, 120, 112, 104, 96, 64, and 32 bits are allowed. Authentication tags of other lengths are invalid per NIST SP 800-38D.
+
+       DEP0091: CRYPTO.DEFAULT_ENCODING
+
+       Type: End-of-Life
+
+       The crypto.DEFAULT_ENCODING property only existed for compatibility with Node.js releases prior to versions 0.9.3 and has been removed.
+
+       DEP0092: TOP-LEVEL THIS BOUND TO MODULE.EXPORTS
+
+       Type: Documentation-only
+
+       Assigning properties to the top-level this as an alternative to module.exports is deprecated. Developers should use exports or module.exports instead.
+
+       DEP0093: CRYPTO.FIPS IS DEPRECATED AND REPLACED
+
+       Type: Runtime
+
+       The crypto.fips property is deprecated. Please use crypto.setFips() and crypto.getFips() instead.
+
+       An automated migration is available (source).
+
+         npx codemod@latest @nodejs/crypto-fips-to-getFips
+
+       DEP0094: USING ASSERT.FAIL() WITH MORE THAN ONE ARGUMENT
+
+       Type: End-of-Life
+
+       Using assert.fail() with more than one argument is deprecated. Use assert.fail() with only one argument or use a different node:assert module method.
+
+       DEP0095: TIMERS.ENROLL()
+
+       Type: End-of-Life
+
+       timers.enroll() has been removed. Please use the publicly documented setTimeout() or setInterval() instead.
+
+       An automated migration is available (source).
+
+         npx codemod @nodejs/timers-deprecations
+
+       DEP0096: TIMERS.UNENROLL()
+
+       Type: End-of-Life
+
+       timers.unenroll() has been removed. Please use the publicly documented clearTimeout() or clearInterval() instead.
+
+       An automated migration is available (source).
+
+         npx codemod @nodejs/timers-deprecations
+
+       DEP0097: MAKECALLBACK WITH DOMAIN PROPERTY
+
+       Type: End-of-Life
+
+       The domain property on async resources and MakeCallback has been removed. The domain module now uses AsyncLocalStorage for context propagation instead of async_hooks. Accessing the domain property on AsyncResource will throw an error. Use AsyncLocalStorage instead for context propagation.
+
+       DEP0098: ASYNCHOOKS EMBEDDER ASYNCRESOURCE.EMITBEFORE AND ASYNCRESOURC
+
+       Type: End-of-Life
+
+       The embedded API provided by AsyncHooks exposes .emitBefore() and .emitAfter() methods which are very easy to use incorrectly which can lead to unrecoverable errors.
+
+       Use asyncResource.runInAsyncScope() API instead which provides a much safer, and more convenient, alternative. See .
+
+       DEP0099: ASYNC CONTEXT-UNAWARE NODE::MAKECALLBACK C++ APIS
+
+       Type: Compile-time
+
+       Certain versions of node::MakeCallback APIs available to native addons are deprecated. Please use the versions of the API that accept an async_context parameter.
+
+       DEP0100: PROCESS.ASSERT()
+
+       Type: End-of-Life
+
+       process.assert() is deprecated. Please use the assert module instead.
+
+       This was never a documented feature.
+
+       An automated migration is available (source).
+
+         npx codemod@latest @nodejs/process-assert-to-node-assert
+
+       DEP0101: --WITH-LTTNG
+
+       Type: End-of-Life
+
+       The --with-lttng compile-time option has been removed.
+
+       DEP0102: USING NOASSERT IN BUFFER#(READ WRITE) OPERATIONS
+
+       Type: End-of-Life
+
+       Using the noAssert argument has no functionality anymore. All input is verified regardless of the value of noAssert. Skipping the verification could lead to hard-to-find errors and crashes.
+
+       DEP0103: PROCESS.BINDING('UTIL').IS ... TYPECHECKS
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       Using process.binding() in general should be avoided. The type checking methods in particular can be replaced by using util.types.
+
+       This deprecation has been superseded by the deprecation of the process.binding() API (DEP0111).
+
+       DEP0104: PROCESS.ENV STRING COERCION
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       When assigning a non-string property to process.env, the assigned value is implicitly converted to a string. This behavior is deprecated if the assigned value is not a string, boolean, or number. In the future, such assignment might result in a thrown error. Please convert the property to a string before assigning it to process.env.
+
+       DEP0105: DECIPHER.FINALTOL
+
+       Type: End-of-Life
+
+       decipher.finaltol() has never been documented and was an alias for decipher.final(). This API has been removed, and it is recommended to use decipher.final() instead.
+
+       DEP0106: CRYPTO.CREATECIPHER AND CRYPTO.CREATEDECIPHER
+
+       Type: End-of-Life
+
+       crypto.createCipher() and crypto.createDecipher() have been removed as they use a weak key derivation function (MD5 with no salt) and static initialization vectors. It is recommended to derive a key using crypto.pbkdf2() or crypto.scrypt() with random salts and to use crypto.createCipheriv() and crypto.createDecipheriv() to obtain the Cipheriv and Decipheriv objects respectively.
+
+       An automated migration is available (source):
+
+         npx codemod @nodejs/crypto-createcipheriv-migration
+
+       DEP0107: TLS.CONVERTNPNPROTOCOLS()
+
+       Type: End-of-Life
+
+       This was an undocumented helper function not intended for use outside Node.js core and obsoleted by the removal of NPN (Next Protocol Negotiation) support.
+
+       DEP0108: ZLIB.BYTESREAD
+
+       Type: End-of-Life
+
+       Deprecated alias for zlib.bytesWritten. This original name was chosen because it also made sense to interpret the value as the number of bytes read by the engine, but is inconsistent with other streams in Node.js that expose values under these names.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/zlib-bytesread-to-byteswritten
+
+       DEP0109: HTTP, HTTPS, AND TLS SUPPORT FOR INVALID URLS
+
+       Type: End-of-Life
+
+       Some previously supported (but strictly invalid) URLs were accepted through the http.request(), http.get(), https.request(), https.get(), and tls.checkServerIdentity() APIs because those were accepted by the legacy url.parse() API. The mentioned APIs now use the WHATWG URL parser that requires strictly valid URLs. Passing an invalid URL is deprecated and support will be removed in the future.
+
+       DEP0110: VM.SCRIPT CACHED DATA
+
+       Type: Documentation-only
+
+       The produceCachedData option is deprecated. Use script.createCachedData() instead.
+
+       DEP0111: PROCESS.BINDING()
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       process.binding() is for use by Node.js internal code only.
+
+       While process.binding() has not reached End-of-Life status in general, it is unavailable when the permission model is enabled.
+
+       DEP0112: DGRAM PRIVATE APIS
+
+       Type: End-of-Life
+
+       The node:dgram module previously contained several APIs that were never meant to accessed outside of Node.js core: Socket.prototype._handle, Socket.prototype._receiving, Socket.prototype._bindState, Socket.prototype._queue, Socket.prototype._reuseAddr, Socket.prototype._healthCheck(), Socket.prototype._stopReceiving(), and dgram._createSocketHandle(). These have been removed.
+
+       DEP0113: CIPHER.SETAUTHTAG(), DECIPHER.GETAUTHTAG()
+
+       Type: End-of-Life
+
+       Cipher.setAuthTag() and Decipher.getAuthTag() are no longer available. They were never documented and would throw when called.
+
+       DEP0114: CRYPTO._TOBUF()
+
+       Type: End-of-Life
+
+       The crypto._toBuf() function was not designed to be used by modules outside of Node.js core and was removed.
+
+       DEP0115: CRYPTO.PRNG(), CRYPTO.PSEUDORANDOMBYTES(), CRYPTO.RNG()
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       In recent versions of Node.js, there is no difference between crypto.randomBytes() and crypto.pseudoRandomBytes(). The latter is deprecated along with the undocumented aliases crypto.prng() and crypto.rng() in favor of crypto.randomBytes() and might be removed in a future release.
+
+       DEP0116: LEGACY URL API
+
+       Type: Deprecation revoked
+
+       The legacy URL API is deprecated. This includes url.format(), url.parse(), url.resolve(), and the legacy urlObject. Please use the WHATWG URL API instead.
+
+       An automated migration is available (source).
+
+         npx codemod@latest @nodejs/node-url-to-whatwg-url
+
+       DEP0117: NATIVE CRYPTO HANDLES
+
+       Type: End-of-Life
+
+       Previous versions of Node.js exposed handles to internal native objects through the _handle property of the Cipher, Decipher, DiffieHellman, DiffieHellmanGroup, ECDH, Hash, Hmac, Sign, and Verify classes. The _handle property has been removed because improper use of the native object can lead to crashing the application.
+
+       DEP0118: DNS.LOOKUP() SUPPORT FOR A FALSY HOST NAME
+
+       Type: End-of-Life
+
+       Previous versions of Node.js supported dns.lookup() with a falsy host name like dns.lookup(false) due to backward compatibility. This has been removed.
+
+       DEP0119: PROCESS.BINDING('UV').ERRNAME() PRIVATE API
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       process.binding('uv').errname() is deprecated. Please use util.getSystemErrorName() instead.
+
+       DEP0120: WINDOWS PERFORMANCE COUNTER SUPPORT
+
+       Type: End-of-Life
+
+       Windows Performance Counter support has been removed from Node.js. The undocumented COUNTER_NET_SERVER_CONNECTION(), COUNTER_NET_SERVER_CONNECTION_CLOSE(), COUNTER_HTTP_SERVER_REQUEST(), COUNTER_HTTP_SERVER_RESPONSE(), COUNTER_HTTP_CLIENT_REQUEST(), and COUNTER_HTTP_CLIENT_RESPONSE() functions have been deprecated.
+
+       DEP0121: NET._SETSIMULTANEOUSACCEPTS()
+
+       Type: End-of-Life
+
+       The undocumented net._setSimultaneousAccepts() function was originally intended for debugging and performance tuning when using the node:child_process and node:cluster modules on Windows. The function is not generally useful and is being removed. See discussion here:
+
+       DEP0122: TLS SERVER.PROTOTYPE.SETOPTIONS()
+
+       Type: End-of-Life
+
+       Please use Server.prototype.setSecureContext() instead.
+
+       DEP0123: SETTING THE TLS SERVERNAME TO AN IP ADDRESS
+
+       Type: End-of-Life
+
+       Setting the TLS ServerName to an IP address is not permitted by RFC 6066.
+
+       DEP0124: USING REPLSERVER.RLI
+
+       Type: End-of-Life
+
+       This property is a reference to the instance itself.
+
+       DEP0125: REQUIRE('NODE:_STREAM_WRAP')
+
+       Type: End-of-Life
+
+       The node:_stream_wrap module is deprecated.
+
+       DEP0126: TIMERS.ACTIVE()
+
+       Type: End-of-Life
+
+       The previously undocumented timers.active() has been removed. Please use the publicly documented timeout.refresh() instead. If re-referencing the timeout is necessary, timeout.ref() can be used with no performance impact since Node.js 10.
+
+       An automated migration is available (source).
+
+         npx codemod @nodejs/timers-deprecations
+
+       DEP0127: TIMERS._UNREFACTIVE()
+
+       Type: End-of-Life
+
+       The previously undocumented and "private" timers._unrefActive() has been removed. Please use the publicly documented timeout.refresh() instead. If unreferencing the timeout is necessary, timeout.unref() can be used with no performance impact since Node.js 10.
+
+       An automated migration is available (source).
+
+         npx codemod @nodejs/timers-deprecations
+
+       DEP0128: MODULES WITH AN INVALID MAIN ENTRY AND AN INDEX.JS FILE
+
+       Type: Runtime
+
+       Modules that have an invalid main entry (e.g., ./does-not-exist.js) and also have an index.js file in the top level directory will resolve the index.js file. That is deprecated and is going to throw an error in future Node.js versions.
+
+       DEP0129: CHILDPROCESS._CHANNEL
+
+       Type: End-of-Life
+
+       The _channel property of child process objects returned by spawn() and similar functions is not intended for public use. Use ChildProcess.channel instead.
+
+       DEP0130: MODULE.CREATEREQUIREFROMPATH()
+
+       Type: End-of-Life
+
+       Use module.createRequire() instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/create-require-from-path
+
+       DEP0131: LEGACY HTTP PARSER
+
+       Type: End-of-Life
+
+       The legacy HTTP parser, used by default in versions of Node.js prior to 12.0.0, is deprecated and has been removed in v13.0.0. Prior to v13.0.0, the --http-parser=legacy command-line flag could be used to revert to using the legacy parser.
+
+       DEP0132: WORKER.TERMINATE() WITH CALLBACK
+
+       Type: End-of-Life
+
+       Passing a callback to worker.terminate() is deprecated. Use the returned Promise instead, or a listener to the worker's 'exit' event.
+
+       DEP0133: HTTP CONNECTION
+
+       Type: Documentation-only
+
+       Prefer response.socket over response.connection and request.socket over request.connection.
+
+       DEP0134: PROCESS._TICKCALLBACK
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       The process._tickCallback property was never documented as an officially supported API.
+
+       DEP0135: WRITESTREAM.OPEN() AND READSTREAM.OPEN() ARE INTERNAL
+
+       Type: End-of-Life
+
+       WriteStream.open() and ReadStream.open() are undocumented internal APIs that do not make sense to use in userland. File streams should always be opened through their corresponding factory methods fs.createWriteStream() and fs.createReadStream()) or by passing a file descriptor in options.
+
+       DEP0136: HTTP FINISHED
+
+       Type: Documentation-only
+
+       response.finished indicates whether response.end() has been called, not whether 'finish' has been emitted and the underlying data is flushed.
+
+       Use response.writableFinished or response.writableEnded accordingly instead to avoid the ambiguity.
+
+       To maintain existing behavior response.finished should be replaced with response.writableEnded.
+
+       DEP0137: CLOSING FS.FILEHANDLE ON GARBAGE COLLECTION
+
+       Type: End-of-Life
+
+       Allowing a fs.FileHandle object to be closed on garbage collection used to be allowed, but now throws an error.
+
+       Please ensure that all fs.FileHandle objects are explicitly closed using FileHandle.prototype.close() when the fs.FileHandle is no longer needed:
+
+         const fsPromises = require('node:fs').promises;
+         async function openAndClose() {
+           let filehandle;
+           try {
+             filehandle = await fsPromises.open('thefile.txt', 'r');
+           } finally {
+             if (filehandle !== undefined)
+               await filehandle.close();
+           }
+         }
+
+       DEP0138: PROCESS.MAINMODULE
+
+       Type: Documentation-only
+
+       process.mainModule is a CommonJS-only feature while process global object is shared with non-CommonJS environment. Its use within ECMAScript modules is unsupported.
+
+       It is deprecated in favor of require.main, because it serves the same purpose and is only available on CommonJS environment.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/process-main-module
+
+       DEP0139: PROCESS.UMASK() WITH NO ARGUMENTS
+
+       Type: Documentation-only
+
+       Calling process.umask() with no argument causes the process-wide umask to be written twice. This introduces a race condition between threads, and is a potential security vulnerability. There is no safe, cross-platform alternative API.
+
+       DEP0140: USE REQUEST.DESTROY() INSTEAD OF REQUEST.ABORT()
+
+       Type: Documentation-only
+
+       Use request.destroy() instead of request.abort().
+
+       DEP0141: REPL.INPUTSTREAM AND REPL.OUTPUTSTREAM
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       The node:repl module exported the input and output stream twice. Use .input instead of .inputStream and .output instead of .outputStream.
+
+       DEP0142: REPL._BUILTINLIBS
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       The node:repl module exports a _builtinLibs property that contains an array of built-in modules. It was incomplete so far and instead it's better to rely upon require('node:module').builtinModules.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/repl-builtin-modules
+
+       DEP0143: TRANSFORM._TRANSFORMSTATE
+
+       Type: End-of-Life
+
+       Transform._transformState will be removed in future versions where it is no longer required due to simplification of the implementation.
+
+       DEP0144: MODULE.PARENT
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       A CommonJS module can access the first module that required it using module.parent. This feature is deprecated because it does not work consistently in the presence of ECMAScript modules and because it gives an inaccurate representation of the CommonJS module graph.
+
+       Some modules use it to check if they are the entry point of the current process. Instead, it is recommended to compare require.main and module:
+
+         if (require.main === module) {
+           // Code section that will run only if current file is the entry point.
+         }
+
+       When looking for the CommonJS modules that have required the current one, require.cache and module.children can be used:
+
+         const moduleParents = Object.values(require.cache)
+           .filter((m) => m.children.includes(module));
+
+       DEP0145: SOCKET.BUFFERSIZE
+
+       Type: Documentation-only
+
+       socket.bufferSize is just an alias for writable.writableLength.
+
+       DEP0146: NEW CRYPTO.CERTIFICATE()
+
+       Type: Documentation-only
+
+       The crypto.Certificate() constructor is deprecated. Use static methods of crypto.Certificate() instead.
+
+       DEP0147: FS.RMDIR(PATH, RECURSIVE: TRUE )
+
+       Type: End-of-Life
+
+       The fs.rmdir, fs.rmdirSync, and fs.promises.rmdir methods used to support a recursive option. That option has been removed.
+
+       Use fs.rm(path, { recursive: true, force: true }), fs.rmSync(path, { recursive: true, force: true }) or fs.promises.rm(path, { recursive: true, force: true }) instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/rmdir
+
+       DEP0148: FOLDER MAPPINGS IN EXPORTS (TRAILING / )
+
+       Type: End-of-Life
+
+       Using a trailing "/" to define subpath folder mappings in the subpath exports or subpath imports fields is no longer supported. Use subpath patterns instead.
+
+       DEP0149: HTTP.INCOMINGMESSAGE#CONNECTION
+
+       Type: Documentation-only
+
+       Prefer message.socket over message.connection.
+
+       DEP0150: CHANGING THE VALUE OF PROCESS.CONFIG
+
+       Type: End-of-Life
+
+       The process.config property provides access to Node.js compile-time settings. However, the property is mutable and therefore subject to tampering. The ability to change the value will be removed in a future version of Node.js.
+
+       DEP0151: MAIN INDEX LOOKUP AND EXTENSION SEARCHING
+
+       Type: Runtime
+
+       Previously, index.js and extension searching lookups would apply to import 'pkg' main entry point resolution, even when resolving ES modules.
+
+       With this deprecation, all ES module main entry point resolutions require an explicit "exports" or "main" entry with the exact file extension.
+
+       DEP0152: EXTENSION PERFORMANCEENTRY PROPERTIES
+
+       Type: End-of-Life
+
+       The 'gc', 'http2', and 'http' {PerformanceEntry} object types used to have additional properties assigned to them that provide additional information. These properties are now available within the standard detail property of the PerformanceEntry object. The deprecated accessors have been removed.
+
+       DEP0153: DNS.LOOKUP AND DNSPROMISES.LOOKUP OPTIONS TYPE COERCION
+
+       Type: End-of-Life
+
+       Using a non-nullish non-integer value for family option, a non-nullish non-number value for hints option, a non-nullish non-boolean value for all option, or a non-nullish non-boolean value for verbatim option in dns.lookup() and dnsPromises.lookup() throws an ERR_INVALID_ARG_TYPE error.
+
+       DEP0154: RSA-PSS GENERATE KEY PAIR OPTIONS
+
+       Type: End-of-Life
+
+       Use 'hashAlgorithm' instead of 'hash', and 'mgf1HashAlgorithm' instead of 'mgf1Hash'.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/crypto-rsa-pss-update
+
+       DEP0155: TRAILING SLASHES IN PATTERN SPECIFIER RESOLUTIONS
+
+       Type: Runtime
+
+       The remapping of specifiers ending in "/" like import 'pkg/x/' is deprecated for package "exports" and "imports" pattern resolutions.
+
+       DEP0156: .ABORTED PROPERTY AND 'ABORT', 'ABORTED' EVENT IN HTTP
+
+       Type: Documentation-only
+
+       Move to {Stream} API instead, as the http.ClientRequest, http.ServerResponse, and http.IncomingMessage are all stream-based. Check stream.destroyed instead of the .aborted property, and listen for 'close' instead of 'abort', 'aborted' event.
+
+       The .aborted property and 'abort' event are only useful for detecting .abort() calls. For closing a request early, use the Stream .destroy([error]) then check the .destroyed property and 'close' event should have the same effect. The receiving end should also check the readable.readableEnded value on http.IncomingMessage to get whether it was an aborted or graceful destroy.
+
+       DEP0157: THENABLE SUPPORT IN STREAMS
+
+       Type: End-of-Life
+
+       An undocumented feature of Node.js streams was to support thenables in implementation methods. This is now deprecated, use callbacks instead and avoid use of async function for streams implementation methods.
+
+       This feature caused users to encounter unexpected problems where the user implements the function in callback style but uses e.g. an async method which would cause an error since mixing promise and callback semantics is not valid.
+
+         const w = new Writable({
+           async final(callback) {
+             await someOp();
+             callback();
+           },
+         });
+
+       DEP0158: BUFFER.SLICE(START, END)
+
+       Type: Documentation-only
+
+       This method was deprecated because it is not compatible with Uint8Array.prototype.slice(), which is a superclass of Buffer.
+
+       Use buffer.subarray which does the same thing instead.
+
+       DEP0159: ERR_INVALID_CALLBACK
+
+       Type: End-of-Life
+
+       This error code was removed due to adding more confusion to the errors used for value type validation.
+
+       An automated migration is available (source):
+
+         npx codemod @nodejs/err-invalid-callback
+
+       DEP0160: PROCESS.ON('MULTIPLERESOLVES', HANDLER)
+
+       Type: End-of-Life
+
+       This event was deprecated and removed because it did not work with V8 promise combinators which diminished its usefulness.
+
+       DEP0161: PROCESS._GETACTIVEREQUESTS() AND PROCESS._GETACTIVEHANDLES()
+
+       Type: Documentation-only
+
+       The process._getActiveHandles() and process._getActiveRequests() functions are not intended for public use and can be removed in future releases.
+
+       Use process.getActiveResourcesInfo() to get a list of types of active resources and not the actual references.
+
+       DEP0162: FS.WRITE(), FS.WRITEFILESYNC() COERCION TO STRING
+
+       Type: End-of-Life
+
+       Implicit coercion of objects with own toString property, passed as second parameter in fs.write(), fs.writeFile(), fs.appendFile(), fs.writeFileSync(), and fs.appendFileSync() is deprecated. Convert them to primitive strings.
+
+       DEP0163: CHANNEL.SUBSCRIBE(ONMESSAGE), CHANNEL.UNSUBSCRIBE(ONMESSAGE)
+
+       Type: Deprecation revoked
+
+       These methods were deprecated because their use could leave the channel object vulnerable to being garbage-collected if not strongly referenced by the user. The deprecation was revoked because channel objects are now resistant to garbage collection when the channel has active subscribers.
+
+       DEP0164: PROCESS.EXIT(CODE), PROCESS.EXITCODE COERCION TO INTEGER
+
+       Type: End-of-Life
+
+       Values other than undefined, null, integer numbers, and integer strings (e.g., '1') are deprecated as value for the code parameter in process.exit() and as value to assign to process.exitCode.
+
+       DEP0165: --TRACE-ATOMICS-WAIT
+
+       Type: End-of-Life
+
+       The --trace-atomics-wait flag has been removed because it uses the V8 hook SetAtomicsWaitCallback, that will be removed in a future V8 release.
+
+       DEP0166: DOUBLE SLASHES IN IMPORTS AND EXPORTS TARGETS
+
+       Type: Runtime
+
+       Package imports and exports targets mapping into paths including a double slash (of _"/"_ or _"\\"_) are deprecated and will fail with a resolution validation error in a future release. This same deprecation also applies to pattern matches starting or ending in a slash.
+
+       DEP0167: WEAK DIFFIEHELLMANGROUP INSTANCES (MODP1, MODP2, MODP5)
+
+       Type: Documentation-only
+
+       The well-known MODP groups modp1, modp2, and modp5 are deprecated because they are not secure against practical attacks. See RFC 8247 Section 2.4 for details.
+
+       These groups might be removed in future versions of Node.js. Applications that rely on these groups should evaluate using stronger MODP groups instead.
+
+       DEP0168: UNHANDLED EXCEPTION IN NODE-API CALLBACKS
+
+       Type: Runtime
+
+       The implicit suppression of uncaught exceptions in Node-API callbacks is now deprecated.
+
+       Set the flag --force-node-api-uncaught-exceptions-policy to force Node.js to emit an 'uncaughtException' event if the exception is not handled in Node-API callbacks.
+
+       DEP0169: INSECURE URL.PARSE()
+
+       Type: Application (non-node_modules code only)
+
+       url.parse() behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for url.parse() vulnerabilities.
+
+       Calling url.format(urlString) or url.resolve() invokes url.parse() internally, and is therefore also covered by this deprecation.
+
+       DEP0170: INVALID PORT WHEN USING URL.PARSE()
+
+       Type: End-of-Life
+
+       url.parse() used to accept URLs with ports that are not numbers. This behavior might result in host name spoofing with unexpected input. These URLs will throw an error (which the WHATWG URL API also does).
+
+       DEP0171: SETTERS FOR HTTP.INCOMINGMESSAGE HEADERS AND TRAILERS
+
+       Type: Documentation-only
+
+       In a future version of Node.js, message.headers, message.headersDistinct, message.trailers, and message.trailersDistinct will be read-only.
+
+       DEP0172: THE ASYNCRESOURCE PROPERTY OF ASYNCRESOURCE BOUND FUNCTIONS
+
+       Type: End-of-Life
+
+       Older versions of Node.js would add the asyncResource when a function is bound to an AsyncResource. It no longer does.
+
+       DEP0173: THE ASSERT.CALLTRACKER CLASS
+
+       Type: End-of-Life
+
+       The assert.CallTracker API has been removed.
+
+       DEP0174: CALLING PROMISIFY ON A FUNCTION THAT RETURNS A PROMISE
+
+       Type: Runtime
+
+       Calling util.promisify on a function that returns a Promise will ignore the result of said promise, which can lead to unhandled promise rejections.
+
+       DEP0175: UTIL.TOUSVSTRING
+
+       Type: Documentation-only
+
+       The util.toUSVString() API is deprecated. Please use String.prototype.toWellFormed instead.
+
+       DEP0176: FS.F_OK, FS.R_OK, FS.W_OK, FS.X_OK
+
+       Type: End-of-Life
+
+       F_OK, R_OK, W_OK and X_OK getters exposed directly on node:fs were removed. Get them from fs.constants or fs.promises.constants instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/fs-access-mode-constants
+
+       DEP0177: UTIL.TYPES.ISWEBASSEMBLYCOMPILEDMODULE
+
+       Type: End-of-Life
+
+       The util.types.isWebAssemblyCompiledModule API has been removed. Please use value instanceof WebAssembly.Module instead.
+
+       DEP0178: DIRENT.PATH
+
+       Type: End-of-Life
+
+       The dirent.path property has been removed due to its lack of consistency across release lines. Please use dirent.parentPath instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/dirent-path-to-parent-path
+
+       DEP0179: HASH CONSTRUCTOR
+
+       Type: Runtime
+
+       Calling Hash class directly with Hash() or new Hash() is deprecated due to being internals, not intended for public use. Please use the crypto.createHash() method to create Hash instances.
+
+       DEP0180: FS.STATS CONSTRUCTOR
+
+       Type: Runtime
+
+       Calling fs.Stats class directly with Stats() or new Stats() is deprecated due to being internals, not intended for public use.
+
+       DEP0181: HMAC CONSTRUCTOR
+
+       Type: Runtime
+
+       Calling Hmac class directly with Hmac() or new Hmac() is deprecated due to being internals, not intended for public use. Please use the crypto.createHmac() method to create Hmac instances.
+
+       DEP0182: SHORT GCM AUTHENTICATION TAGS WITHOUT EXPLICIT AUTHTAGLENGTH
+
+       Type: End-of-Life
+
+       For ciphers in GCM mode, the decipher.setAuthTag() function used to accept authentication tags of any valid length (see also DEP0090). This exception has been removed to better align with recommendations per NIST SP 800-38D, and applications that intend to use authentication tags that are shorter than the default authentication tag length (i.e., shorter than 16 bytes for AES-GCM) must explicitly set the authTagLength option of the crypto.createDecipheriv() function to the appropriate length.
+
+       DEP0183: OPENSSL ENGINE-BASED APIS
+
+       Type: Runtime
+
+       OpenSSL 3 has deprecated support for custom engines with a recommendation to switch to its new provider model. The clientCertEngine option for https.request(), tls.createSecureContext(), and tls.createServer(); the privateKeyEngine and privateKeyIdentifier for tls.createSecureContext(); and crypto.setEngine() all depend on this functionality from OpenSSL.
+
+       DEP0184: INSTANTIATING NODE:ZLIB CLASSES WITHOUT NEW
+
+       Type: End-of-Life
+
+       Instantiating classes without the new qualifier exported by the node:zlib module is no longer supported. The new qualifier must be used instead. This applies to all Zlib classes, such as Deflate, DeflateRaw, Gunzip, Inflate, InflateRaw, Unzip, BrotliCompress, BrotliDecompress, ZstdCompress, and ZstdDecompress.
+
+       DEP0185: INSTANTIATING NODE:REPL CLASSES WITHOUT NEW
+
+       Type: End-of-Life
+
+       Instantiating classes without the new qualifier exported by the node:repl module is deprecated. The new qualifier must be used instead. This applies to all REPL classes, including REPLServer and Recoverable.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/repl-classes-with-new
+
+       DEP0187: PASSING INVALID ARGUMENT TYPES TO FS.EXISTSSYNC
+
+       Type: Runtime
+
+       Passing non-supported argument types is deprecated and, instead of returning false, will throw an error in a future version.
+
+       DEP0188: PROCESS.FEATURES.IPV6 AND PROCESS.FEATURES.UV
+
+       Type: Documentation-only
+
+       These properties are unconditionally true. Any checks based on these properties are redundant.
+
+       DEP0189: PROCESS.FEATURES.TLS_
+
+       Type: Documentation-only
+
+       process.features.tls_alpn, process.features.tls_ocsp, and process.features.tls_sni are deprecated, as their values are guaranteed to be identical to that of process.features.tls.
+
+       DEP0190: PASSING ARGS TO NODE:CHILD_PROCESS EXECFILE/SPAWN WITH SHELL
+
+       Type: Runtime
+
+       When an args array is passed to child_process.execFile or child_process.spawn with the option { shell: true } or { shell: '/path/to/shell' }, the values are not escaped, only space-separated, which can lead to shell injection.
+
+       DEP0191: REPL.BUILTINMODULES
+
+       Type: Documentation-only (supports --pending-deprecation)
+
+       The node:repl module exports a builtinModules property that contains an array of built-in modules. This was incomplete and matched the already deprecated repl._builtinLibs (DEP0142) instead it's better to rely upon require('node:module').builtinModules.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/repl-builtin-modules
+
+       DEP0192: REQUIRE('NODE:_TLS_COMMON') AND REQUIRE('NODE:_TLS_WRAP')
+
+       Type: End-of-Life
+
+       The node:_tls_common and node:_tls_wrap modules are deprecated as they should be considered an internal nodejs implementation rather than a public facing API, use node:tls instead.
+
+       DEP0193: REQUIRE('NODE:_STREAM_ ')
+
+       Type: End-of-Life
+
+       The node:_stream_duplex, node:_stream_passthrough, node:_stream_readable, node:_stream_transform, node:_stream_wrap and node:_stream_writable modules are deprecated as they should be considered an internal nodejs implementation rather than a public facing API, use node:stream instead.
+
+       DEP0194: HTTP/2 PRIORITY SIGNALING
+
+       Type: End-of-Life
+
+       The support for priority signaling has been removed following its deprecation in the RFC 9113.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/http2-priority-signaling
+
+       DEP0195: INSTANTIATING NODE:HTTP CLASSES WITHOUT NEW
+
+       Type: Runtime
+
+       Instantiating classes without the new qualifier exported by the node:http module is deprecated. It is recommended to use the new qualifier instead. This applies to all http classes, such as OutgoingMessage, IncomingMessage, ServerResponse, ClientRequest, Server, and Agent.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/http-classes-with-new
+
+       DEP0196: CALLING NODE:CHILD_PROCESS FUNCTIONS WITH OPTIONS.SHELL AS AN
+
+       Type: Documentation-only
+
+       Calling the process-spawning functions with { shell: '' } is almost certainly unintentional, and can cause aberrant behavior.
+
+       To make child_process.execFile or child_process.spawn invoke the default shell, use { shell: true }. If the intention is not to invoke a shell (default behavior), either omit the shell option, or set it to false or a nullish value.
+
+       To make child_process.exec invoke the default shell, either omit the shell option, or set it to a nullish value. If the intention is not to invoke a shell, use child_process.execFile instead.
+
+       DEP0197: UTIL.TYPES.ISNATIVEERROR()
+
+       Type: Documentation-only
+
+       The util.types.isNativeError API is deprecated. Please use Error.isError instead.
+
+       An automated migration is available (source):
+
+         npx codemod@latest @nodejs/types-is-native-error
+
+       DEP0198: CREATING SHAKE-128 AND SHAKE-256 DIGESTS WITHOUT AN EXPLICIT
+
+       Type: End-of-Life
+
+       Creating SHAKE-128 and SHAKE-256 digests without an explicit options.outputLength is no longer supported.
+
+       DEP0199: REQUIRE('NODE:_HTTP_ ')
+
+       Type: Documentation-only
+
+       The node:_http_agent, node:_http_client, node:_http_common, node:_http_incoming, node:_http_outgoing and node:_http_server modules are deprecated as they should be considered an internal nodejs implementation rather than a public facing API, use node:http instead.
+
+       DEP0200: CLOSING FS.DIR ON GARBAGE COLLECTION
+
+       Type: Documentation-only
+
+       Allowing a fs.Dir object to be closed on garbage collection is deprecated. In the future, doing so might result in a thrown error that will terminate the process.
+
+       Please ensure that all fs.Dir objects are explicitly closed using Dir.prototype.close() or using keyword:
+
+         import { opendir } from 'node:fs/promises';
+
+         {
+           await using dir = await opendir('/async/disposable/directory');
+         } // Closed by dir[Symbol.asyncDispose]()
+
+         {
+           using dir = await opendir('/sync/disposable/directory');
+         } // Closed by dir[Symbol.dispose]()
+
+         {
+           const dir = await opendir('/unconditionally/iterated/directory');
+           for await (const entry of dir) {
+             // process an entry
+           } // Closed by iterator
+         }
+
+         {
+           let dir;
+           try {
+             dir = await opendir('/legacy/closeable/directory');
+           } finally {
+             await dir?.close();
+           }
+         }
+
+       DEP0201: PASSING OPTIONS.TYPE TO DUPLEX.TOWEB()
+
+       Type: Runtime
+
+       Passing the type option to Duplex.toWeb() is deprecated. To specify the type of the readable half of the constructed readable-writable pair, use the readableType option instead.
+
+       DEP0202: HTTP1INCOMINGMESSAGE AND HTTP1SERVERRESPONSE OPTIONS OF HTTP
+
+       Type: Documentation-only
+
+       The Http1IncomingMessage and Http1ServerResponse options of http2.createServer() and http2.createSecureServer() are deprecated. Use http1Options.IncomingMessage and http1Options.ServerResponse instead.
+
+         // Deprecated
+         const server = http2.createSecureServer({
+           allowHTTP1: true,
+           Http1IncomingMessage: MyIncomingMessage,
+           Http1ServerResponse: MyServerResponse,
+         });
+
+         // Use this instead
+         const server = http2.createSecureServer({
+           allowHTTP1: true,
+           http1Options: {
+             IncomingMessage: MyIncomingMessage,
+             ServerResponse: MyServerResponse,
+           },
+         });
+
+       DEP0203: PASSING CRYPTOKEY TO NODE:CRYPTO APIS
+
+       Type: End-of-Life
+
+       Passing a CryptoKey to node:crypto functions is no longer supported.
+
+       DEP0204: KEYOBJECT.FROM() WITH NON-EXTRACTABLE CRYPTOKEY
+
+       Type: End-of-Life
+
+       Passing a non-extractable CryptoKey to KeyObject.from() is no longer supported.
+
+       DEP0205: MODULE.REGISTER()
+
+       Type: Runtime
+
+       module.register() is deprecated. Use module.registerHooks() instead.
+
+       The module.register() API provides off-thread async hooks for customizing ES modules; the module.registerHooks() API provides similar hooks that are synchronous, in-thread, and work for all types of modules. Supporting async hooks has proven to be complex, involving worker threads orchestration, and there are issues that have proven unresolvable. See caveats of asynchronous customization hooks. Please migrate to module.registerHooks() as soon as possible as module.register() will be removed in a future version of Node.js.
+
+       DEP0206: CALLING DIGEST() ON AN ALREADY-FINALIZED HMAC INSTANCE
+
+       Type: Runtime
+
+       Calling hmac.digest() more than once returns an empty buffer instead of throwing an error. This behavior is inconsistent with hash.digest() and may lead to subtle bugs. Calling hmac.digest() on a finalized Hmac instance will throw an error in a future version.
+
+       DEP0207: .ABORTED PROPERTY AND 'ABORTED' EVENT IN NODE:HTTP2
+
+       Type: Documentation-only
+
+       Use standard stream events and state checks instead. Read-side aborts (peer cancelled before sending END_STREAM) now surface as 'error' with code ERR_HTTP2_STREAM_ABORTED (clean peer reset code) or ERR_HTTP2_STREAM_ERROR (non-clean code). Write-side aborts (peer cancelled while we still had writes in flight) are detectable from 'close' by checking writableFinished. Parallels DEP0156 for http.
+
+         // Deprecated
+         server.on('stream', (stream) => {
+           stream.on('aborted', () => {
+             // Stream was closed while the writable was still open.
+           });
+         });
+
+         // Use this instead
+         server.on('stream', (stream) => {
+           // Read-side abort: peer cancelled before sending END_STREAM.
+           stream.on('error', (err) => {
+             if (err.code === 'ERR_HTTP2_STREAM_ABORTED' ||
+                 err.code === 'ERR_HTTP2_STREAM_ERROR') {
+               // Peer cancelled the request mid-stream.
+             }
+           });
+           // Write-side abort: our response didn't fully send before close.
+           stream.on('close', () => {
+             if (!stream.writableFinished) {
+               // Writes were aborted (peer cancel, local destroy, etc.).
+             }
+           });
+         });
+
+       The same patterns apply to the compatibility API (req / res on http2.createServer((req, res) => …)). On the read-side, errors on the underlying stream are emitted from req. On the write-side you can use res.on('close', …) to hear about client aborts by checking res.writableFinished to confirm whether the response was written successfully before the response closed.
+
+       DEP0208: SERVER.PROTOTYPE._LISTEN2
+
+       Type: Runtime
+
+       net.Server.prototype._listen2 is an undocumented alias for an internal function that sets up the listening handle. It is kept only so that code replacing it keeps being called by server.listen(), and it will be removed in a future version of Node.js. Use server.listen() instead of calling or overriding _listen2.
+
+       DEP0209: USING ABORTSIGNAL TO DISPOSE OF RESOURCES
+
+       Type: Documentation-only
+
+       Using AbortSignal to destroy long-lived resources is deprecated. Prefer using for resource cleanup.
+
+       AbortSignal is still a good fit for canceling actions, propagating cancellation from the outside, and timeouts.
+
+         // Deprecated
+         async function example() {
+           const ac = new AbortController();
+           const server = http.createServer(handler);
+           server.listen({ port: 3000, signal: ac.signal });
+
+           await doWork();
+           ac.abort();
+         }
+
+         // Use this instead
+         async function example() {
+           await using server = http.createServer(handler);
+           server.listen(3000);
+
+           await doWork();
+         }
+
+         // Deprecated
+         async function example() {
+           const ac = new AbortController();
+           const stream = addAbortSignal(ac.signal, fs.createReadStream(file));
+
+           await consume(stream);
+           ac.abort();
+         }
+
+         // Use this instead
+         async function example() {
+           await using stream = fs.createReadStream(file);
+
+           await consume(stream);
+         }
+
+         // Deprecated
+         async function example() {
+           const ac = new AbortController();
+           const child = spawn(command, args, { signal: ac.signal });
+
+           await doWork();
+           ac.abort();
+         }
+
+         // Use this instead
+         async function example() {
+           using child = spawn(command, args);
+
+           await doWork();
+         }
+
+       DEP0210: SQLITE.DATABASESYNC
+
+       Type: Documentation-only
+
+       node:sqlite's DatabaseSync class was renamed to Database. DatabaseSync is kept as a deprecated alias. Use Database instead.
+
+       DEP0211: SQLITE.STATEMENTSYNC
+
+       Type: Documentation-only
+
+       node:sqlite's StatementSync class was renamed to Statement. StatementSync is kept as a deprecated alias. Use Statement instead.
+
+Node.js manual                          from the official documentation

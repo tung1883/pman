@@ -1,0 +1,174 @@
+ARCH.OPEN-VSWITCH(1)             Sandbox manual             ARCH.OPEN-VSWITCH(1)
+
+       Open vSwitch (OVS) is a multilayer software switch. It is designed to enable massive network automation through programmatic extension, while still supporting standard management interfaces and protocols. Open vSwitch is well suited to function as a virtual switch in environments with virtual machines.
+
+       INSTALLATION
+
+       Install the openvswitch package.
+
+       REQUIRED SERVICES AND SETUP
+
+       To use ovs-vswitchd, start/enable ovs-vswitchd.service.
+
+       ovs-vswitchd.service will also start the ovsdb-server.service which is used for saving the OVS configuration in a database for persistent settings across reboots.
+
+       CREATE A BRIDGE
+
+         # ovs-vsctl add-br mybridge
+
+       Most commands can be reversed with replacing add with del, for example del-br.
+
+       Print the newly created bridge with one port with an interface named mybridge.
+
+         # ovs-vsctl show
+
+         e4e95383-2d81-45bd-b411-d289b11405b2
+             Bridge mybridge
+                 Port mybridge
+                     Interface mybridge
+                         type: internal
+
+       ADD PHYSICAL ADAPTER TO THE BRIDGE
+
+       Get the current active interface and configuration:
+
+         $ ip addr
+
+         2: eno1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+             link/ether 52:54:00:91:11:95 brd ff:ff:ff:ff:ff:ff
+             inet 192.168.1.10/24 brd 192.168.1.255 scope global dynamic eno1
+                valid_lft 82284sec preferred_lft 82284sec
+             inet6 fe80::5054:ff:fe91:1195/64 scope link
+                valid_lft forever preferred_lft forever
+
+       Disable any running automated config.
+
+       If dhcpcd is running:
+
+         # dhcpcd -k eno1
+
+       Stop systemd-networkd.service if using systemd-networkd.
+
+       Remove the current ip configuration:
+
+         # ip addr del 192.168.1.10/24 dev eno1
+
+       Add physical interface to mybridge:
+
+         # ovs-vsctl add-port mybridge eno1
+
+       Warning This will lose connectivity on this adapter, ensure you have another way to reach your system.
+
+       Print the current setup:
+
+         # ovs-vsctl show
+
+         e4e95383-2d81-45bd-b411-d289b11405b2
+             Bridge mybridge
+                 Port mybridge
+                     Interface mybridge
+                         type: internal
+                 Port eno1
+                     Interface eno1
+
+       Test the config:
+
+         # dhcpcd mybridge
+         $ ip addr
+
+         2: eno1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master ovs-system state UP group default qlen 1000
+             link/ether 52:54:00:91:11:95 brd ff:ff:ff:ff:ff:ff
+             inet6 fe80::5054:ff:fe91:1195/64 scope link
+                valid_lft forever preferred_lft forever
+         3: ovs-system: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+             link/ether 6e:a7:28:66:78:e2 brd ff:ff:ff:ff:ff:ff
+         4: mybridge: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default qlen 1000
+             link/ether ba:21:d0:cd:38:4f brd ff:ff:ff:ff:ff:ff
+             inet 192.168.1.11/24 brd 192.168.1.255 scope global dynamic noprefixroute mybridge
+                valid_lft 86372sec preferred_lft 75572sec
+             inet6 fe80::183e:d590:9014:eeb4/64 scope link
+                valid_lft forever preferred_lft forever
+
+       MAKE CHANGES PERSISTENT OVER REBOOTS
+
+       Open vSwitch will automatically apply any changes made with ovs-commands. But to get it working we need to change some things with systemd-networkd.
+
+       First, remove any old configuration for eno1 and bring the interface up during boot. We will also run DHCP on mybridge with the following config:
+
+         /etc/systemd/network/eno1.network
+
+         [Match]
+         Name=eno1
+
+         [Link]
+         RequiredForOnline=carrier
+
+         [Network]
+         IPv6AcceptRA=false
+         LinkLocalAddressing=no
+         MulticastDNS=false
+         LLMNR=false
+
+         /etc/systemd/network/mybridge.network
+
+         [Match]
+         Name=mybridge
+
+         [Link]
+         RequiredForOnline=routable
+
+         [Network]
+         DHCP=yes
+
+       VLANS
+
+       Setup trunk with vlan 10 + 20 plus tag untagged traffic to vlan 1 through the physical port:
+
+         # ovs-vsctl set port eno1 vlan_mode=native-untagged
+         # ovs-vsctl set port eno1 tag=1 # tag untagged vlan 1
+         # ovs-vsctl set port eno1 trunks=10,20 # allow tagged vlans 10 and 20
+
+       Tip Do multiple actions in one command with -- as seperator, For example, the above is same as:
+
+         # ovs-vsctl set port eno1 vlan_mode=native-untagged -- set port eno1 tag=1 -- set port eno1 trunks=10,20
+
+       Create a new vport1, type internal for use on the host system with vlan 10:
+
+         # ovs-vsctl add-port mybridge vport1 tag=10 -- set Interface vport1 type=internal
+         # dhcpcd vport1 # to test it out!
+
+       VIRTUAL PORTS
+
+       ip_forward is needed for virtual ports and support for vm's:
+
+         # echo 1 > /proc/sys/net/ipv4/ip_forward
+
+       Manually create a tuntap interface:
+
+         # ip tuntap add mode tap vport2
+
+       To make both the above changes persistent across reboots:
+
+         /etc/sysctl.conf
+
+         net.ipv4.ip_forward = 1
+
+         /etc/systemd/network/90-vport2.netdev
+
+         [NetDev]
+         Name=vport2
+         Kind=tap
+
+       Create a new port and tag it vlan 20:
+
+         # ovs-vsctl add-port mybridge vport2 -- set port vport2 tag=20
+
+       vport2 can now be used in libvirt.
+
+       SEE ALSO
+
+        * Wikipedia:Open vSwitch
+        * Official Open vSwitch web site
+        * Official documentation
+
+ArchWiki manual                         bundled documentation

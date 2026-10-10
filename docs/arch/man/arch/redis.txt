@@ -1,0 +1,85 @@
+ARCH.REDIS(1)                    Sandbox manual                    ARCH.REDIS(1)
+
+       From Wikipedia:Valkey:
+
+       Valkey is an open-source in-memory key–value database, used as a distributed cache and message broker, with optional durability.
+
+       Tip valkey is a community-driven fork of Redis that was created after Redis Inc.'s license change. It aims to be a drop-in replacement while remaining under a permissive open-source license.
+
+       INSTALLATION
+
+       Install the valkey package.
+
+       Start/enable valkey.service.
+
+       CLIENT-SIDE SOFTWARE
+
+        * Python: python-redis
+        * PHP: php-redis
+        * C: hiredis
+
+       CONFIGURATION
+
+       The Valkey configuration file is well-documented and located at /etc/valkey/valkey.conf.
+
+        * Accept connections on the specified port (default is 6379), specify port 0 to disable listening on TCP:
+
+         port 6379
+
+       LISTEN ON SOCKET
+
+       Using Valkey over a Unix socket may give a performance increase, compared to TCP/IP [1].
+
+       The following changes should be made in /etc/valkey/valkey.conf to enable use of the unix socket:
+
+        * Enable and update the Valkey socket path:
+
+         unixsocket /run/valkey/valkey.sock
+
+        * Set permission to the socket to all members of the valkey user group:
+
+         unixsocketperm 770
+
+        * Add users (e.g. "git", "http") to the valkey user group so they can access and use the socket.
+       Finally restart the valkey.service.
+
+       TROUBLESHOOTING
+
+       WARNING ABOUT TRANSPARENT HUGE PAGES (THP)
+
+       To solve warning messages as "you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Valkey", you may want to permanently disable this feature:
+
+         /etc/tmpfiles.d/hugepage.conf
+
+         w /sys/kernel/mm/transparent_hugepage/enabled - - - - never
+         w /sys/kernel/mm/transparent_hugepage/defrag - - - - never
+
+       WARNING ABOUT TCP BACKLOG
+
+       To solve warning messages as "The TCP backlog setting of 511 cannot be enforced because /proc/sys/net/core/somaxconn is set to the lower value of 128", increase the current value:
+
+         /etc/sysctl.d/99-sysctl.conf
+
+         net.core.somaxconn=512
+
+       WARNING ABOUT OVERCOMMIT_MEMORY IS SET TO 0
+
+       To solve warning messages as "overcommit_memory is set to 0! Background save may fail under low memory condition":
+
+         /etc/sysctl.d/99-sysctl.conf
+
+         vm.overcommit_memory=1
+
+       TIPS AND TRICKS
+
+       ENABLING TAB AUTOCOMPLETION
+
+       ZSH
+
+       You can leverage redis-cli completion script from zsh-completions. To map redis-cli completion script to valkey-cli, put the following line to .zshrc:
+
+         ~/.zshrc
+
+         compdef '_dispatch redis-cli_completion redis-cli' valkey-cli
+
+ArchWiki manual                         bundled documentation

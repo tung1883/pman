@@ -1,0 +1,62 @@
+WEBAPI.SOURCEBUFFER-ABORT-EVENT(1) Sandbox manual WEBAPI.SOURCEBUFFER-ABORT-EVENT(1)
+
+       NAME
+
+       SourceBuffer: abort event - windowanddedicated
+
+       SOURCEBUFFER: ABORT EVENT
+
+       window_and_dedicated
+
+       The abort event of the SourceBuffer interface is fired when the buffer appending is aborted, because the SourceBuffer.abort() or SourceBuffer.remove() method is called while the SourceBuffer.appendBuffer() algorithm is still running. The updating property transitions from true to false. This event is fired before the updateend event.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("abort", (event) => { })
+
+         onabort = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       ABORTING AN APPEND OPERATION
+
+       This example demonstrates how to abort an append operation and handle the abort event.
+
+         const sourceBuffer = source.addSourceBuffer(mimeCodec);
+         sourceBuffer.addEventListener("abort", () => {
+           downloadStatus.textContent = "Canceled";
+         });
+         sourceBuffer.addEventListener("update", () => {
+           downloadStatus.textContent = "Done";
+         });
+         sourceBuffer.addEventListener("updateend", () => {
+           source.endOfStream();
+         });
+         cancelButton.addEventListener("click", () => {
+           if (sourceBuffer.updating) {
+             sourceBuffer.abort();
+           }
+         });
+         downloadStatus.textContent = "Downloading...";
+         fetch(assetURL)
+           .then((response) => response.arrayBuffer())
+           .then((data) => {
+             downloadStatus.textContent = "Decoding...";
+             sourceBuffer.appendBuffer(data);
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * SourceBuffer.abort()
+
+Web APIs manual                         from the official documentation

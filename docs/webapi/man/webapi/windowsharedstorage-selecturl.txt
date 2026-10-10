@@ -1,0 +1,97 @@
+WEBAPI.WINDOWSHAREDSTORAGE-SELECTURL(1) Sandbox manual WEBAPI.WINDOWSHAREDSTORAGE-SELECTURL(1)
+
+       NAME
+
+       WindowSharedStorage: selectURL() method - The selectURL() method of the
+
+       WINDOWSHAREDSTORAGE: SELECTURL() METHOD
+
+       The selectURL() method of the WindowSharedStorage interface executes a URL Selection operation that is registered in a module added to the current origin's SharedStorageWorklet.
+
+       > The URL Selection output gate is used to select a URL from a provided list to display to the user, based on shared storage data.
+
+       SYNTAX
+
+         selectURL(name, urls)
+         selectURL(name, urls, options)
+
+       PARAMETERS
+
+        * name
+          * : A string representing the registered operation's name within the shared storage worklet module. It must match the name given to the operation when it is registered with SharedStorageWorkletGlobalScope.register().
+        * urls
+          * : An array of objects representing the URLs to be chosen between by the URL Selection operation. Each object contains two properties:
+            * url
+              * : A string representing the URL.
+            * reportingMetadata (optional)
+              * : An object containing properties where names are event types and values are URLs pointing to reporting destinations, for example "click" : "my-reports/report1.html". The URLs act as destinations for reports submitted with a destination of type "shared-storage-select-url", typically submitted via a Fence.reportEvent() or Fence.setReportEventDataForAutomaticBeacons() method call.
+        * options (optional)
+          * : An options object, which can contain the following properties:
+            * data (optional)
+              * : An object representing any data required for executing the operation.
+            * keepAlive (optional)
+              * : A boolean value. If set to true, the SharedStorageWorkletGlobalScope of the associated worklet is kept alive, and the operation can be run again. Therefore, you need to set keepAlive to true for each operation that is not intended to be the last one. The default value, false, means that the SharedStorageWorkletGlobalScope is terminated after the operation is run and cannot be run again.
+            * resolveToConfig (optional)
+              * : A boolean value. If set to true, the fulfillment value of the Promise returned by selectURL() will be a FencedFrameConfig object that can be used to load content into a via its config attribute. The default value, false, means that the fulfillment value will be a URL that can be used to load content into an .
+
+       RETURN VALUE
+
+       A Promise that fulfills with a FencedFrameConfig object or a string representing a URL, depending on the value of the resolveToConfig option.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if:
+            * The worklet module has not yet been added with addModule().
+            * urls is empty or exceeds the maximum allowed length (which is browser-specific).
+            * An object's url property contains an invalid URL.
+            * Shared storage is disabled (for example, via a browser setting).
+            * The calling site does not have the Shared Storage API included in a successful privacy sandbox enrollment process.
+
+       EXAMPLES
+
+       BASIC A/B TESTING
+
+         // Randomly assigns a user to a group 0 or 1
+         function getExperimentGroup() {
+           return Math.round(Math.random());
+         }
+
+         async function injectContent() {
+           // Add the module to the shared storage worklet
+           await window.sharedStorage.worklet.addModule("ab-testing-worklet.js");
+
+           // Assign user to a random group (0 or 1) and store it in shared storage
+           window.sharedStorage.set("ab-testing-group", getExperimentGroup(), {
+             ignoreIfPresent: true,
+           });
+
+           // Run the URL selection operation
+           const fencedFrameConfig = await window.sharedStorage.selectURL(
+             "ab-testing",
+             [
+               { url: `https://your-server.example/content/default-content.html` },
+               { url: `https://your-server.example/content/experiment-content-a.html` },
+             ],
+             {
+               resolveToConfig: true,
+             },
+           );
+
+           // Render the chosen URL into a fenced frame
+           document.getElementById("content-slot").config = fencedFrameConfig;
+         }
+
+         injectContent();
+
+       See the Shared Storage API landing page for a walkthrough of this example and links to other examples.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Shared Storage API
+
+Web APIs manual                         from the official documentation

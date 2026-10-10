@@ -1,0 +1,55 @@
+WEBAPI.ELEMENT-CUSTOMELEMENTREGISTRY(1) Sandbox manual WEBAPI.ELEMENT-CUSTOMELEMENTREGISTRY(1)
+
+       NAME
+
+       Element: customElementRegistry property - The customElementRegistry read-only property of the Element interface returns the CustomElementRegistry object associated with this element,
+
+       ELEMENT: CUSTOMELEMENTREGISTRY PROPERTY
+
+       The customElementRegistry read-only property of the Element interface returns the CustomElementRegistry object associated with this element, or null if one has not been set.
+
+       An element's customElementRegistry is set when the element is created (for example, via Document.createElement() with the customElementRegistry option, or when parsed in a context that has a scoped registry). Once set to a CustomElementRegistry object, it cannot be changed. The registry determines which custom element definitions are used when the element is upgraded.
+
+       VALUE
+
+       A CustomElementRegistry object, or null.
+
+       EXAMPLES
+
+       ACCESSING AN ELEMENT'S CUSTOM ELEMENT REGISTRY
+
+       This example creates a scoped registry, attaches it to a shadow root, and then reads back the customElementRegistry property from an element inside the shadow tree to confirm it matches the scoped registry.
+
+         const myRegistry = new CustomElementRegistry();
+         myRegistry.define(
+           "my-element",
+           class extends HTMLElement {
+             connectedCallback() {
+               this.textContent = "Hello from scoped registry!";
+             }
+           },
+         );
+
+         const host = document.createElement("div");
+         document.body.appendChild(host);
+         const shadow = host.attachShadow({
+           mode: "open",
+           customElementRegistry: myRegistry,
+         });
+         shadow.innerHTML = "<my-element></my-element>";
+
+         const el = shadow.querySelector("my-element");
+         console.log(el.customElementRegistry === myRegistry); // true
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Document.customElementRegistry
+        * ShadowRoot.customElementRegistry
+        * CustomElementRegistry
+        * Scoped custom element registries in Using custom elements
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,65 @@
+HTTP.HEADER-DPR(1)               Sandbox manual               HTTP.HEADER-DPR(1)
+
+       NAME
+
+       DPR header - > [!WARNING]
+
+       DPR HEADER
+
+       {{Non-standard_Header}}
+
+       > The DPR header was standardized as Sec-CH-DPR and the new name is now preferred.
+       The HTTP DPR request header provides device client hints about the client device pixel ratio (DPR). This ratio is the number of physical device pixels corresponding to every CSS pixel.
+
+       The hint is useful when selecting image sources that best correspond to a screen's pixel density. This is similar to the role played by x descriptors in the srcset attribute to allow user agents to select a preferred image.
+
+       If a server uses the DPR hint to choose which resource is sent in a response, the response must include the Content-DPR header. The client must use the value in Content-DPR for layout if it differs from the value in the request's DPR header.
+
+       If the DPR header appears more than once in a message the last occurrence is used.
+
+       Servers that opt in to the DPR client hint will typically also specify it in the Vary header to inform caches that the server may send different responses based on the header value in a request.
+
+       Header type Request header, Client hint Forbidden request header No
+
+       SYNTAX
+
+         DPR: <number>
+
+       DIRECTIVES
+
+        * 
+          * : The client device pixel ratio.
+
+       EXAMPLES
+
+       A server must first opt in to receive the DPR header by sending the response header Accept-CH containing the directive DPR.
+
+         Accept-CH: DPR
+
+       Then on subsequent requests the client might send DPR header to the server:
+
+         DPR: 2.0
+
+       If a request with the DPR header (as shown above) is for an image resource, then the server response must include the Content-DPR header:
+
+         Content-DPR: 2.0
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Device and responsive image client hints
+          * Sec-CH-DPR
+          * Sec-CH-Device-Memory
+          * Sec-CH-Viewport-Height
+          * Sec-CH-Viewport-Width
+          * Sec-CH-Width
+          * Content-DPR (deprecated)
+          * Device-Memory (deprecated)
+          * Viewport-Width (deprecated)
+          * Width (deprecated)
+        * Accept-CH
+        * HTTP Caching: Vary and Vary
+        * Improving user privacy and developer experience with User-Agent Client Hints (developer.chrome.com)
+
+HTTP manual                             from the official documentation

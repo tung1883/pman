@@ -1,0 +1,93 @@
+WEBAPI.CSSFONTPALETTEVALUESRULE-OVERRIDECOLORS(1) Sandbox manual WEBAPI.CSSFONTPALETTEVALUESRULE-OVERRIDECOLORS(1)
+
+       NAME
+
+       CSSFontPaletteValuesRule: overrideColors property - The read-only overrideColors property of the CSSFontPaletteValuesRule interface is a string containing a list of color index and color pair 
+
+       CSSFONTPALETTEVALUESRULE: OVERRIDECOLORS PROPERTY
+
+       The read-only overrideColors property of the CSSFontPaletteValuesRule interface is a string containing a list of color index and color pair that are to be used instead. It is specified in the same format as the corresponding override-colors descriptor.
+
+       VALUE
+
+       A string containing a comma-separated list of color index and color pair
+
+       EXAMPLES
+
+       READ THE OVERRIDDEN COLOR
+
+       This example first defines a few at-rules, among them two @font-palette-values. The MDN live sample infrastructure combines all the CSS blocks in the example into a single inline style with the id css-output, so we first use document.getElementById() to find that sheet.
+
+       HTML
+
+         <div class="hat">
+           <div class="emoji colored-hat">🎩</div>
+         </div>
+         <button>Toggle color</button>
+         <pre id="log"></pre>
+
+       CSS
+
+         @font-face {
+           font-family: "Noto Color Emoji";
+           font-style: normal;
+           font-weight: normal;
+           src: url("https://fonts.gstatic.com/l/font?kit=Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diywYkdG3gjD0U&skey=a373f7129eaba270&v=v24")
+             format("woff2");
+         }
+
+         .emoji {
+           font-family: "Noto Color Emoji", emoji;
+           font-size: 3rem;
+         }
+
+         @font-palette-values --blue {
+           font-family: "Noto Color Emoji";
+           override-colors:
+             3 rgb(1 28 193),
+             4 rgb(60 124 230);
+         }
+
+         @font-palette-values --green {
+           font-family: "Noto Color Emoji";
+           override-colors:
+             3 rgb(28 193 1),
+             4 rgb(34 230 1);
+         }
+
+         .colored-hat {
+           font-palette: --blue;
+         }
+
+       JAVASCRIPT
+
+         const log = document.getElementById("log");
+         const button = document.querySelector("button");
+         const hat = document.querySelector(".colored-hat");
+         const rules = document.getElementById("css-output").sheet.cssRules;
+         const greenFontPaletteValuesRule = rules[3];
+         const blueFontPaletteValuesRule = rules[2];
+         log.textContent = `Overridden colors: ${blueFontPaletteValuesRule.overrideColors}`;
+
+         button.addEventListener("click", (event) => {
+           if (hat.style.fontPalette !== "--green") {
+             hat.style.fontPalette = "--green";
+             log.textContent = `Overridden colors: ${greenFontPaletteValuesRule.overrideColors}`;
+           } else {
+             hat.style.fontPalette = "--blue";
+             log.textContent = `Overridden colors: ${blueFontPaletteValuesRule.overrideColors}`;
+           }
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * @font-palette-values at-rule
+        * override-colors descriptor
+
+Web APIs manual                         from the official documentation

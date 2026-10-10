@@ -1,0 +1,120 @@
+K8S.TASKS-ADMINISTER-CLUSTER-VERIFY-SIGNED-ARTIFACTS(1) Sandbox manual K8S.TASKS-ADMINISTER-CLUSTER-VERIFY-SIGNED-ARTIFACTS(1)
+
+       NAME
+
+       Retrieve the latest available Kubernetes release version - You will need to have the following tools installed:
+
+       RETRIEVE THE LATEST AVAILABLE KUBERNETES RELEASE VERSION
+
+       ## PREREQUISITES
+
+       You will need to have the following tools installed:
+
+        * cosign (install guide)
+        * curl (often provided by your operating system)
+        * jq (download jq)
+
+       VERIFYING BINARY SIGNATURES
+
+       The Kubernetes release process signs all binary artifacts (tarballs, SPDX files, standalone binaries) by using cosign's keyless signing. To verify a particular binary, retrieve it together with its signature and certificate:
+
+         URL=https://dl.k8s.io/release/v/bin/linux/amd64
+         BINARY=kubectl
+
+         FILES=(
+             "$BINARY"
+             "$BINARY.sig"
+             "$BINARY.cert"
+         )
+
+         for FILE in "${FILES[@]}"; do
+             curl -sSfL --retry 3 --retry-delay 3 "$URL/$FILE" -o "$FILE"
+         done
+
+       Then verify the blob by using cosign verify-blob:
+
+         cosign verify-blob "$BINARY" \
+           --signature "$BINARY".sig \
+           --certificate "$BINARY".cert \
+           --certificate-identity krel-staging@k8s-releng-prod.iam.gserviceaccount.com \
+           --certificate-oidc-issuer https://accounts.google.com
+
+       > Note:
+       Cosign 2.0 requires the --certificate-identity and --certificate-oidc-issuer options.
+
+       To learn more about keyless signing, please refer to Keyless Signatures.
+
+       Previous versions of Cosign required that you set COSIGN_EXPERIMENTAL=1.
+
+       For additional information, please refer to the sigstore Blog
+
+       VERIFYING IMAGE SIGNATURES
+
+       For a complete list of images that are signed please refer to Releases.
+
+       Pick one image from this list and verify its signature using the cosign verify command:
+
+         cosign verify registry.k8s.io/kube-apiserver-amd64:v \
+           --certificate-identity krel-trust@k8s-releng-prod.iam.gserviceaccount.com \
+           --certificate-oidc-issuer https://accounts.google.com \
+           | jq .
+
+       VERIFYING IMAGES FOR ALL CONTROL PLANE COMPONENTS
+
+       To verify all signed control plane images for the latest stable version (v), please run the following commands:
+
+         curl -Ls "https://sbom.k8s.io/$(curl -Ls https://dl.k8s.io/release/stable.txt)/release" \
+           | grep "SPDXID: SPDXRef-Package-registry.k8s.io" \
+           | grep -v sha256 | cut -d- -f3- | sed 's/-/\//' | sed 's/-v1/:v1/' \
+           | sort > images.txt
+         input=images.txt
+         while IFS= read -r image
+         do
+           cosign verify "$image" \
+             --certificate-identity krel-trust@k8s-releng-prod.iam.gserviceaccount.com \
+             --certificate-oidc-issuer https://accounts.google.com \
+             | jq .
+         done < "$input"
+
+       Once you have verified an image, you can specify the image by its digest in your Pod manifests as per this example:
+
+         registry-url/image-name@sha256:45b23dee08af5e43a7fea6c4cf9c25ccf269ee113168c19722f87876677c5cb2
+
+       For more information, please refer to the Image Pull Policy section.
+
+       VERIFYING IMAGE SIGNATURES WITH ADMISSION CONTROLLER
+
+       For non-control plane images (for example conformance image), signatures can also be verified at deploy time using sigstore policy-controller admission controller.
+
+       Here are some helpful resources to get started with policy-controller:
+
+        * Installation
+        * Configuration Options
+
+       VERIFY THE SOFTWARE BILL OF MATERIALS
+
+       You can verify the Kubernetes Software Bill of Materials (SBOM) by using the sigstore certificate and signature, or the corresponding SHA files:
+
+         # Retrieve the latest available Kubernetes release version
+         VERSION=$(curl -Ls https://dl.k8s.io/release/stable.txt)
+
+         # Verify the SHA512 sum
+         curl -Ls "https://sbom.k8s.io/$VERSION/release" -o "$VERSION.spdx"
+         echo "$(curl -Ls "https://sbom.k8s.io/$VERSION/release.sha512") $VERSION.spdx" | sha512sum --check
+
+         # Verify the SHA256 sum
+         echo "$(curl -Ls "https://sbom.k8s.io/$VERSION/release.sha256") $VERSION.spdx" | sha256sum --check
+
+         # Retrieve sigstore signature and certificate
+         curl -Ls "https://sbom.k8s.io/$VERSION/release.sig" -o "$VERSION.spdx.sig"
+         curl -Ls "https://sbom.k8s.io/$VERSION/release.cert" -o "$VERSION.spdx.cert"
+
+         # Verify the sigstore signature
+         cosign verify-blob \
+             --certificate "$VERSION.spdx.cert" \
+             --signature "$VERSION.spdx.sig" \
+             --certificate-identity krel-staging@k8s-releng-prod.iam.gserviceaccount.com \
+             --certificate-oidc-issuer https://accounts.google.com \
+             "$VERSION.spdx"
+
+Kubernetes manual                       from the official documentation

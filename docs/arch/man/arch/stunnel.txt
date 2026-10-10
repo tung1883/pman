@@ -1,0 +1,157 @@
+ARCH.STUNNEL(1)                  Sandbox manual                  ARCH.STUNNEL(1)
+
+       stunnel (“Secure Tunnel”) is a
+
+       cross-platform application used to provide a universal DTLS/TLS tunneling service. It is a sort of a proxy designed to add DTLS/TLS encryption functionality to existing clients and servers without any changes in the programs' code. It is designed for security, portability, and scalability (including load-balancing), making it suitable for large deployments. It uses OpenSSL, and is distributed under GNU GPL version 2 or later with OpenSSL exception.
+
+       Conceptually, stunnel can be thought of as a lightweight tunnel. Basically, it just wraps/unwraps the data within DTLS/TLS. It can be used with traditional network interfaces.
+
+       Authentication can also be used by the server to allow access only to approved clients.
+
+       INSTALLATION
+
+       Install the stunnel package.
+
+       Depending on your usage, you might also need to edit the provided systemd units to better handle dependencies. In order for stunnel to start up automatically at system boot you must enable it.
+
+       CONFIGURATION
+
+       The main configuration file is read from /etc/stunnel/stunnel.conf. It is an ini-style file. It is composed from a global section followed by one or more service sections.
+
+       Tip /etc/stunnel/stunnel.conf-sample has examples for a few configurations.
+
+       A client is one to accept non-TLS encrypted data. Stunnel will encrypt its data with TLS and connect to the stunnel server. The stunnel server accepts TLS encrypted data and decrypts it. It then connects to where the data should be sent to.
+
+       The default debug value is notice, which is very verbose. After verifying correct operation, it is worth to explicitly set a lower value in the configuration file.
+
+         /etc/stunnel/stunnel.conf
+
+         debug = err
+
+       For better security, it is advised to explicitly set an appropriate uid and gid, other than root, for the global section and the per service sections. The configuration tokens setuid and setgid are available for this purpose.
+
+       BYTE ORDER MARK (BOM)
+
+       The configuration file should have a UTF-8 byte order mark (BOM), at the beginning of the file. A BOM is the unicode character U+FEFF. Its UTF-8 representation is the (hexadecimal) byte sequence 0xEF, 0xBB, 0xBF. Creating a file with these bytes at its beginning can be done by
+
+         # echo -e '\xef\xbb\xbf; BOM composed of non printable characters. It is here, before the semicolon!' > /etc/stunnel/stunnel.conf
+
+       To test if those bytes appear, one can use
+
+         % od --address-radix=n --format=x1c --read-bytes=8 /etc/stunnel/stunnel.conf
+           ef  bb  bf  3b  20  42  4f  4d
+          357 273 277   ;       B   O   M
+
+       Note that when printing the file to the screen, such as with cat, or when editing the file with a text editor, the BOM bytes are usually not displayed. They should be there, though. Which is why, after editing is completed, you might want to verify that they are still there with the above od or similar command.
+
+       Tip When using Kate, add a comment containing kate: bom on; in the first or last 10 lines and the UTF-8 BOM will be automatically added to the file.
+
+       PRE-SHARED KEY
+
+       At least one of the client and the server, and optionally both, should be authenticated. Either a pre-shared secret or a key and certificate pair can be used for authentication. A pre-shared secret has to be transferred to all involved machines beforehand by other means, such as SCP and SFTP. When such transfer is acceptable, pre-shared key is the fastest method. Its speed might help to mitigate attacks. A simple configuration for a single server with a single client that are using a pre-shared secret is:
+
+       Client:
+
+         /etc/stunnel/stunnel.conf
+
+         ; BOM composed of non printable characters. It is here, before the semicolon!
+         setuid = stunnel
+         setgid = stunnel
+
+         [trivial client]
+         client     = yes
+         accept     = 127.0.0.1:src_port
+         connect    = server_host:server_port
+         debug      = 3
+         PSKsecrets = /etc/stunnel/psk.txt
+         setuid     = stunnel
+         setgid     = stunnel
+
+       Server:
+
+         /etc/stunnel/stunnel.conf
+
+         ; BOM composed of non printable characters. It is here, before the semicolon!
+         setuid = stunnel
+         setgid = stunnel
+
+         [trivial server]
+         accept     = server_port
+         connect    = dst_port
+         debug      = 3
+         PSKsecrets = /etc/stunnel/psk.txt
+         setuid     = stunnel
+         setgid     = stunnel
+
+       where /etc/stunnel/psk.txt could be created on one machine by
+
+         # openssl rand -base64 -out /etc/stunnel/psk.txt 180
+         # sed --in-place --null-data 's/\n//g;1s/^/psk:/' /etc/stunnel/psk.txt
+         # chmod 640 /etc/stunnel/psk.txt
+
+       and copied to the other machine by secure means before starting stunnel. The permissions for each psk.txt file should be set appropriately, neither world-readable nor world-writable. The psk string from the sed command is just a random name for the sake of the example. Do read stunnel(8).
+
+       CERTIFICATES
+
+       Per the upstream examples, such as those in /etc/stunnel/stunnel.conf-sample, there is an option to get stunnel to run with certificates. With proper stunnel configurations, the certificates used need not be trusted by the system. However, when the certificates chain is not trusted by the system, the clients and optionally the server must approve it before using it, for example, by holding a copy of the whole chain including the root certificates.
+
+       Following is an example to allow only a limited number of clients to actually use the traditional TCP version of the echo service. In this example, even if the external TCP port of the echo server on port 12345 portrayed here is open to anyone, the server will deny any client whose certificates it does not have. In effect, with such usage of certificates, the clients' certificates effectively act like pre-shared secrets.
+
+       Client:
+
+         /etc/stunnel/stunnel.conf
+
+         ; BOM composed of non printable characters. It is here, before the semicolon!
+
+         [traditional echo client]
+         CAfile       = /etc/stunnel/server_req.pem
+         accept       = ::1:54321
+         cert         = /etc/stunnel/clients_req.pem
+         client       = yes
+         connect      = Server_IPv6:12345
+         debug        = 5
+         key          = /etc/stunnel/clients_key.pem
+         setgid       = stunnel
+         setuid       = stunnel
+         verifyChain  = yes
+         verifyPeer   = yes
+
+       Server:
+
+         /etc/stunnel/stunnel.conf
+
+         ; BOM composed of non printable characters. It is here, before the semicolon!
+
+         [traditional echo server]
+         CAfile       = /etc/stunnel/clients_req.pem
+         accept       = Server_IPv6:12345
+         cert         = /etc/stunnel/server_req.pem
+         connect      = ::1:7
+         debug        = 5
+         key          = /etc/stunnel/server_key.pem
+         setgid       = stunnel
+         setuid       = stunnel
+         verifyChain  = yes
+         verifyPeer   = yes
+
+       The required certificates can be generated as self-signed certificates. For example, by
+
+         # openssl req -new -x509 -subj "/C=GB/ST=LONDON/O=TOWER OF LONDON/CN=DOMAINS" -key <(openssl genpkey -algorithm ED448) -noenc -days 365 -out server_req.pem -keyout server_key.pem
+
+       And a similar command can be used to generate the certificate for each client. When it is acceptable for all the clients to share a single certificate, this reduces to
+
+         # openssl req -new -x509 -subj "/C=CA/ST=ONTARIO/O=TOWER OF LONDON ASSOCIATION/CN=CA BRANCH" -key <(openssl genpkey -algorithm ED448) -noenc -days 365 -out clients_req.pem -keyout clients_key.pem
+
+       Test it:
+
+         $ echo traditional echo protocol | ncat ::1 54321
+         traditional echo protocol
+
+       SEE ALSO
+
+        * Wikipedia:stunnel
+        * Debian:Pan#SSL encryption
+        * Paranoid Penguin - Rehabilitating Clear-Text Network Applications with Stunnel
+        * How To Encrypt Traffic to Redis with Stunnel on Ubuntu 16.04. Despite the title, by changing the ports the article is useful for other services too. It also contains links to articles about other options, such as spiped or a VPN, at the bottom of the article.
+
+ArchWiki manual                         bundled documentation

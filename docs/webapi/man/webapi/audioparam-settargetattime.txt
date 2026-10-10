@@ -1,0 +1,102 @@
+WEBAPI.AUDIOPARAM-SETTARGETATTIME(1) Sandbox manual WEBAPI.AUDIOPARAM-SETTARGETATTIME(1)
+
+       NAME
+
+       AudioParam: setTargetAtTime() method - The setTargetAtTime() method of the
+
+       AUDIOPARAM: SETTARGETATTIME() METHOD
+
+       The setTargetAtTime() method of the AudioParam interface schedules the start of a gradual change to the AudioParam value. This is useful for decay or release portions of ADSR envelopes.
+
+       SYNTAX
+
+         setTargetAtTime(target, startTime, timeConstant)
+
+       PARAMETERS
+
+        * target
+          * : The value the parameter will start to transition towards at the given start time.
+        * startTime
+          * : The time that the exponential transition will begin, in the same time coordinate
+       system as AudioContext.currentTime. If it is less than or equal to AudioContext.currentTime, the parameter will start changing immediately.
+
+        * timeConstant
+          * : The time-constant value, given in seconds, of an exponential approach to the target
+       value. The larger this value is, the slower the transition will be.
+
+       RETURN VALUE
+
+       A reference to this AudioParam object. Some older browser implementations of this interface return undefined.
+
+       DESCRIPTION
+
+       The change starts at the time specified in startTime and exponentially moves towards the value given by the target parameter. The decay rate as defined by the timeConstant parameter is exponential; therefore the value will never reach target completely, but after each timestep of length timeConstant, the value will have approached target by another 1-e-1≈63.2%1 - e^{-1} \approx 63.2%. For the complete formula (which uses a first-order linear continuous time-invariant system), check the Web Audio specification.
+
+       If you absolutely need to reach the target value by a specific time, you can use AudioParam.exponentialRampToValueAtTime(). However, for mathematical reasons, that method does not work if the current value or the target value is 0.
+
+       CHOOSING A GOOD TIMECONSTANT
+
+       As mentioned above, the value changes exponentially, with each timeConstant bringing you another 63.2% toward the target value. You don't have to worry about reaching the target value; once you are close enough, any further changes will be imperceptible to a human listener.
+
+       Depending on your use case, getting 95% toward the target value may already be enough; in that case, you could set timeConstant to one third of the desired duration.
+
+       For more details, check the following table on how the value changes from 0% to 100% as the time progresses.
+
+         Time since startTime  |  Value
+         0 * timeConstant  |  0%
+         0.5 * timeConstant  |  39.3%
+         1 * timeConstant  |  63.2%
+         2 * timeConstant  |  86.5%
+         3 * timeConstant  |  95.0%
+         4 * timeConstant  |  98.2%
+         5 * timeConstant  |  99.3%
+         n * timeConstant  |  1
+       1-e-n1 - e^{-n}
+
+       EXAMPLES
+
+       In this example, we have a media source with two control buttons (see the webaudio-examples repo for the source code, or view the example live.) When these buttons are pressed, setTargetAtTime() is used to fade the gain value up to 1.0, and down to 0, respectively, with the effect starting after 1 second, and the length of time the effect lasts being controlled by the timeConstant.
+
+         // create audio context
+         const audioCtx = new AudioContext();
+
+         // set basic variables for example
+         const myAudio = document.querySelector("audio");
+
+         const atTimePlus = document.querySelector(".at-time-plus");
+         const atTimeMinus = document.querySelector(".at-time-minus");
+
+         // Create a MediaElementAudioSourceNode
+         // Feed the HTMLMediaElement into it
+         const source = audioCtx.createMediaElementSource(myAudio);
+
+         // Create a gain node and set its gain value to 0.5
+         const gainNode = audioCtx.createGain();
+         gainNode.gain.value = 0.5;
+         let currGain = gainNode.gain.value;
+
+         // connect the AudioBufferSourceNode to the gainNode
+         // and the gainNode to the destination
+         source.connect(gainNode);
+         gainNode.connect(audioCtx.destination);
+
+         // set buttons to do something onclick
+         atTimePlus.onclick = () => {
+           currGain = 1.0;
+           gainNode.gain.setTargetAtTime(1.0, audioCtx.currentTime + 1, 0.5);
+         };
+
+         atTimeMinus.onclick = () => {
+           currGain = 0;
+           gainNode.gain.setTargetAtTime(0, audioCtx.currentTime + 1, 0.5);
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

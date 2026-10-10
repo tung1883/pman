@@ -1,0 +1,65 @@
+NGINX.NGX_HTTP_JSON_MODULE(1)    Sandbox manual    NGINX.NGX_HTTP_JSON_MODULE(1)
+
+       MODULE NGX_HTTP_JSON_MODULE
+
+         Example Configuration Directives  json_max_depth  json_set
+       The ngx_http_json_module module (1.31.5) extracts values from a JSON document stored in a variable and makes them available as variables.
+
+       A document is parsed only once per request, no matter how many variables are extracted from it. Parsing is performed on the first access to any of these variables.
+
+       This module is not built by default, it should be enabled with the --with-http_json_module configuration parameter.
+
+       EXAMPLE CONFIGURATION
+
+         http {
+             json_set $user_name $arg_data user.name;
+             json_set $user_age  $arg_data user.age;
+             json_set $tag0      $arg_data tags[0];
+
+             server {
+                 listen 8080;
+
+                 location / {
+                     return 200 "name=$user_name age=$user_age tag0=$tag0\n";
+                 }
+             }
+         }
+
+       DIRECTIVES
+
+       JSON_MAX_DEPTH
+
+         Syntax: | json_max_depth number;
+
+         json_max_depth 32;
+
+       Default:
+
+         Context: | http
+       Sets the maximum nesting depth of JSON documents. A document nested deeper is considered invalid. Acceptable values are in the range from 1 to 256.
+
+       JSON_SET
+
+         Syntax: | json_set $variable $source path;
+         Default: | —
+         Context: | http
+       Sets the variable to the value extracted from the JSON document held in the source variable at the given path.
+
+       In a path, object members are separated by a dot, and array elements are addressed by a zero-based index in square brackets:
+
+         client_body_early_read on;
+
+         json_set $req_id     $request_body request.id;
+         json_set $enabled    $request_body settings.enabled;
+         json_set $first_item $request_body items[0];
+
+       A member name that is empty or contains “.”, “[”, or “]” is written as a JSON string in square brackets. Since such a path contains double quotes, the whole argument needs to be quoted in the configuration file:
+
+         json_set $domain $request_body '["a.b.com"]';
+         json_set $nested $request_body 'obj["a.b"].c[2]';
+
+       The value of a JSON string is stored unescaped. The values of numbers, booleans, and null are stored as they appear in the document. If the path addresses an object or an array, its whole text is stored, including the enclosing braces or brackets.
+
+       If the addressed member or element is absent, the variable is not found. If the source variable is empty or not found, or if its value is not a valid, complete JSON document, then all variables extracted from this source are not found.
+
+nginx manual                            bundled documentation

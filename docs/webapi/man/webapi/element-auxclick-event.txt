@@ -1,0 +1,113 @@
+WEBAPI.ELEMENT-AUXCLICK-EVENT(1) Sandbox manual WEBAPI.ELEMENT-AUXCLICK-EVENT(1)
+
+       NAME
+
+       Element: auxclick event - The auxclick event is fired at an Element when a non-primary pointing device button (any mouse button other than the primary—usually leftmos
+
+       ELEMENT: AUXCLICK EVENT
+
+       The auxclick event is fired at an Element when a non-primary pointing device button (any mouse button other than the primary—usually leftmost—button) has been pressed and released both within the same element.
+
+       auxclick is fired after the mousedown and mouseup events have been fired, in that order.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("auxclick", (event) => { })
+
+         onauxclick = (event) => { }
+
+       EVENT TYPE
+
+       A PointerEvent. Inherits from MouseEvent.
+
+       PointerEvent
+
+       > In earlier versions of the specification, the event type for this event was a MouseEvent. Check browser compatibility for more information.
+
+       PREVENTING DEFAULT ACTIONS
+
+       For the vast majority of browsers that map middle click to opening a link in a new tab, including Firefox, it is possible to cancel this behavior by calling preventDefault() from within an auxclick event handler.
+
+       When listening for auxclick events originating on elements that do not support input or navigation, you will often want to explicitly prevent other default actions mapped to the down action of the middle mouse button. On Windows this is usually autoscroll, and on Linux this is usually clipboard paste. This can be done by preventing the default behavior of the mousedown or pointerdown event.
+
+       Additionally, you may need to avoid opening a system context menu after a right click. Due to timing differences between operating systems, this too is not a preventable default behavior of auxclick. Instead, this can be done by preventing the default behavior of the contextmenu event.
+
+       EXAMPLES
+
+       In this example we define functions for two event handlers — onclick and onauxclick. The former changes the color of the button background, while the latter changes the button foreground (text) color. You also can see the two functions in action by trying the demo out with a multi-button mouse (see it live on GitHub; also see the source code).
+
+       JAVASCRIPT
+
+         let button = document.querySelector("button");
+         let html = document.querySelector("html");
+
+         function random(number) {
+           return Math.floor(Math.random() * number);
+         }
+
+         function randomColor() {
+           return `rgb(${random(255)} ${random(255)} ${random(255)})`;
+         }
+
+         button.onclick = () => {
+           button.style.backgroundColor = randomColor();
+         };
+
+         button.onauxclick = (e) => {
+           e.preventDefault();
+           button.style.color = randomColor();
+         };
+
+         button.oncontextmenu = (e) => {
+           e.preventDefault();
+         };
+
+       Notice that in addition to capturing the auxclick event using onauxclick, the contextmenu event is also captured, and preventDefault() called on that event, in order to prevent the context menu from popping up after the color change is applied.
+
+       HTML
+
+         <button>Click me!</button>
+
+         html {
+           height: 100%;
+           overflow: hidden;
+         }
+
+         body {
+           height: inherit;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           margin: 0;
+         }
+
+         button {
+           border: 0;
+           background-color: white;
+           font-size: 8vw;
+           display: block;
+           width: 100%;
+           height: 100%;
+           letter-spacing: 0.5rem;
+         }
+
+       > If you are using a three-button mouse, you'll notice that the onauxclick handler is run when any of the non-left mouse buttons are clicked (usually including any "special" buttons on gaming mice).
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Learn: Introduction to events
+        * click
+        * contextmenu
+        * dblclick
+        * mousedown
+        * mouseup
+        * pointerdown
+        * pointerup
+
+Web APIs manual                         from the official documentation

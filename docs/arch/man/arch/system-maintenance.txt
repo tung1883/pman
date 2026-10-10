@@ -1,0 +1,238 @@
+ARCH.SYSTEM-MAINTENANCE(1)       Sandbox manual       ARCH.SYSTEM-MAINTENANCE(1)
+
+       Regular system maintenance is necessary for the proper functioning of Arch over a period of time. Timely maintenance is a practice many users get accustomed to.
+
+       CHECK FOR ERRORS
+
+       FAILED SYSTEMD SERVICES
+
+       Check if any systemd services have failed:
+
+         $ systemctl --failed
+
+       User-mode services can also be checked by passing the --user flag.
+
+       See systemd#Using units for more information.
+
+       LOG FILES
+
+       Look for errors in the log files located in /var/log/, as well as messages logged in the systemd journal:
+
+         # journalctl -b
+
+       User-mode logs in the journal can also be checked by passing the --user flag.
+
+       See Xorg#Troubleshooting for information on where and how Xorg logs errors.
+
+       BACKUP
+
+       Having backups of important data is a necessary measure to take, since human and machine processing errors are very likely to generate corruption as time passes, and also the physical media where the data is stored is inevitably destined to fail.
+
+       See Synchronization and backup programs for many alternative applications that may better suit your case. See Category:System recovery for other articles of interest.
+
+       It is highly encouraged to automate backups and test the recovery process to ensure everything works as intended. For automation see System backup#Automation.
+
+       CONFIGURATION FILES
+
+       Before editing any configuration files, create a backup so that you can revert to a working version in case of problems. Editors like vim and emacs can do this automatically. On a larger scale, consider using a configuration manager.
+
+       For dotfiles (configuration files in the home directory), see dotfiles#Tracking dotfiles directly with Git.
+
+       LIST OF INSTALLED PACKAGES
+
+       Maintain a list of all installed packages so that if a complete re-installation is inevitable, it is easier to re-create the original environment.
+
+       See pacman/Tips and tricks#List of installed packages for details.
+
+       PACMAN DATABASE
+
+       See pacman/Tips and tricks#Back up the pacman database.
+
+       ENCRYPTION METADATA
+
+       See Data-at-rest encryption#Backup for disk encryption scenarios.
+
+       SYSTEM AND USER DATA
+
+       See System backup.
+
+       UPGRADING THE SYSTEM
+
+       It is recommended to perform full system upgrades regularly via pacman#Upgrading packages, to enjoy both the latest bug fixes and security updates, and also to avoid having to deal with too many package upgrades that require manual intervention at once. When requesting support from the community, it will usually be assumed that the system is up to date.
+
+       Make sure to have the Arch install media or another Linux "live" CD/USB available so you can easily rescue your system if there is a problem after updating. If you are running Arch in a production environment, or cannot afford downtime for any reason, test changes to configuration files, as well as updates to software packages, on a non-critical duplicate system first. Then, if no problems arise, roll out the changes to the production system.
+
+       If the system has packages from the AUR, carefully upgrade all of them.
+
+       pacman is a powerful package management tool, but it does not attempt to handle all corner cases. Users must be vigilant and take responsibility for maintaining their own system.
+
+       READ BEFORE UPGRADING THE SYSTEM
+
+       Before upgrading, users are expected to visit the Arch Linux home page to check the latest news, or alternatively subscribe to the RSS feed or the arch-announce mailing list. When updates require out-of-the-ordinary user intervention (more than what can be handled simply by following the instructions given by pacman), an appropriate news post will be made.
+
+       Before upgrading fundamental software (such as the kernel, xorg, systemd, or glibc) to a new version, look over the appropriate forum to see if there have been any reported problems.
+
+       Users must equally be aware that upgrading packages can raise unexpected problems that could need immediate intervention; therefore, it is discouraged to upgrade a stable system shortly before it is required for carrying out an important task. Instead, wait to upgrade until there is enough time available to resolve any post-upgrade issues.
+
+       Tip You could use a pacman hook like informant, newscheckAUR or arch-manwarnAUR which prevents you from updating if there is fresh Arch News that you have not read since the last update ran.
+
+       AVOID CERTAIN PACMAN COMMANDS
+
+       Avoid doing partial upgrades. In other words, never run pacman -Sy; instead, always use pacman -Syu.
+
+       Generally avoid using the --overwrite option with pacman. The --overwrite option takes an argument containing a glob. When used, pacman will bypass file conflict checks for files that match the glob. In a properly maintained system, it should only be used when explicitly recommended by the Arch Developers. See the #Read before upgrading the system section.
+
+       Avoid using the -d option with pacman. pacman -Rdd package skips dependency checks during package removal. As a result, a package providing a critical dependency could be removed, resulting in a broken system.
+
+       PARTIAL UPGRADES ARE UNSUPPORTED
+
+       Arch Linux is a rolling release distribution. That means when new library versions are pushed to the repositories, the Developers and Package Maintainers rebuild all the packages in the repositories that need to be rebuilt against the libraries. For example, if two packages depend on the same library, upgrading only one package might also upgrade the library (as a dependency), which might then break the other package which depends on an older version of the library.
+
+       That is why partial upgrades are not supported. Do not use:
+
+        * pacman -Sy package,
+        * pacman -Sy followed by pacman -S package (instead, -Su should be used in the installation of the package).
+       Note
+
+        * pacman -Syuw carries the same risks as pacman -Sy, because it will update the pacman sync database without installing the newer packages.
+        * The bash script checkupdates, included with the pacman-contrib package, provides a safe way to check for upgrades to installed packages without running a system update, and provides an option (-d) to download the pending updates to the pacman cache without synchronizing the database, thus avoiding partial upgrade issues when later attempting to use pacman -S package to install packages.
+       When refreshing the package database, always do a full upgrade with pacman -Syu.
+
+       Note If pacman -Syu fails to complete the upgrade (i.e. the -Su part), the error must be resolved and the upgrade operation completed before other package management operations, as the database syncing (the -Sy part) has succeeded first.
+
+       Be very careful when using IgnorePkg and IgnoreGroup for the same reason. If the system has locally built packages (such as AUR packages), users will need to rebuild them when their dependencies receive a soname bump.
+
+       If a partial upgrade scenario has been created, and binaries are broken because they cannot find the libraries they are linked against, do not "fix" the problem simply by symlinking. Libraries receive soname bumps when they are not backwards compatible. A simple pacman -Syu to a properly synced mirror will fix the problem as long as pacman is not broken.
+
+       ACT ON ALERTS DURING AN UPGRADE
+
+       When upgrading the system, be sure to pay attention to the alert notices provided by pacman. If any additional actions are required by the user, be sure to take care of them right away. If a pacman alert is confusing, search the forums or check the latest news on the Arch Linux homepage (see #Read before upgrading the system) for more detailed instructions.
+
+       DEAL PROMPTLY WITH NEW CONFIGURATION FILES
+
+       When pacman is invoked, .pacnew and .pacsave files can be created. Pacman provides notice when this happens and users must deal with these files promptly. Users are referred to the pacman/Pacnew and Pacsave wiki page for detailed instructions.
+
+       Also, think about other configuration files you may have copied or created. If a package had an example configuration that you copied to your home directory, check to see if a new one has been created.
+
+       RESTART OR REBOOT AFTER UPGRADES
+
+       Upgrades are typically not applied to existing processes. You must restart processes to fully apply the upgrade.
+
+       The archlinux-contrib package provides a script called checkservices which runs pacdiff to merge .pacnew files then checks for processes running with outdated libraries and prompts the user if they want them to be restarted.
+
+       The kernel is particularly difficult to patch without a reboot. A reboot is always the most secure and convenient option, but if this is very inconvenient kernel live patching can be used to apply upgrades without a reboot.
+
+       REVERT BROKEN UPDATES
+
+       If a package update is expected/known to cause problems, packagers will ensure that pacman displays an appropriate message when the package is updated. If experiencing trouble after an update, double-check the pacman output by looking at /var/log/pacman.log.
+
+       Tip You can use a log viewer such as wat-gitAUR to search the pacman logs.
+
+       At this point, only after ensuring there is no information available through pacman, there is no relevant news on https://archlinux.org/, and there are no forum posts regarding the update, consider seeking help on the forum or over IRC. Downgrading the offending package to revert broken updates should be considered as a last resort.
+
+       CHECK FOR ORPHANS AND DROPPED PACKAGES
+
+       After upgrading you may now have packages that are no longer needed or that are no longer in the official repositories.
+
+       Use pacman -Qtd to check for packages that were installed as a dependency but now, no other packages depend on them. If an orphaned package is still needed, it is recommended to change the installation reason to explicit. Otherwise, if the package is no longer needed, it can be removed. See pacman/Tips and tricks#Removing unused packages (orphans) for details.
+
+       Additionally, some packages may no longer be in the remote repositories, but they still may be on your local system. To list all foreign packages use pacman -Qm. Note that this list will include packages that have been installed manually (e.g., from the AUR). To exclude packages that are (still) available on the AUR, use the script from BBS#288205 or try the ancient-packagesAUR tool.
+
+       CHECK FOR FIRMWARE UPDATES
+
+       In addition to software updates, firmware should also be updated regularly.
+
+       fwupd is an extensive firmware update mechanism available for Linux systems.
+
+       USE THE PACKAGE MANAGER TO INSTALL SOFTWARE
+
+       Pacman does a much better job than you at keeping track of files. If you install things manually you will, sooner or later, forget what you did, forget where you installed to, install conflicting software, install to the wrong locations, etc.
+
+        * Install packages from the official repositories using the method in the pacman#Installing packages section.
+        * If the program you desire is not available, check to see if someone has created a package in the AUR. Follow the method in that article for installation.
+        * Lastly, if the program you want is not in the official repositories or in the AUR, learn how to create a package for it.
+       To clean up improperly installed files, see pacman/Tips and tricks#Identify files not owned by any package.
+
+       CHOOSE OPEN-SOURCE DRIVERS
+
+       Always try open source drivers before resorting to proprietary drivers. Most of the time, open source drivers are more stable and reliable than proprietary drivers. Open source driver bugs are fixed more easily and quickly. While proprietary drivers can offer more features and capabilities, this can come at the cost of stability. To avoid this dilemma, try to choose hardware components known to have mature open source driver support with full features. Information about hardware with open source Linux drivers is available at linux-drivers.org.
+
+       BE CAREFUL WITH UNOFFICIAL PACKAGES
+
+       Use precaution when using packages from the AUR or an unofficial user repository. Most are supplied by regular users and thus may not have the same standards as those in the official repositories. Always check PKGBUILDs for sanity and signs of mistake or malicious code before building and/or installing the package.
+
+       To simplify maintenance, limit the amount of unofficial packages used. Make periodic checks on which are in actual use, and remove (or replace with their official counterparts) any others. See pacman/Tips and tricks#Maintenance for useful commands. Following system upgrade, use rebuild-detector to identify any unofficial packages that may need to be rebuilt.
+
+       UPDATE THE MIRRORLIST
+
+       Update pacman's mirrorlist, as the quality of mirrors can vary over time, and some might go offline or their download rate might degrade.
+
+       See mirrors for details.
+
+       CLEAN THE FILESYSTEM
+
+       Programs that help with this can be found in List of applications/Utilities#Disk cleaning.
+
+       UNUSED LARGE FILES
+
+       When looking for files to remove, it is important to find the files that take up the most disk space. Programs that help with this can be found in List of applications/Utilities#Disk usage display.
+
+       PACKAGE CACHE
+
+       Remove unwanted .pkg files from /var/cache/pacman/pkg/ to free up disk space.
+
+       See pacman#Cleaning the package cache for more information.
+
+       UNUSED PACKAGES
+
+       Remove unused packages from the system to free up disk space and simplify maintenance.
+
+       See #Check for orphans and dropped packages.
+
+       OLD CONFIGURATION FILES
+
+       Old configuration files may conflict with newer software versions, or corrupt over time. Remove unneeded configurations periodically, particularly in your home directory and ~/.config. For similar reasons, be careful when sharing home directories between installations.
+
+       Look for the following directories:
+
+        * ~/.config/ – where applications stores their configuration
+        * ~/.cache/ – cache of some programs may grow in size
+        * ~/.local/share/ – old files may be lying there
+       See XDG Base Directory support for more information about these directories.
+
+       To keep the home directory clean from temporary files created at the wrong place, it is a good idea to manage a list of unwanted files and remove them regularly, for example with rmshit.py.
+
+       rmlint-gitAUR can be used to find and optionally remove duplicate files, empty files, recursive empty directories and broken symlinks.
+
+       BROKEN SYMLINKS
+
+       Old, broken symbolic links might be sitting around your system; you should remove them. Examples on achieving this can be found here and here. However, you should not blindly delete all broken symbolic links, as some of them serve a purpose [1].
+
+       To quickly list all the broken symlinks of permanent files on your system, use:
+
+         # find / -type d \( -path "/dev" -o -path "/proc" -o -path "/run" -o -path "/sys" \) -prune -o -xtype l -print
+
+       Then inspect and remove unnecessary entries from this list.
+
+       TIPS AND TRICKS
+
+       The following tips are generally not required, but certain users may find them useful.
+
+       USE PROVEN SOFTWARE PACKAGES
+
+       Arch's rolling releases can be a boon for users who want to try the latest features and get upstream updates as soon as possible, but they can also make system maintenance more difficult. To simplify maintenance and improve stability, try to avoid cutting edge software and install only mature and proven software. Such packages are less likely to receive difficult upgrades such as major configuration changes or feature removals. Prefer software that has a strong and active development community, as well as a high number of competent users, in order to simplify support in the event of a problem.
+
+       Avoid any use of the testing repository, even individual packages from testing. These packages are experimental and not suitable for a stable system. Similarly, avoid packages which are built directly from upstream development sources. These are usually found in the AUR, with names including things like: "dev", "devel", "svn", "cvs", "git", etc.
+
+       INSTALL THE LINUX-LTS PACKAGE
+
+       The linux-lts package is an alternative Arch kernel package, and is available in the core repository. This particular kernel version has long-term support (LTS) from upstream, including security and bug fixes. It is useful if you use out-of-tree kernel modules and want to ensure their compatibility or if you want a fallback kernel in case a new kernel version causes problems.
+
+       To make it available as a boot option, you will need to update your boot loader's configuration file to use the LTS kernel and ram disk: vmlinuz-linux-lts and initramfs-linux-lts.img.
+
+       SEE ALSO
+
+        * Arch News Bash Script
+        * Arch-Update — "An interactive update notifier & applier for Arch Linux that assists you with important pre / post update tasks (including a systray applet and extensive CLI)."
+
+ArchWiki manual                         bundled documentation

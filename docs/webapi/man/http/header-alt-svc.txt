@@ -1,0 +1,52 @@
+HTTP.HEADER-ALT-SVC(1)           Sandbox manual           HTTP.HEADER-ALT-SVC(1)
+
+       NAME
+
+       Alt-Svc header - The HTTP Alt-Svc response header lets a server indicate that another network location (the "alternative service") can be treated as authorit
+
+       ALT-SVC HEADER
+
+       The HTTP Alt-Svc response header lets a server indicate that another network location (the "alternative service") can be treated as authoritative for that origin when making future requests.
+
+       Doing so allows new protocol versions to be advertised without affecting in-flight requests and can also help servers manage traffic. Using an alternative service is not visible to the end user; it does not change the URL or the origin of the request and does not introduce additional round trips.
+
+       Header type Response header
+
+       SYNTAX
+
+         Alt-Svc: clear
+         Alt-Svc: <protocol-id>=<alt-authority>; ma=<max-age>
+         Alt-Svc: <protocol-id>=<alt-authority>; ma=<max-age>; persist=1
+
+        * clear
+          * : All alternative services of the origin are invalidated.
+        * 
+          * : The Application-Layer Protocol Negotiation (ALPN) protocol identifier. Examples include h2 for HTTP/2 and h3-25 for draft 25 of the HTTP/3 protocol.
+        * 
+          * : A quoted string specifying the alternative authority, consisting of an optional host override, a colon, and a mandatory port number.
+        * ma= (optional)
+          * : The number of seconds for which the alternative service is considered fresh.
+       If omitted, it defaults to 24 hours. Alternative service entries can be cached for up to seconds, minus the age of the response (from the Age header). Once the cached entry expires, the client can no longer use this alternative service for new connections.
+
+        * persist=1 (optional)
+          * : Entries are not deleted by network configuration changes.
+       Cached alternative service entries are usually cleared on such changes.
+
+       Multiple entries can be specified in a single Alt-Svc header using comma as separator. In that case, early entries are considered more preferable.
+
+       EXAMPLE
+
+         Alt-Svc: h2=":443"; ma=2592000;
+         Alt-Svc: h2=":443"; ma=2592000; persist=1
+         Alt-Svc: h2="alt.example.com:443", h2=":443"
+         Alt-Svc: h3-25=":443"; ma=3600, h2=":443"; ma=3600
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Alternative Services by HTTP Working Group chair, Mark Nottingham (2016)
+
+HTTP manual                             from the official documentation

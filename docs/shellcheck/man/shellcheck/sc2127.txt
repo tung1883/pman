@@ -1,0 +1,51 @@
+SHELLCHECK.SC2127(1)             Sandbox manual             SHELLCHECK.SC2127(1)
+
+       NAME
+
+       To use ${ ..; }, specify #!/usr/bin/env ksh. - (Or "To use cases with ;;&, specify #!/usr/bin/env bash)
+
+       TO USE .. , SPECIFY # /USR/BIN/ENV KSH
+
+       TO USE .. , SPECIFY # /USR/BIN/ENV KSH
+
+       (Or "To use cases with ;;&, specify #!/usr/bin/env bash)
+
+       PROBLEMATIC CODE
+
+         #!/usr/bin/env bash
+         var=${ mycmd; };
+
+       or
+
+         #!/usr/bin/env ksh
+         case "$1" in
+           foo) echo "Foo!" ;;&
+           f*) echo "F-something at least" ;;
+         esac
+
+       CORRECT CODE
+
+         #!/usr/bin/env ksh
+         var=${ mycmd; };
+
+       or
+
+         #!/usr/bin/env bash
+         case "$1" in
+           foo) echo "Foo!" ;;&
+           f*) echo "F-something at least" ;;
+         esac
+
+       RATIONALE
+
+       You are using a shell syntax feature not supported by the script's shell. Either rewrite the construct, or switch to a different shell interpreter.
+
+       EXCEPTIONS
+
+       ShellCheck 0.10.0 and below warns about ${ ..; } command expansions when using Bash. However, Bash 5.3 added support for this construct. If you are using this construct in Bash 5.3, either ignore the warning or upgrade ShellCheck.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

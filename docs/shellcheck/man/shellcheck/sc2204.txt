@@ -1,0 +1,39 @@
+SHELLCHECK.SC2204(1)             Sandbox manual             SHELLCHECK.SC2204(1)
+
+       NAME
+
+       (..) is a subshell. Did you mean [ .. ], a test expression? - if ( -d mydir )
+
+       (..) IS A SUBSHELL. DID YOU MEAN .. , A TEST EXPRESSION
+
+       (..) IS A SUBSHELL. DID YOU MEAN .. , A TEST EXPRESSION
+
+       PROBLEMATIC CODE
+
+         if ( -d mydir )
+         then
+           echo "It's a directory"
+         fi
+
+       CORRECT CODE
+
+         if [ -d mydir ]
+         then
+           echo "It's a directory"
+         fi
+
+       RATIONALE
+
+       Tests like -d to see if something is a directory or -z to see if it's non-empty are actually flags to the test command, and only work as tests in that context. [ is an alias for test, so you'll frequently see them written as [ -d mydir ].
+
+       ( .. ) is completely unrelated, and is a subshell mostly used to scope shell modifications. They should not be used in if or while statements in shell scripts.
+
+       If you wanted to test a condition, rewrite the ( .. ) to [ .. ].
+
+       EXCEPTIONS
+
+       None.
+
+       This error is triggered by having a unary test operator as the first command name in a subshell, which won't normally happen. Note that there's a similar warning [[SC2205]] with a higher false positive rate.
+
+ShellCheck manual                       from the official documentation

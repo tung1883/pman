@@ -1,0 +1,46 @@
+SHELLCHECK.SC2066(1)             Sandbox manual             SHELLCHECK.SC2066(1)
+
+       NAME
+
+       Since you double-quoted this, it will not word split, and the loop will only run once. - for s in "$(mycommand)"; do echo "$s"; done
+
+       SINCE YOU DOUBLE-QUOTED THIS, IT WILL NOT WORD SPLIT, AND THE LOOP WIL
+
+       SINCE YOU DOUBLE-QUOTED THIS, IT WILL NOT WORD SPLIT, AND THE LOOP WIL
+
+       PROBLEMATIC CODE
+
+         for s in "$(mycommand)"; do echo "$s"; done
+
+       CORRECT CODE
+
+       The correct code depends on your intention. Let's say you're in a directory with the files file.png and My cat.png, and you want to loop over a command that outputs (or variable that contains):
+
+         hello world
+         My *.png
+
+       LOOP OVER EACH LINE WITHOUT GLOBBING (HELLO WORLD, MY .PNG)
+
+         mycommand | while IFS= read -r s; do echo "$s"; done
+
+       LOOP OVER EACH WORD WITH GLOBBING (HELLO, WORLD, MY, FILE.PNG, MY CAT
+
+         # relies on the fact that IFS by default contains space-tab-linefeed
+         for s in $(mycommand); do echo "$s"; done
+
+       LOOP OVER EACH LINE WITH GLOBBING (HELLO WORLD, MY CAT.PNG)
+
+         # explicitly set IFS to contain only a line feed
+         IFS='
+         '
+         for s in $(mycommand); do echo "$s"; done
+
+       RATIONALE
+
+       You get this warning because you have a loop that will only ever run exactly one iteration. Since you have a loop, you clearly expect it to run more than once. You just have to decide how it should be split up.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

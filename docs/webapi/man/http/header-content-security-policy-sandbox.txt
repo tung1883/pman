@@ -1,0 +1,70 @@
+HTTP.HEADER-CONTENT-SECURITY-POLICY-SANDBOX(1) Sandbox manual HTTP.HEADER-CONTENT-SECURITY-POLICY-SANDBOX(1)
+
+       NAME
+
+       Content-Security-Policy: sandbox directive - The HTTP Content-Security-Policy (CSP) sandbox directive enables a sandbox for the requested resource similar to the <iframe> sandbox attrib
+
+       CONTENT-SECURITY-POLICY: SANDBOX DIRECTIVE
+
+       The HTTP Content-Security-Policy (CSP) sandbox directive enables a sandbox for the requested resource similar to the sandbox attribute. It applies restrictions to a page's actions including preventing popups, preventing the execution of plugins and scripts, and enforcing a same-origin policy.
+
+       CSP version 1.1 / 2 Directive type Document directive This directive is not supported in the element or by the Content-Security-policy-Report-Only header field.
+
+       SYNTAX
+
+         Content-Security-Policy: sandbox;
+         Content-Security-Policy: sandbox <value>;
+
+       where can optionally be one of the following values:
+
+        * allow-downloads
+          * : Allows downloading files through an or element with the download attribute, as well as through the navigation that leads to a download of a file.
+       This works regardless of whether the user clicked on the link, or JS code initiated it without user interaction.
+
+        * allow-forms
+          * : Allows the page to submit forms. If this keyword is not used, form will be displayed as normal, but submitting it will not trigger input validation, sending data to a web server or closing a dialog.
+        * allow-modals
+          * : Allows the page to open modal windows by Window.alert(), Window.confirm(), Window.print() and Window.prompt(), while opening a is allowed regardless of this keyword. It also allows the page to receive BeforeUnloadEvent event.
+        * allow-orientation-lock
+          * : Lets the resource lock the screen orientation.
+        * allow-pointer-lock
+          * : Allows the page to use the Pointer Lock API.
+        * allow-popups
+          * : Allows popups (created, for example, by Window.open() or target="_blank").
+       If this keyword is not used, popup display will silently fail.
+
+        * allow-popups-to-escape-sandbox
+          * : Allows a sandboxed document to open new windows without forcing the sandboxing flags upon them. This will allow, for example, a third-party advertisement to be safely sandboxed without forcing the same restrictions upon the page the ad links to.
+        * allow-presentation
+          * : Allows embedders to have control over whether an iframe can start a presentation session.
+        * allow-same-origin
+          * : Allows a sandboxed resource to retain its origin.
+       A sandboxed resource is otherwise treated as being from an opaque origin, which ensures that it will always fail same-origin policy checks, and hence cannot access localstorage and document.cookie and some JavaScript APIs. The Origin of sandboxed resources without the allow-same-origin keyword is null.
+
+        * allow-scripts
+          * : Allows the page to run scripts (but not create pop-up windows). If this keyword is not used, this operation is not allowed.
+        * allow-storage-access-by-user-activation (experimental)
+          * : Lets the resource request access to the parent's storage capabilities with the Storage Access API.
+        * allow-top-navigation
+          * : Lets the resource navigate the top-level browsing context (the one named _top).
+        * allow-top-navigation-by-user-activation
+          * : Lets the resource navigate the top-level browsing context, but only if initiated by a user gesture.
+        * allow-top-navigation-to-custom-protocols
+          * : Allows navigations to non-http protocols built into browser or registered by a website. This feature is also activated by allow-popups or allow-top-navigation keyword.
+       > The allow-top-navigation and related values only make sense for embedded documents (such as child iframes). For standalone documents, these values have no effect, as the top-level browsing context is the document itself.
+
+       EXAMPLES
+
+         Content-Security-Policy: sandbox allow-scripts;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Content-Security-Policy
+        * sandbox attribute on
+       elements
+
+HTTP manual                             from the official documentation

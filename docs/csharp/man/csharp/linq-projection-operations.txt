@@ -1,0 +1,255 @@
+CSHARP.LINQ-PROJECTION-OPERATIONS(1) Sandbox manual CSHARP.LINQ-PROJECTION-OPERATIONS(1)
+
+       NAME
+
+       Projection operations (C#) - Learn about projection operations. These operations transform an object into a new form that often consists only of properties used later.
+
+       PROJECTION OPERATIONS (C#)
+
+       Projection refers to the operation of transforming an object into a new form that often consists only of those properties subsequently used. By using projection, you can construct a new type that is built from each object. You can project a property and perform a mathematical function on it. You can also project the original object without changing it.
+
+       The standard query operator methods that perform projection are listed in the following section.
+
+       METHODS
+
+         Method names  |  Description  |  C# query expression syntax  |  More information
+         Select  |  Projects values that are based on a transform function.  |  select  |  Select*Select*
+         SelectMany  |  Projects sequences of values that are based on a transform function and then flattens them into one sequence.  |  Use multiple from clauses  |  SelectMany*SelectMany*
+         Zip  |  Produces a sequence of tuples with elements from 2-3 specified sequences.  |  Not applicable.  |  Zip*Zip*
+
+       SELECT
+
+       The following example uses the select clause to project the first letter from each string in a list of strings.
+
+         List<string> words = ["an", "apple", "a", "day"];
+
+         var query = from word in words
+                     select word.Substring(0, 1);
+
+         foreach (string s in query)
+         {
+             Console.WriteLine(s);
+         }
+
+         /* This code produces the following output:
+
+             a
+             a
+             a
+             d
+         */
+
+       The equivalent query using method syntax is shown in the following code:
+
+         List<string> words = ["an", "apple", "a", "day"];
+
+         var query = words.Select(word => word.Substring(0, 1));
+
+         foreach (string s in query)
+         {
+             Console.WriteLine(s);
+         }
+
+         /* This code produces the following output:
+
+             a
+             a
+             a
+             d
+         */
+
+       SELECTMANY
+
+       The following example uses multiple from clauses to project each word from each string in a list of strings.
+
+         List<string> phrases = ["an apple a day", "the quick brown fox"];
+
+         var query = from phrase in phrases
+                     from word in phrase.Split(' ')
+                     select word;
+
+         foreach (string s in query)
+         {
+             Console.WriteLine(s);
+         }
+
+         /* This code produces the following output:
+
+             an
+             apple
+             a
+             day
+             the
+             quick
+             brown
+             fox
+         */
+
+       The equivalent query using method syntax is shown in the following code:
+
+         List<string> phrases = ["an apple a day", "the quick brown fox"];
+
+         var query = phrases.SelectMany(phrase => phrase.Split(' '));
+
+         foreach (string s in query)
+         {
+             Console.WriteLine(s);
+         }
+
+         /* This code produces the following output:
+
+             an
+             apple
+             a
+             day
+             the
+             quick
+             brown
+             fox
+         */
+
+       The SelectMany method can also form the combination of matching every item in the first sequence with every item in the second sequence:
+
+         var query = from number in numbers
+                     from letter in letters
+                     select (number, letter);
+
+         foreach (var item in query)
+         {
+             Console.WriteLine(item);
+         }
+
+       The equivalent query using method syntax is shown in the following code:
+
+         var method = numbers
+             .SelectMany(number => letters,
+             (number, letter) => (number, letter));
+
+         foreach (var item in method)
+         {
+             Console.WriteLine(item);
+         }
+
+       ZIP
+
+       There are several overloads for the Zip projection operator. All of the Zip methods work on sequences of two or more possibly heterogenous types. The first two overloads return tuples, with the corresponding positional type from the given sequences.
+
+       Consider the following collections:
+
+         // An int array with 7 elements.
+         IEnumerable<int> numbers = [1, 2, 3, 4, 5, 6, 7];
+         // A char array with 6 elements.
+         IEnumerable<char> letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+       To project these sequences together, use the IEnumerable{1}) operator:
+
+         foreach ((int number, char letter) in numbers.Zip(letters))
+         {
+             Console.WriteLine($"Number: {number} zipped with letter: '{letter}'");
+         }
+         // This code produces the following output:
+         //     Number: 1 zipped with letter: 'A'
+         //     Number: 2 zipped with letter: 'B'
+         //     Number: 3 zipped with letter: 'C'
+         //     Number: 4 zipped with letter: 'D'
+         //     Number: 5 zipped with letter: 'E'
+         //     Number: 6 zipped with letter: 'F'
+
+       > The resulting sequence from a zip operation is never longer in length than the shortest sequence. The numbers and letters collections differ in length, and the resulting sequence omits the last element from the numbers collection, as it has nothing to zip with.
+       The second overload accepts a third sequence. Let's create another collection, namely emoji:
+
+         // A string array with 8 elements.
+         IEnumerable<string> emoji = [ "🤓", "🔥", "🎉", "👀", "⭐", "💜", "✔", "💯"];
+
+       To project these sequences together, use the IEnumerable{2}) operator:
+
+         foreach ((int number, char letter, string em) in numbers.Zip(letters, emoji))
+         {
+             Console.WriteLine(
+                 $"Number: {number} is zipped with letter: '{letter}' and emoji: {em}");
+         }
+         // This code produces the following output:
+         //     Number: 1 is zipped with letter: 'A' and emoji: 🤓
+         //     Number: 2 is zipped with letter: 'B' and emoji: 🔥
+         //     Number: 3 is zipped with letter: 'C' and emoji: 🎉
+         //     Number: 4 is zipped with letter: 'D' and emoji: 👀
+         //     Number: 5 is zipped with letter: 'E' and emoji: ⭐
+         //     Number: 6 is zipped with letter: 'F' and emoji: 💜
+
+       Much like the previous overload, the Zip method projects a tuple, but this time with three elements.
+
+       The third overload accepts a Func argument that acts as a results selector. You can project a new resulting sequence from the sequences being zipped.
+
+         foreach (string result in
+             numbers.Zip(letters, (number, letter) => $"{number} = {letter} ({(int)letter})"))
+         {
+             Console.WriteLine(result);
+         }
+         // This code produces the following output:
+         //     1 = A (65)
+         //     2 = B (66)
+         //     3 = C (67)
+         //     4 = D (68)
+         //     5 = E (69)
+         //     6 = F (70)
+
+       With the preceding Zip overload, the specified function is applied to the corresponding elements number and letter, producing a sequence of the string results.
+
+       SELECT VERSUS SELECTMANY
+
+       The work of both Select and SelectMany is to produce a result value (or values) from source values. Select produces one result value for every source value. The overall result is therefore a collection that has the same number of elements as the source collection. In contrast, SelectMany produces a single overall result that contains concatenated subcollections from each source value. The transform function that is passed as an argument to SelectMany must return an enumerable sequence of values for each source value. SelectMany concatenates these enumerable sequences to create one large sequence.
+
+       The following two illustrations show the conceptual difference between the actions of these two methods. In each case, assume that the selector (transform) function selects the array of flowers from each source value.
+
+       This illustration depicts how Select returns a collection that has the same number of elements as the source collection.
+
+       This illustration depicts how SelectMany concatenates the intermediate sequence of arrays into one final result value that contains each value from each intermediate array.
+
+       CODE EXAMPLE
+
+       The following example compares the behavior of Select and SelectMany. The code creates a "bouquet" of flowers by taking the items from each list of flower names in the source collection. In the following example, the "single value" that the transform function Func%7B0%2C1%7D%29 uses is a collection of values. This example requires the extra foreach loop in order to enumerate each string in each subsequence.
+
+         class Bouquet
+         {
+             public required List<string> Flowers { get; init; }
+         }
+
+         static void SelectVsSelectMany()
+         {
+             List<Bouquet> bouquets =
+             [
+                 new Bouquet { Flowers = ["sunflower", "daisy", "daffodil", "larkspur"] },
+                 new Bouquet { Flowers = ["tulip", "rose", "orchid"] },
+                 new Bouquet { Flowers = ["gladiolis", "lily", "snapdragon", "aster", "protea"] },
+                 new Bouquet { Flowers = ["larkspur", "lilac", "iris", "dahlia"] }
+             ];
+
+             IEnumerable<List<string>> query1 = bouquets.Select(bq => bq.Flowers);
+
+             IEnumerable<string> query2 = bouquets.SelectMany(bq => bq.Flowers);
+
+             Console.WriteLine("Results by using Select():");
+             // Note the extra foreach loop here.
+             foreach (IEnumerable<string> collection in query1)
+             {
+                 foreach (string item in collection)
+                 {
+                     Console.WriteLine(item);
+                 }
+             }
+
+             Console.WriteLine("\nResults by using SelectMany():");
+             foreach (string item in query2)
+             {
+                 Console.WriteLine(item);
+             }
+         }
+
+       SEE ALSO
+
+        * Linq
+        * select clause
+        * How to populate object collections from multiple sources (LINQ) (C#)
+        * How to split a file into many files by using groups (LINQ) (C#)
+
+C# manual                               from the official documentation

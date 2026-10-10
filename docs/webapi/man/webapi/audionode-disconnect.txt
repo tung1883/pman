@@ -1,0 +1,61 @@
+WEBAPI.AUDIONODE-DISCONNECT(1)   Sandbox manual   WEBAPI.AUDIONODE-DISCONNECT(1)
+
+       NAME
+
+       AudioNode: disconnect() method - The disconnect() method of the AudioNode interface lets you disconnect one or more nodes from the node on which the method is called.
+
+       AUDIONODE: DISCONNECT() METHOD
+
+       The disconnect() method of the AudioNode interface lets you disconnect one or more nodes from the node on which the method is called.
+
+       SYNTAX
+
+         disconnect()
+         disconnect(output)
+         disconnect(destination)
+         disconnect(destination, output)
+         disconnect(destination, output, input)
+
+       PARAMETERS
+
+       There are several versions of the disconnect() method, which accept different combinations of parameters to control which nodes to disconnect from. If no parameters are provided, all outgoing connections are disconnected.
+
+        * destination (optional)
+          * : An AudioNode or AudioParam specifying the node or nodes to disconnect from. If this value is an AudioNode, a single node is disconnected from, with any other, optional, parameters (output and/or input) further limiting which inputs and/or outputs should be disconnected. If this value is an AudioParam, then the connection to that AudioParam is terminated, and the node's contributions to that computed parameter become 0 going forward once the change takes effect.
+        * output (optional)
+          * : An index describing which output from the current AudioNode is to be disconnected. The index numbers are defined according to the number of output channels (see Audio channels).
+        * input (optional)
+          * : An index describing which input into the specified destination AudioNode is to be disconnected. The index numbers are defined according to the number of input channels (see Audio channels). Not applicable if destination is an AudioParam.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * IndexSizeError DOMException
+          * : Thrown if the value specified as input or output is invalid, referring to a node which doesn't exist or is outside the permitted range.
+        * InvalidAccessError DOMException
+          * : Thrown if the node on which disconnect() is called isn't connected to the specified destination node.
+
+       EXAMPLES
+
+         const audioCtx = new AudioContext();
+
+         const oscillator = audioCtx.createOscillator();
+         const gainNode = audioCtx.createGain();
+
+         oscillator.connect(gainNode);
+         gainNode.connect(audioCtx.destination);
+
+         gainNode.disconnect();
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

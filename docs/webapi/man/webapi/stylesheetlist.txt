@@ -1,0 +1,56 @@
+WEBAPI.STYLESHEETLIST(1)         Sandbox manual         WEBAPI.STYLESHEETLIST(1)
+
+       NAME
+
+       StyleSheetList - The StyleSheetList interface represents a list of CSSStyleSheet objects. An instance of this object can be returned by Document.styleSheets.
+
+       STYLESHEETLIST
+
+       The StyleSheetList interface represents a list of CSSStyleSheet objects. An instance of this object can be returned by Document.styleSheets.
+
+       It is an array-like object but can't be iterated over using Array methods. However it can be iterated over in a standard for loop over its indices, or converted to an Array.
+
+       > Typically list interfaces like StyleSheetList wrap around Array types, so you can use Array methods on them.
+       > This is not the case here for historical reasons.
+       > However, you can convert StyleSheetList to an Array in order to use those methods (see the example below).
+
+       INSTANCE PROPERTIES
+
+        * StyleSheetList.length (read-only)
+          * : Returns the number of CSSStyleSheet objects in the collection.
+
+       INSTANCE METHODS
+
+        * StyleSheetList.item()
+          * : Returns the CSSStyleSheet object at the index passed in, or null if no item exists for that index.
+
+       EXAMPLES
+
+       GET CSSSTYLESHEET OBJECTS WITH FOR LOOP
+
+         for (const styleSheet of document.styleSheets) {
+           console.log(styleSheet); // A CSSStyleSheet object
+         }
+
+       GET ALL CSS RULES FOR THE DOCUMENT USING ARRAY METHODS
+
+         const allCSS = [...document.styleSheets]
+           .map((styleSheet) => {
+             try {
+               return [...styleSheet.cssRules].map((rule) => rule.cssText).join("");
+             } catch (e) {
+               console.log(
+                 "Access to stylesheet %s is denied. Ignoring…",
+                 styleSheet.href,
+               );
+               return undefined;
+             }
+           })
+           .filter(Boolean)
+           .join("\n");
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

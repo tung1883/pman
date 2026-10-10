@@ -1,0 +1,64 @@
+WEBAPI.SVGTRANSFORMLIST-CONSOLIDATE(1) Sandbox manual WEBAPI.SVGTRANSFORMLIST-CONSOLIDATE(1)
+
+       NAME
+
+       SVGTransformList: consolidate() method - The consolidate() method of the SVGTransformList interface consolidates the list of separate SVGTransform objects by multiplying the equival
+
+       SVGTRANSFORMLIST: CONSOLIDATE() METHOD
+
+       The consolidate() method of the SVGTransformList interface consolidates the list of separate SVGTransform objects by multiplying the equivalent transformation matrices together to result in a list consisting of a single SVGTransform object of type SVG_TRANSFORM_MATRIX.
+
+       The consolidation operation creates a new SVGTransform object as the first and only item in the list.
+
+       The returned item is the item itself and not a copy. Any changes made to the item are immediately reflected in the list.
+
+       SYNTAX
+
+         consolidate()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A live SVGTransform object; the consolidated transformation.
+
+       EXCEPTIONS
+
+        * NoModificationAllowedError DOMException
+          * : Thrown if SVGTransformList corresponds to a read-only attribute or when the object itself is read-only.
+
+       EXAMPLES
+
+       CONSOLIDATING TRANSFORMATIONS
+
+         <svg width="200" height="200">
+           <rect
+             width="100"
+             height="100"
+             fill="red"
+             transform="translate(50,50) rotate(45)" />
+         </svg>
+
+         const svgElement = document.querySelector("svg");
+         const rectElement = svgElement.querySelector("rect");
+
+         // Access the transform list of the <rect> element
+         const transformList = rectElement.transform.baseVal;
+
+         // Consolidate the transformations
+         const consolidatedTransform = transformList.consolidate();
+
+         console.dir(consolidatedTransform); // Output: SVGTransform { type: 1, matrix: SVGMatrix, angle: 0 }
+         console.log(transformList.numberOfItems); // Output: 1
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * SVGTransform
+
+Web APIs manual                         from the official documentation

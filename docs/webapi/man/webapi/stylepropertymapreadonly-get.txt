@@ -1,0 +1,161 @@
+WEBAPI.STYLEPROPERTYMAPREADONLY-GET(1) Sandbox manual WEBAPI.STYLEPROPERTYMAPREADONLY-GET(1)
+
+       NAME
+
+       StylePropertyMapReadOnly: get() method - The get() method of the StylePropertyMapReadOnly interface returns a CSSStyleValue-derived object for the first value of the specified prope
+
+       STYLEPROPERTYMAPREADONLY: GET() METHOD
+
+       The get() method of the StylePropertyMapReadOnly interface returns a CSSStyleValue-derived object for the first value of the specified property.
+
+       Use getAll() to get all the values of a CSS property that can have multiple values, such as background-image or transition.
+
+       SYNTAX
+
+         get(property)
+
+       PARAMETERS
+
+        * property
+          * : The name of the property.
+       Custom property names (starting with --) are matched case-sensitively; standard property names are not.
+
+       RETURN VALUE
+
+       A CSSStyleValue-derived object, or undefined if property has no value in the map.
+
+       The concrete type of the returned object depends on the property and its value. For example, a property assigned a keyword might return a CSSKeywordValue, while a property assigned the result of a mathematical operation might return a CSSMathSum.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if property is not a valid CSS property name.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       This example shows how to get a few properties and their values.
+
+       HTML
+
+       First we create a link inside a paragraph:
+
+         <p>
+           <a href="https://example.com">Link</a>
+         </p>
+
+         <pre id="log"></pre>
+
+       CSS
+
+       The CSS styles the font-weight of the paragraph, and defines and uses a custom property for the color of the link:
+
+         p {
+           font-weight: bold;
+         }
+         a {
+           --color: red;
+           color: var(--color);
+         }
+
+         #log {
+           height: 100px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+       JAVASCRIPT
+
+       First we call computedStyleMap() on the element to get its style map: a StylePropertyMapReadOnly object. We create an array of properties of interest and use the get() method of StylePropertyMapReadOnly to log only those values.
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText += `${text}\n`;
+         }
+
+         // get the element and its style map
+         const myElement = document.querySelector("a");
+         const styleMap = myElement.computedStyleMap();
+
+         // array of properties we're interested in
+         const properties = ["font-weight", "border-left-color", "color", "--color"];
+
+         // log the value of each property of interest
+         for (const property of properties) {
+           log(`${property}: ${styleMap.get(property)}`);
+         }
+
+       RESULT
+
+       GETTING DIFFERENT VALUE TYPES
+
+       This example demonstrates that get() can return objects of different types, depending on the property and its value.
+
+       First it applies a number of different properties to an element using CSS. It then reads them back via JavaScript and logs the constructor name and value of each property. The logging code itself isn't part of the demonstration, so it's hidden here.
+
+       HTML
+
+       First we define an with id demoBox to which we'll add styles.
+
+         <div id="demoBox">Text</div>
+
+         <pre id="log"></pre>
+
+       CSS
+
+         #demoBox {
+           --my-custom-property: "some text";
+           opacity: 0.5;
+           width: calc(30% - 20px);
+           display: block;
+           transform: translate(10px, 10px);
+         }
+
+         #log {
+           height: 330px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+       JAVASCRIPT
+
+       Next we use computedStyleMap() to get the StylePropertyMapReadOnly object for the demo box, and iterate through each of the properties we added, logging their constructor name and value.
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText += `${text}\n`;
+         }
+
+         const styleMap = document.querySelector("#demoBox").computedStyleMap();
+         const properties = [
+           "opacity",
+           "display",
+           "width",
+           "transform",
+           "--my-custom-property",
+         ];
+
+         for (const property of properties) {
+           const value = styleMap.get(property);
+           log(property);
+           log(`  type: ${value.constructor.name}`);
+           log(`  value: ${value}\n`);
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * getAll()
+        * has()
+        * CSS Typed Object Model API
+        * Learning Houdini: the CSS Typed Object Model
+
+Web APIs manual                         from the official documentation

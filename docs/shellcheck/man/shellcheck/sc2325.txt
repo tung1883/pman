@@ -1,0 +1,39 @@
+SHELLCHECK.SC2325(1)             Sandbox manual             SHELLCHECK.SC2325(1)
+
+       NAME
+
+       Multiple ! in front of pipelines are a bash/ksh extension. Use only 0 or 1. - true
+
+       MULTIPLE IN FRONT OF PIPELINES ARE A BASH/KSH EXTENSION. USE ONLY 0 OR
+
+       MULTIPLE IN FRONT OF PIPELINES ARE A BASH/KSH EXTENSION. USE ONLY 0 OR
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         ! ! true
+
+       CORRECT CODE
+
+         #!/bin/sh
+         true
+
+       RATIONALE
+
+       POSIX (and Dash) does not allow multiple ! pipeline negations in a row. It's also logically unnecessary.
+
+       Use either zero or one !.
+
+       EXCEPTIONS
+
+       Scripts whose shebang declares it will run with Ksh and Bash will not trigger this warning.
+
+       If you really want to negate multiple times on POSIX or Dash, e.g. to normalize exit codes to 0 or 1, use cmd || false or a command group:
+
+         ! { ! true; }
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

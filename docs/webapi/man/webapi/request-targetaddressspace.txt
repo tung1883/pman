@@ -1,0 +1,59 @@
+WEBAPI.REQUEST-TARGETADDRESSSPACE(1) Sandbox manual WEBAPI.REQUEST-TARGETADDRESSSPACE(1)
+
+       NAME
+
+       Request: targetAddressSpace property - The targetAddressSpace read-only property of the Request interface returns the request's target address space, which indicates whether it is
+
+       REQUEST: TARGETADDRESSSPACE PROPERTY
+
+       The targetAddressSpace read-only property of the Request interface returns the request's target address space, which indicates whether it is intended to be a loopback, local, or public request.
+
+       VALUE
+
+       An enumerated value, which can be one of:
+
+        * local
+          * : The request is to a local address, which is only accessible on the local network; its target will differ on different networks. For example, 192.168.0.1.
+        * loopback
+          * : The request is to a loopback address, which is only accessible on the local device; its target will differ on every device. For example, 127.0.0.1, which is generally known as localhost.
+        * public
+          * : The request is to an address available from anywhere on the internet; its target is the same for all devices globally. For example, 104.18.27.120 (the IP address of example.com)
+        * unknown
+          * : No targetAddressSpace was set on the request.
+
+       DESCRIPTION
+
+       In browsers that support the Local Network Access specification, loopback and local requests are gated behind specific permissions — local-network and loopback-network, respectively. Requiring user permissions for such requests mitigates the risk of cross-site request forgery (CSRF) attacks against local network devices such as routers and printers, and reduces the ability of sites to use these requests to fingerprint the user's local network.
+
+       These permissions are restricted to secure contexts. If granted, the permissions additionally relax mixed content blocking for local network requests. This is needed because many local devices are not able to obtain publicly trusted TLS certificates for various reasons. For example, it allows public websites to access local testing servers or devices running on HTTP.
+
+       The targetAddressSpace property, when set to local or loopback on new requests (via the Request() constructor or directly in the fetch() method), explicitly tells supporting browsers to skip mixed content checks. This is needed in cases where a URL is a public domain address, but ends up resolving to a local network address, such as http://internal.example.com.
+
+       Some addresses, such as private IP literals (for example, 192.168.0.1) and .local addresses (such as http://router.local), have mixed content checks relaxed in cases where local network access permissions are granted, so don't need the targetAddressSpace property to be set. However, if local network access permissions are not granted, mixed content checks still apply, regardless of whether targetAddressSpace is set or not.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+         const req = new Request("http://localhost:8888", {
+           method: "get",
+           mode: "cors",
+           targetAddressSpace: "loopback",
+         });
+
+         console.log(req.targetAddressSpace);
+         // loopback
+
+         fetch(req);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Local Network Access
+        * local-network permissions policy
+        * loopback-network permissions policy
+
+Web APIs manual                         from the official documentation

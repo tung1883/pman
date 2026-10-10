@@ -1,0 +1,137 @@
+ARCH.TLP(1)                      Sandbox manual                      ARCH.TLP(1)
+
+       TLP is a feature-rich command line utility for Linux, saving laptop battery power without the need to delve deeper into technical details.
+
+       TLP's default settings are already optimized for battery life and implement Powertop's recommendations out of the box, so additional configuration is not needed. Also, TLP is completely customizable, which means you can get even more power savings or meet your exact requirements.
+
+       TLP intentionally excludes some settings from the project, notably Fan speed control and Backlight.
+
+       INSTALLATION
+
+       Install the tlp package. Installing the optional dependencies may help provide additional power saving.
+
+       Enable/start tlp.service.
+
+       One should also mask the service systemd-rfkill.service and socket systemd-rfkill.socket to avoid conflicts and ensure proper operation of TLP's radio device switching options.
+
+       REPLACE POWER-PROFILES-DAEMON SUPPORT IN DESKTOP ENVIRONMENTS
+
+       To be able to use the power profiles interface in power-profiles-daemon used by GNOME and KDE, install tlp-pd.
+
+       See TLP FAQ for details.
+
+       RADIO DEVICE WIZARD (TLP-RDW)
+
+       When using the Radio Device Wizard (tlp-rdw), it is required to use NetworkManager and enabling NetworkManager-dispatcher.service.
+
+       See TLP settings for details.
+
+       FRONT END
+
+        * tlpui is a GTK user interface for TLP written in Python.
+        * slimbookbatteryAUR is a different GTK interface that works with additional drivers like AMD and NVIDIA.
+
+       THINKPADS ONLY
+
+       Controlling the charge thresholds using D-Bus without root privileges is possible using threshyAUR and its example Qt user interface threshy-guiAUR. Note: threshy is no longer maintained by its developer.
+
+       BEFORE SANDY BRIDGE (UNTIL 2010)
+
+       For ThinkPads before model year 2011, the tp_smapi kernel module is required. See tp_smapi#Installation for kernel-specific installation instructions.
+
+       CONFIGURATION
+
+       The configuration file is located at /etc/tlp.conf and provides a largely optimized power saving by default. For a full explanation of options see: TLP settings. Instead of editing this file directly, you can also place files in /etc/tlp.d/, for example /etc/tlp.d/00-enable-wifi-at-startup.conf with the desired changes. If the same parameter is defined in both places, the value set in /etc/tlp.conf takes precedence.
+
+       USB AUTOSUSPEND
+
+       When starting TLP with the default configuration, some USB devices such as audio DACs will be powered down when running on battery due to TLP's autosuspend feature. Some devices such as keyboards and scanners are blacklisted from autosuspend by default.
+
+       You may simply want to disable USB autosuspend entirely with the following setting:
+
+         /etc/tlp.conf
+
+         # Do not suspend USB devices
+         USB_AUTOSUSPEND=0
+
+       Or blacklist specific devices from being auto-suspended. See the TLP documentation on USB devices for details.
+
+       FORCE BALANCED (BAL) POWER PROFILE
+
+       When no power supply can be detected, the performance power profile (PRF) will be used on devices like desktops and embedded hardware.
+
+       You may want to force the balanced (BAL) or power-saving (SAV) profile when using TLP on these devices to enable more power saving:
+
+       (Note: Legacy values AC and BAT continue to work. They are mapped to PRF and BAL, respectively.)
+
+         /etc/tlp.conf
+
+         # Operation mode when no power supply can be detected:
+         #    PRF=performance, BAL=balanced, SAV=power-saver
+
+         TLP_DEFAULT_MODE=BAL
+
+         # Operation mode select: 0=depend on power source, 1=always use TLP_DEFAULT_MODE
+         TLP_PERSISTENT_DEFAULT=1
+
+       BUMBLEBEE WITH NVIDIA DRIVER
+
+       If you are running Bumblebee with NVIDIA driver, you need to disable power management for the GPU in TLP in order to make Bumblebee control the power of the GPU.
+
+       Depending on the driver(s) that you are using, blacklist one or more of them, preventing TLP from managing their power state:
+
+         /etc/tlp.conf
+
+         RUNTIME_PM_DRIVER_DENYLIST="nouveau nvidia"
+
+       PRIME WITH NVIDIA DRIVER
+
+       If you are running PRIME with NVIDIA driver, do not disable power management for the GPU in TLP. Instead, you may want to enable power management all the time to prevent your laptop from heating by adding the NVIDIA card PCI ID (lspci -d 10de::03xx) to the variable RUNTIME_PM_ENABLE:
+
+         /etc/tlp.conf
+
+         RUNTIME_PM_ENABLE="01:00.0"
+
+       PCI(E) RUNTIME POWER MANAGEMENT ON AC
+
+       Enabling runtime power management for PCI(e) bus devices while on AC may improve power saving on some laptops. This is enabled by default on battery, but not on AC. To enable on AC, set:
+
+         /etc/tlp.conf
+
+         RUNTIME_PM_ON_AC=auto
+
+       ENABLE WI-FI RADIO ON BOOT
+
+       By default, TLP stops the Wi-Fi radio from automatically powering on. Although definitely power-saving, most users might find this behavior undesirable. To make Wi-Fi start on boot, set the following:
+
+         /etc/tlp.conf
+
+         DEVICES_TO_ENABLE_ON_STARTUP="wifi"
+
+       COMMAND LINE
+
+       TLP provides several command line tools. See TLP commands.
+
+       TROUBLESHOOTING
+
+       For debugging you can display information about the currently used Mode(AC/BAT) and applied configurations:
+
+         # tlp-stat
+
+       See also the upstream troubleshooting guide.
+
+       HCI0: LINK TX TIMEOUT
+
+       If your bluetooth headphones suddenly stop working and you see this error from dmesg, it may be caused by TLP suspending your device. Add device ID to USB_DENYLIST in /etc/tlp.conf:
+
+         # Disable bluetooth autosuspend
+         USB_DENYLIST="8087:0aaa"
+
+       Get the device ID for your bluetooth device from lsusb -v. Restart TLP and the bluetooth service.
+
+       SEE ALSO
+
+        * TLP - Optimize Linux Laptop Battery Life — Project homepage & documentation
+        * Project FAQ
+
+ArchWiki manual                         bundled documentation

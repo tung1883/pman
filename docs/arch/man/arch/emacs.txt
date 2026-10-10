@@ -1,0 +1,603 @@
+ARCH.EMACS(1)                    Sandbox manual                    ARCH.EMACS(1)
+
+       Emacs is an extensible, customizable, self-documenting real-time display editor.
+
+       At the core of Emacs lies an Emacs Lisp interpreter, the language in which the majority of Emacs' built-in functionality and extensions are implemented.
+
+       GNU Emacs uses GTK as its default X toolkit, though it functions equally well within a CLI environment.
+
+       INSTALLATION
+
+       Install one of the following packages:
+
+        * emacs - stable release,
+        * emacs-nox - without GUI; only run on a terminal emulator,
+        * emacs-wayland - PGTK enabled,
+        * Other variants can be searched for, as an example emacs-lucidAUR provides the Lucid (Athena) toolkit in place of GTK.
+       If you want Emacs spell checking to work, also install aspell and an aspell language, such as aspell-en
+
+       USAGE
+
+       Before launching emacs, you should know how to close it (especially if you run it in a terminal): use the Ctrl+xCtrl+c key sequence. If you are new to Emacs, it's recommended to work through the official tutorial. To do so, first start Emacs, then select "Tutorial" from the splash screen or press Ctrl+h and then press t.
+
+       To start Emacs run:
+
+         $ emacs
+
+       or, to use it from the console:
+
+         $ emacs -nw
+
+       or, for fast loading (no .emacs) and editing within CLI:
+
+         $ emacs -Q -nw
+
+       If you installed the nox version, emacs and emacs -nw will be the same.
+
+       A file name can also be provided to open that file immediately:
+
+         $ emacs filename.txt
+
+       NO COLORS
+
+       By default, Emacs starts with a color theme showing hyperlinks in dark blue. To start Emacs on a text terminal without any color theme or scheme:
+
+         $ emacs -nw --color=no
+
+       This will cause all text to appear in the foreground color of the terminal — normally white text on a black background, or black text on a white background.
+
+       AS A DAEMON
+
+       In order to avoid reloading the Emacs configuration file every time Emacs starts, you can run Emacs as a daemon:
+
+         $ emacs --daemon
+
+       You may then connect to the daemon by running:
+
+         $ emacsclient -nc
+
+       Which creates a new frame -c (use -t if you prefer to use it in the terminal) and does not hog the terminal -n (--no-wait). Note that some programs such as Mutt or Git (for commit messages) wait for the editor to finish, so you cannot use the -n parameter. If your default editor is set to use it, you will have to specify an alternate editor (e.g. emacsclient -a "" -t) for those programs.
+
+       AS A SYSTEMD UNIT
+
+       A systemd unit is included in Emacs 26.1. The unit is installed with Emacs, but it must be enabled and started as a user unit (not a system-wide) after installing Emacs.
+
+       After the service is started, Emacs is ready.
+
+       If you want to be able to start graphical emacs frames through emacsclient on Wayland, a specific drop-in snippet is needed (unless you are running emacs-wayland), as shown in EmacsWiki.
+
+       Note that systemd user units do not inherit environment variables from a login shell (like ~/.bash_profile). See systemd/User#Environment variables for more information.
+
+       If you start emacs as a daemon, you may want to set the VISUAL and EDITOR environment variables to emacsclient so that programs that start an editor use emacsclient instead of starting a new full instance of the editor. Programs that use an external editor include email programs (for editing the message), Git (for editing the commit message), and less (the v command for editing the displayed file). Do not use the -n (--nowait) option to emacsclient, since programs typically expect editing to be finished when the editor exits.
+
+       It is also recommended to change any GUI start menu entries (or equivalent) for Emacs to point to emacsclient instead of emacs, so that the emacs daemon is used instead of starting a new emacs process.
+
+       GETTING HELP
+
+       Emacs has a built-in tutorial which can be accessed by clicking the first link on the splash screen and selecting Help>Emacs Tutorial from the menu or by pressing C-h t.
+
+       To read the tutorial in a language other than English, use the command Alt x, and enter help-with-tutorial-spec-language
+
+       Emacs is self-documenting by design. As such, a great deal of information is available to determine the name of a specific command or its keybinding, for example. See all contextual help bindings with C-h C-h. You can access the quick help for the Emacs help system with C-h ?.
+
+       Emacs also includes a set of reference cards, useful for beginners and experts alike, see /usr/share/emacs/version/etc/refcards/.
+
+       THE MANUALS
+
+       If you really want to master Emacs, the most recommended source of documentation remains the official manuals:
+
+        * Emacs: the complete Emacs user manual.
+        * Emacs FAQ.
+        * Emacs Lisp Intro: if you never used any programming language before.
+        * Elisp: if you are already familiar with a programming language.
+       You can access them as HTML documents or PDFs from GNU.org or directly from Emacs itself thanks to the embedded 'info' reader: C-h i. Press m to choose a book.
+
+       Some users prefer to read books using 'info' because of its convenient shortcuts, its paragraphs adapting to window width and the font adapted to current screen resolution. Some find it less irritating to the eyes. Finally you can easily copy content from the book to any Emacs buffer, and you can even execute Lisp code snippets directly from the examples.
+
+       You may want to read the Info book to know more about it: C-h i m info <RET>. Press ? while in info mode for a quick list of shortcuts.
+
+       You can read man pages with Emacs with M-x man <RET>. Note that man pages for most GNU programs are not as complete as their Info manuals.
+
+       CONFIGURATION
+
+       One of Emacs's main features is its extensibility and the ease of configuration. Emacs has a built-in customization engine. You can do M-x customize which displays a list of customization options. For how to use this interface, see the Easy Customization info node: (info "(emacs) Easy Customization"). You can set customization opens just for one Emacs session or save them into a configuration file so that they are saved across Emacs sessions. Note that this is what the customization interface does if you select Apply and Save.
+
+       When Emacs is started, it normally tries to load a Lisp program from an "initialization file", or "init file" for short. This file, if it exists, specifies how to initialize Emacs for you. Emacs looks for your init file at ~/.emacs, ~/.emacs.el, ~/.emacs.d/init.el, or ~/.config/emacs/init.el. See the info node "Init File" for more:  (info "(emacs) Init File")
+
+       TIPS AND TRICKS
+
+       TRAMP
+
+       TRAMP (Transparent Remote Access, Multiple Protocols) is an extension which, as its name suggests, provides transparent access to remote files across a number of protocols. When prompted for a filename, entering a specific form will invoke TRAMP. Some examples:
+
+       To prompt for the root password before opening /etc/hosts with root permissions:
+
+         C-x C-f /sudo::/etc/hosts
+
+       To connect to 'remotehost' as 'you' via SSH and open the file ~/example.txt:
+
+         C-x C-f /ssh:you@remotehost:~/example.txt
+
+       The path for TRAMP is typically of the form '/[protocol]:[[user@]host]:<file>'.
+
+       To connect to 'myhost' as 'you' and edit /etc/hosts with sudo:
+
+         /ssh:you@remotehost|sudo:remotehost:/etc/hosts
+
+       TRAMP supports much more than the examples above might indicate. For more information refer to the TRAMP info manual, which is distributed with Emacs.
+
+       LSP
+
+       Eglot is a native client for the Language Server Protocol.
+
+       Hooks can be loaded at startup:
+
+         .emacs or .emacs.d/init.el
+
+          (add-hook 'foo-mode-hook 'eglot-ensure)
+
+       where foo can be replaced by any language name such as c or python. For a global application to all languages, use prog-mode-hook.
+
+       USING EMACS AS GIT MERGETOOL
+
+       By default, Git provides support for using Emacs' Emerge mode as a merge tool. However you may prefer the Ediff mode. Unfortunately this mode is not supported by git for technical reasons. There is still a way to use it by evaluating some elisp code upon emacs call.
+
+         .gitconfig
+
+         [mergetool.ediff]
+             cmd = emacs --eval \" (progn (defun ediff-write-merge-buffer () (let ((file ediff-merge-store-file)) (set-buffer ediff-buffer-C) (write-region (point-min) (point-max) file) (message \\\"Merge buffer saved in: %s\\\" file) (set-buffer-modified-p nil) (sit-for 1))) (setq ediff-quit-hook 'kill-emacs ediff-quit-merge-hook 'ediff-write-merge-buffer) (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\" \\\"$BASE\\\" nil \\\"$MERGED\\\"))\"
+
+         [merge]
+         	tool = ediff
+
+       Note that the command has to be on a single line. In the above example, we launch a new instance of Emacs. You might want to use emacsclient for quicker startup; it is not recommended though since the Ediff call is not really clean: it could mess with your current Emacs session.
+
+       If you want an instant startup you can use the -q parameter. If you want to launch Emacs quickly while preserving at least a part of your configuration, you can call Emacs with
+
+         emacs -q -l ~/.emacs-light
+
+       where the light configuration file loads only what you need for Ediff.
+
+       See kerneltrap.org and stackoverflow for more details on this trick and the Ediff issue.
+
+       USING CAPS LOCK AS CONTROL KEY
+
+       Some users like this behavior to avoid the so-called "emacs pinky". A nice way to achieve this in GUI desktops (Xorg or Wayland), terminals, and even the console is to use keyd. Install the package and create this config file:
+
+         /etc/keyd/main.conf
+
+         [ids]
+         *
+
+         [main]
+         capslock = overload(control, noop)
+
+       Then enable and start the keyd service.
+
+       MULTIPLEXING EMACS AND EMACSCLIENT
+
+       Opening a new file in the same emacs-session requires the use of emacsclient. emacs command can be itself wrapped to do the smarter job to open the file if the session exists.
+
+       To start session you need to start-server. This snippet will create server in first session of emacs. Add this to your emacs configuration file.
+
+         .emacs or .emacs.d/init.el
+
+         (require 'server)
+         (unless (server-running-p)
+           (server-start))
+
+       Shell alias method is not adequate for this since you also need to pass variables or start the independent session of your own. Add this to the .bashrc or any rc file of your shell. This will make your emacs command behave like emacsclient if the argument is passed.
+
+         function emacs {
+             if [[ $# -eq 0 ]]; then
+                 /usr/bin/emacs # "emacs" is function, will cause recursion
+                 return
+             fi
+             args=($*)
+             for ((i=0; i <= ${#args}; i++)); do
+                 local a=${args[i]}
+                 # NOTE: -c for creating new frame
+                 if [[ ${a:0:1} == '-' && ${a} != '-c' && ${a} != '--' ]]; then
+                     /usr/bin/emacs ${args[*]}
+                     return
+                 fi
+             done
+             setsid emacsclient -n -a /usr/bin/emacs ${args[*]}
+         }
+
+       If you want to run it in a new session just do emacs file -.
+
+       MULTIPLE CONFIGURATIONS
+
+       You can use several configurations and tell Emacs to load one or the other.
+
+       For example, let us define two configuration files.
+
+         .emacs
+
+         (load "~/.emacs.d/main" nil t)
+         (load "~/.emacs.d/functions" nil t)
+         (load "~/.emacs.d/modes" nil t)
+         (load "~/.emacs.d/plugins" nil t)
+         (load "~/.emacs.d/theme" nil t)
+
+       This is the full configuration we load for the daemon. But the plugins file is huge and slow to load. If we want to spawn a new Emacs instance that does not need the plugins features, it can be cumbersome to load it every time in the long run.
+
+         .emacs-light
+
+         (load "~/.emacs.d/main" nil t)
+         (load "~/.emacs.d/functions" nil t)
+         (load "~/.emacs.d/modes" nil t)
+         (load "~/.emacs.d/theme" nil t)
+
+       And now we launch Emacs with
+
+         emacs -q -l ~/.emacs-light
+
+       You can create an alias to ease the call.
+
+       LOCAL AND CUSTOM VARIABLES
+
+       You can define variables in your configuration file that can be later one modified locally for a file.
+
+         (defcustom my-compiler "gcc" "Some documentation")
+
+       Now in any file you can define local variables in two ways, see the manual for complete details
+
+        * Using  M-x add-file-local-variable-prop-line, which adds a commented line at the beginning similar to:
+
+         // -*- my-compiler:g++; mode:c++ -*-
+
+        * Or you can use  M-x add-file-local-variable to add lines near the end of the file:
+
+         // Local Variables:
+         // my-compiler: g++
+         // mode: c++
+         // End:
+
+       Note that for the values to take effect, you will need to call M-x revert-buffer.
+
+       Custom variables are considered unsafe by default. If you try to open a file that contains local variable redefining custom variables, Emacs will ask you for confirmation.
+
+       You can declare the variable as secure, thus removing the Emacs prompt for confirmation. You need to specify a predicate that any new value has to verify so that it can be considered safe.
+
+         (defcustom my-compiler "gcc" "Some documentation" :safe 'stringp)
+
+       In the previous example, if you attempt to set anything else than a string, Emacs will consider it insecure.
+
+       CUSTOM COLORS AND THEME
+
+       Colors can be easily customized using the face facility.
+
+         (set-face-background  'region                 "color-17")
+         (set-face-foreground  'region                 "white")
+         (set-face-bold-p      'font-lock-builtin-face t )
+
+       You can have let Emacs tell you the name of the face where the point is. Use the customize-face function for that. The facility will show you how to set colors, bold, underline, etc.
+
+       Emacs in console can handle 256 colors, but you will have to use an appropriate terminal for that. For instance URxvt has support for 256 colors. You can use the list-colors-display for a comprehensive list of supported colors. This is highly terminal-dependent.
+
+       See also:
+
+        * https://www.emacswiki.org/emacs/ColorThemes
+        * https://www.gnu.org/software/emacs/manual/html_node/emacs/Custom-Themes.html
+
+       SYNCTEX SUPPORT
+
+       Emacs is a powerful LaTeX editor. This is mostly due to the fact you can adapt or create a LaTeX mode to fit your needs best.
+
+       Still, there might be some challenges, like SyncTeX support. First you need to make sure your TeX distribution has it. If you installed TeX Live manually, you may need to install the synctex package.
+
+         # umask 022 && tlmgr install synctex
+
+       SyncTeX support is viewer-dependent. Here we will use Zathura as an example, so the code needs to be adapted if you want to use another PDF viewer.
+
+         (defcustom tex-my-viewer "zathura --fork -s -x \"emacsclient --eval '(progn (switch-to-buffer  (file-name-nondirectory \"'\"'\"%{input}\"'\"'\")) (goto-line %{line}))'\""
+           "PDF Viewer for TeX documents. You may want to fork the viewer
+         so that it detects when the same document is launched twice, and
+         persists when Emacs gets closed.
+
+         Simple command:
+
+           zathura --fork
+
+         We can use
+
+           emacsclient --eval '(progn (switch-to-buffer  (file-name-nondirectory \"%{input}\")) (goto-line %{line}))'
+
+         to reverse-search a pdf using SyncTeX. Note that the quotes and double-quotes matter and must be escaped appropriately."
+         :safe 'stringp)
+
+       Here we define our custom variable. If you are using AucTeX or Emacs default LaTeX-mode, you will have to set the viewer accordingly.
+
+       Now open a LaTeX source file with Emacs, compile the document, and launch the viewer. Zathura will spawn. If you press Ctrl+Left click Emacs should place the point at the corresponding position.
+
+       SYNTAX HIGHLIGHTING FOR SYSTEMD FILES
+
+       You can use systemd-mode.
+
+       Alternatively, you can simply tell emacs to colour systemd files (services, timer, etc.), by adding this to your init file:
+
+         (add-to-list 'auto-mode-alist '("\\.service\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.timer\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.target\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.mount\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.automount\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.slice\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.socket\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.path\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.netdev\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.network\\'" . conf-unix-mode))
+         (add-to-list 'auto-mode-alist '("\\.link\\'" . conf-unix-mode))
+
+       CLIPBOARD SUPPORT FOR EMACS-NOX
+
+       To use the Xorg clipboard in emacs-nox, install xclip and add the following function to ~/.emacs [1]
+
+         ;; use xclip to copy/paste in emacs-nox
+         (unless window-system
+           (when (getenv "DISPLAY")
+             (defun xclip-cut-function (text &optional push)
+               (with-temp-buffer
+         	(insert text)
+         	(call-process-region (point-min) (point-max) "xclip" nil 0 nil "-i" "-selection" "clipboard")))
+             (defun xclip-paste-function()
+               (let ((xclip-output (shell-command-to-string "xclip -o -selection clipboard")))
+         	(unless (string= (car kill-ring) xclip-output)
+         	  xclip-output )))
+             (setq interprogram-cut-function 'xclip-cut-function)
+             (setq interprogram-paste-function 'xclip-paste-function)
+             ))
+
+       Tip You may also enable terminal mouse support by adding:
+
+         ;; xterm mouse support
+         (require 'mouse)
+         (xterm-mouse-mode t)
+
+       See also [2].
+
+       PACKAGES
+
+       Emacs's functionality can be extended with third-party packages. The built-in package manager package.el is the officially supported way to do this, though there are several other package managers written by members of the Emacs community. package.el relies on the variable package-archives to find packages. By default, this includes the Emacs Lisp Package Archive (ELPA). M-x list-packages will create a buffer listing all the packages your Emacs knows about. The manual ((info "(emacs) Packages")) contains much more information.
+
+       Third-party package archives can be added. The most widely used of these is MELPA.
+
+       A number of popular extensions are available as packages in the official repositories, and more still, via the AUR. The name of such packages usually have a 'emacs-' prefix (for example, emacs-lua-mode), though not always (for example, auctexAUR).
+
+       Some packages may require you to make changes to your configuration file in order to activate them so that their features are available during an Emacs session. For example, if you install auctexAUR, you will need to add
+
+         (load "auctex.el" nil t t)
+         (load "preview-latex.el" nil t t)
+
+       to your configuration file. Other packages should let you know how to activate them in the commentary section of their source code or in their README.
+
+       TROUBLESHOOTING
+
+       EMACS FAILS TO START WITH THE ERROR MESSAGE 'UNDEFINED COLOR: WINDOW_F
+
+       You need to install either the mcpp package or the gcc package. The C preprocessor cpp is used to preprocess X resources by xrdb. If a C preprocessor is not installed on the system, xrdb silently skips running the C preprocessor and the symbol WINDOW_FOREGROUND is not expanded to a hexadecimal color code.
+
+       EMACS SYSTEMD SERVICE FAILS TO START WHEN USING GCCEMACS
+
+       When using Gccemacs (either the branch emacs-native-comp or pgtk-nativecomp) and trying to start a systemd service for it, an error message informing that a .eln file was not found might be logged:
+
+         $ journalctl --user -xb -g eln
+
+         emacs[7507]: emacs: ../native-lisp/28.0.50-x86_64-pc-linux-gnu-fc9c33938bf279333039c28064d363e8/lisp-mode-410874a46ab8852855281f021ca61fe7-1738806322de892570d69dfc55b437c2.eln: cannot open shared object file: No such file or directory
+
+       As a workaround, edit the WorkingDirectory line of emacs.service in the [Service] section.
+
+         emacs.service
+
+         [Service]
+         ...
+         WorkingDirectory=/usr/lib/emacs/28.0.50/x86_64-pc-linux-gnu/
+         ...
+
+       Note The WorkingDirectory parameter has to be defined before a possible existing Restart parameter.
+
+       COLORED OUTPUT ISSUES
+
+       By default, the Emacs shell will show raw escape sequences used to print colors. In other words, it will display strange symbols in place of the desired colored output.
+
+       Including the following into ~/.emacs amends the problem:
+
+         (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
+
+       PROBLEMS DISPLAYING CHARACTERS IN X WINDOWS
+
+       If when you start emacs in X windows all the characters in the main window are white boxes with black borders (the ones you see if you try to view characters for which you do not have the correct font installed), you need to install xorg-fonts-75dpi and/or xorg-fonts-100dpi and restart X windows.
+
+       SLOW STARTUP
+
+       Tip To eliminate startup time, users may want to consider running Emacs #As a systemd unit.
+
+       Slow startup times are often caused by one of two things.
+
+       To determine which it might be, run Emacs with:
+
+         $ emacs -q
+
+        * Mistakes, particularly in /etc/hosts, will often result in a 5+ second delay when starting Emacs. Refer to 'set the hostname' in the network configuration guide for information.
+        * You may need to monitor any network packets sent from your computer (using a program like Wireshark) to see if there is any strange behavior.
+        * A simple way to search for the cause is to comment-out (i.e., prefix lines with ';') suspect sections of your ~/.emacs (or ~/.emacs.d/init.el) then start Emacs again to see if there is any change. Keep in mind use of "require" and "load" can slow the startup down, especially when used with larger extensions. They should, as a rule, only be used when their target is either: needed once Emacs starts or provides little more than "autoloads" for an extension. Otherwise, use the 'autoload function directly. For example, instead of:
+
+         (require 'anything)
+
+       you might use:
+
+         (autoload 'anything "anything" "Select anything" t)
+
+       CANNOT OPEN LOAD FILE
+
+       The most common cause of this error is the 'load-path' variable not including the path to the directory within which the extension is located. To solve this, add the appropriate path to the list to be searched prior to attempting to load the extension:
+
+          (add-to-list 'load-path "/path/to/directory/")
+
+       When attempting to use packages for extensions and Emacs has been configured with a prefix other than /usr, the load-path will need to be updated. Place the following in ~/.emacs prior to the instructions provided by the package:
+
+          (add-to-list 'load-path "/usr/share/emacs/site-lisp")
+
+       If compiling Emacs by hand, keep in mind that the default prefix is /usr/local.
+
+       DEAD-ACCENT KEYS PROBLEM: ' DEAD-ACUTE IS UNDEFINED'
+
+       Searching about this bug on Google, we find this link: https://lists.gnu.org/archive/html/help-gnu-emacs/2009-05/msg00167.html explaining the problem. The normal way to use accent keys does not work as expected. Trying to accent a word like 'fiancé' will produce the message above.
+
+       A way to solve it is just put the line below on your startup file, ~/.emacs:
+
+           (require 'iso-transl)
+
+       And no, it is not a bug, but a feature of new Emacs versions. Reading the subsequent messages about it on the mail list, we found it [3]:
+
+       It seems that nothing is loaded automatically because there is a choice betwee iso-transl and iso-acc. Both seem to provide an input method with C-x 8 or Alt-<accent> prefix, but what you and I are doing is just pressing a dead key (^, ´, `, ~, ¨) for the accent and then another key to "compose" the accented character. And there is no Alt key used in this! And according to documentation it seems be appropriate for 8-bit encodings, so it should be pretty useless in UTF-8. I reported this bug when it was introduced, but the bug seems to be classified as a feature ... Maybe it's just because the file is auto-loaded though pretty useless.
+
+       C-M- AND SOME OTHER BINDINGS DO NOT WORK IN EMACS NOX
+
+       This is because terminals are more limited than Xorg. Some terminals may handle more bindings than other, though. Two solutions:
+
+        * either use the graphical version,
+        * or change the binding to a supported one.
+       Example:
+
+         .emacs
+
+         (global-set-key (kbd "C-M-y") 'query-replace-regexp)
+
+       EMACS HANGS
+
+       Due to its single-threaded nature, many operations block Emacs. This could happen in a few ways. For example, Emacs may be waiting for input from you (e.g. you have opened the minibuffer in one frame but are trying to work in another). Alternatively, Emacs could be running code that simply takes a while to finish. Or perhaps you have run across a bug. There are several ways of trying to unblock Emacs without killing the Emacs process.
+
+        * Try pressing C-g. Depending on what Emacs is doing, you may need to press it multiple times.
+        * Try pressing ESC ESC ESC.
+        * From another terminal, run killall -SIGUSR2 emacs
+
+       EMACS-NOX OUTPUT GETS MESSY
+
+       When working in a terminal, the color, indentation, or anything related to the output might become crazy. This is (probably?) because Emacs was sent a special character at some point which may conflict with the current terminal. If this happens you can do M-x redraw-display, which will redraw the terminal's display. If this problem happens frequently, you might want to bind the command to a key, e.g. by putting something like:
+
+         (global-set-key (kbd "<f7>") 'redraw-display)
+
+       in your .emacs file.
+
+       Graphical Emacs does not suffer from this issue.
+
+       WEIRD ESCAPED NUMBERS (UTF-8) DISPLAYING IN EMACS TERMINAL
+
+       Export these values in your .bashrc or .zshrc:
+
+         $ ~/.bashrc or ~/.zshrc
+
+         export LANG\='en_US.UTF-8'
+         export LC_ALL\="en_US.UTF-8"
+         export TERM\=xterm-256color
+
+       It can be a source of errors since in Linux distributions the correct values use lowercase utf (e.g. en_US.utf-8)
+
+       To view all available locales use locale -a.
+
+       SHIFT + ARROW KEYS NOT WORKING IN EMACS WITHIN TMUX
+
+       Enable xterm-keys in your tmux configuration:
+
+         ~/.tmux.conf
+
+         setw -g xterm-keys on
+
+       Because this will break other key combinations, put the following in your emacs config.
+
+         ~/.emacs
+
+         (defadvice terminal-init-screen
+           ;; The advice is named `tmux', and is run before `terminal-init-screen' runs.
+           (before tmux activate)
+           ;; Docstring. This describes the advice and is made available inside emacs;
+           ;; for example when doing C-h f terminal-init-screen RET
+           "Apply xterm keymap, allowing use of keys passed through tmux."
+           ;; This is the elisp code that is run before `terminal-init-screen'.
+           (if (getenv "TMUX")
+             (let ((map (copy-keymap xterm-function-map)))
+             (set-keymap-parent map (keymap-parent input-decode-map))
+         (set-keymap-parent input-decode-map map))))
+
+       See tmux FAQ for details.
+
+       IMPROPER WINDOW RESIZING IN KDE
+
+       KDE users may observe that the Emacs window does not resize properly, but rather, the resized portion is transparent and mouse clicks are sent to the underlying window. To correct this behavior, change KDE's GTK3 theme to something other than oxygen-gtk. For instance, use the Emacs theme which is included with gtk3.
+
+       To force Emacs to maximize completely in KDE, click the Emacs icon in the title bar, and select More Actions > Special Window Settings. Then in the Size & Position tab, select Obey geometry restrictions, choose Force in the dropdown menu, and select No from the radio buttons on the right.
+
+       MISSING INFO PAGES
+
+       Sometimes the texinfo dir file can get out of sync and info pages that exist on the system are not available in the info browser. The script below recreates the dir info file, putting all of the system's info pages in it.
+
+            pushd /usr/share/info
+            rm -v dir
+            for f in *
+                do install-info "$f" dir 2>/dev/null
+            done
+            popd
+
+       ALTERNATIVES
+
+       There are numerous "smaller" text editors that are, at least on the surface, similar to GNU Emacs. Here are some of them:
+
+        * mg — Lightweight implementation of Emacs written in C. Note that it does not support UTF-8.
+       https://github.com/hboetes/mg || mg
+
+        * Zile — "Zile Is Lossy Emacs", a lightweight clone written to be as similar as possible to Emacs. Zile has no UTF-8 support.
+       https://www.gnu.org/software/zile/ || zileAUR
+
+        * uemacs — A "Micro-emacs" version customized by Linus Torvalds.
+       https://git.kernel.org/pub/scm/editors/uemacs/uemacs.git || uemacs-gitAUR
+
+        * emacs-ng — A new approach to Emacs - Including TypeScript, Threading, Async I/O, and WebRender.
+       https://github.com/emacs-ng/emacs-ng || emacs-ng-gitAUR
+
+        * qemacs — "Quick Emacs", based on the Emacs Lisp interpreter, but it has a smaller code base and a simplified user interface.
+       https://bellard.org/qemacs/ || qemacsAUR
+
+        * sxemacs — A fork of xemacs.
+       https://www.sxemacs.org/ || sxemacsAUR
+
+        * lem — A WIP clone of Emacs, written in Common Lisp.
+       https://lem-project.github.io/ || lem-editor-gitAUR
+
+        * jove — Jonathan's Own Version of Emacs is an Emacs-like editor without Lisp.
+       https://github.com/jonmacs/jove || joveAUR
+
+        * jed — The JED is Emacs-like editor that's implemented using S-Lang library.
+       https://www.jedsoft.org/jed/ || jedAUR
+
+        * jmacs — The Joe editor comes with optional Emacs emulation.
+       https://joe-editor.sourceforge.io/ || joe
+
+       ALTERNATIVE GNU EMACS DISTRIBUTIONS
+
+       An Emacs "distro" is a collection of emacs packages and customizations. They are easier to install and use than customizing emacs on your own is (but less custom to you).
+
+        * Spacemacs - A community-driven Emacs distribution - The best editor is neither Emacs nor Vim, it's Emacs *and* Vim!
+        * Doom Emacs - An Emacs framework for the stubborn martian hacker
+        * Witchmacs - The cutest Emacs distribution
+        * Yukimacs - A GNU/Emacs config built from the ground up (no Spacemacs or Doom Emacs), heavily inspired by Uncle Dave’s Emacs and Witchmacs. It is discouraged now and yukimacs-doom is encouraged instead, which mentioned just below.
+        * yukimacs-doom - Yukimacs, but Doom.
+       More: Starter Kits
+
+       SEE ALSO
+
+        * GNU Emacs home page
+        * GNU Emacs manual
+        * An Introduction to Programming in Emacs Lisp
+        * Emacs Lisp Elements
+        * Emacs Wiki
+        * WikEmacs - a more readable, but less complete Emacs wiki
+        * Useful introduction to Emacs and its shortcuts
+        * Mastering Emacs
+        * The Church of Emacs (via Google drive) (humor)
+        * Official reference card
+        * EXWM, the Emacs X Window Manager
+        * EWM, the Emacs Wayland Window Manager
+
+ArchWiki manual                         bundled documentation

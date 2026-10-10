@@ -1,0 +1,77 @@
+WEBAPI.RANGE-SELECTNODECONTENTS(1) Sandbox manual WEBAPI.RANGE-SELECTNODECONTENTS(1)
+
+       NAME
+
+       Range: selectNodeContents() method - The Range.selectNodeContents() method sets the Range to contain the contents of a Node.
+
+       RANGE: SELECTNODECONTENTS() METHOD
+
+       The Range.selectNodeContents() method sets the Range to contain the contents of a Node.
+
+       The parent Node of the start and end of the Range will be the reference node. The startOffset is 0, and the endOffset is the number of child Nodes or number of characters contained in the reference node.
+
+       SYNTAX
+
+         selectNodeContents(referenceNode)
+
+       PARAMETERS
+
+        * referenceNode
+          * : The Node whose contents will be selected within a Range.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+         const range = document.createRange();
+         const referenceNode = document.querySelector("div");
+         range.selectNodeContents(referenceNode);
+
+       LIVE SAMPLE
+
+       This example lets the user select and deselect a paragraph with buttons. Document.createRange(), Range.selectNodeContents(), and Selection.addRange() are used to select the content. Window.getSelection() and Selection.removeAllRanges() are used to deselect it.
+
+       HTML
+
+         <p id="p">
+           <strong>Use the buttons below</strong> to select or deselect the contents of
+           this paragraph.
+         </p>
+         <button id="select-button">Select paragraph</button>
+         <button id="deselect-button">Deselect paragraph</button>
+
+       JAVASCRIPT
+
+         const p = document.getElementById("p");
+         const selectButton = document.getElementById("select-button");
+         const deselectButton = document.getElementById("deselect-button");
+
+         selectButton.addEventListener("click", (e) => {
+           // Clear any current selection
+           const selection = window.getSelection();
+           selection.removeAllRanges();
+
+           // Select paragraph
+           const range = document.createRange();
+           range.selectNodeContents(p);
+           selection.addRange(range);
+         });
+
+         deselectButton.addEventListener("click", (e) => {
+           const selection = window.getSelection();
+           selection.removeAllRanges();
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The DOM interfaces index
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,36 @@
+SHELLCHECK.SC1065(1)             Sandbox manual             SHELLCHECK.SC1065(1)
+
+       NAME
+
+       Trying to declare parameters? Don't. Use () and refer to params as $1, $2, … - foo(input) {
+
+       TRYING TO DECLARE PARAMETERS DON'T. USE () AND REFER TO PARAMS AS 1, 2
+
+       TRYING TO DECLARE PARAMETERS DON'T. USE () AND REFER TO PARAMS AS 1, 2
+
+       PROBLEMATIC CODE
+
+         foo(input) {
+           echo "$input"
+         }
+         foo("hello world");
+
+       CORRECT CODE
+
+         foo() {
+           echo "$1"
+         }
+         foo "hello world"
+
+       RATIONALE
+
+       Shell script functions behave just like scripts and other commands:
+
+          * They always take a 0 to N parameters, referred to with $1, $2 etc. They can not declare parameters by name.
+          * They are executed using name arg1 arg2, and not with parentheses as C-like languages.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

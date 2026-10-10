@@ -1,0 +1,28 @@
+SHELLCHECK.SC2072(1)             Sandbox manual             SHELLCHECK.SC2072(1)
+
+       NAME
+
+       Decimals are not supported. Either use integers only, or use bc or awk to compare. - Bash and Posix sh does not support decimals in numbers. Decimals should either be avoided, or compared using a tool that does support them.
+
+       DECIMALS ARE NOT SUPPORTED. EITHER USE INTEGERS ONLY, OR USE BC OR AWK
+
+       DECIMALS ARE NOT SUPPORTED. EITHER USE INTEGERS ONLY, OR USE BC OR AWK
+
+       PROBLEMATIC CODE
+
+         [[ 2 -lt 3.14 ]]
+
+       CORRECT CODE
+
+         [[ 200 -lt 314 ]]                   # Use fixed point math
+         [[ $(echo "2 < 3.14" | bc) == 1 ]]  # Use bc
+
+       RATIONALE
+
+       Bash and Posix sh does not support decimals in numbers. Decimals should either be avoided, or compared using a tool that does support them.
+
+       EXCEPTIONS
+
+       If the strings happen to be version numbers and you're using <, or > to compare them as strings, and you consider this an acceptable thing to do, then you can ignore this warning.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,45 @@
+SHELLCHECK.SC1117(1)             Sandbox manual             SHELLCHECK.SC1117(1)
+
+       NAME
+
+       Backslash is literal in "\n". Prefer explicit escaping: "\\n". - Note: this warning has been retired due to being too pedantic. Removed in v0.6.0 - 2018-12-03
+
+       BACKSLASH IS LITERAL IN N . PREFER EXPLICIT ESCAPING: N
+
+       BACKSLASH IS LITERAL IN N . PREFER EXPLICIT ESCAPING: N
+
+       _Note: this warning has been retired due to being too pedantic. Removed in v0.6.0 - 2018-12-03_
+
+       PROBLEMATIC CODE
+
+         printf "%s\n" "Hello"
+
+       CORRECT CODE
+
+         printf "%s\\n" "Hello"
+
+       or alternatively, with single quotes:
+
+         printf '%s\n' "Hello"
+
+       RATIONALE
+
+       In a double quoted string, you have escaped a character that has no special behavior when escaped. Instead, it's invoking the fallback behavior of being interpreted literally.
+
+       Instead of relying on this implicit fallback, you should escape the backslash explicitly. This makes it clear that it's meant to be passed as a literal backslash in the string parameter.
+
+       EXCEPTIONS
+
+       None. This is a stylistic issue which can be [[ignored]]. But can you name the 5 characters that are special when escaped in double quotes?
+
+       They are $, , ", \\, or newline. More infos are available in the [bash manual].
+
+       [bash manual]: https://www.gnu.org/software/bash/manual/html_node/Double-Quotes.html
+
+       RETIRED
+
+       This warning is no longer emitted as of d8a32da07 (strictly after v0.5).
+
+       The number of harmlessly affected printf, sed and grep statements was significantly higher than the number of actual unexpanded escape sequences. It may return some day under a -pedantic type flag.
+
+ShellCheck manual                       from the official documentation

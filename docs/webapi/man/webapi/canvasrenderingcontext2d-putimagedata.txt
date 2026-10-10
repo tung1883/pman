@@ -1,0 +1,145 @@
+WEBAPI.CANVASRENDERINGCONTEXT2D-PUTIMAGEDATA(1) Sandbox manual WEBAPI.CANVASRENDERINGCONTEXT2D-PUTIMAGEDATA(1)
+
+       NAME
+
+       CanvasRenderingContext2D: putImageData() method - The CanvasRenderingContext2D.putImageData()
+
+       CANVASRENDERINGCONTEXT2D: PUTIMAGEDATA() METHOD
+
+       The CanvasRenderingContext2D.putImageData() method of the Canvas 2D API paints data from the given ImageData object onto the canvas. If a dirty rectangle is provided, only the pixels from that rectangle are painted. This method is not affected by the canvas transformation matrix.
+
+       > Image data can be retrieved from a canvas using the
+       > getImageData() method.
+       You can find more information about putImageData() and general manipulation of canvas contents in the article Pixel manipulation with canvas.
+
+       SYNTAX
+
+         putImageData(imageData, dx, dy)
+         putImageData(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight)
+
+       PARAMETERS
+
+        * imageData
+          * : An ImageData object containing the array of pixel values.
+        * dx
+          * : Horizontal position (x coordinate) at which to place the image data in the
+       destination canvas.
+
+        * dy
+          * : Vertical position (y coordinate) at which to place the image data in the destination
+       canvas.
+
+        * dirtyX (optional)
+          * : Horizontal position (x coordinate) of the top-left corner from which the image data
+       will be extracted. Defaults to 0.
+
+        * dirtyY (optional)
+          * : Vertical position (y coordinate) of the top-left corner from which the image data
+       will be extracted. Defaults to 0.
+
+        * dirtyWidth (optional)
+          * : Width of the rectangle to be painted. Defaults to the width of the image data.
+        * dirtyHeight (optional)
+          * : Height of the rectangle to be painted. Defaults to the height of the image data.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * NotSupportedError DOMException
+          * : Thrown if any of the arguments is infinite.
+        * InvalidStateError DOMException
+          * : Thrown if the ImageData object's data has been detached.
+
+       EXAMPLES
+
+       UNDERSTANDING PUTIMAGEDATA
+
+       To understand what this algorithm does under the hood, here is an implementation on top of CanvasRenderingContext2D.fillRect().
+
+       HTML
+
+         <canvas id="canvas"></canvas>
+
+       JAVASCRIPT
+
+         const canvas = document.getElementById("canvas");
+         const ctx = canvas.getContext("2d");
+
+         function putImageData(
+           ctx,
+           imageData,
+           dx,
+           dy,
+           dirtyX = 0,
+           dirtyY = 0,
+           dirtyWidth = imageData.width,
+           dirtyHeight = imageData.height,
+         ) {
+           const data = imageData.data;
+           const height = imageData.height;
+           const width = imageData.width;
+           const limitBottom = dirtyY + dirtyHeight;
+           const limitRight = dirtyX + dirtyWidth;
+           for (let y = dirtyY; y < limitBottom; y++) {
+             for (let x = dirtyX; x < limitRight; x++) {
+               const pos = y * width + x;
+               ctx.fillStyle = `rgb(${data[pos * 4 + 0]} ${data[pos * 4 + 1]}
+               ${data[pos * 4 + 2]} / ${data[pos * 4 + 3] / 255})`;
+               ctx.fillRect(x + dx, y + dy, 1, 1);
+             }
+           }
+         }
+
+         // Draw content onto the canvas
+         ctx.fillRect(0, 0, 100, 100);
+         // Create an ImageData object from it
+         const imagedata = ctx.getImageData(0, 0, 100, 100);
+         // use the putImageData function that illustrates how putImageData works
+         putImageData(ctx, imagedata, 150, 0, 50, 50, 25, 25);
+
+       RESULT
+
+       DATA LOSS DUE TO BROWSER OPTIMIZATION
+
+       > Due to the lossy nature of converting to and from premultiplied alpha color values,
+       > pixels that have just been set using putImageData() might be returned to
+       > an equivalent getImageData() as different values.
+
+       JAVASCRIPT
+
+         const canvas = document.createElement("canvas");
+         canvas.width = 1;
+         canvas.height = 1;
+         const context = canvas.getContext("2d");
+         const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+         const pixels = imgData.data;
+         pixels[0 + 0] = 1;
+         pixels[0 + 1] = 127;
+         pixels[0 + 2] = 255;
+         pixels[0 + 3] = 1;
+         console.log("before:", pixels);
+         context.putImageData(imgData, 0, 0);
+         const imgData2 = context.getImageData(0, 0, canvas.width, canvas.height);
+         const pixels2 = imgData2.data;
+         console.log("after:", pixels2);
+
+       The output might look like:
+
+         before: Uint8ClampedArray(4) [ 1, 127, 255, 1 ]
+         after: Uint8ClampedArray(4) [ 255, 255, 255, 1 ]
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The interface defining this method: CanvasRenderingContext2D
+        * ImageData object
+        * CanvasRenderingContext2D.getImageData()
+        * Pixel manipulation with canvas
+
+Web APIs manual                         from the official documentation

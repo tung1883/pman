@@ -1,0 +1,68 @@
+SHELLCHECK.SC2095(1)             Sandbox manual             SHELLCHECK.SC2095(1)
+
+       NAME
+
+       Use ssh -n to prevent ssh from swallowing stdin. - The same error applies to multiple commands, like ffmpeg -nostdin and mplayer -noconsolecontrols.
+
+       USE SSH -N TO PREVENT SSH FROM SWALLOWING STDIN
+
+       USE SSH -N TO PREVENT SSH FROM SWALLOWING STDIN
+
+       The same error applies to multiple commands, like ffmpeg -nostdin and mplayer -noconsolecontrols.
+
+       PROBLEMATIC CODE
+
+         while read -r host
+         do
+           ssh "$host" "uptime"
+         done < hosts.txt
+
+       CORRECT CODE
+
+         while read -r host
+         do
+           ssh -n "$host" "uptime"
+         done < hosts.txt
+
+       or
+
+         while read -r host
+         do
+           ssh "$host" <<'EOF'
+         uptime
+         EOF
+         done < hosts.txt
+
+       or
+
+       By using a pipe and avoiding the use of the stdin file descriptor, this ensures that commands in the loop are not interfered with.
+
+         exec 3< hosts.txt
+         while read -r host
+         do
+           ssh "$host" "uptime"
+         done <&3
+         # Close the file descriptor
+         exec 3<&-
+
+       RATIONALE
+
+       Commands that process stdin will compete with the read statement for input. This is especially tricky for commands you wouldn't expect reads from stdin, like ssh .. uptime, ffmpeg and mplayer.
+
+       The most common symptom of this is a while read loop only running once, even though the input contains many lines. This is because the rest of the lines are swallowed by the offending command.
+
+       To refuse such commands input, you can use a command specific option like ssh -n or ffmpeg -nostdin.
+
+       More generally, you can also redirect their stdin with < /dev/null. This works for all commands with this behavior.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * BashFaq: I'm reading a file line by line and running ssh or ffmpeg, only the first line gets processed!
+        * [StackOverflow: Shell script while read line loop stops after the first line
+       ](https://stackoverflow.com/questions/13800225/shell-script-while-read-line-loop-stops-after-the-first-line)
+
+ShellCheck manual                       from the official documentation

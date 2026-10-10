@@ -1,0 +1,34 @@
+SHELLCHECK.SC2114(1)             Sandbox manual             SHELLCHECK.SC2114(1)
+
+       NAME
+
+       Warning: deletes a system directory. - rm -rf /usr /lib/nvidia-current/xorg/xorg
+
+       WARNING: DELETES A SYSTEM DIRECTORY
+
+       WARNING: DELETES A SYSTEM DIRECTORY
+
+       PROBLEMATIC CODE
+
+         rm -rf /usr /lib/nvidia-current/xorg/xorg
+
+       CORRECT CODE
+
+         rm -rf /usr/lib/nvidia-current/xorg/xorg
+
+       RATIONALE
+
+       The example line of code was an actual bug in the Bumblebee NVIDIA driver.
+
+       Due to an accidental space, it deleted /usr instead of just the particular directory.
+
+       EXCEPTIONS
+
+       If you do intend to delete a system directory, such as when working in a chroot or initramfs, you can disable this message with a directive:
+
+         # shellcheck disable=SC2114
+         rm -rf /usr
+
+       Previous versions of shellcheck, up to and including 0.4.6, would ignore rm statements containing a -- (an arbitrary convention). This is no longer the case.
+
+ShellCheck manual                       from the official documentation

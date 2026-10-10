@@ -1,0 +1,196 @@
+CSHARP.FUNDAMENTALS-SPLIT(1)     Sandbox manual     CSHARP.FUNDAMENTALS-SPLIT(1)
+
+       NAME
+
+       Split strings into substrings in C\# - Learn how to split a C# string into substrings with String.Split, including how to use multiple separators, limit the substring count, and t
+
+       SPLIT STRINGS INTO SUBSTRINGS IN C #
+
+       > This article is part of the Fundamentals section for developers who already know at least one programming language and are learning C#. If you're new to programming, start with the Get started tutorials first.
+       > Coming from another language? string.Split is C#'s counterpart to Java's String.split and JavaScript's String.prototype.split. Unlike those languages, C# returns an array (string[]), not a list, and the separator argument is a character or string, not a regular expression. For pattern-based splitting, see Split*.
+       The Split* method breaks a string into an array of substrings using one or more separators. It's the simplest way to parse delimited text such as words, CSV-style values, or protocol tokens.
+
+       The method has many overloads, but they cover four independent decisions:
+
+        * Separators: one char, an array of char, one string, or an array of string.
+        * Maximum result count: cap the number of substrings returned.
+        * Empty-entry handling: keep empty substrings (the default) or drop them with RemoveEmptyEntries.
+        * Whitespace handling: trim leading and trailing whitespace from each entry with TrimEntries.
+
+       SPLIT A STRING INTO WORDS
+
+       To split a phrase on whitespace, pass ' ' as the separator:
+
+         string phrase = "The quick brown fox jumps over the lazy dog.";
+         string[] words = phrase.Split(' ');
+
+         foreach (var word in words)
+         {
+             Console.WriteLine($"<{word}>");
+         }
+         // => <The>
+         // => <quick>
+         // => <brown>
+         // => <fox>
+         // => <jumps>
+         // => <over>
+         // => <the>
+         // => <lazy>
+         // => <dog.>
+
+       Iterate the returned array with for to recover the position of each word:
+
+         string phrase = "The quick brown fox jumps over the lazy dog.";
+         string[] words = phrase.Split(' ');
+
+         for (int i = 0; i < words.Length; i++)
+         {
+             Console.WriteLine($"Index {i}: <{words[i]}>");
+         }
+         // => Index 0: <The>
+         // => Index 1: <quick>
+         // => Index 2: <brown>
+         // => ...
+
+       If the input contains repeated instances of the separator character, Split produces empty entries, one for each "gap" between consecutive separators:
+
+         string phrase = "The quick brown    fox     jumps over the lazy dog.";
+         string[] words = phrase.Split(' ');
+
+         foreach (var word in words)
+         {
+             Console.WriteLine($"<{word}>");
+         }
+         // The runs of spaces produce empty entries:
+         // => <The>
+         // => <quick>
+         // => <brown>
+         // => <>
+         // => <>
+         // => <>
+         // => <fox>
+         // => ...
+
+       Pass StringSplitOptions.RemoveEmptyEntries to drop those empty entries, as shown later in this article.
+
+       SPLIT ON MULTIPLE SEPARATOR CHARACTERS
+
+       When more than one character can act as a separator, pass them as an array. The following example treats spaces, commas, periods, colons, and tabs all as word boundaries:
+
+         char[] delimiters = [' ', ',', '.', ':', '\t'];
+
+         string text = "one\ttwo three:four,five six seven";
+         Console.WriteLine($"Original text: '{text}'");
+
+         string[] words = text.Split(delimiters);
+         Console.WriteLine($"{words.Length} words in text:");
+
+         foreach (var word in words)
+         {
+             Console.WriteLine($"<{word}>");
+         }
+         // => 7 words in text:
+         // => <one>
+         // => <two>
+         // => <three>
+         // => <four>
+         // => <five>
+         // => <six>
+         // => <seven>
+
+       Adjacent separators still produce empty entries:
+
+         char[] delimiters = [' ', ',', '.', ':', '\t'];
+
+         string text = "one\ttwo :,five six seven";
+         Console.WriteLine($"Original text: '{text}'");
+
+         string[] words = text.Split(delimiters);
+         Console.WriteLine($"{words.Length} words in text:");
+
+         foreach (var word in words)
+         {
+             Console.WriteLine($"<{word}>");
+         }
+         // => 7 words in text:
+         // => <one>
+         // => <two>
+         // => <>
+         // => <>
+         // => <five>
+         // => <six>
+         // => <seven>
+
+       SPLIT ON MULTICHARACTER SEPARATORS
+
+       To split on whole-word or multicharacter separators, pass an array of strings. The string-array overloads require a StringSplitOptions value. Use RemoveEmptyEntries when repeated separators would otherwise produce empty results:
+
+         string[] separators = ["<<", "..."];
+
+         string text = "one<<two......three<four";
+         Console.WriteLine($"Original text: '{text}'");
+
+         string[] words = text.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+         Console.WriteLine($"{words.Length} substrings in text:");
+
+         foreach (var word in words)
+         {
+             Console.WriteLine(word);
+         }
+         // => 3 substrings in text:
+         // => one
+         // => two
+         // => three<four
+
+       LIMIT HOW MANY SUBSTRINGS YOU GET BACK
+
+       Pass a count argument to cap the number of results. The final entry holds everything that's left, including any remaining separators:
+
+         string phrase = "The quick brown fox jumps over the lazy dog.";
+         string[] words = phrase.Split(' ', 4, StringSplitOptions.None);
+
+         foreach (var word in words)
+         {
+             Console.WriteLine($"<{word}>");
+         }
+         // => <The>
+         // => <quick>
+         // => <brown>
+         // => <fox jumps over the lazy dog.>
+
+       This pattern is handy for key=value pairs and other formats where only the first separator is meaningful.
+
+       TRIM WHITESPACE FROM EACH ENTRY
+
+       StringSplitOptions.TrimEntries strips leading and trailing whitespace from every returned substring. You can combine it with RemoveEmptyEntries for typical CSV-style cleanup:
+
+         string numerals = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10";
+         string[] trimmed = numerals.Split(',', StringSplitOptions.TrimEntries);
+
+         Console.WriteLine("Trimmed entries:");
+         foreach (var word in trimmed)
+         {
+             Console.WriteLine($"<{word}>");
+         }
+
+         string[] untrimmed = numerals.Split(',', StringSplitOptions.None);
+         Console.WriteLine("Untrimmed entries:");
+         foreach (var word in untrimmed)
+         {
+             Console.WriteLine($"<{word}>");
+         }
+         // => Trimmed entries: <1> <2> ... <10>
+         // => Untrimmed entries: <1> < 2> ... < 10>
+
+       USE REGULAR EXPRESSIONS
+
+       Split works well for fixed character or string delimiters. For pattern-based splitting, use Split*. For an introduction to regular expressions on strings, see String operations.
+
+       SEE ALSO
+
+        * Split*
+        * StringSplitOptions
+        * String operations: pattern matching, performance, and span-based search
+        * Extract elements from a string
+
+C# manual                               from the official documentation

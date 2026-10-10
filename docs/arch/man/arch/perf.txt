@@ -1,0 +1,55 @@
+ARCH.PERF(1)                     Sandbox manual                     ARCH.PERF(1)
+
+       Due to performance regressions, unoptimized new features or simply unknown factors affecting performance, it may be necessary to profile an application. According to Wikipedia:
+
+       In software engineering, profiling ("program profiling", "software profiling") is a form of dynamic program analysis that measures, for example, the space (memory) or time complexity of a program, the usage of particular instructions, or the frequency and duration of function calls. ... Profilers may use a number of different techniques, such as event-based, statistical, instrumented, and simulation methods.
+
+       Statistical profilers periodically sample resources such as the program's callstack or the CPU's hardware performance counters to build an approximate profile of the running program. Instrumented profilers are more invasive, often requiring recompilation to instrument the program to record events for a verbose trace of the running program. Although profiling and tracing are distinct,[1] many profilers (including perf_events) integrate both data collection methods.
+
+       See List of applications/Utilities#Profilers and trace recorders for additional software not discussed on this page.
+
+       PROFILING WITH PERF
+
+       The Linux kernel has a built-in perf_events subsystem (herein perf) for profiling code at the kernel and/or user level, with support for adding low-overhead tracepoints.
+
+       To get started, install the perf userspace utility.
+
+       GETTING DEBUG SYMBOLS
+
+       In order to get interpretable results, debugging symbols for the application you are debugging are mandatory. See Debugging/Getting traces#Manually getting debug info. perf does not support debuginfod yet and thus the debugging symbols must be obtained manually.
+
+       Should the application be profiled or otherwise debugged without debugging symbols, there will only be pointers instead of actual function names, which are quite useless.
+
+       USAGE
+
+       Just as with GDB, the application will be run within perf.
+
+       Note It may be necessary to adjust the profiling frequency using -F. Since 2012-05-22 it defaults to 4000. A higher value will cause more load. While the default is fine for most cases, you may want to increase the value further for programs which have a very short runtime or decrease it if the program will be running a long time. Also keep the system load in mind, as a high load will cause sampling overhead and hide the actual bottleneck that is being debugged. See perf-record(1).
+
+         $ perf record -g -- command
+
+       Alternatively, to profile an already-running process by its PID:
+
+         $ perf record -g -p <PID>
+
+       This will record the data to perf.data. After the program is finished, display the results with:
+
+         $ perf report --stdio
+
+       For a prettier display, consider using one of:
+
+        * cargo-flamegraph
+        * speedscope
+        * Firefox Profiler
+        * Perfetto
+       Some of these tools require or work better with the perf "script" format - convert your trace using perf script > perf.txt and load perf.txt in the profiler UI.
+
+       If reporting a bug to upstream, submit the perf.data file.
+
+       SEE ALSO
+
+        * https://perf.wiki.kernel.org
+        * https://www.brendangregg.com/perf.html
+        * Performance
+
+ArchWiki manual                         bundled documentation

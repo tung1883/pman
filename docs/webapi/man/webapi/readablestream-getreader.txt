@@ -1,0 +1,85 @@
+WEBAPI.READABLESTREAM-GETREADER(1) Sandbox manual WEBAPI.READABLESTREAM-GETREADER(1)
+
+       NAME
+
+       ReadableStream: getReader() method - The getReader() method of the ReadableStream interface creates a reader and locks the stream to it.
+
+       READABLESTREAM: GETREADER() METHOD
+
+       The getReader() method of the ReadableStream interface creates a reader and locks the stream to it. While the stream is locked, no other reader can be acquired until this one is released.
+
+       SYNTAX
+
+         getReader()
+         getReader(options)
+
+       PARAMETERS
+
+        * options (optional)
+          * : An object containing the following properties:
+            * mode (optional)
+              * : A property that specifies the type of reader to create.
+       Values can be:
+
+                * "byob", which results in a ReadableStreamBYOBReader being created that can read readable byte streams (streams that support zero-copy transfer from an underlying byte source to the reader when internal stream buffers are empty).
+                * undefined (or not specified at all — this is the default), which results in a ReadableStreamDefaultReader being created that can read individual chunks from a stream.
+
+       RETURN VALUE
+
+       A ReadableStreamDefaultReader or ReadableStreamBYOBReader object instance, depending on the mode value.
+
+       EXCEPTIONS
+
+        * RangeError
+          * : Thrown if the provided mode value is not "byob" or undefined.
+        * TypeError
+          * : Thrown if the stream you are trying to create a reader for is already locked, or not a ReadableStream.
+       This is also thrown if a BYOB reader is requested and the stream controller is not a ReadableByteStreamController (the stream was not constructed as an underlying source with type="bytes").
+
+       EXAMPLES
+
+       In the following simple example, a previously-created custom ReadableStream is read using a ReadableStreamDefaultReader created using getReader(). (see our Simple random stream example for the full code). Each chunk is read sequentially and output to the UI, until the stream has finished being read, at which point we return out of the recursive function and print the entire stream to another part of the UI.
+
+         function fetchStream() {
+           const reader = stream.getReader();
+           let charsReceived = 0;
+
+           // read() returns a promise that resolves
+           // when a value has been received
+           reader.read().then(function processText({ done, value }) {
+             // Result objects contain two properties:
+             // done  - true if the stream has already given you all its data.
+             // value - some data. Always undefined when done is true.
+             if (done) {
+               console.log("Stream complete");
+               para.textContent = result;
+               return;
+             }
+
+             // value for fetch streams is a Uint8Array
+             charsReceived += value.length;
+             const chunk = value;
+             let listItem = document.createElement("li");
+             listItem.textContent = `Received ${charsReceived} characters so far. Current chunk = ${chunk}`;
+             list2.appendChild(listItem);
+
+             result += chunk;
+
+             // Read some more, and call this function again
+             return reader.read().then(processText);
+           });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ReadableStream() constructor
+        * ReadableStreamDefaultReader
+        * ReadableStreamBYOBReader
+        * Using readable streams
+        * Using readable byte stream
+
+Web APIs manual                         from the official documentation

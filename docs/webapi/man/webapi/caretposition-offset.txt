@@ -1,0 +1,71 @@
+WEBAPI.CARETPOSITION-OFFSET(1)   Sandbox manual   WEBAPI.CARETPOSITION-OFFSET(1)
+
+       NAME
+
+       CaretPosition: offset property - The offset property of the CaretPosition interface returns an integer representing the offset of the selection in the caret position node.
+
+       CARETPOSITION: OFFSET PROPERTY
+
+       The offset property of the CaretPosition interface returns an integer representing the offset of the selection in the caret position node.
+
+       This will be the character offset in a text node or the selected child node's index in an element node.
+
+       VALUE
+
+       An integer.
+
+       EXAMPLES
+
+       This example logs the offsetNode and offset of the caret position when clicking inside the input field.
+
+         <input aria-label="text field" value="Click inside this input field" />
+
+         <pre id="log"></pre>
+
+         input {
+           width: 100%;
+           padding: 10px;
+           font-size: 16px;
+           box-sizing: border-box;
+         }
+
+         #log {
+           height: 200px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         document.querySelector("input").addEventListener("click", (event) => {
+           const x = event.clientX;
+           const y = event.clientY;
+
+           const caret = document.caretPositionFromPoint?.(x, y);
+           if (!caret) {
+             log("Not supported");
+             return;
+           }
+
+           const node = caret.offsetNode;
+           const offset = caret.offset;
+
+           log(`offsetNode: ${node}`);
+           log(`offset: ${offset}`);
+         });
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Node
+        * Document.caretPositionFromPoint()
+
+Web APIs manual                         from the official documentation

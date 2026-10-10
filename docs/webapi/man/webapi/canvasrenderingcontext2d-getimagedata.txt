@@ -1,0 +1,130 @@
+WEBAPI.CANVASRENDERINGCONTEXT2D-GETIMAGEDATA(1) Sandbox manual WEBAPI.CANVASRENDERINGCONTEXT2D-GETIMAGEDATA(1)
+
+       NAME
+
+       CanvasRenderingContext2D: getImageData() method - The CanvasRenderingContext2D method
+
+       CANVASRENDERINGCONTEXT2D: GETIMAGEDATA() METHOD
+
+       The CanvasRenderingContext2D method getImageData() of the Canvas 2D API returns an ImageData object representing the underlying pixel data for a specified portion of the canvas.
+
+       This method is not affected by the canvas's transformation matrix. If the specified rectangle extends outside the bounds of the canvas, the pixels outside the canvas are transparent black in the returned ImageData object.
+
+       > Image data can be painted onto a canvas using the
+       > putImageData() method.
+       You can find more information about getImageData() and general manipulation of canvas contents in Pixel manipulation with canvas.
+
+       SYNTAX
+
+         getImageData(sx, sy, sw, sh)
+         getImageData(sx, sy, sw, sh, settings)
+
+       PARAMETERS
+
+        * sx
+          * : The x-axis coordinate of the top-left corner of the rectangle from which the
+       ImageData will be extracted.
+
+        * sy
+          * : The y-axis coordinate of the top-left corner of the rectangle from which the
+       ImageData will be extracted.
+
+        * sw
+          * : The width of the rectangle from which the ImageData will be extracted.
+       Positive values are to the right, and negative to the left.
+
+        * sh
+          * : The height of the rectangle from which the ImageData will be extracted.
+       Positive values are down, and negative are up.
+
+        * settings (optional)
+          * : An object with the following properties:
+            * colorSpace
+              * : Specifies the color space of the image data. Can be set to "srgb" for the sRGB color space or "display-p3" for the display-p3 color space.
+            * pixelFormat
+              * : Specifies the pixel format. Possible values:
+                * "rgba-unorm8", for RGBA with 8 bit per component unsigned normalized format, using a Uint8ClampedArray.
+                * "rgba-float16", for RGBA with 16 bits per component, using a Float16Array. Floating-point pixel values allow representing colors in arbitrarily wide gamuts and high dynamic range (HDR).
+
+       RETURN VALUE
+
+       An ImageData object containing the image data for the rectangle of the canvas specified. The coordinates of the rectangle's top-left corner are (sx, sy), while the coordinates of the bottom corner are (sx + sw - 1, sy + sh - 1).
+
+       > With certain privacy settings (such as fingerprinting protection), random subtle noise is introduced to the getImageData() result to prevent the website from inferring the user's rendering device. Therefore, putImageData() and getImageData() may not round-trip.
+
+       EXCEPTIONS
+
+        * IndexSizeError DOMException
+          * : Thrown if either sw or sh is zero.
+        * SecurityError DOMException
+          * : The canvas contains or may contain pixels which were loaded from an origin other
+       than the one from which the document itself was loaded. To avoid a SecurityError DOMException being thrown in this situation, configure CORS to allow the source image to be used in this way. See Allowing cross-origin use of images and canvas.
+
+       EXAMPLES
+
+       GETTING IMAGE DATA FROM A CANVAS
+
+       This example draws an image, and then uses getImageData() to grab a portion of the canvas.
+
+       We use getImageData() to extract a slice of the image, starting at (10, 20), with a width of 80 and a height of 230. We then draw this slice three times, positioning the slices progressively below and to the right of the last slice.
+
+       HTML
+
+         <canvas id="canvas" width="700" height="400"></canvas>
+
+       JAVASCRIPT
+
+         const canvas = document.getElementById("canvas");
+         const ctx = canvas.getContext("2d");
+
+         const image = new Image();
+         image.src = "plumeria.jpg";
+         image.addEventListener("load", () => {
+           ctx.drawImage(image, 0, 0, 233, 320);
+
+           const imageData = ctx.getImageData(10, 20, 80, 230);
+           ctx.putImageData(imageData, 260, 0);
+           ctx.putImageData(imageData, 380, 50);
+           ctx.putImageData(imageData, 500, 100);
+         });
+
+       RESULT
+
+       COLOR SPACE CONVERSION
+
+       The optional colorSpace setting allows you to get image data in the desired format.
+
+         const context = canvas.getContext("2d", { colorSpace: "display-p3" });
+         context.fillStyle = "color(display-p3 0.5 0 0)";
+         context.fillRect(0, 0, 10, 10);
+
+         // Get ImageData converted to sRGB
+         const imageData = context.getImageData(0, 0, 1, 1, { colorSpace: "srgb" });
+         console.log(imageData.colorSpace); // "srgb"
+
+       GETTING DATA IN DIFFERENT PIXEL FORMATS
+
+       The optional pixelFormat setting allows you to get image data in the desired pixel format.
+
+         const context = canvas.getContext("2d");
+
+         const defaultImageData = context.getImageData(0, 0, 1, 1);
+         console.log(defaultImageData.pixelFormat); // "rgba-unorm8"
+
+         const float16ImageData = context.getImageData(0, 0, 1, 1, {
+           pixelFormat: "rgba-float16",
+         });
+         console.log(float16ImageData.pixelFormat); // "rgba-float16"
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The interface defining this method: CanvasRenderingContext2D
+        * ImageData object
+        * CanvasRenderingContext2D.putImageData()
+        * Pixel manipulation with canvas
+
+Web APIs manual                         from the official documentation

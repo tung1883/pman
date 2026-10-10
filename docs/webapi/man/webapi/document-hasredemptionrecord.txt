@@ -1,0 +1,55 @@
+WEBAPI.DOCUMENT-HASREDEMPTIONRECORD(1) Sandbox manual WEBAPI.DOCUMENT-HASREDEMPTIONRECORD(1)
+
+       NAME
+
+       Document: hasRedemptionRecord() method - The hasRedemptionRecord() method of the Document interface returns a promise that fulfills with a boolean indicating whether the browser has
+
+       DOCUMENT: HASREDEMPTIONRECORD() METHOD
+
+       The hasRedemptionRecord() method of the Document interface returns a promise that fulfills with a boolean indicating whether the browser has a redemption record originating from a particular issuer.
+
+       SYNTAX
+
+         hasRedemptionRecord(issuer)
+
+       PARAMETERS
+
+        * issuer
+          * : A string representing the URL of an issuer server.
+
+       RETURN VALUE
+
+       A Promise that resolves with a boolean value indicating whether the browser has a redemption record stored that originates from the specified issuer server.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the current Document is not yet active.
+        * NotAllowedError DOMException
+          * : Thrown if the current Document is not loaded in a secure context.
+        * TypeError DOMException
+          * : Thrown if issuer is not a valid URL.
+
+       EXAMPLES
+
+         const hasRR = await Document.hasRedemptionRecord(`issuer.example`);
+         if (hasRR) {
+           await fetch("some-resource.example", {
+             method: "POST",
+             privateToken: {
+               version: 1,
+               operation: "send-redemption-record",
+               issuers: ["https://issuer.example"],
+             },
+           });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Private State Token API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,201 @@
+UBUNTU.HOW-TO-SOFTWARE-PACKAGE-MANAGEMENT(1) Sandbox manual UBUNTU.HOW-TO-SOFTWARE-PACKAGE-MANAGEMENT(1)
+
+       NAME
+
+       Install and manage packages - The recommended way to install Debian packages ("deb" files) is using the
+
+       INSTALL AND MANAGE PACKAGES
+
+       The recommended way to install Debian packages ("deb" files) is using the Advanced Packaging Tool (APT), which can be used on the command line using the apt utility.
+
+       The commands contained within apt provide the means to install new software packages, upgrade existing software packages, update the package list index, and even upgrade the entire Ubuntu system.
+
+       UPDATE THE PACKAGE INDEX
+
+       The APT package index is a database of available packages from the repositories defined in the /etc/apt/sources.list.d directory. Ubuntu repositories are defined in the /etc/apt/sources.list.d/ubuntu.sources file. To update the local package index with the latest changes made in the repositories, and thereby access the most up-to-date version of the package you're interested in, run the following:
+
+         sudo apt update
+
+       > Note: Ubuntu releases prior to 24.04 LTS (Noble), which don't use the deb822 standard by default, have repository information defined in the /etc/apt/sources.list file.
+
+       INSTALL A PACKAGE
+
+       As an example, to install the nmap network scanner, run the following command:
+
+         sudo apt install nmap
+
+       > Tip: You can install or remove multiple packages at once by separating them with spaces.
+
+       REMOVE A PACKAGE
+
+       To remove the package installed in the previous example, run the following:
+
+         sudo apt remove nmap
+
+       Adding the --purge option to apt remove will remove the package configuration files as well. This may or may not be what you want, so use it with caution.
+
+       > Note: While apt is a command-line tool, it is intended to be used interactively, and not to be called from non-interactive scripts. The apt-get command should be used in scripts (perhaps with the --quiet flag). For basic commands the syntax of the two tools is identical.
+
+       UPGRADING PACKAGES
+
+       Installed packages on your computer may periodically have upgrades available from the package repositories (e.g., security updates). To upgrade your system, first update your package index and then perform the upgrade -- as follows:
+
+         sudo apt update
+
+         sudo apt upgrade
+
+       For details on how to upgrade to a new Ubuntu release, see our guide on upgrading releases. For further information about using APT, read the comprehensive APT User's Guide, or type apt help.
+
+       APTITUDE
+
+       Launching Aptitude with no command-line options will give you a menu-driven, text-based frontend to the APT system. Many of the common package management functions, such as installation, removal, and upgrade, can be performed in Aptitude with single-key commands, which are typically lowercase letters.
+
+       Aptitude is best suited for use in a non-graphical terminal environment to ensure the command keys work properly.
+
+       Install Aptitude by running:
+
+         sudo apt install aptitude
+
+       You can start the menu-driven interface of Aptitude as a regular user by typing the following command at a terminal prompt:
+
+         sudo aptitude
+
+       When Aptitude starts, you will see a menu bar at the top of the screen and two panes below the menu bar. The top pane contains package categories, such as "New Packages" and "Not Installed Packages". The bottom pane contains information related to the packages and package categories.
+
+       Using Aptitude for package management is relatively straightforward thanks to its user interface. The following are examples of common package management functions as performed in Aptitude:
+
+       INSTALLING PACKAGES
+
+       To install a package, locate it in the "Not Installed Packages" category by using the keyboard arrow keys and the Enter key.
+
+       Highlight the desired package, then press the + key. The package entry should turn green, which indicates it has been marked for installation. Now press g to be presented with a summary of package actions. Press g again, and the package will be downloaded and installed. When finished, press Enter to return to the menu.
+
+       REMOVE PACKAGES
+
+       To remove a package, locate it in the "Installed Packages" category by using the keyboard arrow keys and the Enter key.
+
+       Highlight the package you want to remove, then press the - key. The package entry should turn pink, indicating it has been marked for removal. Now press g to be presented with a summary of package actions. Press g again, and the package will be removed. When finished, press Enter to return to the menu.
+
+       UPDATING THE PACKAGE INDEX
+
+       To update the package index, press the u key.
+
+       UPGRADE PACKAGES
+
+       To upgrade packages, first update the package index as detailed above, and then press the U key to mark all packages with available updates. Now press g, which will present you with a summary of package actions. Press g again to begin the download and installation. When finished, press Enter to return to the menu.
+
+       The first column of information displayed in the package list (in the top pane) lists the current state of the package (when viewing packages). It uses the following key to describe the package state:
+
+        * i : Installed package
+        * c : Package not installed, but package configuration remains on the system
+        * p : Purged from system
+        * v : Virtual package
+        * B : Broken package
+        * u : Unpacked files, but package not yet configured
+        * C : Half-configured - configuration failed and requires fix
+        * H : Half-installed - removal failed and requires a fix
+       To exit Aptitude, simply press the q key and confirm you want to exit. Many other functions are available from the Aptitude menu by pressing the F10 key.
+
+       COMMAND-LINE APTITUDE
+
+       You can also use Aptitude as a command-line tool, similar to apt. To install the nmap package with all necessary dependencies (as in the apt example), you would use the following command:
+
+         sudo aptitude install nmap
+
+       To remove the same package, you would use the command:
+
+         sudo aptitude remove nmap
+
+       Consult the Aptitude manual pages for full details of Aptitude's command-line options.
+
+       DPKG
+
+       dpkg is a package manager for Debian-based systems. It can install, remove, and build packages, but unlike other package management systems, it cannot automatically download and install packages -- or their dependencies.
+
+       APT and Aptitude are newer, and layer additional features on top of dpkg. This section covers using dpkg to manage locally installed packages.
+
+       LIST PACKAGES
+
+       To list all packages in the system’s package database (both installed and uninstalled) run the following command from a terminal prompt:
+
+         dpkg -l
+
+       Depending on the number of packages on your system, this can generate a large amount of output. Pipe the output through grep to see if a specific package is installed:
+
+         dpkg -l | grep apache2
+
+       Replace apache2 with any package name, part of a package name, or a regular expression.
+
+       LIST FILES
+
+       To list the files installed by a package, in this case the ufw package, enter:
+
+         dpkg -L ufw
+
+       If you are unsure which package installed a file, dpkg -S may be able to tell you. For example:
+
+         dpkg -S /etc/host.conf
+
+         base-files: /etc/host.conf
+
+       The output shows that the /etc/host.conf belongs to the base-files package.
+
+       > Note: Many files are automatically generated during the package install process, and even though they are on the filesystem, dpkg -S may not know which package they belong to.
+
+       INSTALLING A DEB FILE
+
+       You can install a local .deb file by entering:
+
+         sudo dpkg -i zip_3.0-4_amd64.deb
+
+       Change zip_3.0-4_amd64.deb to the actual file name of the local .deb file you wish to install.
+
+       UNINSTALLING PACKAGES
+
+       You can uninstall a package by running:
+
+         sudo dpkg -r zip
+
+       > Caution: Uninstalling packages using dpkg, is NOT recommended in most cases. It is better to use a package manager that handles dependencies to ensure that the system is left in a consistent state. For example, using dpkg -r zip will remove the zip package, but any packages that depend on it will still be installed and may no longer function correctly as a result.
+       For more dpkg options see the dpkg(1) manual page: man dpkg.
+
+       APT CONFIGURATION
+
+       Configuration of the APT system repositories is stored in the /etc/apt/sources.list.d directory. The Ubuntu repositories are stored in /etc/apt/sources.list.d/ubuntu.sources. You can edit this file to enable and disable repositories.
+
+       AUTOMATIC UPDATES
+
+       It's possible to setup an Ubuntu system with Automatic Updates, such that certain types of upgrades are applied automatically. In fact, the default for Ubuntu Server is to automatically apply security updates. Please see the Automatic updates section for details.
+
+       EXTRA REPOSITORIES
+
+       In addition to the officially-supported package repositories available for Ubuntu, there are also community-maintained repositories which add thousands more packages for potential installation. Two of the most popular are the Universe and Multiverse repositories. These repositories are not officially supported by Ubuntu, but because they are maintained by the community they generally provide packages which are safe for use with your Ubuntu computer.
+
+       For more information, see our guide on using third-party repositories.
+
+       > Warning: Be advised that packages in Universe and Multiverse are not officially supported and do not receive security patches, except through Ubuntu Pro's Expanded Security Maintenance. A subscription to Ubuntu Pro is free for personal use on up to five machines. Packages in the multiverse repository often have licensing issues that prevent them from being distributed with a free operating system, and they may be illegal in your locality.
+       Many other package sources are available -- sometimes even offering only one package, as in the case of packages provided by the developer of a single application. You should always be cautious when using non-standard package sources/repos, however. Research the packages and their origins carefully before performing any installation, as some packages could render your system unstable or non-functional in some respects.
+
+       By default, the universe and multiverse repositories are enabled. If you would like to disable them, edit /etc/apt/sources.list.d/ubuntu.sources and remove universe and multiverse from Components:
+
+         Types: deb
+         URIs: http://archive.ubuntu.com/ubuntu
+         Suites: DISTRO-SHORT-CODENAME DISTRO-SHORT-CODENAME-updates DISTRO-SHORT-CODENAME-backports
+         Components: main universe restricted multiverse
+         Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+       LOGGING
+
+       Actions of the apt command, such as installation and removal of packages, are logged in the /var/log/dpkg.log log file.
+
+       FURTHER READING
+
+       Most of the material covered in this chapter is available in the respective man pages, many of which are available online.
+
+        * The Installing Software Ubuntu wiki page has more information.
+        * The APT User's Guide contains useful information regarding APT usage.
+        * For more information about systemd timer units (and systemd in general), visit the systemd(1) manual page and systemd.timer(5) manual page
+        * See the Aptitude user's manual for more Aptitude options.
+        * The Adding Repositories HOWTO (Ubuntu Wiki) page contains more details on adding repositories.
+
+Ubuntu Server manual                    from the official documentation

@@ -1,0 +1,45 @@
+HTTP.STATUS-416(1)               Sandbox manual               HTTP.STATUS-416(1)
+
+       NAME
+
+       416 Range Not Satisfiable - The HTTP 416 Range Not Satisfiable client error response status code indicates that a server could not serve the requested ranges.
+
+       416 RANGE NOT SATISFIABLE
+
+       The HTTP 416 Range Not Satisfiable client error response status code indicates that a server could not serve the requested ranges. The most likely reason for this response is that the document doesn't contain such ranges, or that the Range header value, though syntactically correct, doesn't make sense.
+
+       The 416 response message should contain a Content-Range indicating an unsatisfied range (that is a '*') followed by a '/' and the current length of the resource, e.g., Content-Range: bytes */12777
+
+       When encountering this error, browsers typically either abort the operation (for example, a download will be considered non-resumable) or request the whole document again without ranges.
+
+       STATUS
+
+         416 Range Not Satisfiable
+
+       EXAMPLES
+
+       MALFORMED RANGE REQUEST
+
+       The following request asks for a range of 1000-1999 bytes from a text file. The first position unit (1000) is larger than the actual resource on the server (800 bytes):
+
+         GET /files/prose.txt HTTP/1.1
+         Host: example.com
+         Range: bytes=1000-1999
+
+       The server supports range requests and sends back the current length of the selected representation in the Content-Range header:
+
+         HTTP/1.1 416 Range Not Satisfiable
+         Date: Fri, 28 Jun 2024 11:40:58 GMT
+         Content-Range: bytes */800
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * HTTP response status codes
+        * 206 Partial Content
+        * HTTP range requests
+        * Content-Range
+        * Range
+
+HTTP manual                             from the official documentation

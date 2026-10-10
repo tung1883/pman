@@ -1,0 +1,50 @@
+WEBAPI.DECOMPRESSIONSTREAM-READABLE(1) Sandbox manual WEBAPI.DECOMPRESSIONSTREAM-READABLE(1)
+
+       NAME
+
+       DecompressionStream: readable property - The readable read-only property of the DecompressionStream interface returns a ReadableStream that emits decompressed data as Uint8Array chu
+
+       DECOMPRESSIONSTREAM: READABLE PROPERTY
+
+       The readable read-only property of the DecompressionStream interface returns a ReadableStream that emits decompressed data as Uint8Array chunks.
+
+       VALUE
+
+       A ReadableStream.
+
+       EXAMPLES
+
+       This example creates a DecompressionStream that performs gzip decompression. It writes some compressed binary data to the writable stream, then reads the decompressed data from the readable stream, decoding it as UTF-8 text.
+
+         const stream = new DecompressionStream("gzip");
+
+         // Write data to be compressed
+         const data = Uint8Array.fromBase64(
+           "H4sIAAAAAAAAE/NIzcnJ11Eozy/KSVEEAObG5usNAAAA",
+         );
+         const writer = stream.writable.getWriter();
+         writer.write(data);
+         writer.close();
+
+         // Read compressed data
+         const reader = stream.readable.getReader();
+         let done = false;
+         let output = [];
+         while (!done) {
+           const result = await reader.read();
+           if (result.value) {
+             output.push(...result.value);
+           }
+           done = result.done;
+         }
+         console.log(new TextDecoder().decode(new Uint8Array(output))); // Hello, world!
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * TransformStream.readable
+
+Web APIs manual                         from the official documentation

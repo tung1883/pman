@@ -1,0 +1,130 @@
+K8S.TASKS-CONFIGURE-POD-CONTAINER-EXTENDED-RESOURCE(1) Sandbox manual K8S.TASKS-CONFIGURE-POD-CONTAINER-EXTENDED-RESOURCE(1)
+
+       NAME
+
+       Assign Extended Resources to a Container - This page shows how to assign extended resources to a Container.
+
+       ASSIGN EXTENDED RESOURCES TO A CONTAINER
+
+       This page shows how to assign extended resources to a Container.
+
+       ## PREREQUISITES
+
+       Before you do this exercise, do the exercise in Advertise Extended Resources for a Node. That will configure one of your Nodes to advertise a dongle resource.
+
+       ASSIGN AN EXTENDED RESOURCE TO A POD
+
+       To request an extended resource, include the resources.requests. field in the container manifest. *.kubernetes.io/. Valid extended resource names have the form example.com/foo where example.com is replaced with your organization's domain and foo is a descriptive resource name.
+
+       Here is the configuration file for a Pod that has one Container:
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: extended-resource-demo
+         spec:
+           containers:
+           - name: extended-resource-demo-ctr
+             image: nginx
+             resources:
+               requests:
+                 example.com/dongle: 3
+               limits:
+                 example.com/dongle: 3
+
+       In the configuration file, you can see that the Container requests 3 dongles.
+
+       Create a Pod:
+
+         kubectl apply -f https://k8s.io/examples/pods/resource/extended-resource-pod.yaml
+
+       Verify that the Pod is running:
+
+         kubectl get pod extended-resource-demo
+
+       Describe the Pod:
+
+         kubectl describe pod extended-resource-demo
+
+       The output shows dongle requests:
+
+         Limits:
+           example.com/dongle: 3
+         Requests:
+           example.com/dongle: 3
+
+       ATTEMPT TO CREATE A SECOND POD
+
+       Here is the configuration file for a Pod that has one Container. The Container requests two dongles.
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: extended-resource-demo-2
+         spec:
+           containers:
+           - name: extended-resource-demo-2-ctr
+             image: nginx
+             resources:
+               requests:
+                 example.com/dongle: 2
+               limits:
+                 example.com/dongle: 2
+
+       Kubernetes will not be able to satisfy the request for two dongles, because the first Pod used three of the four available dongles.
+
+       Attempt to create a Pod:
+
+         kubectl apply -f https://k8s.io/examples/pods/resource/extended-resource-pod-2.yaml
+
+       Describe the Pod
+
+         kubectl describe pod extended-resource-demo-2
+
+       The output shows that the Pod cannot be scheduled, because there is no Node that has 2 dongles available:
+
+         Conditions:
+           Type    Status
+           PodScheduled  False
+         ...
+         Events:
+           ...
+           ... Warning   FailedScheduling  pod (extended-resource-demo-2) failed to fit in any node
+         fit failure summary on nodes : Insufficient example.com/dongle (1)
+
+       View the Pod status:
+
+         kubectl get pod extended-resource-demo-2
+
+       The output shows that the Pod was created, but not scheduled to run on a Node. It has a status of Pending:
+
+         NAME                       READY     STATUS    RESTARTS   AGE
+         extended-resource-demo-2   0/1       Pending   0          6m
+
+       CLEAN UP
+
+       Delete the Pods that you created for this exercise:
+
+         kubectl delete pod extended-resource-demo
+         kubectl delete pod extended-resource-demo-2
+
+       EXTENDED RESOURCES BACKED BY DRA
+
+       The exercise above uses an extended resource that a Node advertises. Extended resources can also be backed by Dynamic Resource Allocation (DRA): a DeviceClass sets an extendedResourceName, and the scheduler satisfies matching extended-resource requests using DRA devices instead of Node-advertised capacity.
+
+       A Pod requests the resource the same way in both cases — through resources.requests. — so a workload does not need to know whether a device plugin or DRA provides it. The same resource name can even be provided by a device plugin on some Nodes and by DRA on others.
+
+       For the DeviceClass setup and examples, see Extended resource allocation by DRA.
+
+       ## WHATSNEXT
+
+       FOR APPLICATION DEVELOPERS
+
+        * Assign Memory Resources to Containers and Pods
+        * Assign CPU Resources to Containers and Pods
+
+       FOR CLUSTER ADMINISTRATORS
+
+        * Advertise Extended Resources for a Node
+
+Kubernetes manual                       from the official documentation

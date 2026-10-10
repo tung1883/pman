@@ -1,0 +1,37 @@
+SHELLCHECK.SC2286(1)             Sandbox manual             SHELLCHECK.SC2286(1)
+
+       NAME
+
+       This empty string is interpreted as a command name. Double check syntax (or use 'true' as a no-op). - jq
+
+       THIS EMPTY STRING IS INTERPRETED AS A COMMAND NAME. DOUBLE CHECK SYNTA
+
+       THIS EMPTY STRING IS INTERPRETED AS A COMMAND NAME. DOUBLE CHECK SYNTA
+
+       PROBLEMATIC CODE
+
+         jq
+            ''
+            file.json
+
+       CORRECT CODE
+
+         jq \
+           '' \
+           file.json
+
+       RATIONALE
+
+       ShellCheck found an empty string used as a command name. This is never valid.
+
+       If the command is intended to do nothing, use true aka : instead. Otherwise, determine why an empty string ended up as a command name and fix it accordingly. In the example, each line was interpreted as a separate command due to missing line continuations.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

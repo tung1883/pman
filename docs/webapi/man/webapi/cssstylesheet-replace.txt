@@ -1,0 +1,58 @@
+WEBAPI.CSSSTYLESHEET-REPLACE(1)  Sandbox manual  WEBAPI.CSSSTYLESHEET-REPLACE(1)
+
+       NAME
+
+       CSSStyleSheet: replace() method - The replace() method of the CSSStyleSheet interface asynchronously replaces the content of the stylesheet with the content passed into it. T
+
+       CSSSTYLESHEET: REPLACE() METHOD
+
+       The replace() method of the CSSStyleSheet interface asynchronously replaces the content of the stylesheet with the content passed into it. The method returns a promise that resolves with the CSSStyleSheet object.
+
+       The replace() and CSSStyleSheet.replaceSync() methods can only be used on a stylesheet created with the CSSStyleSheet() constructor.
+
+       SYNTAX
+
+         replace(text)
+
+       PARAMETERS
+
+        * text
+          * : A string containing the style rules to replace the content of the stylesheet. If the string does not contain a parsable list of rules, then the value will be set to an empty string.
+       > If any of the rules passed in text are an external stylesheet imported with the @import rule, those rules will be removed, and a warning printed to the console.
+
+       RETURN VALUE
+
+       A Promise that resolves with the CSSStyleSheet.
+
+       EXCEPTIONS
+
+        * NotAllowedError DOMException
+          * : Thrown if one of these two conditions is met:
+            * The stylesheet was not created using the CSSStyleSheet() constructor.
+            * The stylesheet is flagged as unmodifiable.
+
+       EXAMPLES
+
+       In the following example a new stylesheet is created and two CSS rules are added using replace(). The first rule is then printed to the console, which will return: body { font-size: 1.4em; }
+
+         const stylesheet = new CSSStyleSheet();
+
+         stylesheet
+           .replace("body { font-size: 1.4em; } p { color: red; }")
+           .then(() => {
+             console.log(stylesheet.cssRules[0].cssText);
+           })
+           .catch((err) => {
+             console.error("Failed to replace styles:", err);
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Constructable Stylesheets (web.dev)
+        * Using the Shadow DOM
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,68 @@
+WEBAPI.XPATHEVALUATOR-CREATEEXPRESSION(1) Sandbox manual WEBAPI.XPATHEVALUATOR-CREATEEXPRESSION(1)
+
+       NAME
+
+       XPathEvaluator: createExpression() method - This method compiles an XPathExpression which can then be used for
+
+       XPATHEVALUATOR: CREATEEXPRESSION() METHOD
+
+       This method compiles an XPathExpression which can then be used for (repeated) evaluations of the XPath expression.
+
+       SYNTAX
+
+         createExpression(expression)
+         createExpression(expression, resolver)
+
+       PARAMETERS
+
+        * expression
+          * : A string representing the XPath expression to be created.
+        * resolver (optional)
+          * : A Node, null, or any object implementing the lookupNamespaceURI method. Permits translation of all prefixes, including the xml namespace prefix, within the XPath expression into appropriate namespace URIs.
+
+       RETURN VALUE
+
+       A XPathExpression representing the compiled form of the XPath expression.
+
+       EXCEPTIONS
+
+       INVALID_EXPRESSION_ERR
+
+       If the expression is not legal according to the rules of the XPathEvaluator, a DOMException of type INVALID_EXPRESSION_ERR is raised.
+
+       NAMESPACE_ERR
+
+       If the expression contains namespace prefixes which cannot be resolved by the specified XPathNSResolver, a DOMException of type NAMESPACE_ERROR is raised.
+
+       EXAMPLES
+
+       The following example shows the use of the evaluate() method.
+
+       HTML
+
+         <div>XPath example</div>
+         <div>Number of &lt;div&gt;s: <output></output></div>
+
+       JAVASCRIPT
+
+         const xpath = "//div";
+         const evaluator = new XPathEvaluator();
+         const expression = evaluator.createExpression(xpath);
+         const result = expression.evaluate(
+           document,
+           XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+         );
+         document.querySelector("output").textContent = result.snapshotLength;
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Document.createExpression()
+        * XPathExpression
+
+Web APIs manual                         from the official documentation

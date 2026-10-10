@@ -1,0 +1,59 @@
+WEBAPI.SERVICEWORKERGLOBALSCOPE-BACKGROUNDFETCHCLICK-EVENT(1) Sandbox manual WEBAPI.SERVICEWORKERGLOBALSCOPE-BACKGROUNDFETCHCLICK-EVENT(1)
+
+       NAME
+
+       ServiceWorkerGlobalScope: backgroundfetchclick event - service
+
+       SERVICEWORKERGLOBALSCOPE: BACKGROUNDFETCHCLICK EVENT
+
+       service
+
+       The backgroundfetchclick event of the ServiceWorkerGlobalScope interface is fired when the user clicks on the UI that the browser provides to show the user the progress of the background fetch operation.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("backgroundfetchclick", (event) => { })
+
+         onbackgroundfetchclick = (event) => { }
+
+       EVENT TYPE
+
+       A BackgroundFetchEvent.
+
+       BackgroundFetchEvent
+
+       DESCRIPTION
+
+       When a background fetch operation starts, the browser shows a UI element to the user to indicate the progress of the operation. If the user clicks this element, the browser starts the service worker, if necessary, and fires the backgroundfetchclick event in the service worker's global scope.
+
+       A common task for the handler in this situation is to open a window giving the user more details about the fetch operation.
+
+       EXAMPLES
+
+       OPENING A WINDOW WITH MORE DETAILS
+
+       This event handler uses the global clients property to open a window giving the user more details about the fetch. It opens a different window depending on whether the fetch has completed or not.
+
+         addEventListener("backgroundfetchclick", (event) => {
+           const registration = event.registration;
+
+           if (registration.result === "success") {
+             clients.openWindow("/play-movie");
+           } else {
+             clients.openWindow("/movie-download-progress");
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Background Fetch API
+
+Web APIs manual                         from the official documentation

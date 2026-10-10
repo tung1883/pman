@@ -1,0 +1,285 @@
+CSHARP.MEMBER-ACCESS-OPERATORS(1) Sandbox manual CSHARP.MEMBER-ACCESS-OPERATORS(1)
+
+       NAME
+
+       Member access operators and expressions - the dot, indexer, and invocation operators - C# operators that you use to access type members or null-conditionally access type members. These operators include the dot operator - `.`,
+
+       MEMBER ACCESS OPERATORS AND EXPRESSIONS - THE DOT, INDEXER, AND INVOCA
+
+       You use several operators and expressions to access a type member. Member access operators include member access (.), array element, or indexer access ([]), index-from-end (^), range (..), null-conditional operators (?. and ?[]), and method invocation (()). These operators include the null-conditional member access (?.), and indexer access (?[]) operators.
+
+        * . (member access): Access a member of a namespace or a type.
+        * [[] (array element or indexer access)](#indexer-operator-): Access an array element or a type indexer.
+        * [?. and ?[] (null-conditional operators)](#null-conditional-operators--and-): Perform a member or element access operation only if an operand is non-null.
+        * () (invocation): Call an accessed method or invoke a delegate.
+        * ^ (index from end): Indicate that the element position is from the end of a sequence.
+        * .. (range): Specify a range of indices that you can use to obtain a range of sequence elements.
+
+       MEMBER ACCESS EXPRESSION
+
+       Use the . token to access a member of a namespace or a type, as the following examples demonstrate:
+
+        * Use . to access a nested namespace within a namespace, as the following example of a using directive shows:
+        * Use . to form a qualified name to access a type within a namespace, as the following code shows:
+       Use a using directive to make the use of qualified names optional.
+
+        * Use . to access type members, static and nonstatic, as the following code shows:
+       You can also use . to access an extension member.
+
+       INDEXER OPERATOR
+
+       Square brackets, [], typically access array, indexer, or pointer elements. Beginning with C# 12, [] encloses a collection expression.
+
+       ARRAY ACCESS
+
+       The following example demonstrates how to access array elements:
+
+       If an array index is outside the bounds of the corresponding dimension of an array, the runtime throws an IndexOutOfRangeException.
+
+       As the preceding example shows, you also use square brackets when you declare an array type or instantiate an array instance.
+
+       For more information about arrays, see Arrays.
+
+       INDEXER ACCESS
+
+       The following example uses the .NET Dictionary2 type to demonstrate indexer access:
+
+       Indexers allow you to index instances of a user-defined type in a similar way as array indexing. Unlike array indices, which must be integer, the indexer parameters can be declared to be of any type.
+
+       For more information about indexers, see Indexers.
+
+       OTHER USAGES OF
+
+       For information about pointer element access, see the [Pointer element access operator []](pointer-related-operators.md#pointer-element-access-operator-) section of the Pointer related operators article. For information about collection expressions, see the collection expressions article.
+
+       You also use square brackets to specify attributes:
+
+         [System.Diagnostics.Conditional("DEBUG")]
+         void TraceMethod() {}
+
+       Additionally, use square brackets to designate list patterns for use in pattern matching or testing.
+
+         arr is ([1, 2, ..])
+         //Specifies that an array starts with (1, 2)
+
+       NULL-CONDITIONAL OPERATORS . AND
+
+       A null-conditional operator applies a member access (?.) or element access (?[]) operation to its operand only if that operand evaluates to non-null. Otherwise, it returns null. In other words:
+
+        * If a evaluates to null, the result of a?.x or a?[x] is null.
+        * If a evaluates to non-null, the result of a?.x or a?[x] is the same as the result of a.x or a[x], respectively.
+       > If a.x or a[x] throws an exception, a?.x or a?[x] throws the same exception for non-null a. For example, if a is a non-null array instance and x is outside the bounds of a, a?[x] throws an IndexOutOfRangeException.
+       The null-conditional operators are short-circuiting. That is, if one operation in a chain of conditional member or element access operations returns null, the rest of the chain doesn't execute. In the following example, B isn't evaluated if A evaluates to null and C isn't evaluated if A or B evaluates to null:
+
+         A?.B?.Do(C);
+         A?.B?[C];
+
+       If A might be null but B and C wouldn't be null if A isn't null, you only need to apply the null-conditional operator to A:
+
+         A?.B.C();
+
+       In the preceding example, B isn't evaluated and C() isn't called if A is null. However, if the chained member access is interrupted, for example by parentheses as in (A?.B).C(), short-circuiting doesn't happen.
+
+       The following examples demonstrate the usage of the ?. and ?[] operators:
+
+         double SumNumbers(List<double[]> setsOfNumbers, int indexOfSetToSum)
+         {
+             return setsOfNumbers?[indexOfSetToSum]?.Sum() ?? double.NaN;
+         }
+
+         var sum1 = SumNumbers(null, 0);
+         Console.WriteLine(sum1);  // output: NaN
+
+         List<double[]?> numberSets =
+         [
+             [1.0, 2.0, 3.0],
+             null
+         ];
+
+         var sum2 = SumNumbers(numberSets, 0);
+         Console.WriteLine(sum2);  // output: 6
+
+         var sum3 = SumNumbers(numberSets, 1);
+         Console.WriteLine(sum3);  // output: NaN
+
+         ﻿namespace MemberAccessOperators2;
+
+         public static class NullConditionalShortCircuiting
+         {
+             public static void Main()
+             {
+                 Person? person = null;
+                 person?.Name.Write(); // no output: Write() is not called due to short-circuit.
+                 try
+                 {
+                     (person?.Name).Write();
+                 }
+                 catch (NullReferenceException)
+                 {
+                     Console.WriteLine("NullReferenceException");
+                 }; // output: NullReferenceException
+             }
+         }
+
+         public class Person
+         {
+             public required FullName Name { get; set; }
+         }
+
+         public class FullName
+         {
+             public required string FirstName { get; set; }
+             public required string LastName { get; set; }
+             public void Write() => Console.WriteLine($"{FirstName} {LastName}");
+         }
+
+       The first preceding example also uses the null-coalescing operator ?? to specify an alternative expression to evaluate in case the result of a null-conditional operation is null.
+
+       If a.x or a[x] is of a non-nullable value type T, a?.x or a?[x] is of the corresponding nullable value type T?. If you need an expression of type T, apply the null-coalescing operator ?? to a null-conditional expression, as the following example shows:
+
+       In the preceding example, if you don't use the ?? operator, numbers?.Length < 2 evaluates to false when numbers is null.
+
+       > The ?. operator evaluates its left-hand operand no more than once, guaranteeing that it can't be changed to null after being verified as non-null.
+       Beginning in C# 14, assignment is permissible with a null conditional access expression (?. and ?[]) on reference types. For example, see the following method:
+
+         person?.FirstName = "Scott";
+         messages?[5] = "five";
+
+       The preceding example shows assignment to a property and an indexed element on a reference type that might be null. An important behavior for this assignment is that the expression on the right-hand side of the = is evaluated only when the left-hand side is known to be non-null. For example, in the following code, the function GenerateNextIndex is called only when the values array isn't null. If the values array is null, GenerateNextIndex isn't called:
+
+         values?[2] = GenerateNextIndex();
+         int GenerateNextIndex() => index++;
+
+       In other words, the preceding code is equivalent to the following code using an if statement for the null check:
+
+         if (values is not null)
+         {
+             values[2] = GenerateNextIndex();
+         }
+
+       In addition to assignment, any form of compound assignment, such as += or -=, is allowed. However, increment (++) and decrement (--) aren't allowed.
+
+       This enhancement doesn't classify a null conditional expression as a variable. It can't be ref assigned, nor can it be assigned to a ref variable or passed to a method as a ref or out argument.
+
+       THREAD-SAFE DELEGATE INVOCATION
+
+       Use the ?. operator to check if a delegate isn't null and invoke it in a thread-safe way (for example, when you raise an event), as the following code shows:
+
+         PropertyChanged?.Invoke(…)
+
+       That code is equivalent to the following code:
+
+         var handler = this.PropertyChanged;
+         if (handler != null)
+         {
+             handler(…);
+         }
+
+       The preceding example is a thread-safe way to ensure that only a non-null handler is invoked. Because delegate instances are immutable, no thread can change the object referenced by the handler local variable. In particular, if the code executed by another thread unsubscribes from the PropertyChanged event and PropertyChanged becomes null before handler is invoked, the object referenced by handler remains unaffected.
+
+       INVOCATION EXPRESSION ()
+
+       Use parentheses, (), to call a method or invoke a delegate.
+
+       The following code demonstrates how to call a method, with or without arguments, and invoke a delegate:
+
+       You also use parentheses when you invoke a constructor by using the new operator.
+
+       OTHER USAGES OF ()
+
+       You also use parentheses to adjust the order in which to evaluate operations in an expression. For more information, see C# operators.
+
+       Cast expressions, which perform explicit type conversions, also use parentheses.
+
+       INDEX FROM END OPERATOR
+
+       You can use index and range operators with a type that is countable. A countable type has an int property named either Count or Length with an accessible get accessor. Collection expressions also rely on countable types.
+
+       > Single dimensional arrays are countable. Multidimensional arrays aren't. You can't use the ^ and .. (range) operators in multidimensional arrays.
+       The ^ operator indicates the element position from the end of a sequence. For a sequence of length length, ^n points to the element with offset length - n from the start of a sequence. For example, ^1 points to the last element of a sequence and ^length points to the first element of a sequence.
+
+       As the preceding example shows, expression ^e is of the Index type. In expression ^e, the result of e must be implicitly convertible to int.
+
+       You can also use the ^ operator with the range operator to create a range of indices. For more information, see Indices and ranges.
+
+       Starting with C# 13, you can use the Index from the end operator, ^, in an object initializer.
+
+       RANGE OPERATOR
+
+       The .. operator specifies the start and end of a range of indices as its operands. The left-hand operand is an inclusive start of a range. The right-hand operand is an exclusive end of a range. Either operand can be an index from the start or from the end of a sequence, as the following example shows:
+
+       As the preceding example shows, expression a..b is of the Range type. In expression a..b, the results of a and b must be implicitly convertible to Int32 or Index.
+
+       > Implicit conversions from int to Index throw an ArgumentOutOfRangeException when the value is negative.
+       You can omit any of the operands of the .. operator to obtain an open-ended range:
+
+        * a.. is equivalent to a..^0
+        * ..b is equivalent to 0..b
+        * .. is equivalent to 0..^0
+       The following table shows various ways to express collection ranges:
+
+         Range operator expression  |  Description
+         ..  |  All values in the collection.
+         ..end  |  Values from the start to the end exclusively.
+         start..  |  Values from the start inclusively to the end.
+         start..end  |  Values from the start inclusively to the end exclusively.
+         ^start..  |  Values from the start inclusively to the end counting from the end.
+         ..^end  |  Values from the start to the end exclusively counting from the end.
+         start..^end  |  Values from start inclusively to end exclusively counting from the end.
+         ^start..^end  |  Values from start inclusively to end exclusively both counting from the end.
+       The following example demonstrates the effect of using all the ranges presented in the preceding table:
+
+         int[] oneThroughTen =
+         [
+             1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+         ];
+
+         Write(oneThroughTen, ..);
+         Write(oneThroughTen, ..3);
+         Write(oneThroughTen, 2..);
+         Write(oneThroughTen, 3..5);
+         Write(oneThroughTen, ^2..);
+         Write(oneThroughTen, ..^3);
+         Write(oneThroughTen, 3..^4);
+         Write(oneThroughTen, ^4..^2);
+
+         static void Write(int[] values, Range range) =>
+             Console.WriteLine($"{range}:\t{string.Join(", ", values[range])}");
+         // Sample output:
+         //      0..^0:      1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+         //      0..3:       1, 2, 3
+         //      2..^0:      3, 4, 5, 6, 7, 8, 9, 10
+         //      3..5:       4, 5
+         //      ^2..^0:     9, 10
+         //      0..^3:      1, 2, 3, 4, 5, 6, 7
+         //      3..^4:      4, 5, 6
+         //      ^4..^2:     7, 8
+
+       For more information, see Indices and ranges.
+
+       The .. token is also used for the spread element in a collection expression.
+
+       OPERATOR OVERLOADABILITY
+
+       You can't overload the ., (), ^, and .. operators. The [] operator is also a non-overloadable operator. Use indexers to support indexing with user-defined types.
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information, see the following sections of the [C# language specification]:
+
+        * [Member access]
+        * [Element access]
+        * [Null-conditional member access]
+        * [Invocation expressions]
+       For more information about indices and ranges, see the [feature proposal note].
+
+       SEE ALSO
+
+        * Use index operator (style rule IDE0056)
+        * Use range operator (style rule IDE0057)
+        * Use conditional delegate call (style rule IDE1005)
+        * C# operators and expressions
+        * ?? (null-coalescing operator)
+        * :: operator
+
+C# manual                               from the official documentation

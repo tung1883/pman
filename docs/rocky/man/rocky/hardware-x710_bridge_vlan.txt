@@ -1,0 +1,43 @@
+ROCKY.HARDWARE-X710_BRIDGE_VLAN(1) Sandbox manual ROCKY.HARDWARE-X710_BRIDGE_VLAN(1)
+
+       NAME
+
+       Enabling VLAN Passthrough on Intel X710-series NICs - Some servers have Intel X710-series network interface cards (NICs), such as the author's Minisforum MS-01, which is used for a virtualized f
+
+       ENABLING VLAN PASSTHROUGH ON INTEL X710-SERIES NICS
+
+       INTRODUCTION
+
+       Some servers have Intel X710-series network interface cards (NICs), such as the author's Minisforum MS-01, which is used for a virtualized firewall. Unfortunately, the stock Rocky Linux driver has a bug where VLANs are not passed through the bridge interfaces as expected. This happened to the author's MikroTik CHR virtual machine. Fortunately, it is fixable.
+
+       PREREQUISITES AND ASSUMPTIONS
+
+       The following are the minimum requirements for using this procedure:
+
+        * A Rocky Linux 8 or 9 server with an Intel X710-series NIC
+
+       INSTALLING THE INTEL-PROVIDED NIC DRIVERS
+
+       While the stock Rocky Linux driver does not pass through VLANs, the Intel-provided driver does. First, navigate to Intel's driver download page.
+
+       
+
+       When you are on the above page, download the i40e_RPM_Files.zip file and subsequently, unzip it:
+
+       unzip i40e_RPM_Files.zip
+
+       You will see a bunch of RPM files:
+
+       kmod-i40e-2.25.11-1.rhel8u10.src.rpm kmod-i40e-2.25.11-1.rhel8u10.x86_64.rpm kmod-i40e-2.25.11-1.rhel8u7.src.rpm kmod-i40e-2.25.11-1.rhel8u7.x86_64.rpm kmod-i40e-2.25.11-1.rhel8u8.src.rpm kmod-i40e-2.25.11-1.rhel8u8.x86_64.rpm kmod-i40e-2.25.11-1.rhel8u9.src.rpm kmod-i40e-2.25.11-1.rhel8u9.x86_64.rpm kmod-i40e-2.25.11-1.rhel9u1.src.rpm kmod-i40e-2.25.11-1.rhel9u1.x86_64.rpm kmod-i40e-2.25.11-1.rhel9u2.src.rpm kmod-i40e-2.25.11-1.rhel9u2.x86_64.rpm kmod-i40e-2.25.11-1.rhel9u3.src.rpm kmod-i40e-2.25.11-1.rhel9u3.x86_64.rpm kmod-i40e-2.25.11-1.rhel9u4.src.rpm kmod-i40e-2.25.11-1.rhel9u4.x86_64.rpm
+
+       The file to install is in the kmod-i40e-2.25.11-1.rhelXuY.x86_64.rpm format, where X and Y are the Rocky Linux major and minor versions respectively. For instance, on the author's Rocky Linux 9.4 server X is 9, Y is 4, so the author's install package was:
+
+       sudo dnf install kmod-i40e-2.25.11-1.rhel9u4.x86_64.rpm
+
+       After installing the driver, you will need to reboot the server:
+
+       sudo reboot
+
+       After rebooting, the X710 NICs should pass through VLANs via bridge interfaces.
+
+Rocky Linux manual                      from the official documentation

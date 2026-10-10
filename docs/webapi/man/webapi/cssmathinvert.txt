@@ -1,0 +1,64 @@
+WEBAPI.CSSMATHINVERT(1)          Sandbox manual          WEBAPI.CSSMATHINVERT(1)
+
+       NAME
+
+       CSSMathInvert - The CSSMathInvert interface of the CSS Typed Object Model API represents the inverse (reciprocal) of a CSSNumericValue.
+
+       CSSMATHINVERT
+
+       The CSSMathInvert interface of the CSS Typed Object Model API represents the inverse (reciprocal) of a CSSNumericValue.
+
+       CONSTRUCTOR
+
+        * CSSMathInvert()
+          * : Creates a new CSSMathInvert object.
+
+       INSTANCE PROPERTIES
+
+       _Also inherits properties from its parent interface, CSSMathValue._
+
+        * CSSMathInvert.value (read-only)
+          * : Returns a CSSNumericValue object containing the value being inverted.
+
+       STATIC METHODS
+
+       _Also inherits methods from its parent interface, CSSMathValue._
+
+       INSTANCE METHODS
+
+       _Also inherits methods from its parent interface, CSSMathValue._
+
+       DESCRIPTION
+
+       When you divide one CSSNumericValue by another using div(), if the divisor is a plain number, it can immediately be scaled into a value of the original type.
+
+       If the divisor is a different type, the result can't be resolved to a single object. In this case, the CSS Typed Object Model API represents the divisor as a CSSMathInvert.
+
+       Generally you won't construct a CSSMathInvert directly. It's produced when div() is called with a divisor that isn't a plain number: the result is a CSSMathProduct, and CSSMathInvert is the operand holding that divisor — found by walking the product's operands, or by checking CSSMathValue.operator for the string "invert".
+
+       CSSMathInvert serializes using CSS calc() syntax, as calc(1 / ).
+
+       EXAMPLES
+
+       CONSTRUCTING A CSSMATHINVERT WITH A NON-NUMBER DIVISOR
+
+       This example shows how you can use div() with a divisor that isn't a plain number to get a CSSMathProduct that has a CSSMathInvert as one of its operands. The value and serialization of that operand are also logged.
+
+         const product = CSS.px(200).div(CSS.percent(4));
+
+         console.log(product.constructor.name); // "CSSMathProduct"
+         console.log(product.values[1].constructor.name); // "CSSMathInvert"
+         console.log(product.values[1].value); // CSSUnitValue {value: 4, unit: "percent"}
+         console.log(product.toString()); // "calc(200px / 4%)"
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * div()
+        * CSSMathNegate
+        * CSSMathValue.operator
+
+Web APIs manual                         from the official documentation

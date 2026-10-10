@@ -1,0 +1,70 @@
+SHELLCHECK.SC2144(1)             Sandbox manual             SHELLCHECK.SC2144(1)
+
+       NAME
+
+       -e doesn't work with globs. Use a for loop. - if [ -e dir/.mp3 ]
+
+       E DOESN'T WORK WITH GLOBS. USE A FOR LOOP
+
+       E DOESN'T WORK WITH GLOBS. USE A FOR LOOP
+
+       PROBLEMATIC CODE
+
+         if [ -e dir/*.mp3 ]
+         then
+           echo "There are mp3 files."
+         fi
+
+       CORRECT CODE
+
+         for file in dir/*.mp3
+         do
+           if [ -e "$file" ]
+           then
+             echo "There are mp3 files"
+             break
+           fi
+         done
+
+       RATIONALE
+
+       [ -e file* ] only works if there's 0 or 1 matches. If there are multiple, it becomes [ -e file1 file2 ], and the test fails.
+
+       [[ -e file* ]] doesn't work at all.
+
+       Instead, use a for loop to expand the glob and check each result individually.
+
+       If you are looking for the existence of a directory, do:
+
+         for f in /path/to/your/files*; do
+
+             ## Check if the glob gets expanded to existing files.
+             ## If not, f here will be exactly the pattern above
+             ## and the exists test will evaluate to false.
+             [ -e "$f" ] && echo "files do exist" || echo "files do not exist"
+
+             ## This is all we needed to know, so we can break after the first iteration
+             break
+         done
+
+       EXCEPTIONS
+
+       If you are sure there will only ever be exactly 0 or 1 matches -- and nullglob is not enabled -- then the test happens to work.
+
+       You may still want to consider making this assumption explicit and failing fast if it's ever violated:
+
+         files=( dir/file* )
+         [ "${#files[@]}" -ge 2 ] && exit 1
+         if [ -e "${files[0]}" ]
+         then
+           echo "The file exists"
+         else
+           echo "No such file"
+         fi
+
+       RELATED RESOURCES
+
+        * BashFaq: How can I check whether a directory is empty or not? How do I check for any *.mpg files, or count how many there are?
+        * sh - Check if a file exists with wildcard in shell script - Stack Overflow
+
+ShellCheck manual                       from the official documentation

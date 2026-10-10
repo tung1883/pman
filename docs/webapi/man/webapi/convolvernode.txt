@@ -1,0 +1,65 @@
+WEBAPI.CONVOLVERNODE(1)          Sandbox manual          WEBAPI.CONVOLVERNODE(1)
+
+       NAME
+
+       ConvolverNode - The ConvolverNode interface is an AudioNode that performs a Linear Convolution on a given AudioBuffer, often used to achieve a reverb effect
+
+       CONVOLVERNODE
+
+       The ConvolverNode interface is an AudioNode that performs a Linear Convolution on a given AudioBuffer, often used to achieve a reverb effect. A ConvolverNode always has exactly one input and one output.
+
+       > For more information on the theory behind Linear Convolution, see the Convolution article on Wikipedia.
+       Number of inputs 1 Number of outputs 1 Channel count mode "clamped-max" Channel count 1, 2, or 4 Channel interpretation "speakers"
+
+       CONSTRUCTOR
+
+        * ConvolverNode()
+          * : Creates a new ConvolverNode object instance.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, AudioNode_.
+
+        * ConvolverNode.buffer
+          * : A mono, stereo, or 4-channel _AudioBuffer_ containing the (possibly multichannel) impulse response used by the ConvolverNode to create the reverb effect.
+        * ConvolverNode.normalize
+          * : A boolean that controls whether the impulse response from the buffer will be scaled by an equal-power normalization when the buffer attribute is set, or not.
+
+       INSTANCE METHODS
+
+       _No specific method; inherits methods from its parent, AudioNode_.
+
+       EXAMPLES
+
+       The following example shows basic usage of an AudioContext to create a convolver node. You will need to find an impulse response to complete the example below. See our HolySpaceCow example for a complete, applied example.
+
+         let audioCtx = new window.AudioContext();
+
+         async function createReverb() {
+           let convolver = audioCtx.createConvolver();
+
+           // load impulse response from file
+           let response = await fetch("path/to/impulse-response.wav");
+           let arraybuffer = await response.arrayBuffer();
+           convolver.buffer = await audioCtx.decodeAudioData(arraybuffer);
+
+           return convolver;
+         }
+
+         // …
+
+         let reverb = await createReverb();
+
+         // someOtherAudioNode -> reverb -> destination
+         someOtherAudioNode.connect(reverb);
+         reverb.connect(audioCtx.destination);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

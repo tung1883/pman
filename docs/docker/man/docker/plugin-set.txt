@@ -1,0 +1,86 @@
+DOCKER.PLUGIN-SET(1)             Sandbox manual             DOCKER.PLUGIN-SET(1)
+
+       NAME
+
+       docker plugin set - Change settings for a plugin
+
+       DOCKER PLUGIN SET
+
+       Change settings for a plugin
+
+       USAGE
+
+         docker plugin set PLUGIN KEY=VALUE [KEY=VALUE...]
+
+       DESCRIPTION
+
+       Change settings for a plugin. The plugin must be disabled.
+
+       The settings currently supported are:
+
+        * env variables
+        * source of mounts
+        * path of devices
+        * args
+
+       EXAMPLES
+
+       CHANGE AN ENVIRONMENT VARIABLE
+
+       The following example change the env variable DEBUG on the sample-volume-plugin plugin.
+
+         $ docker plugin inspect -f {{.Settings.Env}} tiborvass/sample-volume-plugin
+         [DEBUG=0]
+
+         $ docker plugin set tiborvass/sample-volume-plugin DEBUG=1
+
+         $ docker plugin inspect -f {{.Settings.Env}} tiborvass/sample-volume-plugin
+         [DEBUG=1]
+
+       CHANGE THE SOURCE OF A MOUNT
+
+       The following example change the source of the mymount mount on the myplugin plugin.
+
+         $ docker plugin inspect -f '{{with $mount := index .Settings.Mounts 0}}{{$mount.Source}}{{end}}' myplugin
+         /foo
+
+         $ docker plugins set myplugin mymount.source=/bar
+
+         $ docker plugin inspect -f '{{with $mount := index .Settings.Mounts 0}}{{$mount.Source}}{{end}}' myplugin
+         /bar
+
+       > Since only source is settable in mymount,
+       > docker plugins set mymount=/bar myplugin would work too.
+
+       CHANGE A DEVICE PATH
+
+       The following example change the path of the mydevice device on the myplugin plugin.
+
+         $ docker plugin inspect -f '{{with $device := index .Settings.Devices 0}}{{$device.Path}}{{end}}' myplugin
+
+         /dev/foo
+
+         $ docker plugins set myplugin mydevice.path=/dev/bar
+
+         $ docker plugin inspect -f '{{with $device := index .Settings.Devices 0}}{{$device.Path}}{{end}}' myplugin
+
+         /dev/bar
+
+       > Since only path is settable in mydevice,
+       > docker plugins set mydevice=/dev/bar myplugin would work too.
+
+       CHANGE THE SOURCE OF THE ARGUMENTS
+
+       The following example change the value of the args on the myplugin plugin.
+
+         $ docker plugin inspect -f '{{.Settings.Args}}' myplugin
+
+         ["foo", "bar"]
+
+         $ docker plugins set myplugin myargs="foo bar baz"
+
+         $ docker plugin inspect -f '{{.Settings.Args}}' myplugin
+
+         ["foo", "bar", "baz"]
+
+Docker manual                           from the official documentation

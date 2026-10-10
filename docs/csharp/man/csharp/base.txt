@@ -1,0 +1,103 @@
+CSHARP.BASE(1)                   Sandbox manual                   CSHARP.BASE(1)
+
+       NAME
+
+       The base keyword - Learn about the base keyword, which is used to access members of the base class from within a derived class in C#.
+
+       THE BASE KEYWORD
+
+       Use the base keyword to access members of the base class from within a derived class. Use it if you want to:
+
+        * Call a method on the base class that's overridden by another method.
+        * Specify which base-class constructor to call when creating instances of the derived class.
+       You can access the base class only in a constructor, in an instance method, and in an instance property accessor. Using the base keyword from within a static method produces an error.
+
+       The base class you access is the base class you specify in the class declaration. For example, if you specify class ClassB : ClassA, you access the members of ClassA from ClassB, regardless of the base class of ClassA.
+
+       In this example, both the base class Person and the derived class Employee have a method named GetInfo. By using the base keyword, you can call the GetInfo method of the base class from within the derived class.
+
+         public class Person
+         {
+             protected string ssn = "444-55-6666";
+             protected string name = "John L. Malgraine";
+
+             public virtual void GetInfo()
+             {
+                 Console.WriteLine($"Name: {name}");
+                 Console.WriteLine($"SSN: {ssn}");
+             }
+         }
+         class Employee : Person
+         {
+             public readonly string id = "ABC567EFG";
+             public override void GetInfo()
+             {
+                 // Calling the base class GetInfo method:
+                 base.GetInfo();
+                 Console.WriteLine($"Employee ID: {id}");
+             }
+         }
+
+         class TestClass
+         {
+             static void Main()
+             {
+                 Employee E = new Employee();
+                 E.GetInfo();
+             }
+         }
+         /*
+         Output
+         Name: John L. Malgraine
+         SSN: 444-55-6666
+         Employee ID: ABC567EFG
+         */
+
+       This example shows how to specify the base-class constructor to call when creating instances of a derived class.
+
+         public class BaseClass
+         {
+             private int num;
+
+             public BaseClass() =>
+                 Console.WriteLine("in BaseClass()");
+
+             public BaseClass(int i)
+             {
+                 num = i;
+                 Console.WriteLine("in BaseClass(int i)");
+             }
+
+             public int GetNum() => num;
+         }
+
+         public class DerivedClass : BaseClass
+         {
+             // This constructor will call BaseClass.BaseClass()
+             public DerivedClass() : base() { }
+
+             // This constructor will call BaseClass.BaseClass(int i)
+             public DerivedClass(int i) : base(i) { }
+
+             static void Main()
+             {
+                 DerivedClass md = new DerivedClass();
+                 DerivedClass md1 = new DerivedClass(1);
+             }
+         }
+         /*
+         Output:
+         in BaseClass()
+         in BaseClass(int i)
+         */
+
+       For more examples, see new, virtual, and override.
+
+       C# LANGUAGE SPECIFICATION
+
+       SEE ALSO
+
+        * C# Keywords
+        * The this keyword
+
+C# manual                               from the official documentation

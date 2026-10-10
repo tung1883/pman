@@ -1,0 +1,44 @@
+WEBAPI.IDLEDEADLINE-TIMEREMAINING(1) Sandbox manual WEBAPI.IDLEDEADLINE-TIMEREMAINING(1)
+
+       NAME
+
+       IdleDeadline: timeRemaining() method - The timeRemaining() method
+
+       IDLEDEADLINE: TIMEREMAINING() METHOD
+
+       The timeRemaining() method of the IdleDeadline interface returns the estimated number of milliseconds the user agent will remain idle for. The callback can call this method at any time to determine how much time it can continue to work before it must return. For example, if the callback finishes a task and has another one to begin, it can call timeRemaining() to see if there's enough time to complete the next task. If there isn't, the callback can just return immediately, or look for other work to do with the remaining time.
+
+       By the time timeRemaining() reaches 0, it is suggested that the callback should return control to the user agent's event loop.
+
+       > The value returned by timeRemaining() is an estimate of how much time the user agent believes is available before the next latency-critical task needs to run. This estimate is not fixed and can suddenly drop to 0 if higher-priority work arrives. For example, the browser's estimate can change in the middle of an idle callback if the user clicks. Developers should not assume the value always decreases linearly like a countdown timer.
+
+       SYNTAX
+
+         timeRemaining()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A DOMHighResTimeStamp value (which is a floating-point number) representing the number of milliseconds the user agent estimates are left in the current idle period. The value is ideally accurate to within about 5 microseconds.
+
+       If the IdleDeadline object's didTimeout property is true, this method returns zero.
+
+       EXAMPLES
+
+       See our complete example in the article Cooperative Scheduling of Background Tasks API.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Collaborative Scheduling of Background Tasks
+        * IdleDeadline
+        * Window.requestIdleCallback()
+        * Window.cancelIdleCallback()
+
+Web APIs manual                         from the official documentation

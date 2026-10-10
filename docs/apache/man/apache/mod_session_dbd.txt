@@ -1,0 +1,155 @@
+APACHE.MOD_SESSION_DBD(1)        Sandbox manual        APACHE.MOD_SESSION_DBD(1)
+
+       DBD CONFIGURATION
+
+       Before the mod_session_dbd module can be configured to maintain a session, the mod_dbd module must be configured to make the various database queries available to the server.
+
+       There are four queries required to keep a session maintained, to select an existing session, to update an existing session, to insert a new session, and to delete an expired or empty session. These queries are configured as per the example below.
+
+       SAMPLE DBD CONFIGURATION
+
+         DBDriver pgsql
+         DBDParams "dbname=apachesession user=apache password=xxxxx host=localhost"
+         DBDPrepareSQL "delete from session where key = %s" deletesession
+         DBDPrepareSQL "update session set value = %s, expiry = %lld, key = %s where key = %s" updatesession
+         DBDPrepareSQL "insert into session (value, expiry, key) values (%s, %lld, %s)" insertsession
+         DBDPrepareSQL "select value from session where key = %s and (expiry = 0 or expiry > %lld)" selectsession
+         DBDPrepareSQL "delete from session where expiry != 0 and expiry < %lld" cleansession
+
+       ANONYMOUS SESSIONS
+
+       Anonymous sessions are keyed against a unique UUID, and stored on the browser within an HTTP cookie. This method is similar to that used by most application servers to store session information.
+
+       To create a simple anonymous session and store it in a postgres database table called apachesession, and save the session ID in a cookie called session, configure the session as follows:
+
+       SQL BASED ANONYMOUS SESSION
+
+         Session On
+         SessionDBDCookieName session path=/
+
+       For more examples on how the session can be configured to be read from and written to by a CGI application, see the mod_session examples section.
+
+       For documentation on how the session can be used to store username and password details, see the mod_auth_form module.
+
+       PER USER SESSIONS
+
+       Per user sessions are keyed against the username of a successfully authenticated user. It offers the most privacy, as no external handle to the session exists outside of the authenticated realm.
+
+       Per user sessions work within a correctly configured authenticated environment, be that using basic authentication, digest authentication or SSL client certificates. Due to the limitations of who came first, the chicken or the egg, per user sessions cannot be used to store authentication credentials from a module like mod_auth_form.
+
+       To create a simple per user session and store it in a postgres database table called apachesession, and with the session keyed to the userid, configure the session as follows:
+
+       SQL BASED PER USER SESSION
+
+         Session On
+         SessionDBDPerUser On
+
+       DATABASE HOUSEKEEPING
+
+       Over the course of time, the database can be expected to start accumulating expired sessions. At this point, the mod_session_dbd module is not yet able to handle session expiry automatically.
+
+       WARNING
+
+       The administrator will need to set up an external process via cron to clean out expired sessions.
+
+       SESSIONDBDCOOKIENAME DIRECTIVE
+
+         Description: | Name and attributes for the RFC2109 cookie storing the session ID
+         Syntax: | SessionDBDCookieName name attributes
+         Default: | none
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session_dbd
+       The SessionDBDCookieName directive specifies the name and optional attributes of an RFC2109 compliant cookie inside which the session ID will be stored. RFC2109 cookies are set using the Set-Cookie HTTP header.
+
+       An optional list of cookie attributes can be specified, as per the example below. These attributes are inserted into the cookie as is, and are not interpreted by Apache. Ensure that your attributes are defined correctly as per the cookie specification.
+
+       COOKIE WITH ATTRIBUTES
+
+         Session On
+         SessionDBDCookieName session path=/private;domain=example.com;httponly;secure;version=1;
+
+       SESSIONDBDCOOKIENAME2 DIRECTIVE
+
+         Description: | Name and attributes for the RFC2965 cookie storing the session ID
+         Syntax: | SessionDBDCookieName2 name attributes
+         Default: | none
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session_dbd
+       The SessionDBDCookieName2 directive specifies the name and optional attributes of an RFC2965 compliant cookie inside which the session ID will be stored. RFC2965 cookies are set using the Set-Cookie2 HTTP header.
+
+       An optional list of cookie attributes can be specified, as per the example below. These attributes are inserted into the cookie as is, and are not interpreted by Apache. Ensure that your attributes are defined correctly as per the cookie specification.
+
+       COOKIE2 WITH ATTRIBUTES
+
+         Session On
+         SessionDBDCookieName2 session path=/private;domain=example.com;httponly;secure;version=1;
+
+       SESSIONDBDCOOKIEREMOVE DIRECTIVE
+
+         Description: | Control for whether session ID cookies should be removed from incoming HTTP headers
+         Syntax: | SessionDBDCookieRemove On|Off
+         Default: | SessionDBDCookieRemove On
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session_dbd
+       The SessionDBDCookieRemove flag controls whether the cookies containing the session ID will be removed from the headers during request processing.
+
+       In a reverse proxy situation where the Apache server acts as a server frontend for a backend origin server, revealing the contents of the session ID cookie to the backend could be a potential privacy violation. When set to on, the session ID cookie will be removed from the incoming HTTP headers.
+
+       SESSIONDBDDELETELABEL DIRECTIVE
+
+         Description: | The SQL query to use to remove sessions from the database
+         Syntax: | SessionDBDDeleteLabel label
+         Default: | SessionDBDDeleteLabel deletesession
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session_dbd
+       The SessionDBDDeleteLabel directive sets the default delete query label to be used to delete an expired or empty session. This label must have been previously defined using the DBDPrepareSQL directive.
+
+       SESSIONDBDINSERTLABEL DIRECTIVE
+
+         Description: | The SQL query to use to insert sessions into the database
+         Syntax: | SessionDBDInsertLabel label
+         Default: | SessionDBDInsertLabel insertsession
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session_dbd
+       The SessionDBDInsertLabel directive sets the default insert query label to be used to load in a session. This label must have been previously defined using the DBDPrepareSQL directive.
+
+       If an attempt to update the session affects no rows, this query will be called to insert the session into the database.
+
+       SESSIONDBDPERUSER DIRECTIVE
+
+         Description: | Enable a per user session
+         Syntax: | SessionDBDPerUser On|Off
+         Default: | SessionDBDPerUser Off
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session_dbd
+       The SessionDBDPerUser flag enables a per user session keyed against the user's login name. If the user is not logged in, this directive will be ignored.
+
+       SESSIONDBDSELECTLABEL DIRECTIVE
+
+         Description: | The SQL query to use to select sessions from the database
+         Syntax: | SessionDBDSelectLabel label
+         Default: | SessionDBDSelectLabel selectsession
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session_dbd
+       The SessionDBDSelectLabel directive sets the default select query label to be used to load in a session. This label must have been previously defined using the DBDPrepareSQL directive.
+
+       SESSIONDBDUPDATELABEL DIRECTIVE
+
+         Description: | The SQL query to use to update existing sessions in the database
+         Syntax: | SessionDBDUpdateLabel label
+         Default: | SessionDBDUpdateLabel updatesession
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Extension
+         Module: | mod_session_dbd
+       The SessionDBDUpdateLabel directive sets the default update query label to be used to load in a session. This label must have been previously defined using the DBDPrepareSQL directive.
+
+       If an attempt to update the session affects no rows, the insert query will be called to insert the session into the database. If the database supports InsertOrUpdate, override this query to perform the update in one query instead of two.
+
+Apache HTTP Server manual               bundled documentation

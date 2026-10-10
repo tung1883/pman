@@ -1,0 +1,29 @@
+SHELLCHECK.SC3019(1)             Sandbox manual             SHELLCHECK.SC3019(1)
+
+       NAME
+
+       In POSIX sh, exponentials are undefined. - ShellCheck noticed you're using -notation with two asterisks to obtain an exponent's value. Some examples:
+
+       IN POSIX SH, EXPONENTIALS ARE UNDEFINED
+
+       IN POSIX SH, EXPONENTIALS ARE UNDEFINED
+
+       PROBLEMATIC CODE
+
+       ShellCheck noticed you're using **-notation with two asterisks to obtain an exponent's value. Some examples:
+
+         #!/bin/sh
+         echo $((2 ** 3)) # Using `**` for an exponent is undefined in POSIX sh.
+
+       CORRECT CODE
+
+       Other possibilities exist:
+
+         #!/bin/sh
+         echo $((2 * 2 * 2))   # equivalent to `bash`'s `echo $((2 ** 3))`
+         echo '2 ^ 3' | bc     # piping the formula to `bc` to parse the output https://stackoverflow.com/a/13111995
+         printf '2 ^ 3\n' | bc # piping using `printf` (newline `\n` is mandatory)
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,78 @@
+WEBAPI.WORKER(1)                 Sandbox manual                 WEBAPI.WORKER(1)
+
+       NAME
+
+       Worker - windowandworkerexceptservice
+
+       WORKER
+
+       window_and_worker_except_service
+
+       The Worker interface of the Web Workers API represents a background task that can be created via script, which can send messages back to its creator.
+
+       Creating a worker is done by calling the Worker("path/to/worker/script") constructor.
+
+       Workers may themselves spawn new workers, as long as those workers are hosted at the same origin as the parent page.
+
+       Note that not all interfaces and functions are available to web workers. See Functions and classes available to Web Workers for details.
+
+       CONSTRUCTORS
+
+        * Worker()
+          * : Creates a dedicated web worker that executes the script at the specified URL. This also works for Blob URLs.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, EventTarget._
+
+       INSTANCE METHODS
+
+       _Inherits methods from its parent, EventTarget._
+
+        * Worker.postMessage()
+          * : Sends a message — consisting of any JavaScript object — to the worker's inner scope.
+        * Worker.terminate()
+          * : Immediately terminates the worker. This does not let worker finish its operations; it is halted at once. ServiceWorker instances do not support this method.
+
+       EVENTS
+
+        * error
+          * : Fires when an error occurs in the worker.
+        * message
+          * : Fires when the worker's parent receives a message from that worker.
+        * messageerror
+          * : Fires when a Worker object receives a message that can't be deserialized.
+
+       EXAMPLE
+
+       The following code snippet creates a Worker object using the Worker() constructor, then uses the worker object:
+
+         const myWorker = new Worker("/worker.js");
+         const first = document.querySelector("input#number1");
+         const second = document.querySelector("input#number2");
+
+         first.onchange = () => {
+           myWorker.postMessage([first.value, second.value]);
+           console.log("Message posted to worker");
+         };
+
+       For a full example, see our Basic dedicated worker example (run dedicated worker).
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       Support varies for different types of workers. See each worker type's page for specifics.
+
+       CROSS-ORIGIN WORKER ERROR BEHAVIOR
+
+       In early versions of the spec, loading a cross-origin worker script threw a SecurityError. Nowadays, an error event is thrown instead.
+
+       SEE ALSO
+
+        * Using Web Workers
+        * Functions and classes available to Web Workers
+        * Other kind of workers: SharedWorker and Service Worker.
+        * OffscreenCanvas interface
+
+Web APIs manual                         from the official documentation

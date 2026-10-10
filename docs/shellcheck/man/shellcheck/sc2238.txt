@@ -1,0 +1,42 @@
+SHELLCHECK.SC2238(1)             Sandbox manual             SHELLCHECK.SC2238(1)
+
+       NAME
+
+       Redirecting to/from command name instead of file. Did you want pipes/xargs (or quote to ignore)? - cat file > tr -d '\r'
+
+       REDIRECTING TO/FROM COMMAND NAME INSTEAD OF FILE. DID YOU WANT PIPES/X
+
+       REDIRECTING TO/FROM COMMAND NAME INSTEAD OF FILE. DID YOU WANT PIPES/X
+
+       PROBLEMATIC CODE
+
+         cat file > tr -d '\r'
+         cat file > rm
+
+       CORRECT CODE
+
+         cat file | tr -d '\r'         # tr reads stdin
+         cat file | xargs -d '\n' rm   # rm reads arguments
+
+       RATIONALE
+
+       You are using file redirection, but the filename is an unquoted command name. Instead of running the command and feeding data to it, this just writes to a file with the same name.
+
+       To run the command and feed data to it, determine how it gets its data:
+
+        * If the command reads from STDIN, simply use a pipe as in the first example.
+        * If the command reads multiple arguments, use a pipe to xargs as in the second example
+       Note that xargs has many pitfalls when it comes to spaces and quotes. cat file | xargs rm will appear to work during testing, but fails for filenames like My File.txt or Can't_Fight_This_Feeling.mp3. The example uses the GNU extension -d '\n' to more safely handle these names.
+
+       EXCEPTIONS
+
+       If you actually did want to write a file named after a command, simply quote the filename to let ShellCheck know you meant it literally and not as a command name. This does not change anything about how the script works:
+
+         # Write to a file literally named 'rm', does not try to delete anything
+         echo "A potentially dangerous command" > "rm"
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

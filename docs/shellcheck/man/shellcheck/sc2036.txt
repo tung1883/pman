@@ -1,0 +1,33 @@
+SHELLCHECK.SC2036(1)             Sandbox manual             SHELLCHECK.SC2036(1)
+
+       NAME
+
+       If you wanted to assign the output of the pipeline, use a=$(b | c) . - sum=find | wc -l
+
+       IF YOU WANTED TO ASSIGN THE OUTPUT OF THE PIPELINE, USE A (B C)
+
+       IF YOU WANTED TO ASSIGN THE OUTPUT OF THE PIPELINE, USE A (B C)
+
+       PROBLEMATIC CODE
+
+         sum=find | wc -l
+
+       CORRECT CODE
+
+         sum=$(find | wc -l)
+
+       RATIONALE
+
+       The intention in this code was that sum would in some way get the value of the command find | wc -l.
+
+       However, | has precedence over the =, so the command is a two stage pipeline consisting of sum=find and wc -l.
+
+       sum=find is a plain string assignment. Since it happens by itself in an independent pipeline stage, it has no effect: it produces no output, and the variable disappears when the pipeline stage finishes. Because the assignment produces no output, wc -l will count 0 lines.
+
+       To instead actually assign a variable with the output of a command, command substitution $(..) can be used.
+
+       EXCEPTIONS
+
+       None. This warning is triggered whenever the first stage of a pipeline is a single assignment, which is never correct.
+
+ShellCheck manual                       from the official documentation

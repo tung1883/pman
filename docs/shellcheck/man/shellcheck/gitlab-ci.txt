@@ -1,0 +1,41 @@
+SHELLCHECK.GITLAB-CI(1)          Sandbox manual          SHELLCHECK.GITLAB-CI(1)
+
+       NAME
+
+       gitlab-ci - Simple test job for GitLab (analyse testScript.sh):
+
+       GITLAB-CI
+
+       Simple test job for GitLab (analyse testScript.sh):
+
+         test:
+             image: koalaman/shellcheck-alpine:latest
+             stage: test
+             script:
+             - shellcheck testScript.sh
+
+       Here is a CI job that will lint all shell-scripts in a Git repository:
+
+         test:
+             image: koalaman/shellcheck-alpine:latest
+             stage: test
+             before_script:
+             - apk update
+             - apk add git
+             script:
+             - git ls-files --exclude='*.sh' --ignored -c -z | xargs -0r shellcheck
+
+       If you want to lint all shell scripts (i.e. with a shebang), even those not ending on .sh:
+
+         test:
+             image: koalaman/shellcheck-alpine:latest
+             stage: test
+             before_script:
+             - apk update
+             - apk add git
+             script:
+             - git ls-files -c -z | xargs -0 awk -vORS='\0' 'FNR==1 && /^#!.*sh/ { print FILENAME }' | xargs -0r shellcheck
+
+       If you want to create a JUnit XML report to see in the GitLab's UI, check the instructions here, additionally checkstyle can also be transformed back into text again for logging purposes.
+
+ShellCheck manual                       from the official documentation

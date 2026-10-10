@@ -1,0 +1,39 @@
+SHELLCHECK.SC2048(1)             Sandbox manual             SHELLCHECK.SC2048(1)
+
+       NAME
+
+       Use "$@" (with quotes) to prevent whitespace problems. - Or: Use "${array[@]}" (with quotes) to prevent whitespace problems.
+
+       USE (WITH QUOTES) TO PREVENT WHITESPACE PROBLEMS
+
+       USE (WITH QUOTES) TO PREVENT WHITESPACE PROBLEMS
+
+       Or: Use "${array[@]}" (with quotes) to prevent whitespace problems.
+
+       PROBLEMATIC CODE
+
+         cp $* ~/dir
+         cp ${array[*]} ~/dir
+
+       CORRECT CODE
+
+         cp "$@" ~/dir
+         cp "${array[@]}" ~/dir
+
+       RATIONALE
+
+       $ and ${array[]}, unquoted, is subject to word splitting and globbing.
+
+       Let's say you have three arguments or array elements: baz, foo bar and *
+
+       "$@" and "${array[@]}" will expand into exactly that: baz, foo bar and *
+
+       $ and ${array[]} will expand into multiple other arguments: baz, foo, bar, file.txt and otherfile.jpg
+
+       Since the latter is rarely expected or desired, ShellCheck warns about it.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,49 @@
+WEBAPI.CROPTARGET(1)             Sandbox manual             WEBAPI.CROPTARGET(1)
+
+       NAME
+
+       CropTarget - The CropTarget interface of the Screen Capture API provides a static method, fromElement(), which returns a CropTarget instance that can be 
+
+       CROPTARGET
+
+       The CropTarget interface of the Screen Capture API provides a static method, fromElement(), which returns a CropTarget instance that can be used to crop a captured video track to the area in which a specified element is rendered.
+
+       STATIC METHODS
+
+        * fromElement() (experimental)
+          * : Returns a CropTarget instance that can be used to crop a captured video track to the area in which a specified element is rendered.
+
+       EXAMPLES
+
+         // Options for getDisplayMedia()
+         const displayMediaOptions = {
+           preferCurrentTab: true,
+         };
+
+         // Create crop target from DOM element
+         const demoElem = document.querySelector("#demo");
+         const cropTarget = await CropTarget.fromElement(demoElem);
+
+         // Capture video stream from user's webcam and isolate video track
+         const stream =
+           await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+         const [track] = stream.getVideoTracks();
+
+         // Crop video track
+         await track.cropTo(cropTarget);
+
+         // Broadcast cropped stream in <video> element
+         videoElem.srcObject = stream;
+
+       See Using the Element Capture and Region Capture APIs for in-context example code.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Screen Capture API
+        * Using the Element Capture and Region Capture APIs
+
+Web APIs manual                         from the official documentation

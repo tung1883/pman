@@ -1,0 +1,88 @@
+WEBAPI.CHARACTERBOUNDSUPDATEEVENT(1) Sandbox manual WEBAPI.CHARACTERBOUNDSUPDATEEVENT(1)
+
+       NAME
+
+       CharacterBoundsUpdateEvent - The CharacterBoundsUpdateEvent interface is a DOM event that represents a request from the operating system to know the bounds of certain ch
+
+       CHARACTERBOUNDSUPDATEEVENT
+
+       The CharacterBoundsUpdateEvent interface is a DOM event that represents a request from the operating system to know the bounds of certain characters within an editable region that's attached to an EditContext instance.
+
+       This interface inherits properties from Event.
+
+       CONSTRUCTOR
+
+        * CharacterBoundsUpdateEvent() (experimental)
+          * : Creates a new CharacterBoundsUpdateEvent object.
+
+       INSTANCE PROPERTIES
+
+        * CharacterBoundsUpdateEvent.rangeStart (read-only) (experimental)
+          * : The offset of the first character within the editable region text for which the operating system needs the bounds.
+        * CharacterBoundsUpdateEvent.rangeEnd (read-only) (experimental)
+          * : The offset of the last character within the editable region text for which the operating system needs the bounds.
+
+       EXAMPLES
+
+       UPDATING THE CHARACTER BOUNDS WHEN NEEDED
+
+       This example shows how to use the characterboundsupdate event and the updateCharacterBounds method to inform the operating system of the character bounds it requires. Note that the event listener callback is only called when using an IME window, or other platform-specific editing UI surfaces, to compose text.
+
+         <canvas id="editor-canvas"></canvas>
+
+         const FONT_SIZE = 40;
+         const FONT = `${FONT_SIZE}px Arial`;
+
+         const canvas = document.getElementById("editor-canvas");
+         const ctx = canvas.getContext("2d");
+         ctx.font = FONT;
+
+         const editContext = new EditContext();
+         canvas.editContext = editContext;
+
+         function computeCharacterBound(offset) {
+           // Measure the width from the start of the text to the character.
+           const widthBeforeChar = ctx.measureText(
+             editContext.text.substring(0, offset),
+           ).width;
+
+           // Measure the character width.
+           const charWidth = ctx.measureText(editContext.text[offset]).width;
+
+           const charX = canvas.offsetLeft + widthBeforeChar;
+           const charY = canvas.offsetTop;
+
+           // Return a DOMRect representing the character bounds.
+           return DOMRect.fromRect({
+             x: charX,
+             y: charY - FONT_SIZE,
+             width: charWidth,
+             height: FONT_SIZE,
+           });
+         }
+
+         editContext.addEventListener("characterboundsupdate", (e) => {
+           const charBounds = [];
+           for (let offset = e.rangeStart; offset < e.rangeEnd; offset++) {
+             charBounds.push(computeCharacterBound(offset));
+           }
+
+           // Update the character bounds in the EditContext instance.
+           editContext.updateCharacterBounds(e.rangeStart, charBounds);
+
+           console.log(
+             "The required character bounds are",
+             charBounds
+               .map(
+                 (bound) =>
+                   `(x: ${bound.x}, y: ${bound.y}, width: ${bound.width}, height: ${bound.height})`,
+               )
+               .join(", "),
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

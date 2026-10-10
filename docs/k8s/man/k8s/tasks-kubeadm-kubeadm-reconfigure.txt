@@ -1,0 +1,195 @@
+K8S.TASKS-KUBEADM-KUBEADM-RECONFIGURE(1) Sandbox manual K8S.TASKS-KUBEADM-KUBEADM-RECONFIGURE(1)
+
+       NAME
+
+       For Kubernetes control plane components - kubeadm does not support automated ways of reconfiguring components that
+
+       FOR KUBERNETES CONTROL PLANE COMPONENTS
+
+       kubeadm does not support automated ways of reconfiguring components that were deployed on managed nodes. One way of automating this would be by using a custom operator.
+
+       To modify the components configuration you must manually edit associated cluster objects and files on disk.
+
+       This guide shows the correct sequence of steps that need to be performed to achieve kubeadm cluster reconfiguration.
+
+       ## PREREQUISITES
+
+        * You need a cluster that was deployed using kubeadm
+        * Have administrator credentials (/etc/kubernetes/admin.conf) and network connectivity
+       to a running kube-apiserver in the cluster from a host that has kubectl installed
+
+        * Have a text editor installed on all hosts
+
+       RECONFIGURING THE CLUSTER
+
+       kubeadm writes a set of cluster wide component configuration options in ConfigMaps and other objects. These objects must be manually edited. The command kubectl edit can be used for that.
+
+       The kubectl edit command will open a text editor where you can edit and save the object directly.
+
+       You can use the environment variables KUBECONFIG and KUBE_EDITOR to specify the location of the kubectl consumed kubeconfig file and preferred text editor.
+
+       For example:
+
+         KUBECONFIG=/etc/kubernetes/admin.conf KUBE_EDITOR=nano kubectl edit <parameters>
+
+       > Note:
+       Upon saving any changes to these cluster objects, components running on nodes may not be automatically updated. The steps below instruct you on how to perform that manually.
+
+       > Note:
+       Component configuration in ConfigMaps is stored as unstructured data (YAML string). This means that validation will not be performed upon updating the contents of a ConfigMap. You have to be careful to follow the documented API format for a particular component configuration and avoid introducing typos and YAML indentation mistakes.
+
+       APPLYING CLUSTER CONFIGURATION CHANGES
+
+       UPDATING THE CLUSTERCONFIGURATION
+
+       During cluster creation and upgrade, kubeadm writes its ClusterConfiguration in a ConfigMap called kubeadm-config in the kube-system namespace.
+
+       To change a particular option in the ClusterConfiguration you can edit the ConfigMap with this command:
+
+         kubectl edit cm -n kube-system kubeadm-config
+
+       The configuration is located under the data.ClusterConfiguration key.
+
+       > Note:
+       The ClusterConfiguration includes a variety of options that affect the configuration of individual components such as kube-apiserver, kube-scheduler, kube-controller-manager, CoreDNS, etcd and kube-proxy. Changes to the configuration must be reflected on node components manually.
+
+       REFLECTING CLUSTERCONFIGURATION CHANGES ON CONTROL PLANE NODES
+
+       kubeadm manages the control plane components as static Pod manifests located in the directory /etc/kubernetes/manifests. Any changes to the ClusterConfiguration under the apiServer, controllerManager, scheduler or etcd keys must be reflected in the associated files in the manifests directory on a control plane node.
+
+       Such changes may include:
+
+        * extraArgs - requires updating the list of flags passed to a component container
+        * extraVolumes - requires updating the volume mounts for a component container
+        * *SANs - requires writing new certificates with updated Subject Alternative Names
+       Before proceeding with these changes, make sure you have backed up the directory /etc/kubernetes/.
+
+       To write new certificates you can use:
+
+         kubeadm init phase certs <component-name> --config <config-file>
+
+       To write new manifest files in /etc/kubernetes/manifests you can use:
+
+         # For Kubernetes control plane components
+         kubeadm init phase control-plane <component-name> --config <config-file>
+         # For local etcd
+         kubeadm init phase etcd local --config <config-file>
+
+       The contents must match the updated ClusterConfiguration. The value must be a name of a Kubernetes control plane component (apiserver, controller-manager or scheduler).
+
+       > Note:
+       Updating a file in /etc/kubernetes/manifests will tell the kubelet to restart the static Pod for the corresponding component. Try doing these changes one node at a time to leave the cluster without downtime.
+
+       APPLYING KUBELET CONFIGURATION CHANGES
+
+       UPDATING THE KUBELETCONFIGURATION
+
+       During cluster creation and upgrade, kubeadm writes its KubeletConfiguration in a ConfigMap called kubelet-config in the kube-system namespace.
+
+       You can edit the ConfigMap with this command:
+
+         kubectl edit cm -n kube-system kubelet-config
+
+       The configuration is located under the data.kubelet key.
+
+       REFLECTING THE KUBELET CHANGES
+
+       To reflect the change on kubeadm nodes you must do the following:
+
+        * Log in to a kubeadm node
+        * Run kubeadm upgrade node phase kubelet-config to download the latest kubelet-config
+       ConfigMap contents into the local file /var/lib/kubelet/config.yaml
+
+        * Edit the file /var/lib/kubelet/kubeadm-flags.env to apply additional configuration with
+       flags
+
+        * Restart the kubelet service with systemctl restart kubelet
+       > Note:
+       Do these changes one node at a time to allow workloads to be rescheduled properly.
+
+       > Note:
+       During kubeadm upgrade, kubeadm downloads the KubeletConfiguration from the kubelet-config ConfigMap and overwrite the contents of /var/lib/kubelet/config.yaml. This means that node local configuration must be applied either by flags in /var/lib/kubelet/kubeadm-flags.env or by manually updating the contents of /var/lib/kubelet/config.yaml after kubeadm upgrade, and then restarting the kubelet.
+
+       APPLYING KUBE-PROXY CONFIGURATION CHANGES
+
+       UPDATING THE KUBEPROXYCONFIGURATION
+
+       During cluster creation and upgrade, kubeadm writes its KubeProxyConfiguration in a ConfigMap in the kube-system namespace called kube-proxy.
+
+       This ConfigMap is used by the kube-proxy DaemonSet in the kube-system namespace.
+
+       To change a particular option in the KubeProxyConfiguration, you can edit the ConfigMap with this command:
+
+         kubectl edit cm -n kube-system kube-proxy
+
+       The configuration is located under the data.config.conf key.
+
+       REFLECTING THE KUBE-PROXY CHANGES
+
+       Once the kube-proxy ConfigMap is updated, you can restart all kube-proxy Pods:
+
+       Delete the Pods with:
+
+         kubectl delete po -n kube-system -l k8s-app=kube-proxy
+
+       New Pods that use the updated ConfigMap will be created.
+
+       > Note:
+       Because kubeadm deploys kube-proxy as a DaemonSet, node specific configuration is unsupported.
+
+       APPLYING COREDNS CONFIGURATION CHANGES
+
+       UPDATING THE COREDNS DEPLOYMENT AND SERVICE
+
+       kubeadm deploys CoreDNS as a Deployment called coredns and with a Service kube-dns, both in the kube-system namespace.
+
+       To update any of the CoreDNS settings, you can edit the Deployment and Service objects:
+
+         kubectl edit deployment -n kube-system coredns
+         kubectl edit service -n kube-system kube-dns
+
+       REFLECTING THE COREDNS CHANGES
+
+       Once the CoreDNS changes are applied you can restart the CoreDNS deployment:
+
+         kubectl rollout restart deployment -n kube-system coredns
+
+       > Note:
+       kubeadm does not allow CoreDNS configuration during cluster creation and upgrade. This means that if you execute kubeadm upgrade apply, your changes to the CoreDNS objects will be lost and must be reapplied.
+
+       PERSISTING THE RECONFIGURATION
+
+       During the execution of kubeadm upgrade on a managed node, kubeadm might overwrite configuration that was applied after the cluster was created (reconfiguration).
+
+       PERSISTING NODE OBJECT RECONFIGURATION
+
+       kubeadm writes Labels, Taints, CRI socket and other information on the Node object for a particular Kubernetes node. To change any of the contents of this Node object you can use:
+
+         kubectl edit no <node-name>
+
+       During kubeadm upgrade the contents of such a Node might get overwritten. If you would like to persist your modifications to the Node object after upgrade, you can prepare a kubectl patch and apply it to the Node object:
+
+         kubectl patch no <node-name> --patch-file <patch-file>
+
+       PERSISTING CONTROL PLANE COMPONENT RECONFIGURATION
+
+       The main source of control plane configuration is the ClusterConfiguration object stored in the cluster. To extend the static Pod manifests configuration, patches can be used.
+
+       These patch files must remain as files on the control plane nodes to ensure that they can be used by the kubeadm upgrade ... --patches .
+
+       If reconfiguration is done to the ClusterConfiguration and static Pod manifests on disk, the set of node specific patches must be updated accordingly.
+
+       PERSISTING KUBELET RECONFIGURATION
+
+       Any changes to the KubeletConfiguration stored in /var/lib/kubelet/config.yaml will be overwritten on kubeadm upgrade by downloading the contents of the cluster wide kubelet-config ConfigMap. To persist kubelet node specific configuration either the file /var/lib/kubelet/config.yaml has to be updated manually post-upgrade or the file /var/lib/kubelet/kubeadm-flags.env can include flags. The kubelet flags override the associated KubeletConfiguration options, but note that some of the flags are deprecated.
+
+       A kubelet restart will be required after changing /var/lib/kubelet/config.yaml or /var/lib/kubelet/kubeadm-flags.env.
+
+       ## WHATSNEXT
+
+        * Upgrading kubeadm clusters
+        * Customizing components with the kubeadm API
+        * Certificate management with kubeadm
+        * Find more about kubeadm set-up
+
+Kubernetes manual                       from the official documentation

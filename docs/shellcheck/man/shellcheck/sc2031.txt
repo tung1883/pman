@@ -1,0 +1,99 @@
+SHELLCHECK.SC2031(1)             Sandbox manual             SHELLCHECK.SC2031(1)
+
+       NAME
+
+       var was modified in a subshell. That change might be lost. - There are many ways of accidentally creating subshells, but a common one is piping to a loop:
+
+       VAR WAS MODIFIED IN A SUBSHELL. THAT CHANGE MIGHT BE LOST
+
+       PROBLEMATIC CODE
+
+       There are many ways of accidentally creating subshells, but a common one is piping to a loop:
+
+         n=0
+         printf "%s\n" {1..10} | while read i; do (( n+=i )); done
+         echo $n
+
+       CORRECT CODE
+
+         # Bash specific: process substitution. Also try shopts like lastpipe.
+         n=0
+         while read i; do (( n+=i )); done < <(printf "%s\n" {1..10})
+         echo $n
+
+       In sh, temporary files, FIFOs or file descriptors can be used instead. When the output of the command can be stored to a variable before entering the loop, here documents are a preferable alternative.
+
+         n=0
+         SUMMANDS="1
+         2
+         3
+         4
+         5
+         6
+         7
+         8
+         9
+         10
+         "
+         while read i; do n=$(( n + i )); done <<SUMMANDS_HEREDOC_INPUT
+         $SUMMANDS
+         SUMMANDS_HEREDOC_INPUT
+         echo $n
+
+       With Bash 4.2+ you can also use shopt -s lastpipe which will change the pipe behaviour to be similar to Ksh and Zsh (see Rationale below) as long as job control is not active (e.g. inside a script):
+
+         #!/usr/bin/env bash
+         shopt -s lastpipe
+         n=0
+         printf "%s\n" {1..10} | while read i; do (( n+=i )); done
+         echo $n
+
+       RATIONALE
+
+       Variables set in subshells are not available outside the subshell. This is a wide topic, and better described on the Wooledge Bash Wiki.
+
+       Here are some constructs that cause subshells (shellcheck may not warn about all of them). In each case, you can replace subshell1 by a command or function that sets a variable, e.g. simply var=foo, and the variable will appear to be unset after the command is run. Similarly, you can replace regular with var=foo, and it will be set afterwards:
+
+       Pipelines:
+
+         subshell1 | subshell2 | subshell3    # Dash, Ash, Bash (default)
+         subshell1 | subshell2 | regular      # Ksh, Zsh, Bash (with lastpipe=on and no job control)
+
+       Command substitution:
+
+         regular "$(subshell1)" "`subshell2`"
+
+       Process substitution:
+
+         regular <(subshell1) >(subshell2)
+
+       Some forms of grouping:
+
+         ( subshell )
+         { regular; }
+
+       Backgrounding:
+
+         subshell1 &
+         subshell2 &
+
+       Anything executed by external processes:
+
+         find . -exec subshell1 {} \;
+         find . -print0 | xargs -0 subshell2
+         sudo subshell3
+         su -c subshell4
+
+       This applies not only to setting variables, but also setting shell options and changing directories.
+
+       EXCEPTIONS
+
+       You can ignore this error if you don't care that the changes aren't reflected, because work on the value branches and shouldn't be recombined.
+
+       RELATED RESOURCES
+
+        * BashFaq: I set variables in a loop that's in a pipeline. Why do they disappear after the loop terminates?
+        * Bash Pitfalls: grep foo bar | while read -r; do ((count++)); done
+        * StackOverflow: A variable modified inside a while loop is not remembered
+
+ShellCheck manual                       from the official documentation

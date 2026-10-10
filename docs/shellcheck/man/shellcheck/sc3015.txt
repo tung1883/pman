@@ -1,0 +1,50 @@
+SHELLCHECK.SC3015(1)             Sandbox manual             SHELLCHECK.SC3015(1)
+
+       NAME
+
+       In POSIX sh, =~ regex matching is undefined. - if [ "$var" =~ foo[0-9]+ ]; then
+
+       IN POSIX SH, REGEX MATCHING IS UNDEFINED
+
+       IN POSIX SH, REGEX MATCHING IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         if [ "$var" =~ foo[0-9]+ ]; then
+           echo matched
+         fi
+
+       CORRECT CODE
+
+         #!/bin/sh
+         if expr "X$var" : 'X.*foo[0-9]\{1,\}' >/dev/null; then
+           echo matched
+         fi
+
+       or
+
+         #!/bin/sh
+         case $var in
+           *foo[0-9]*)
+             echo matched
+             ;;
+         esac
+
+       RATIONALE
+
+       You are using =~ in a script declared to be compatible with POSIX sh or Dash, but =~ is not specified by POSIX and is unlikely to work outside [[ ]] in Bash and Ksh.
+
+       Use expr's : operator instead. It may be necessary to revise the regular expression because POSIX expr uses basic regular expressions anchored to the beginning of the string, as opposed to the unanchored extended regular expressions used by [[ str =~ re ]] in Bash and Ksh.
+
+       Alternately, use case if the matching can be done with shell patterns instead of regular expressions. This avoids the need for an external utility.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Greg's Wiki - BashFAQ #41: How do I determine whether a variable contains a substring?
+
+ShellCheck manual                       from the official documentation

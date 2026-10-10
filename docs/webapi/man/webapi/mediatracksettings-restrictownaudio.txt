@@ -1,0 +1,57 @@
+WEBAPI.MEDIATRACKSETTINGS-RESTRICTOWNAUDIO(1) Sandbox manual WEBAPI.MEDIATRACKSETTINGS-RESTRICTOWNAUDIO(1)
+
+       NAME
+
+       MediaTrackSettings: restrictOwnAudio property - The MediaTrackSettings dictionary's restrictOwnAudio property controls whether system audio originating from the capturing tab is filtered o
+
+       MEDIATRACKSETTINGS: RESTRICTOWNAUDIO PROPERTY
+
+       The MediaTrackSettings dictionary's restrictOwnAudio property controls whether system audio originating from the capturing tab is filtered out of screen capture, allowing for cleaner screen recordings in some cases.
+
+       For example, if the capturing web page itself is playing embedded audio or video, that audio would be included in the capture. Since this could lead to an undesirable echo or interfere with the intended audio sources from other tabs or applications, removing it from the capture is desirable.
+
+       VALUE
+
+       A boolean value, where true enables the capturing tab's system audio restriction and false disables it.
+
+       If the value is true, the user agent will attempt to remove any audio originating from the captured audio produced by the tab that called MediaDevices.getDisplayMedia() to initiate screen capture. If removal of audio via processing fails, the user agent may exclude all audio originating from the capturing tab.
+
+       > If the captured display surface doesn't include system audio, this setting will have no effect.
+
+       EXAMPLES
+
+       The following function sets up a constraints object that specifies the options for a call to getDisplayMedia(). It adds the restrictOwnAudio constraint (requesting that system audio originating from the capturing tab be filtered out of the screen capture) only if it is known to be supported by the browser. Capture then starts by calling getDisplayMedia() and attaching the returned stream to the element referenced by the variable videoElem.
+
+         async function capture() {
+           const supportedConstraints = navigator.mediaDevices.getSupportedConstraints();
+           const displayMediaOptions = {
+             audio: {},
+           };
+
+           if (supportedConstraints.restrictOwnAudio) {
+             displayMediaOptions.audio.restrictOwnAudio = true;
+           }
+
+           try {
+             videoElem.srcObject =
+               await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+           } catch (err) {
+             /* handle the error */
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Screen Capture API
+        * Using the screen capture API
+        * Capabilities, constraints, and settings
+        * MediaDevices.getDisplayMedia()
+        * MediaStreamTrack.getConstraints()
+        * MediaStreamTrack.applyConstraints()
+        * MediaStreamTrack.getSettings()
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,79 @@
+SHELLCHECK.SC2155(1)             Sandbox manual             SHELLCHECK.SC2155(1)
+
+       NAME
+
+       Declare and assign separately to avoid masking return values. - export foo="$(mycmd)"
+
+       DECLARE AND ASSIGN SEPARATELY TO AVOID MASKING RETURN VALUES
+
+       DECLARE AND ASSIGN SEPARATELY TO AVOID MASKING RETURN VALUES
+
+       PROBLEMATIC CODE IN THE CASE OF EXPORT
+
+         export foo="$(mycmd)"
+
+       CORRECT CODE
+
+         foo="$(mycmd)"
+         export foo
+
+       RATIONALE
+
+       In the original code, the return value of mycmd is ignored, and export will instead always return true. This may prevent conditionals, set -e and traps from working correctly.
+
+       When first marked for export and assigned separately, the return value of the assignment will be that of mycmd. This avoids the problem.
+
+       Note that ShellCheck does not warn about masking of local read-only variables, such as local -r foo=$(cmd), even though this also masks the return value. This is because the alternative local foo; foo=$(cmd); local -r foo is repetitive and cumbersome. To see warnings for this and many other additional cases of suppressed exit codes, enable check-extra-masked-returns.
+
+       EXCEPTIONS
+
+       If you intend to ignore the return value of an assignment, you can either [[ignore]] this warning or use
+
+         foo=$(mycmd) || true
+         export foo
+
+       Shellcheck does not warn about export foo=bar because bar is a literal and not a command substitution with an independent return value.
+
+       PROBLEMATIC CODE IN THE CASE OF LOCAL
+
+         local foo="$(mycmd)"
+
+       CORRECT CODE
+
+         local foo
+         foo=$(mycmd)
+
+       RATIONALE
+
+       The exit status of the command is overridden by the exit status of the creation of the local variable. For example:
+
+         $ f() { local foo=$(false) && echo "error was hidden"; }; f
+         error was hidden
+         $ f() { local foo; foo=$(false) && echo "error was hidden"; }; f
+
+       PROBLEMATIC CODE IN THE CASE OF READONLY
+
+         readonly foo="$(mycmd)"
+
+       CORRECT CODE
+
+         foo="$(mycmd)"
+         readonly foo
+
+       WORD SPLITTING AND QUOTING ISSUE WITH DASH, MAYBE OTHERS
+
+       A serious quoting problem with dash is another reason to declare and assign separately. Dash is the default, /bin/sh shell on Ubuntu. More specifically, dash version 0.5.8-2.10 and others cannot run these two examples:
+
+         f(){ local e=$1; }
+         f "1 2"
+
+         export g=$(printf '%s' "foo 2")
+
+       While this runs fine in other shells, dash doesn't treat any of these as assignments and fails both like this:
+
+         local: 2: bad variable name
+         export: 2: bad variable name
+
+       The direct workaround to this bug is to quote the right-hand-side of the assignment. Separating declaraction and assignment also makes this runs fine in any shell.
+
+ShellCheck manual                       from the official documentation

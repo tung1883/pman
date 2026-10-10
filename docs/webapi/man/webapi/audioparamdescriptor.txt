@@ -1,0 +1,54 @@
+WEBAPI.AUDIOPARAMDESCRIPTOR(1)   Sandbox manual   WEBAPI.AUDIOPARAMDESCRIPTOR(1)
+
+       NAME
+
+       AudioParamDescriptor - The AudioParamDescriptor dictionary of the Web Audio API specifies properties for AudioParam objects.
+
+       AUDIOPARAMDESCRIPTOR
+
+       The AudioParamDescriptor dictionary of the Web Audio API specifies properties for AudioParam objects.
+
+       It is used to create custom AudioParams on an AudioWorkletNode. If the underlying AudioWorkletProcessor has a parameterDescriptors static getter, then the returned array of objects based on this dictionary is used internally by AudioWorkletNode constructor to populate its parameters property accordingly.
+
+       INSTANCE PROPERTIES
+
+        * name
+          * : The string which represents the name of the AudioParam. Under this name the AudioParam will be available in the parameters property of the node, and under this name the AudioWorkletProcessor.process method will acquire the calculated values of this AudioParam.
+        * automationRate (optional)
+          * : Either "a-rate", or "k-rate" string which represents an automation rate of this AudioParam. Defaults to "a-rate".
+        * minValue (optional)
+          * : A float which represents minimum value of the AudioParam. Defaults to -3.4028235e38.
+        * maxValue (optional)
+          * : A float which represents maximum value of the AudioParam. Defaults to 3.4028235e38.
+        * defaultValue (optional)
+          * : A float which represents initial value of the AudioParam. Defaults to 0.
+
+       EXAMPLES
+
+       The code fragment below shows a descriptor of this type being returned by a static parameterDescriptors method defined in a custom AudioWorkletProcessor (this is part of the more complete example in AudioWorkletNode.parameters).
+
+         // white-noise-processor.js
+         class WhiteNoiseProcessor extends AudioWorkletProcessor {
+           static get parameterDescriptors() {
+             return [
+               {
+                 name: "customGain",
+                 defaultValue: 1,
+                 minValue: 0,
+                 maxValue: 1,
+                 automationRate: "a-rate",
+               },
+             ];
+           }
+
+           // …
+         }
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * Web Audio API
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

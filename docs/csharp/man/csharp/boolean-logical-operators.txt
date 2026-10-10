@@ -1,0 +1,143 @@
+CSHARP.BOOLEAN-LOGICAL-OPERATORS(1) Sandbox manual CSHARP.BOOLEAN-LOGICAL-OPERATORS(1)
+
+       NAME
+
+       Boolean logical operators - AND, OR, NOT, XOR - C# logical operators perform logical negation (`!`), conjunction (AND - `&`, `&&`), and inclusive and exclusive disjunction (OR - `|`, `||`,
+
+       BOOLEAN LOGICAL OPERATORS - AND, OR, NOT, XOR
+
+       The logical Boolean operators perform logical operations with bool operands. The operators include the unary logical negation (!), binary logical AND (&), OR (|), and exclusive OR (^), and the binary conditional logical AND (&&) and OR (||).
+
+        * Unary ! (logical negation) operator.
+        * Binary & (logical AND), | (logical OR), and ^ (logical exclusive OR) operators. Those operators always evaluate both operands.
+        * Binary && (conditional logical AND) and || (conditional logical OR) operators. Those operators evaluate the right-hand operand only if it's necessary.
+       For operands of the integral numeric types, the &, |, and ^ operators perform bitwise logical operations. For more information, see Bitwise and shift operators.
+
+       LOGICAL NEGATION OPERATOR
+
+       The unary prefix ! operator computes the logical negation of its operand. It produces true if the operand evaluates to false, and false if the operand evaluates to true:
+
+       The unary postfix ! operator is the null-forgiving operator.
+
+       LOGICAL AND OPERATOR &
+
+       The & operator computes the logical AND of its operands. The result of x & y is true if both x and y are true. Otherwise, the result is false.
+
+       The & operator always evaluates both operands. When the left-hand operand is false, the operation result is false regardless of the value of the right-hand operand. However, the right-hand operand is still evaluated.
+
+       In the following example, the right-hand operand of the & operator is a method call, which runs regardless of the value of the left-hand operand:
+
+       The conditional logical AND operator && also computes the logical AND of its operands, but it doesn't evaluate the right-hand operand if the left-hand operand is false.
+
+       For operands of the integral numeric types, the & operator computes the bitwise logical AND of its operands. The unary & operator is the address-of operator.
+
+       LOGICAL EXCLUSIVE OR OPERATOR
+
+       The ^ operator computes the logical exclusive OR, also known as the logical XOR, of its operands. The result of x ^ y is true if x is true and y is false, or x is false and y is true. Otherwise, the result is false. For bool operands, the ^ operator computes the same result as the inequality operator !=.
+
+       For operands of the integral numeric types, the ^ operator computes the bitwise logical exclusive OR of its operands.
+
+       LOGICAL OR OPERATOR
+
+       The | operator computes the logical OR of its operands. The result of x | y is true if either x or y evaluates to true. Otherwise, the result is false.
+
+       The | operator always evaluates both operands. When the left-hand operand evaluates to true, the operation result is true regardless of the value of the right-hand operand. However, even then, the right-hand operand is evaluated.
+
+       In the following example, the right-hand operand of the | operator is a method call, which is performed regardless of the value of the left-hand operand:
+
+       The conditional logical OR operator || also computes the logical OR of its operands, but it doesn't evaluate the right-hand operand if the left-hand operand evaluates to true.
+
+       For operands of the integral numeric types, the | operator computes the bitwise logical OR of its operands.
+
+       CONDITIONAL LOGICAL AND OPERATOR &&
+
+       The conditional logical AND operator &&, also known as the "short-circuiting" logical AND operator, computes the logical AND of its operands. The result of x && y is true if both x and y evaluate to true. Otherwise, the result is false. If x evaluates to false, y isn't evaluated.
+
+       In the following example, the right-hand operand of the && operator is a method call, which isn't performed if the left-hand operand evaluates to false:
+
+       The logical AND operator & also computes the logical AND of its operands, but it always evaluates both operands.
+
+       CONDITIONAL LOGICAL OR OPERATOR
+
+       The conditional logical OR operator ||, also known as the "short-circuiting" logical OR operator, computes the logical OR of its operands. The result of x || y is true if either x or y evaluates to true. Otherwise, the result is false. If x evaluates to true, y isn't evaluated.
+
+       In the following example, the right-hand operand of the || operator is a method call, which isn't performed if the left-hand operand evaluates to true:
+
+       The logical OR operator | also computes the logical OR of its operands, but always evaluates both operands.
+
+       NULLABLE BOOLEAN LOGICAL OPERATORS
+
+       For bool? operands, the & (logical AND) and | (logical OR) operators support three-valued logic as follows:
+
+        * The & operator returns true only if both its operands evaluate to true. If either x or y evaluates to false, x & y returns false (even if another operand evaluates to null). Otherwise, the result of x & y is null.
+        * The | operator produces false only if both its operands evaluate to false. If either x or y evaluates to true, x | y produces true (even if another operand evaluates to null). Otherwise, the result of x | y is null.
+       The following table presents that semantics:
+
+         x  |  y  |  x & y  |  x \  |  y
+         true  |  true  |  true  |  true
+         true  |  false  |  false  |  true
+         true  |  null  |  null  |  true
+         false  |  true  |  false  |  true
+         false  |  false  |  false  |  false
+         false  |  null  |  false  |  null
+         null  |  true  |  null  |  true
+         null  |  false  |  false  |  null
+         null  |  null  |  null  |  null
+       The behavior of those operators differs from the typical operator behavior with nullable value types. Typically, an operator that is defined for operands of a value type can also be used with operands of the corresponding nullable value type. Such an operator produces null if any of its operands evaluates to null. However, the & and | operators can produce non-null even if one of the operands evaluates to null. For more information about the operator behavior with nullable value types, see the Lifted operators section of the Nullable value types article.
+
+       You can also use the ! and ^ operators with bool? operands, as the following example shows:
+
+       The conditional logical operators && and || don't support bool? operands.
+
+       COMPOUND ASSIGNMENT
+
+       For a binary operator op, a compound assignment expression of the form
+
+         x op= y
+
+       Is equivalent to
+
+         x = x op y
+
+       Except that x is only evaluated once.
+
+       The &, |, and ^ operators support compound assignment, as the following example shows:
+
+       > The conditional logical operators && and || don't support compound assignment.
+
+       OPERATOR PRECEDENCE
+
+       The following list orders logical operators in groups starting from the highest precedence to the lowest:
+
+        * (Primary) operators: Logical negation operator !.
+        * (Boolean logical AND) operators: &.
+        * (Boolean logical XOR) operators: Logical exclusive OR operator ^.
+        * (Boolean logical OR) operators: |.
+        * (Conditional AND) operators: &&.
+        * (Conditional OR) operators: ||.
+       Use parentheses, (), to change the order of evaluation imposed by operator precedence:
+
+       For the complete list of C# operators ordered by precedence level, see the Operator precedence section of the C# operators article.
+
+       OPERATOR OVERLOADABILITY
+
+       A user-defined type can overload the !, &, |, and ^ operators. When a binary operator is overloaded, the corresponding compound assignment operator is also implicitly overloaded. Beginning with C# 14, a user-defined type can explicitly overload the compound assignment operators to provide a more efficient implementation. Typically, a type overloads these operators because the value can be updated in place, rather than allocating a new instance to hold the result of the binary operation. If a type doesn't provide an explicit overload, the compiler generates the implicit overload.
+
+       A user-defined type can't overload the conditional logical operators && and ||. However, if a user-defined type overloads the true and false operators and the & or | operator in a certain way, the && or || operation, respectively, can be evaluated for the operands of that type. For more information, see the [User-defined conditional logical operators] section of the [C# language specification].
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information, see the following sections of the [C# language specification]:
+
+        * [Logical negation operator]
+        * [Logical operators]
+        * [Conditional logical operators]
+        * [Compound assignment]
+        * [User defined compound assignment]
+
+       SEE ALSO
+
+        * C# operators and expressions
+        * Bitwise and shift operators
+
+C# manual                               from the official documentation

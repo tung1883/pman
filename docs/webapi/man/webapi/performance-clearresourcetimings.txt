@@ -1,0 +1,60 @@
+WEBAPI.PERFORMANCE-CLEARRESOURCETIMINGS(1) Sandbox manual WEBAPI.PERFORMANCE-CLEARRESOURCETIMINGS(1)
+
+       NAME
+
+       Performance: clearResourceTimings() method - The clearResourceTimings() method removes all performance entries with an entryType of "resource" from the browser's performance timeline an
+
+       PERFORMANCE: CLEARRESOURCETIMINGS() METHOD
+
+       The clearResourceTimings() method removes all performance entries with an entryType of "resource" from the browser's performance timeline and sets the size of the performance resource data buffer to zero.
+
+       To set the size of the browser's performance resource data buffer, use the Performance.setResourceTimingBufferSize() method.
+
+       To get notified when the browser's resource timing buffer is full, listen for the resourcetimingbufferfull event.
+
+       SYNTAX
+
+         clearResourceTimings()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       CLEARING THE PERFORMANCE RESOURCE DATA BUFFER
+
+       To remove all resource performance entries from the buffer, call the clearResourceTimings() at an appropriate point in your code or paste it into the console.
+
+         performance.clearResourceTimings();
+         performance.getEntriesByType("resource").length; // 0
+
+       TAKING RECORDS AND EMPTYING PERFORMANCE OBSERVERS
+
+       When using PerformanceObserver objects (especially with the buffered flag set to true), the performance resource buffer might get full quickly. However, instead of clearing the buffer, you can also store the current list of performance entries and empty the performance observer using the PerformanceObserver.takeRecords() method. This works with all kinds of performance entry types, not just "resource" entries.
+
+         function perfObserver(list, observer) {
+           list.getEntries().forEach((entry) => {
+             // do something with the entries
+           });
+         }
+         const observer = new PerformanceObserver(perfObserver);
+         observer.observe({ type: "resource", buffered: true });
+
+         // Store entries and empty performance observer
+         const records = observer.takeRecords();
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Performance.setResourceTimingBufferSize()
+        * resourcetimingbufferfull
+
+Web APIs manual                         from the official documentation

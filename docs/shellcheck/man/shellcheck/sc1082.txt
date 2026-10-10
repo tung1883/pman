@@ -1,0 +1,39 @@
+SHELLCHECK.SC1082(1)             Sandbox manual             SHELLCHECK.SC1082(1)
+
+       NAME
+
+       This file has a UTF-8 BOM. Remove it with: LCCTYPE=C sed '1s/^...//' < yourscript. - This is an encoding error that can't be seen in the script itself, but cat -v will show three bytes of garbage at the start of the file:
+
+       THIS FILE HAS A UTF-8 BOM. REMOVE IT WITH: LCCTYPE C SED '1S/ ...//' Y
+
+       THIS FILE HAS A UTF-8 BOM. REMOVE IT WITH: LC_CTYPE C SED '1S/ ...//'
+
+       PROBLEMATIC CODE
+
+       This is an encoding error that can't be seen in the script itself, but cat -v will show three bytes of garbage at the start of the file:
+
+         $ cat -v file
+         M-oM-;M-?#!/bin/bash
+         echo "hello world"
+
+       CORRECT CODE
+
+       The code is correct when this garbage does not appear.
+
+       RATIONALE
+
+       Some editors may save a file with a Byte Order Mark to mark the file as UTF-8. Shells do not understand this and will give errors on the first line:
+
+         $ bash myscript
+         myscript: line 1: #!/bin/sh: No such file or directory
+
+         $ dash myscript
+         myscript: 1: myscript: #!/bin/sh: not found
+
+       To fix it, remove the byte order mark. One way of doing this is LC_CTYPE=C sed '1s/^...//' < yourscript. Verify that it's not there with cat -v.
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

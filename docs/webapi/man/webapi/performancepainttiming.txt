@@ -1,0 +1,103 @@
+WEBAPI.PERFORMANCEPAINTTIMING(1) Sandbox manual WEBAPI.PERFORMANCEPAINTTIMING(1)
+
+       NAME
+
+       PerformancePaintTiming - The PerformancePaintTiming interface provides timing information about "paint" (also called "render") operations during web page constructio
+
+       PERFORMANCEPAINTTIMING
+
+       The PerformancePaintTiming interface provides timing information about "paint" (also called "render") operations during web page construction. "Paint" refers to conversion of the render tree to on-screen pixels.
+
+       There are two key paint moments this API provides:
+
+        * First Paint (FP): Time when anything is rendered. Note that the marking of the first paint is optional, not all user agents report it.
+        * First Contentful Paint (FCP): Time when the first contentful paint — the first bit of DOM text or image content is rendered.
+       A third key paint moment is provided by the LargestContentfulPaint API:
+
+        * Largest Contentful Paint (LCP): Render time of the largest image or text block visible within the viewport, recorded from when the page first begins to load.
+       The data this API provides helps you minimize the time that users have to wait before they can see the site's content start to appear. Decreasing the time until these key paint moments make sites feel more responsive, performant, and engaging for your users.
+
+       Like other Performance APIs, this API extends PerformanceEntry.
+
+       INSTANCE PROPERTIES
+
+       This interface directly defines the following properties:
+
+        * PerformancePaintTiming.paintTime (read-only)
+          * : Returns the timestamp when the rendering phase ended and the paint phase started.
+        * PerformancePaintTiming.presentationTime (read-only)
+          * : Returns the timestamp when the painted pixels were actually drawn on the screen.
+       It also extends the following PerformanceEntry properties, qualifying and constraining them as described:
+
+        * PerformanceEntry.entryType (read-only)
+          * : Returns "paint".
+        * PerformanceEntry.name (read-only)
+          * : Returns either "first-paint" or "first-contentful-paint".
+        * PerformanceEntry.startTime (read-only)
+          * : Returns the timestamp when the paint occurred.
+        * PerformanceEntry.duration (read-only)
+          * : Returns 0.
+
+       INSTANCE METHODS
+
+        * PerformancePaintTiming.toJSON()
+          * : Returns a JSON-serializable plain object representing the PerformancePaintTiming object. Automatically called by JSON.stringify().
+
+       EXAMPLES
+
+       GETTING BASIC PAINT TIMINGS
+
+       Example using a PerformanceObserver, which notifies of new paint performance entries as they are recorded in the browser's performance timeline. Use the buffered option to access entries from before the observer creation.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             console.log(
+               `The time to ${entry.name} was ${entry.startTime} milliseconds.`,
+             );
+             // Logs "The time to first-paint was 386.7999999523163 milliseconds."
+             // Logs "The time to first-contentful-paint was 400.6999999284744 milliseconds."
+           });
+         });
+
+         observer.observe({ type: "paint", buffered: true });
+
+       Example using Performance.getEntriesByType(), which only shows paint performance entries present in the browser's performance timeline at the time you call this method:
+
+         const entries = performance.getEntriesByType("paint");
+         entries.forEach((entry) => {
+           console.log(`The time to ${entry.name} was ${entry.startTime} milliseconds.`);
+           // Logs "The time to first-paint was 386.7999999523163 milliseconds."
+           // Logs "The time to first-contentful-paint was 400.6999999284744 milliseconds."
+         });
+
+       GETTING SEPARATE PAINT AND PRESENTATION TIMINGS
+
+       The paintTime and presentationTime properties enable you to retrieve specific timings for the paint phase starting and the painted pixels being drawn on the screen. The paintTime is broadly interoperable, whereas the presentationTime is implementation-dependent.
+
+       This example builds on the earlier Performance.getEntriesByType() example, showing how to check for paintTime and presentationTime support and retrieve those values if they are available. In non-supporting browsers, the code retrieves the loadTime.
+
+         const entries = performance.getEntriesByType("paint");
+         entries.forEach((entry) => {
+           if (entry.presentationTime) {
+             console.log(
+               "paintTime:",
+               entry.paintTime,
+               "presentationTime:",
+               entry.presentationTime,
+             );
+           } else if (entry.paintTime) {
+             console.log("paintTime:", entry.paintTime);
+           } else {
+             console.log("loadTime", entry.loadTime);
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * LargestContentfulPaint
+
+Web APIs manual                         from the official documentation

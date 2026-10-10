@@ -1,0 +1,83 @@
+CSHARP.THIS(1)                   Sandbox manual                   CSHARP.THIS(1)
+
+       NAME
+
+       The this keyword - The `this` keyword clarifies access to the current instance of a type, or declares an indexer on the type.
+
+       THE THIS KEYWORD
+
+       The this keyword refers to the current instance of the class. It also serves as a modifier for the first parameter of an extension method.
+
+       > This article discusses the use of this to refer to the receiver instance in the current member. For more information about its use in extension methods, see the extension keyword.
+       Common uses of this include:
+
+        * Qualifying members hidden by similar names, such as:
+        * Passing an object as a parameter to other methods.
+
+           CalcTax(this);
+
+        * Declaring indexers, such as:
+       Static member functions exist at the class level and not as part of an object. They don't have a this pointer. Referring to this in a static method is an error.
+
+       In the following example, the parameters name and alias hide fields with the same names. The this keyword qualifies those variables as Employee class members. The this keyword also specifies the object for the method CalcTax, which belongs to another class.
+
+         class Employee
+         {
+             private string name;
+             private string alias;
+
+             // Constructor:
+             public Employee(string name, string alias)
+             {
+                 // Use this to qualify the fields, name and alias:
+                 this.name = name;
+                 this.alias = alias;
+             }
+
+             // Printing method:
+             public void printEmployee()
+             {
+                 Console.WriteLine($"""
+                 Name: {name}
+                 Alias: {alias}
+                 """);
+                 // Passing the object to the CalcTax method by using this:
+                 Console.WriteLine($"Taxes: {Tax.CalcTax(this):C}");
+             }
+
+             public decimal Salary { get; } = 3000.00m;
+         }
+
+         class Tax
+         {
+             public static decimal CalcTax(Employee E)=> 0.08m * E.Salary;
+         }
+
+         class Program
+         {
+             static void Main()
+             {
+                 // Create objects:
+                 Employee E1 = new Employee("Mingda Pan", "mpan");
+
+                 // Display results:
+                 E1.printEmployee();
+             }
+         }
+         /*
+         Output:
+             Name: Mingda Pan
+             Alias: mpan
+             Taxes: $240.00
+          */
+
+       C# LANGUAGE SPECIFICATION
+
+       SEE ALSO
+
+        * Member-access qualification preferences (IDE0003 and IDE0009)
+        * C# Keywords
+        * base
+        * Methods
+
+C# manual                               from the official documentation

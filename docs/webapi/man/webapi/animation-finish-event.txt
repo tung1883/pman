@@ -1,0 +1,61 @@
+WEBAPI.ANIMATION-FINISH-EVENT(1) Sandbox manual WEBAPI.ANIMATION-FINISH-EVENT(1)
+
+       NAME
+
+       Animation: finish event - The finish event of the Animation interface is fired when the animation finishes playing, either when the animation completes naturally, or
+
+       ANIMATION: FINISH EVENT
+
+       The finish event of the Animation interface is fired when the animation finishes playing, either when the animation completes naturally, or when the Animation.finish() method is called to immediately cause the animation to finish up.
+
+       > The "paused" play state supersedes the "finished" play
+       > state; if the animation is both paused and finished, the "paused" state
+       > is the one that will be reported. You can force the animation into the
+       > "finished" state by setting its startTime to
+       > document.timeline.currentTime - (Animation.currentTime * Animation.playbackRate).
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("finish", (event) => { })
+
+         onfinish = (event) => { }
+
+       EVENT TYPE
+
+       An AnimationPlaybackEvent. Inherits from Event.
+
+       AnimationPlaybackEvent
+
+       EXAMPLES
+
+       Animation.onfinish is used several times in the Alice in Web Animations API Land Growing/Shrinking Alice Game. Here is one instance where we add pointer events back to an element after its opacity animation has faded it in:
+
+         // Add an animation to the game's ending credits
+         const endingUI = document.getElementById("ending-ui");
+         const bringUI = endingUI.animate(keysFade, timingFade);
+
+         // Pause said animation's credits
+         bringUI.pause();
+
+         // This function removes pointer events on the credits.
+         hide(endingUI);
+
+         // When the credits are later faded in,
+         // we re-add the pointer events when they're done
+         bringUI.onfinish = (event) => {
+           endingUI.style.pointerEvents = "auto";
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Animations API
+        * Animation
+        * Animation.finish()
+
+Web APIs manual                         from the official documentation

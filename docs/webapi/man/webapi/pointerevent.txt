@@ -1,0 +1,101 @@
+WEBAPI.POINTEREVENT(1)           Sandbox manual           WEBAPI.POINTEREVENT(1)
+
+       NAME
+
+       PointerEvent - The PointerEvent interface represents the state of a DOM event produced by a pointer such as the geometry of the contact point, the device t
+
+       POINTEREVENT
+
+       The PointerEvent interface represents the state of a DOM event produced by a pointer such as the geometry of the contact point, the device type that generated the event, the amount of pressure that was applied on the contact surface, etc.
+
+       A _pointer_ is a hardware agnostic representation of input devices (such as a mouse, pen or contact point on a touch-enable surface). The pointer can target a specific coordinate (or set of coordinates) on the contact surface such as a screen.
+
+       A pointer's _hit test_ is the process a browser uses to determine the target element for a pointer event. Typically, this is determined by considering the pointer's location and also the visual layout of elements in a document on screen media.
+
+       CONSTRUCTORS
+
+        * PointerEvent()
+          * : Creates a synthetic—and untrusted—PointerEvent.
+
+       INSTANCE PROPERTIES
+
+       _This interface inherits properties from MouseEvent and Event._
+
+        * PointerEvent.altitudeAngle (read-only)
+          * : Represents the angle between a transducer (a pointer or stylus) axis and the X-Y plane of a device screen.
+        * PointerEvent.azimuthAngle (read-only)
+          * : Represents the angle between the Y-Z plane and the plane containing both the transducer (a pointer or stylus) axis and the Y axis.
+        * PointerEvent.persistentDeviceId (read-only)
+          * : A unique identifier for the pointing device generating the PointerEvent.
+        * PointerEvent.pointerId (read-only)
+          * : A unique identifier for the pointer causing the event.
+        * PointerEvent.width (read-only)
+          * : The width (magnitude on the X axis), in CSS pixels, of the contact geometry of the pointer.
+        * PointerEvent.height (read-only)
+          * : The height (magnitude on the Y axis), in CSS pixels, of the contact geometry of the pointer.
+        * PointerEvent.pressure (read-only)
+          * : The normalized pressure of the pointer input in the range 0 to 1, where 0 and 1 represent the minimum and maximum pressure the hardware is capable of detecting, respectively.
+        * PointerEvent.tangentialPressure (read-only)
+          * : The normalized tangential pressure of the pointer input (also known as barrel pressure or cylinder stress) in the range -1 to 1, where 0 is the neutral position of the control.
+        * PointerEvent.tiltX (read-only)
+          * : The plane angle (in degrees, in the range of -90 to 90) between the Y–Z plane and the plane containing both the pointer (e.g., pen stylus) axis and the Y axis.
+        * PointerEvent.tiltY (read-only)
+          * : The plane angle (in degrees, in the range of -90 to 90) between the X–Z plane and the plane containing both the pointer (e.g., pen stylus) axis and the X axis.
+        * PointerEvent.twist (read-only)
+          * : The clockwise rotation of the pointer (e.g., pen stylus) around its major axis in degrees, with a value in the range 0 to 359.
+        * PointerEvent.pointerType (read-only)
+          * : Indicates the device type that caused the event (mouse, pen, touch, etc.).
+        * PointerEvent.isPrimary (read-only)
+          * : Indicates if the pointer represents the primary pointer of this pointer type.
+
+       INSTANCE METHODS
+
+        * PointerEvent.getCoalescedEvents()
+          * : Returns a sequence of all PointerEvent instances that were coalesced into the dispatched pointermove event.
+        * PointerEvent.getPredictedEvents()
+          * : Returns a sequence of PointerEvent instances that the browser predicts will follow the dispatched pointermove event's coalesced events.
+
+       POINTER EVENT TYPES
+
+       The PointerEvent interface has several event types. To determine which event fired, look at the event's type property.
+
+       > It's important to note that in many cases, both pointer and mouse events get sent (in order to let non-pointer-specific code still interact with the user). If you use pointer events, you should call preventDefault() to keep the mouse event from being sent as well.
+        * pointerover
+          * : This event is fired when a pointing device is moved into an element's hit test boundaries.
+        * pointerenter
+          * : This event is fired when a pointing device is moved into the hit test boundaries of an element or one of its descendants, including as a result of a pointerdown event from a device that does not support hover (see pointerdown). This event type is similar to pointerover, but differs in that it does not bubble.
+        * pointerdown
+          * : The event is fired when a pointer becomes _active_. For mouse, it is fired when the device transitions from no buttons pressed to at least one button pressed. For touch, it is fired when physical contact is made with the digitizer. For pen, it is fired when the stylus makes physical contact with the digitizer.
+       > For touchscreen browsers that allow direct manipulation, a pointerdown event triggers implicit pointer capture, which causes the target to capture all subsequent pointer events as if they were occurring over the capturing target. Accordingly, pointerover, pointerenter, pointerleave, and pointerout will not fire as long as this capture is set. The capture can be released manually by calling element.releasePointerCapture on the target element, or it will be implicitly released after a pointerup or pointercancel event.
+        * pointermove
+          * : This event is fired when a pointer changes coordinates.
+        * pointerrawupdate (experimental)
+          * : This event is fired when any of a pointer's properties change.
+        * pointerup
+          * : This event is fired when a pointer is no longer _active_.
+        * pointercancel
+          * : A browser fires this event if it concludes the pointer will no longer be able to generate events (for example the related device is deactivated).
+        * pointerout
+          * : This event is fired for several reasons including: pointing device is moved out of the hit test boundaries of an element; firing the pointerup event for a device that does not support hover (see pointerup); after firing the pointercancel event (see pointercancel); when a pen stylus leaves the hover range detectable by the digitizer.
+        * pointerleave
+          * : This event is fired when a pointing device is moved out of the hit test boundaries of an element. For pen devices, this event is fired when the stylus leaves the hover range detectable by the digitizer.
+        * gotpointercapture
+          * : This event is fired when an element receives pointer capture.
+        * lostpointercapture
+          * : This event is fired after pointer capture is released for a pointer.
+
+       EXAMPLE
+
+       Examples of each property, event type, and global event handler are included in their respective reference pages.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Touch events
+        * GestureEvent
+        * touch-action
+
+Web APIs manual                         from the official documentation

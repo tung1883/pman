@@ -1,0 +1,99 @@
+WEBAPI.HTMLOUTPUTELEMENT-HTMLOUTPUTELEMENT(1) Sandbox manual WEBAPI.HTMLOUTPUTELEMENT-HTMLOUTPUTELEMENT(1)
+
+       NAME
+
+       HTMLOutputElement: HTMLOutputElement() constructor - The HTMLOutputElement() constructor creates a new HTMLOutputElement object.
+
+       HTMLOUTPUTELEMENT: HTMLOUTPUTELEMENT() CONSTRUCTOR
+
+       The HTMLOutputElement() constructor creates a new HTMLOutputElement object.
+
+       > Currently only Safari implements this constructor, so using Document.createElement() is recommended for broader compatibility — see the example below.
+
+       SYNTAX
+
+         new HTMLOutputElement()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A new HTMLOutputElement object.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown with the message "Illegal constructor" in browsers that do not support this constructor.
+
+       EXAMPLES
+
+       CREATING AN OUTPUT ELEMENT PROGRAMMATICALLY
+
+       > In practice, you would usually create elements using Document.createElement() instead of this constructor, since createElement() is supported across all browsers.
+       This example creates an element using the HTMLOutputElement() constructor and inserts it into a form that adds two numbers together.
+
+         <form id="my-form">
+           <label>
+             Number one
+             <input type="number" id="a" value="5" />
+           </label>
+           +
+           <label>
+             Number two
+             <input type="number" id="b" value="3" />
+           </label>
+           =
+           <span id="output-container"></span>
+         </form>
+         <p id="warning" hidden>
+           ⚠️ Your browser does not support the
+           <code>HTMLOutputElement()</code> constructor.
+         </p>
+
+         body {
+           font-family: system-ui;
+         }
+
+         input {
+           width: 3rem;
+           font-size: inherit;
+         }
+
+         p {
+           padding: 0.25rem;
+           background-color: #fff2cc;
+         }
+
+         try {
+           new HTMLOutputElement();
+         } catch {
+           document.getElementById("warning").hidden = false;
+         }
+
+         const output = new HTMLOutputElement();
+         output.id = "result";
+         output.setAttribute("for", "a b");
+         document.getElementById("output-container").appendChild(output);
+
+         function updateResult() {
+           const a = document.getElementById("a");
+           const b = document.getElementById("b");
+           output.value = a.valueAsNumber + b.valueAsNumber;
+         }
+
+         document.getElementById("my-form").addEventListener("input", updateResult);
+         updateResult();
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTMLOutputElement
+        * 
+        * Document.createElement()
+
+Web APIs manual                         from the official documentation

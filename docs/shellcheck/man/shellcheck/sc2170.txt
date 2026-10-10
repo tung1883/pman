@@ -1,0 +1,49 @@
+SHELLCHECK.SC2170(1)             Sandbox manual             SHELLCHECK.SC2170(1)
+
+       NAME
+
+       Invalid number for -eq. Use = to compare as string (or use $var to expand as a variable). - read -r n
+
+       INVALID NUMBER FOR -EQ. USE TO COMPARE AS STRING (OR USE VAR TO EXPAND
+
+       INVALID NUMBER FOR -EQ. USE TO COMPARE AS STRING (OR USE VAR TO EXPAND
+
+       PROBLEMATIC CODE
+
+         read -r n
+         if [ n -lt 0 ]
+         then
+            echo "bad input"
+         fi
+
+         if [ "$USER" -eq root ]
+         then
+           echo "You are root"
+         fi
+
+       CORRECT CODE
+
+         read -r n
+         if [ "$n" -lt 0 ]        # Numerical comparison
+         then
+            echo "bad input"
+         fi
+
+         if [ "$USER" = root ]    # String comparison
+         then
+           echo "You are root"
+         fi
+
+       RATIONALE
+
+       You are comparing a string value with a numerical operator, such as -eq, -ne, -lt or -gt. These only work for numbers.
+
+       If you want to compare the value as a string, switch to the equivalent string operator: =, != \< or \>.
+
+       If you want to compare it as a number, such as n=42; while [ n -gt 1024/8 ]; .., then keep the operator and expand the operands yourself with $var or $((expr)): while [ "$n" -gt $((1024/8)) ]
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,51 @@
+WEBAPI.COOKIECHANGEEVENT(1)      Sandbox manual      WEBAPI.COOKIECHANGEEVENT(1)
+
+       NAME
+
+       CookieChangeEvent - The CookieChangeEvent interface of the Cookie Store API is the event type of the change event fired at a CookieStore when any cookies are cr
+
+       COOKIECHANGEEVENT
+
+       The CookieChangeEvent interface of the Cookie Store API is the event type of the change event fired at a CookieStore when any cookies are created or deleted.
+
+       > A cookie that is replaced due to the insertion of another cookie with the same name, domain, and path, is ignored and does not trigger a change event.
+
+       CONSTRUCTOR
+
+        * CookieChangeEvent()
+          * : Creates a new CookieChangeEvent.
+
+       INSTANCE PROPERTIES
+
+       _This interface also inherits properties from Event._
+
+        * CookieChangeEvent.changed (read-only)
+          * : An array listing all newly-created cookies. Note that this will exclude cookies which were created with an expiry date in the past, as these cookies are immediately deleted.
+        * CookieChangeEvent.deleted (read-only)
+          * : An array listing all cookies which were removed, either because they expired or because they were explicitly deleted. Note that this will include cookies which were created with an expiry date in the past.
+
+       INSTANCE METHODS
+
+       _This interface also inherits methods from Event._
+
+       EXAMPLES
+
+       In this example when the cookie is set, the event listener logs the event to the console. This is a CookieChangeEvent object with the changed property containing an object representing the cookie that has just been set.
+
+         cookieStore.addEventListener("change", (event) => {
+           console.log(event);
+         });
+
+         const oneDay = 24 * 60 * 60 * 1000;
+         cookieStore.set({
+           name: "cookie1",
+           value: "cookie1-value",
+           expires: Date.now() + oneDay,
+           domain: "example.com",
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

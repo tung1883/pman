@@ -1,0 +1,49 @@
+WEBAPI.NAVIGATEEVENT-DOWNLOADREQUEST(1) Sandbox manual WEBAPI.NAVIGATEEVENT-DOWNLOADREQUEST(1)
+
+       NAME
+
+       NavigateEvent: downloadRequest property - The downloadRequest read-only property of the
+
+       NAVIGATEEVENT: DOWNLOADREQUEST PROPERTY
+
+       The downloadRequest read-only property of the NavigateEvent interface returns the filename of the file requested for download, in the case of a download navigation (e.g., an or element with a download attribute), or null otherwise.
+
+       VALUE
+
+       A string containing the filename of the file requested for download, or null.
+
+       EXAMPLES
+
+         navigation.addEventListener("navigate", (event) => {
+           // Some navigations, e.g. cross-origin navigations, we
+           // cannot intercept. Let the browser handle those normally.
+           if (!event.canIntercept) {
+             return;
+           }
+
+           // Don't intercept fragment navigations or downloads.
+           if (event.hashChange || event.downloadRequest !== null) {
+             return;
+           }
+
+           event.intercept({
+             handler() {
+               if (event.formData) {
+                 processFormDataAndUpdateUI(event.formData, event.signal);
+               } else {
+                 doSinglePageAppNav(event.destination, event.signal);
+               }
+             },
+           });
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+
+Web APIs manual                         from the official documentation

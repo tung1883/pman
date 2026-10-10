@@ -1,0 +1,45 @@
+SHELLCHECK.SC2316(1)             Sandbox manual             SHELLCHECK.SC2316(1)
+
+       NAME
+
+       This applies local to the variable named readonly, which is probably not what you want. Use a separate command or the appropriate declare options instead. - local readonly foo=3
+
+       THIS APPLIES LOCAL TO THE VARIABLE NAMED READONLY, WHICH IS PROBABLY N
+
+       THIS APPLIES LOCAL TO THE VARIABLE NAMED READONLY, WHICH IS PROBABLY N
+
+       PROBLEMATIC CODE
+
+         local readonly foo=3
+         readonly export bar=4
+
+       CORRECT CODE
+
+         local foo=3
+         readonly foo
+
+         readonly bar=4
+         export bar
+
+       or
+
+         declare -r foo=3
+         declare -rx bar=4
+
+       RATIONALE
+
+       In most languages, declaration modifiers like public/static/const are keywords and you can apply multiple to any declaration.
+
+       In shell scripting they are instead command names, and anything after them is an argument. This means that readonly local foo will create two readonly variables: local, and foo. Neither will be local.
+
+       Instead, either use multiple commands, or use a single declare command with appropriate flags (declare will automatically make a variable local when invoked in a function, unless -g is passed to explicitly make it global).
+
+       EXCEPTIONS
+
+       If you want to name your variable local, you can quote it as in readonly "local" to make your intention clear to ShellCheck and other humans.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

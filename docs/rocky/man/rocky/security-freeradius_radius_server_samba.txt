@@ -1,0 +1,121 @@
+ROCKY.SECURITY-FREERADIUS_RADIUS_SERVER_SAMBA(1) Sandbox manual ROCKY.SECURITY-FREERADIUS_RADIUS_SERVER_SAMBA(1)
+
+       NAME
+
+       FreeRADIUS RADIUS Server with Samba Active Directory - RADIUS is an AAA (authentication, authorization, and accounting) protocol to manage network access. FreeRADIUS is the de facto RADIUS server
+
+       FREERADIUS RADIUS SERVER WITH SAMBA ACTIVE DIRECTORY
+
+       INTRODUCTION
+
+       RADIUS is an AAA (authentication, authorization, and accounting) protocol to manage network access. FreeRADIUS is the de facto RADIUS server for Linux and other Unix-like systems.
+
+       You can make FreeRADIUS work with Microsoft's Active Directory, say for 802.1X, Wi-Fi, or VPN authentication.
+
+       PREREQUISITES AND ASSUMPTIONS
+
+       The following are the minimum requirements for this procedure:
+
+        * The ability to run commands as the root user or use sudo to elevate privileges
+        * An Active Directory member server, whether using a Windows Server or Samba domain
+        * A RADIUS client, such as a router, switch, or Wi-Fi access point
+
+       CONFIGURING SAMBA
+
+       You will need to configure Active Directory with Samba. Note that sssd will not work.
+
+       INSTALLING FREERADIUS
+
+       You can install FreeRADIUS from the dnf repositories:
+
+         dnf install -y freeradius
+
+       CONFIGURING FREERADIUS
+
+       With the packages installed, you need first to generate the TLS encryption certificates for FreeRADIUS:
+
+         cd /etc/raddb/certs
+         ./bootstrap
+
+       Subsequently, you will need to enable ntlm_auth. Edit the /etc/raddb/sites-enabled/default file and insert the following in the authenticate block:
+
+         authenticate {
+         ...
+             ntlm_auth
+         ...
+         }
+
+       Insert the same in /etc/raddb/sites-enabled/inner_tunnel:
+
+         authenticate {
+         ...
+             ntlm_auth
+         ...
+         }
+
+       Change the program line in /etc/raddb/mods-enabled/ntlm_auth to this:
+
+             program = "/usr/bin/ntlm_auth --request-nt-key --domain=MYDOMAIN --username=%{mschap:User-Name} --password=%{User-Password}"
+
+       Replace MYDOMAIN with your Active Directory domain name.
+
+       You will need to Make ntlm_auth the default authentication type in /etc/raddb/mods-config/files/authorize. Add the following line:
+
+         DEFAULT   Auth-Type = ntlm_auth
+
+       You will also need to define clients. This is to prevent unauthorized access to our RADIUS server. Edit the clients.conf file:
+
+         vi clients.conf
+
+       Insert the following:
+
+         client 172.20.0.254 {
+                 secret = secret123
+         }
+
+       Replace 172.20.0.254 and secret123 with the IP address and secret value the clients will use. Repeat this for other clients.
+
+       ENABLING MS-CHAP
+
+       MS-CHAP allows hashed passwords to be sent to Active Directory via RADIUS. This is highly recommended.
+
+       Remove the following line from /etc/raddb/mods-config/files/authorize:
+
+         DEFAULT   Auth-Type = ntlm_auth
+
+       Then in /etc/raddb/mods-enabled/mschap insert the following line:
+
+         mschap {
+         ...
+                 ntlm_auth = "/usr/bin/ntlm_auth --request-nt-key --allow-mschapv2 --username=%{mschap:User-Name:-None} --domain=%{%{mschap:NT-Domain}:-MYDOMAIN} --challenge=%{mschap:Challenge:-00} --nt-response=%{mschap:NT-Response:-00}"
+         ...
+         }
+
+       Replace MYDOMAIN with your Active Directory domain name.
+
+       Finally, add the radiusd user to the wbpriv group:
+
+         usermod -a -G wbpriv radiusd
+
+       This step is important since it allows MS-CHAP authentication.
+
+       ENABLING FREERADIUS
+
+       After the initial configuration, you can start radiusd:
+
+         systemctl enable --now radiusd
+
+       CONFIGURING RADIUS ON A SWITCH
+
+       After setting up the FreeRADIUS server, you will configure a RADIUS client.
+
+       As an example, the author's MikroTik switch can be configured like:
+
+         /radius
+         add address=172.20.0.12 secret=secret123 service=dot1x
+         /interface dot1x server
+         add interface=combo3
+
+       Replace 172.20.0.12 with the FreeRADIUS server's IP address and secret123 with the secret you set earlier.
+
+Rocky Linux manual                      from the official documentation

@@ -1,0 +1,36 @@
+SHELLCHECK.SC1119(1)             Sandbox manual             SHELLCHECK.SC1119(1)
+
+       NAME
+
+       Add a linefeed between end token and terminating ). - var=$(fmt -s "$COLUMNS" << "eof"
+
+       ADD A LINEFEED BETWEEN END TOKEN AND TERMINATING )
+
+       ADD A LINEFEED BETWEEN END TOKEN AND TERMINATING )
+
+       PROBLEMATIC CODE
+
+         var=$(fmt -s "$COLUMNS" << "eof"
+         This is a bunch of text
+         eof)
+
+       CORRECT CODE
+
+         var=$(fmt -s "$COLUMNS" << "eof"
+         This is a bunch of text
+         eof
+         )
+
+       RATIONALE
+
+       When embedding a here document in $(..) or (..), there needs to be a linefeed (newline) between the here doc token and the closing ). Please insert one.
+
+       Failing to do so may cause warnings like this:
+
+       bash: warning: here-document at line 15 delimited by end-of-file (wanted eof') dash: 5: Syntax error: end of file unexpected (expecting ")")
+
+       EXCEPTIONS
+
+       This error may be incorrectly emitted for ksh, where this is allowed. In this case, please either write it in a standard way or ignore this warning.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,31 @@
+SHELLCHECK.SC2183(1)             Sandbox manual             SHELLCHECK.SC2183(1)
+
+       NAME
+
+       This format string has 2 variables, but is passed 1 argument. - printf "Hello %s, welcome to %s.\n" "$USER"
+
+       THIS FORMAT STRING HAS 2 VARIABLES, BUT IS PASSED 1 ARGUMENT
+
+       THIS FORMAT STRING HAS 2 VARIABLES, BUT IS PASSED 1 ARGUMENT
+
+       PROBLEMATIC CODE
+
+         printf "Hello %s, welcome to %s.\n" "$USER"
+
+       CORRECT CODE
+
+         printf "Hello %s, welcome to %s.\n" "$USER" "$HOSTNAME"
+
+       RATIONALE
+
+       ShellCheck has noticed that you're using a printf format string with more %s variables than arguments to fill them.
+
+       In the problematic example case, the last %s will just become an empty string every time.
+
+       Either remove the unused variables from the format string, or add enough arguments to fill them.
+
+       EXCEPTIONS
+
+       When using the Ksh/Bash %T timestamp extension, such as printf 'The time is %(%H:%M)T\n', an argument of -1 and no argument are both taken to mean the current time. In these cases, consider specifying -1 explicitly.
+
+ShellCheck manual                       from the official documentation

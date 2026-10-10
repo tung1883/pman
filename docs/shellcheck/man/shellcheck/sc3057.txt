@@ -1,0 +1,133 @@
+SHELLCHECK.SC3057(1)             Sandbox manual             SHELLCHECK.SC3057(1)
+
+       NAME
+
+       In POSIX sh, string indexing is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, STRING INDEXING IS UNDEFINED
+
+       IN POSIX SH, STRING INDEXING IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         echo "Your initial is ${USER:0:1}"
+
+       CORRECT CODE
+
+       Either switch to a shell that does support string indexing via parameter expansion, like bash or ksh, or rewrite with cut:
+
+         #!/bin/sh
+         echo "Your initial is $(printf '%s' "$USER" | cut -c 1)"
+
+       To find the last argument passed to a shell script without using bash’s ${@:$#}- or ${@: -1}-style string indexing, use the following, which even “works in the unix v7 bourne shell from 1979”:
+
+         #!/bin/sh
+         for argument in "$@"; do
+           : # `:`, also called as `true`, is a no-op here
+         done
+         printf '%s\n' "${argument-}"
+
+       USE PARAMETER EXPANSION INSTEAD
+
+       An alternative could be to use parameter expansion instead of string indexing. Either through a delimiting character, through matching undesired parts of a text, or through a "simple" pattern of length size.
+
+       THROUGH A DELIMITING CHARACTER
+
+       For instance, to use texts prefixed with a number, an option is to use a colon as a delimiter and use that in a parameter expansion that removes a pattern form either beginning or ending of variable value.
+
+         #!/usr/bin/env sh
+         exitForReasonY='6:Stopping because of 8x Y.'
+         printf "The ''reason y'' has number '%s' and its message is: '%s'." "${exitForReasonY#*:}" "${exitForReasonY%%:*}"
+
+       Or, in a function:
+
+         #!/usr/bin/env sh
+         exitForReasonX='44:Stopping %s because of X.'
+         reasonableExit ()
+         {
+           state="${1:-}"
+           state="${state:?is required}"
+           ${1+shift}
+           set -- "${state#*:}" ${1+"${@?}"}
+           >&2 printf "${@?}"
+           exit "${state%%:*}"
+         }
+         reasonableExit "${exitForReasonX?}" 'something'
+
+       THROUGH MATCHING UNDESIRED PARTS OF THE TEXT
+
+       Another way could be to remove what is unwanted by selecting that.
+
+         #!/usr/bin/env sh
+         exitForReasonY='6Stopping because of 8x Y.'
+         yNumber="${exitForReasonY%%[![:digit:]]*}"
+         yText="${exitForReasonY#${exitForReasonY%%[![:digit:]]*}}"
+         # or : yText="${exitForReasonY#${yNumber?}"
+         printf "The ''reason y'' has number '%s' and its message is: '%s'.\n" "${yNumber?}" "${yText?}"
+
+       Or, in a function:
+
+         #!/usr/bin/env sh
+         exitForReasonX='44Stopping %s because of X.'
+         reasonableExit ()
+         {
+           text="${1:-}"
+           text="${text:?is required}"
+           ${1+shift}
+           state="${text%%[![:digit:]]*}"
+           set -- "${text#"${state?}"}" ${1+"${@?}"}
+           >&2 printf "${@?}"
+           exit "${state?}"
+         }
+         reasonableExit "${exitForReasonX?}" 'something'
+
+       THROUGH A SIMPLE PATTERN
+
+       Remove the smallest _prefix_ from a text where prefix matches a pattern that matches any character as many times as the sum of start and length. Remove the smallest _suffix that matches that previous text from the original text. Remove the smallest _prefix_ that matches any character as many times as the start index.
+
+       This could also be the other way around, selecting an offset from the end of a text.
+
+         #!/usr/bin/env sh
+
+         part="zyxwvutsrqponmlkjihgfedcba"
+         #echo "${part:5:3}"
+         part="${part%${part#????????}}"
+         part="${part#?????}"
+         printf '%s\n' "${part?}"
+
+       Code "walkthrough"
+
+         #!/usr/bin/env sh
+
+         part="zyxwvutsrqponmlkjihgfedcba"
+         #echo "${part:5:3}"
+
+         part="${part%${part#????????}}"
+         ## Removed smallest prefix from text where prefix matches pattern ????????
+         ## in this case : "rqponmlkjihgfedcba"
+         ## "${part%${part#????????}}" = "${part%"rqponmlkjihgfedcba"}" = "zyxwvuts"
+         ## Removed smallest suffix from part of text where suffix matches pattern ${part#????????} (i.e. "rqponmlkjihgfedcba")
+
+         part="${part#?????}"
+         ## Removed smallest prefix from text where prefix matches ????? (i.e. "zyxwv")
+
+         printf '%s\n' "${part?}"
+
+       RATIONALE
+
+       String indexing is a bash and ksh extension, and does not work in dash or POSIX sh.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

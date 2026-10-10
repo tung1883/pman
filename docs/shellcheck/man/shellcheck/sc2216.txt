@@ -1,0 +1,41 @@
+SHELLCHECK.SC2216(1)             Sandbox manual             SHELLCHECK.SC2216(1)
+
+       NAME
+
+       Piping to rm, a command that doesn't read stdin. Wrong command or missing xargs? - ls | echo                      # Want to print result
+
+       PIPING TO RM, A COMMAND THAT DOESN'T READ STDIN. WRONG COMMAND OR MISS
+
+       PIPING TO RM, A COMMAND THAT DOESN'T READ STDIN. WRONG COMMAND OR MISS
+
+       PROBLEMATIC CODE
+
+         ls | echo                      # Want to print result
+         cat files | rm                 # Want to delete items from a file
+         find . -type f | cp dir        # Want to process 'find' output
+         rm file | true                 # Want to ignore errors
+
+       CORRECT CODE
+
+         ls
+         cat files | while IFS= read -r file; do rm -- "$file"; done
+         find . -type f -exec cp {} dir \;
+         rm file || true
+
+       RATIONALE
+
+       You are piping to one of several commands that don't read from stdin.
+
+       This may happen when:
+
+        * Confusing one command for another, e.g. using echo where cat was intended.
+        * Incorrectly refactoring, leaving a | on the previous line.
+        * Missing xargs, because stdin should be passed as positional parameters instead (use xargs -0 if at all possible).
+        * Intending to use || instead of |
+       Check your logic, and rewrite the command so data is passed correctly.
+
+       EXCEPTIONS
+
+       If you've overridden a command to return output, you can either rename it to make this obvious, or [[ignore]] this message.
+
+ShellCheck manual                       from the official documentation

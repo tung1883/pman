@@ -1,0 +1,62 @@
+HTTP.STATUS-408(1)               Sandbox manual               HTTP.STATUS-408(1)
+
+       NAME
+
+       408 Request Timeout - The HTTP 408 Request Timeout client error response status code indicates that the server would like to shut down this unused connection.
+
+       408 REQUEST TIMEOUT
+
+       The HTTP 408 Request Timeout client error response status code indicates that the server would like to shut down this unused connection. A 408 is sent on an idle connection by some servers, _even without any previous request by the client_.
+
+       A server should send the Connection: close header field in the response, since 408 implies that the server has decided to close the connection rather than continue waiting.
+
+       This response is used much more since some browsers, like Chrome and Firefox, use HTTP pre-connection mechanisms to speed up surfing.
+
+       > Some servers will shut down a connection without sending this message.
+
+       STATUS
+
+         408 Request Timeout
+
+       EXAMPLES
+
+       TIMEOUT IN FORM SUBMISSION
+
+       The following example shows what a client may send when an element uses an image on form submission with method="post":
+
+         POST /upload HTTP/1.1
+         Host: example.com
+         Content-Type: multipart/form-data; boundary=----Boundary1234
+         Content-Length: 4012345
+
+         ------Boundary1234
+         Content-Disposition: form-data; name="file"; filename="myImage.jpg"
+         Content-Type: image/jpeg
+
+         \xFF\xD8\xFF\xE0\x00...(binary data)
+         ------Boundary1234--
+
+       If the data is not received in full due to network issues or latency, the server may timeout the connection. Clients may repeat the request again, and a new connection will be used:
+
+         HTTP/1.1 408 Request Timeout
+         Content-Type: text/html
+
+         <html>
+         <head>
+             <title>408 Request Timeout</title>
+         </head>
+         <body>
+             <h1>408 Request Timeout</h1>
+             <p>Failed to process request in time. Please try again.</p>
+         </body>
+         </html>
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * HTTP response status codes
+        * Connection
+        * X-DNS-Prefetch-Control
+
+HTTP manual                             from the official documentation

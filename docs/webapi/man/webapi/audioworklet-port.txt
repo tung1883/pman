@@ -1,0 +1,50 @@
+WEBAPI.AUDIOWORKLET-PORT(1)      Sandbox manual      WEBAPI.AUDIOWORKLET-PORT(1)
+
+       NAME
+
+       AudioWorklet: port - The port read-only property of the AudioWorklet interface returns a MessagePort object that can be used to send and receive messages between
+
+       AUDIOWORKLET: PORT
+
+       The port read-only property of the AudioWorklet interface returns a MessagePort object that can be used to send and receive messages between the main thread and the associated AudioWorkletGlobalScope.
+
+       This allows for custom, asynchronous communication between code in the main thread and the global scope of an audio worklet, such as receiving control data or global settings.
+
+       VALUE
+
+       The MessagePort object connecting the AudioWorklet and its associated AudioWorkletGlobalScope.
+
+       EXAMPLES
+
+       See AudioWorkletNode.port for more examples.
+
+       USING A PORT FOR GLOBAL MESSAGES
+
+       In the following example, we can use port.onmessage to receive data and port.postMessage to send data:
+
+         const context = new AudioContext();
+         // Load the module that contains worklet code
+         await context.audioWorklet.addModule("processor.js");
+
+         // Listener for messages from AudioWorkletGlobalScope
+         context.audioWorklet.port.onmessage = (event) => {
+           console.log("Message from global worklet:", event.data);
+         };
+
+         // Set a global config, for example:
+         context.audioWorklet.port.postMessage({
+           volume: 0.8,
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * AudioWorkletGlobalScope — the global execution context of an AudioWorklet
+        * Web Audio API
+        * Using the Web Audio API
+        * Using AudioWorklet
+
+Web APIs manual                         from the official documentation

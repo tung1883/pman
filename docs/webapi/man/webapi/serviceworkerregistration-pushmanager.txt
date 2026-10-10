@@ -1,0 +1,52 @@
+WEBAPI.SERVICEWORKERREGISTRATION-PUSHMANAGER(1) Sandbox manual WEBAPI.SERVICEWORKERREGISTRATION-PUSHMANAGER(1)
+
+       NAME
+
+       ServiceWorkerRegistration: pushManager property - The pushManager read-only property of the
+
+       SERVICEWORKERREGISTRATION: PUSHMANAGER PROPERTY
+
+       The pushManager read-only property of the ServiceWorkerRegistration interface returns a reference to the PushManager interface for managing push subscriptions; this includes support for subscribing, getting an active subscription, and accessing push permission status.
+
+       VALUE
+
+       A PushManager object.
+
+       EXAMPLES
+
+         this.onpush = (event) => {
+           console.log(event.data);
+           // From here we can write the data to IndexedDB, send it to any open
+           // windows, display a notification, etc.
+         };
+
+         navigator.serviceWorker
+           .register("serviceworker.js")
+           .then((serviceWorkerRegistration) => {
+             serviceWorkerRegistration.pushManager.subscribe().then(
+               (pushSubscription) => {
+                 console.log(pushSubscription.subscriptionId);
+                 console.log(pushSubscription.endpoint);
+                 // The push subscription details needed by the application
+                 // server are now available, and can be sent to it using,
+                 // for example, the fetch() API.
+               },
+               (error) => {
+                 // During development it often helps to log errors to the
+                 // console. In a production environment it might make sense to
+                 // also report information about errors back to the
+                 // application server.
+                 console.error(error);
+               },
+             );
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Push API
+
+Web APIs manual                         from the official documentation

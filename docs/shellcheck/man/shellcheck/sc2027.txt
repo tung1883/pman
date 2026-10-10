@@ -1,0 +1,35 @@
+SHELLCHECK.SC2027(1)             Sandbox manual             SHELLCHECK.SC2027(1)
+
+       NAME
+
+       The surrounding quotes actually unquote this. Remove or escape them. - echo "You enter "$HOSTNAME". You can smell the wumpus." >> /etc/issue
+
+       THE SURROUNDING QUOTES ACTUALLY UNQUOTE THIS. REMOVE OR ESCAPE THEM
+
+       THE SURROUNDING QUOTES ACTUALLY UNQUOTE THIS. REMOVE OR ESCAPE THEM
+
+       PROBLEMATIC CODE
+
+         echo "You enter "$HOSTNAME". You can smell the wumpus." >> /etc/issue
+
+       CORRECT CODE
+
+         echo "You enter $HOSTNAME. You can smell the wumpus." >> /etc/issue
+
+       RATIONALE
+
+       Always quoting variables and command expansions is good practice, but blindly putting quotes left and right of them is not.
+
+       In this case, ShellCheck has noticed that the quotes around the expansion are unquoting it, because the left quote is terminating an existing double quoted string, while the right quote starts a new one:
+
+         echo "You enter "$HOSTNAME". You can smell the wumpus."
+              |----------|         |---------------------------|
+                 Quoted   No quotes           Quoted
+
+       If the quotes were supposed to be literal, they should be escaped. If the quotes were supposed to quote an expansion (as in the example), they should be removed because this is already a double quoted string.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

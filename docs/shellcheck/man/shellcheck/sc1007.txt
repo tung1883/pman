@@ -1,0 +1,42 @@
+SHELLCHECK.SC1007(1)             Sandbox manual             SHELLCHECK.SC1007(1)
+
+       NAME
+
+       Remove space after = if trying to assign a value (or for empty string, use var="" ... ). - LANGUAGE= nl
+
+       REMOVE SPACE AFTER IF TRYING TO ASSIGN A VALUE (OR FOR EMPTY STRING, U
+
+       PROBLEMATIC CODE
+
+         # I want programs to show text in Dutch!
+         LANGUAGE= nl
+
+         # I want to run the nl command with English error messages!
+         LANGUAGE= nl
+
+       CORRECT CODE
+
+         # I want programs to show text in Dutch!
+         LANGUAGE=nl
+
+         # I want to run the nl command with English error messages!
+         LANGUAGE='' nl
+
+       RATIONALE
+
+       It's easy to think that LANGUAGE= nl would assign "nl" to the variable LANGUAGE. It doesn't.
+
+       Instead, it runs nl (the "number lines" command) and sets LANGUAGE to an empty string in its environment.
+
+       Since trying to assign values this way is a common mistake, ShellCheck warns about it and asks you to be explicit when assigning empty strings (except for IFS, due to the common IFS= read .. idiom).
+
+       EXCEPTIONS
+
+       If you're familiar with this behavior and feel that the explicit version is unnecessary, you can [[ignore]] it.
+
+       RELATED RESOURCES
+
+        * https://www.gnu.org/software/bash/manual/html_node/Shell-Parameters.html
+        * https://mywiki.wooledge.org/BashPitfalls#foo_.3D_bar
+
+ShellCheck manual                       from the official documentation

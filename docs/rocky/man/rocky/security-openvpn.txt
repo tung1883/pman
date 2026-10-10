@@ -1,0 +1,213 @@
+ROCKY.SECURITY-OPENVPN(1)        Sandbox manual        ROCKY.SECURITY-OPENVPN(1)
+
+       NAME
+
+       OpenVPN - The following are the minimum requirements for this procedure:
+
+       OPENVPN
+
+       INTRODUCTION
+
+       OpenVPN is a free and open-source Virtual Private Network (VPN). This article will guide you through setting up OpenVPN with X509 Public Key Infrastructure (PKI). This guide requires a Rocky Linux system with a public IP address, as OpenVPN operates on a Client/Server model. The easiest way to achieve this is to spin up a virtual private server (VPS) through a cloud provider of your choice. At the time of writing, Google Cloud Platform offers a free tier for its e2-micro instances. If you are looking for the most straightforward OpenVPN setup using a point-to-point (p2p) VPN with no PKI, refer to their Static Key Mini-HOWTO.
+
+       PREREQUISITES AND ASSUMPTIONS
+
+       The following are the minimum requirements for this procedure:
+
+        * The ability to run commands as the root user or use sudo to elevate privileges
+        * A Rocky Linux system with a publicly accessible IP
+
+       INSTALL OPENVPN
+
+       Install the Extra Packages for Enterprise Linux (EPEL) repository:
+
+         sudo dnf install epel-release -y
+
+       Install OpenVPN:
+
+         sudo dnf install openvpn -y
+
+       SET UP CERTIFICATE AUTHORITY
+
+       Install easy-rsa:
+
+         sudo dnf install easy-rsa -y
+
+       Create easy-rsa directory in /etc/openvpn:
+
+         sudo mkdir /etc/openvpn/easy-rsa
+
+       Create symbolic link to easy-rsa files:
+
+         sudo ln -s /usr/share/easy-rsa /etc/openvpn/easy-rsa
+
+       Change directory to /etc/openvpn/easy-rsa:
+
+         cd /etc/openvpn/easy-rsa
+
+       Run the easyrsa script with init-pki parameter to initialize the Certificate Authority's PKI:
+
+         sudo ./easy-rsa/3/easyrsa init-pki
+
+       Run the easyrsa script with build-ca and nopass parameters to build the Certificate Authority without a password:
+
+         sudo ./easy-rsa/3/easyrsa build-ca nopass
+
+       CREATE CERTIFICATES
+
+       Run the easyrsa script with gen-req and nopass parameters to generate the server certificate with no password:
+
+         sudo ./easy-rsa/3/easyrsa gen-req server nopass
+
+       Run the easyrsa script with sign-req and server parameters to sign the server certificate:
+
+         sudo ./easy-rsa/3/easyrsa sign-req server server
+
+       > Note:
+       You can just repeat the below steps as many times as you need for additional clients.
+
+       Run the easyrsa script with gen-req and nopass parameters to generate client certificates with no password:
+
+         sudo ./easy-rsa/3/easyrsa gen-req client1 nopass
+
+       Run the easyrsa script with sign-req and client parameters to sign client certificates with no password:
+
+         sudo ./easy-rsa/3/easyrsa sign-req client client1
+
+       OpenVPN requires Diffie Hellman parameters. Run this command to generate them:
+
+         sudo ./easy-rsa/3/easyrsa gen-dh
+
+       CONFIGURE OPENVPN
+
+       Once PKI creation is complete, it is time to configure OpenVPN.
+
+       Copy server.conf sample file to /etc/openvpn:
+
+         sudo cp /usr/share/doc/openvpn/sample/sample-config-files/server.conf /etc/openvpn
+
+       Use your editor of choice to open and write to server.conf:
+
+         sudo vim /etc/openvpn/server.conf
+
+       Next, you must add the file paths for the certificate authority, server certificate, and server key to the OpenVPN server configuration file.
+
+       Copy and paste the file paths for the keys and certificates on lines 78-80:
+
+       > Note:
+       In Vim, you can add line numbers to your current editing with :set nu
+
+         ca /etc/openvpn/easy-rsa/pki/ca.crt
+         cert /etc/openvpn/easy-rsa/pki/issued/server.crt
+         key /etc/openvpn/easy-rsa/pki/private/server.key  # This file should be kept secret
+
+       Copy and paste the Diffie Hellman file path on line 85 of the sample file server.conf:
+
+         dh /etc/openvpn/easy-rsa/pki/dh.pem
+
+       OpenVPN uses SSL by default but can optionally use TLS. This guide uses SSL.
+
+       Comment out tls-auth ta.key key-pair values on line 244:
+
+         #tls-auth ta.key 0 # This file is secret
+
+       Save before closing server.conf.
+
+       CONFIGURE FIREWALL
+
+       OpenVPN runs on UDP port 1194 by default. You will use firewalld to allow OpenVPN traffic into the server.
+
+       Install firewalld:
+
+         sudo dnf install firewalld -y
+
+       Enable firewalld:
+
+         sudo systemctl enable --now firewalld
+
+       Allow OpenVPN through the firewall by adding it as a service:
+
+         sudo firewall-cmd --add-service=openvpn --permanent
+
+       Enable network address translation (NAT) and hide public client IP addresses by adding a masquerade rule to the firewall:
+
+         sudo firewall-cmd --add-masquerade --permanent
+
+       Reload the firewall:
+
+         sudo firewall-cmd --reload
+
+       CONFIGURE ROUTING
+
+       Allow IP forwarding with the following command:
+
+         sudo sysctl -w net.ipv4.ip_forward=1
+
+       START OPENVPN SERVER
+
+       According to OpenVPN documentation, "it's best to initially start the OpenVPN server from the command line":
+
+         sudo openvpn /etc/openvpn/server.conf
+
+       After starting OpenVPN, press Ctrl + Z, then send the job to the background:
+
+         bg
+
+       CONFIGURE AND START CLIENT
+
+       Besides the server, you need to install OpenVPN on all the clients to function. Install OpenVPN on the client if you have not already:
+
+         sudo dnf install openvpn -y
+
+       Create new directories to store the client's keys, certs, and configuration file:
+
+         sudo mkdir -p /etc/openvpn/pki`
+
+       Now copy the keys and certificates using a secure method of transport and place them in /etc/openvpn/pki. Some potential ways you can do this are using SFTP or SCP protocols. Check out Rocky Linux guide SSH Public and Private Key to setup SSH access.
+
+       These are the necessary certificates and keys needed for the client configuration and their file paths on the server:
+
+        * ca.crt
+        * client1.crt
+        * client1.key
+       After storing the necessary certificates and keys in /etc/openvpn/pki, copy the sample file client.conf to /etc/openvpn:
+
+         sudo cp /usr/share/doc/openvpn/sample/sample-config-files/client.conf /etc/openvpn
+
+       Open client.conf with an editor of your choice:
+
+         sudo vim /etc/openvpn/client.conf`
+
+       Map the file paths of the necessary certificates and keys to the client configuration file. You can do this by copying and pasting these text lines onto lines 88-90 of the sample file:
+
+         ca /etc/openvpn/pki/ca.crt
+         cert /etc/openvpn/pki/client1.crt
+         key /etc/openvpn/pki/client1.key
+
+       You will also need to set the server hostname or IP. You can leave the default UDP port 1194. In the sample file, this is on line 42:
+
+         remote server 1194
+
+       Save before quitting client.conf.
+
+       Start OpenVPN on the client:
+
+         sudo openvpn /etc/openvpn/client.conf
+
+       After starting OpenVPN press Ctrl + Z then send the job to the background:
+
+         bg
+
+       Run the below command to view jobs running in the background:
+
+         jobs
+
+       Send a test ping to the server. By default, its private address is 10.8.0.1:
+
+         ping 10.8.0.1
+
+       CONCLUSION
+
+       You should now have your own OpenVPN server up and running! With this basic configuration, you have secured a private tunnel for your systems to communicate over the greater internet. However, OpenVPN is highly customizable, and this guide leaves much to the imagination. You can further explore OpenVPN by checking out their website. You can also read more about OpenVPN right on your system - man openvpn - by using the man page.
+
+Rocky Linux manual                      from the official documentation

@@ -1,0 +1,276 @@
+DEBREF.CH08-I18N-AND-L10N(1)     Sandbox manual     DEBREF.CH08-I18N-AND-L10N(1)
+
+       CHAPTER 8. I18N AND L10N
+
+       Multilingualization (M17N) or Native Language Support for an application software is done in 2 steps.
+
+        * Internationalization (I18N): To make a software potentially handle multiple locales.
+        * Localization (L10N): To make a software handle an specific locale.
+         Tip
+       There are 17, 18, or 10 letters between "m" and "n", "i" and "n", or "l" and "n" in multilingualization, internationalization, and localization which correspond to M17N, I18N, and L10N. See Internationalization and localization for details.
+
+       8.1. THE LOCALE
+
+       The behavior of programs supporting internationalization are configured by the environment variable "$LANG" to support localization. Actual support of locale dependent features by the libc library requires to install locales or locales-all packages. The locales package requires to be initialized properly.
+
+       If neither locales or locales-all package are installed, support of locale features are lost and system uses US English messages and handles data as ASCII. This behavior is the same way as "$LANG" is set by "LANG=", "LANG=C", or "LANG=POSIX".
+
+       The modern software such as GNOME and KDE are multilingualized. They are internationalized by making them handle UTF-8 data and localized by providing their translated messages through the gettext(1) infrastructure. Translated messages may be provided as separate localization packages.
+
+       The current Debian desktop GUI system normally sets the locale under GUI environment as "LANG=xx_YY.UTF-8". Here, "xx" is ISO 639 language codes and "YY" is ISO 3166 country codes. These values are set by the desktop configuration GUI dialogue and change the program behavior. See Section 1.5.2, “The "$LANG" variable”
+
+       8.1.1. RATIONALE FOR UTF-8 LOCALE
+
+       The simplest representation of the text data is ASCII which is sufficient for English and uses less than 127 characters (representable with 7 bits).
+
+       Even plain English text may contain non-ASCII characters, e.g. slightly curly left and right quotation marks are not available in ASCII.
+
+         “double quoted text” is not "double quoted ASCII"
+         ‘single quoted text’ is not 'single quoted ASCII'
+
+       In order to support more characters, many character sets and encoding systems have been used to support many languages (see Table 11.2, “List of encoding values and their usage”).
+
+       Unicode character set can represent practically all characters known to human with 21 bit code point range (i.e., 0 to 10FFFF in hexadecimal notation).
+
+       Text encoding system UTF-8 fits Unicode code points into a sensible 8 bit data stream mostly compatible with the ASCII data processing system. This makes UTF-8 the modern preferred choice. UTF stands for Unicode Transformation Format. When ASCII plain text data is converted to UTF-8 one, it has exactly the same content and size as the original ASCII one. So you loose nothing by deploying UTF-8 locale.
+
+       Under UTF-8 locale with the compatible application program, you can display and edit any foreign language text data as long as required fonts and input methods are installed and enabled. For example under "LANG=fr_FR.UTF-8" locale, gedit(1) (text editor for the GNOME desktop) can display and edit Chinese character text data while presenting menus in French.
+
+         Tip
+       Both the new standard "en_US.UTF-8" locale and the old standard "C"/"POSIX" locale use the standard US English message, they have subtle differences in sorting order etc. If you want to handle not only ASCII characters but also handle all UTF-8 encoded characters gracefully while maintaining the old "C" local behavior, use the non-standard "C.UTF-8" locale on Debian.
+
+         Note
+       Some programs consume more memory after supporting I18N. This is because they are coded to use UTF-32(UCS4) internally to support Unicode for speed optimization and consume 4 bytes per each ASCII character data independent of locale selected. Again, you loose nothing by deploying UTF-8 locale.
+
+       8.1.2. THE RECONFIGURATION OF THE LOCALE
+
+       In order for the system to access a particular locale, the locale data must be compiled from the locale database.
+
+       The locales package does not come with pre-compiled locale data. You need to configure it as:
+
+         # dpkg-reconfigure locales
+
+       This process involves 2 steps.
+
+        * Select all required locale data to be compiled into the binary form. (Please make sure to include at least one UTF-8 locale)
+        * Set the system wide default locale value by creating "/etc/default/locale" for use by PAM (see Section 4.5, “PAM and NSS”).
+       The system wide default locale value set in "/etc/default/locale" may be overridden by the GUI configuration for GUI applications.
+
+         Note
+       Actual traditional encoding system can be identified by "/usr/share/i18n/SUPPORTED". Thus, the "LANG=en_US" is "LANG=en_US.ISO-8859-1".
+
+       The locales-all package comes with pre-compiled locale data for all locale data. Since it doesn't create "/etc/default/locale", you may still need to install the locales package, too.
+
+         Tip
+       The locales package of some Debian derivative distributions come with pre-compiled locale data for all locale data. You need to install both locales and locales-all packages on Debian to emulate such system environment.
+
+       8.1.3. FILENAME ENCODING
+
+       For cross platform data exchanges (see Section 10.1.7, “Removable storage device”), you may need to mount some filesystem with particular encodings. For example, mount(8) for vfat filesystem assumes CP437 if used without option. You need to provide explicit mount option to use UTF-8 or CP932 for filenames.
+
+         Note
+       When auto-mounting a hot-pluggable USB flash drive under modern desktop environment such as GNOME, you may provide such mount option by right clicking the icon on the desktop, click "Drive" tab, click to expand "Setting", and entering "utf8" to "Mount options:". The next time this USB flash drive is mounted, mount with UTF-8 is enabled.
+
+         Note
+       If you are upgrading system or moving disk drives from older non-UTF-8 system, file names with non-ASCII characters may be encoded in the historic and deprecated encodings such as ISO-8859-1 or eucJP. Please seek help of text conversion tools to convert them to UTF-8. See Section 11.1, “Text data conversion tools”.
+
+       Samba uses Unicode for newer clients (Windows NT, 200x, XP) but uses CP850 for older clients (DOS and Windows 9x/Me) as default. This default for older clients can be changed using "dos charset" in the "/etc/samba/smb.conf" file, e.g., to CP932 for Japanese.
+
+       8.1.4. LOCALIZED MESSAGES AND TRANSLATED DOCUMENTATION
+
+       Translations exist for many of the text messages and documents that are displayed in the Debian system, such as error messages, standard program output, menus, and manual pages. GNU gettext(1) command tool chain is used as the backend tool for most translation activities.
+
+       Under "Tasks" → "Localization" aptitude(8) provides an extensive list of useful binary packages which add localized messages to applications and provide translated documentation.
+
+       For example, you can obtain the localized message for manpage by installing the manpages-LANG package. To read the Italian-language manpage for programname from "/usr/share/man/it/", execute as the following.
+
+         LANG=it_IT.UTF-8 man programname
+
+       GNU gettext can accommodate priority list of translation languages with $LANGUAGE environment variable. For example:
+
+          $ export LANGUAGE="pt:pt_BR:es:it:fr"
+
+       For more, see info gettext and read the section "The LANGUAGE variable".
+
+       8.1.5. EFFECTS OF THE LOCALE
+
+       The sort order of characters with sort(1) and ls(1) are affected by the locale. Exporting LANG=en_US.UTF-8 sorts in the dictionary A->a->B->b...->Z->z order, while exporting LANG=C.UTF-8 sorts in ASCII binary A->B->...->Z->a->b... order.
+
+       The date format of ls(1) is affected by the locale (see Section 9.3.4, “Customized display of time and date”).
+
+       The date format of date(1) is affected by the locale. For example:
+
+          $ unset LC_ALL
+          $ LANG=en_US.UTF-8 date
+         Thu Dec 24 08:30:00 PM JST 2023
+          $ LANG=en_GB.UTF-8 date
+         Thu 24 Dec 20:30:10 JST 2023
+          $ LANG=es_ES.UTF-8 date
+         jue 24 dic 2023 20:30:20 JST
+          $ LC_TIME=en_DK.UTF-8 date
+         2023-12-24T20:30:30 JST
+
+       Number punctuation are different for locales. For example, in English locale, one thousand point one is displayed as "1,000.1" while in German locale, it is displayed as "1.000,1". You may see this difference in spreadsheet program.
+
+       Each detail feature of "$LANG" environment variable may be overridden by setting "$LC_*" variables. These environment variables can be overridden again by setting "$LC_ALL" variable. See locale(7) manpage for the details. Unless you have strong reason to create complicated configuration, please stay away from them and use only "$LANG" variable set to one of the UTF-8 locales.
+
+       8.2. THE KEYBOARD INPUT
+
+       The keyboard system can be configured at different layers of the system.
+
+        * Linux kernel: keyboard(5)
+        * X server: setxkbmap(1), xkeyboard-config(5), environment variable XMODIFIERS
+        * GUI desktop environment: Input Method framework: ibus, fcitx5
+        * Application: environment variables to set its input source: GTK_IM_MODULE, QT_IM_MODULE, QT_IM_MODULES, ...
+       Input method framework (IM) consists of:
+
+        * Input method engine (IME): Actual input method
+        * Configuration: Handles the configuration for IBus and other services such as IME plugins
+        * Panel: User interface such as language bar and candidate selection table
+       Multilingual input to the application is processed roughly as:
+
+         Keyboard        UI panel    Configuration          Application
+         |                  ^ |           |                        ^  ^
+         v                  | v           v                        |  |
+         Linux kernel -> Input method engine (IME) -+-> Gtk, Qt ---+  |
+                            | ^                     |                 |
+                            | |                     +-> X11, Wayland -+
+                            v |
+                         IME plugin (ibus-mozc, ...)
+
+       8.2.1. THE KEYBOARD INPUT FOR LINUX CONSOLE AND X WINDOW
+
+       The Debian system can be configured to work with many international keyboard arrangements using the keyboard-configuration package.
+
+         # dpkg-reconfigure keyboard-configuration
+
+       For the Linux console and the X Window system, this updates configuration parameters in "/etc/default/keyboard". Many non-ASCII characters including accented characters used by many European languages can be made available with dead key, AltGr key, and compose key.
+
+         Note
+       If ibus is active, your classic X keyboard configuration by the setxkbmap may be overridden by ibus even under classic X-based desktop environment. You can disable installed ibus using im-config to set input method to "None". For more, see Debian Wiki on keyboard.
+
+       8.2.2. THE KEYBOARD INPUT FOR WAYLAND
+
+       Unlike the X Window protocol, the Wayland core protocol doesn't even support the input of accented characters. Popular Wayland Compositors, such as Mutter for GNOME or KWin for KDE, implement extension protocols such as the text-input-unstable-v3 for the text input (see "current Wayland protocols and their support status").
+
+       The text-input-unstable-v3 protocol works well with Input methods for Wayland (see "Wayland input method project post-mortem").
+
+        * Most GUI applications are built with GUI libraries such as GTK or Qt which support this text-input-unstable-v3.
+        * Popular Input Method Engines (IME), such as IBus or Fcitx (version 5), can work with this text-input-unstable-v3.
+        * IMEs support text input for many languages with plugins.
+        * Recent IMEs integrate "X Keyboard Extension (XKB)" functionalities such as setxkbmap previously provided by the X Window to support accented character text input for European languages for Wayland.
+
+       8.2.3. THE INPUT METHOD SUPPORT WITH IBUS
+
+       For GNOME, "ibus" is the default IME which is automatically installed via its package dependency.
+
+        * Most multilingualized keyboard input features can be configured from "GNOME Settings" or "GNOME Tweaks".
+        * Some multilingualized keyboard input features may need to be configured from the ibus-setup(1) command.
+        * The emoji keyboard input is available by typing "SUPER-." (Simultaneously type Windows and period keys) followed by a keyword for each emoji and SPACE-keys.
+       The list of IBus and its plugin packages are the following.
+
+       Table 8.1. List of IBus and its plugin packages
+
+         package | popcon | size | supported locale
+         ibus | V:210, I:250 | 1828 | input method framework using dbus
+         ibus-mozc | V:2.2, I:3.9 | 979 | Japanese
+         ibus-anthy | V:0.5, I:1.2 | 8958 | Japanese
+         ibus-skk | V:0.05, I:0.16 | 242 | Japanese
+         ibus-kkc | V:0.04, I:0.17 | 206 | Japanese
+         ibus-libpinyin | V:1.1, I:5.1 | 123 | Chinese (for zh_CN)
+         ibus-chewing | V:0.16, I:0.84 | 298 | Chinese (for zh_TW)
+         ibus-libzhuyin | V:0.00, I:0.12 | 41021 | Chinese (for zh_TW)
+         ibus-rime | V:0.26, I:0.49 | 76 | Chinese (for zh_CN/zh_TW)
+         ibus-cangjie | V:0.01, I:0.11 | 235 | Chinese (for zh_HK)
+         ibus-hangul | V:0.3, I:2.0 | 261 | Korean
+         ibus-libthai | V:0.00, I:0.04 | 84 | Thai
+         ibus-table-thai | I:0.05 | 59 | Thai
+         ibus-unikey | V:0.18, I:0.38 | 286 | Vietnamese
+         keyman | V:0.00, I:0.12 | 507 | Multilingual: Keyman plugin for over 2000 languages
+         ibus-table | V:0.1, I:1.0 | 2364 | table plugin for IBus
+         ibus-m17n | V:0.2, I:1.9 | 373 | Multilingual: Indic, Arabic and others
+
+       8.2.4. THE INPUT METHOD SUPPORT WITH FCITX
+
+       The Fcitx (version 5) input method framework is popular with Chinese users and compatible with "ibus".
+
+       The list of "fcitx5" and its plugin packages are the following.
+
+       Table 8.2. List of Fcitx5 and its plugin packages
+
+         package | popcon | size | supported locale
+         fcitx5 | V:8, I:12 | 761 | input method framework compatible with "ibus"
+         fcitx5-mozc | V:1.1, I:1.8 | 1265 | Japanese
+         fcitx5-anthy | V:0.07, I:0.21 | 808 | Japanese
+         fcitx5-skk | V:0.06, I:0.17 | 369 | Japanese
+         fcitx5-kkc | V:0.01, I:0.07 | 416 | Japanese
+         fcitx5-chinese-addons | I:9.0 | 17 | Chinese (metapackage for zh_*)
+         fcitx5-pinyin | V:3.9, I:9.4 | 996 | Chinese (for zh_CN)
+         fcitx5-chewing | V:0.24, I:0.93 | 217 | Chinese (for zh_TW)
+         fcitx5-zhuyin | I:0.07 | 41051 | Chinese (for zh_TW)
+         fcitx5-rime | V:0.45, I:0.90 | 371 | Chinese (for zh_CN/zh_TW)
+         fcitx5-table-cangjie-large | I:0.12 | 1292 | Chinese (for zh_HK)
+         fcitx5-hangul | V:0.11, I:0.25 | 235 | Korean
+         fcitx5-libthai | I:0.04 | 119 | Thai
+         fcitx5-table-thai | I:0.07 | 34 | Thai
+         fcitx5-unikey | V:0.09, I:0.20 | 588 | Vietnamese
+         fcitx5-m17n | V:0.16, I:0.58 | 259 | Multilingual: Indic, Arabic and others
+         fcitx5-table | V:0.3, I:9.3 | 417 | table plugin for fcitx5
+         fcitx5-keyman | V:0.04, I:0.05 | 235 | Multilingual: Keyman plugin for over 2000 languages
+
+       8.2.5. AN EXAMPLE FOR JAPANESE
+
+       I find the Japanese input method started under English environment ("en_US.UTF-8") very useful. Here is how I did this with IBus:
+
+        * Install the Japanese input tool package ibus-mozc (or ibus-anthy).
+          * Generic: Execute ibus-setup(1) → select "Input Method" → click "Add" → "Japanese" → "Mozc (or Anthy)" → click "Add"
+          * GNOME: Select "Settings" → "Keyboard" → "Input Sources" → click "+" in "Input Sources" → "Japanese" → "Mozc (or Anthy)" → click "Add"
+        * You may choose as many input sources.
+        * Relogin to user's account.
+        * Setup each input source by right clicking the GUI toolbar icon.
+        * Switch among installed input sources by SUPER-SPACE. (SUPER is normally the Windows key.)
+         Tip
+       If you wish to have access to alphabet only keyboard environment with the physical Japanese keyboard on which shift-2 has " (double quotation mark) engraved, you select "Japanese" in the above procedure. You can enter Japanese using "Japanese mozc (or anthy)" with physical "US" keyboard on which shift-2 has @ (at mark) engraved.
+
+        * For Wayland:
+          * The im-config package does nothing and can be removed safely.
+          * You probably don't need to set environment variables except for the backward compatibility etc.
+          * If you need to set environment variables, create a file such as "~/.config/environment.d/50-input-method.conf "to set them.
+        * For X Window:
+          * Install the im-config package.
+          * The GUI menu entry for im-config(8) is "Input method".
+          * Alternatively, execute "im-config" from user's shell.
+          * im-config(8) behaves differently if command is executed from root or not.
+          * im-config(8) enables the best input method on the system as default without any user actions.
+
+       8.3. THE DISPLAY OUTPUT
+
+       Linux console can only display limited characters. (You need to use special terminal program such as jfbterm(1) to display non-European languages on the non-GUI console.)
+
+       GUI environment (Chapter 7, GUI System) can display any characters in the UTF-8 as long as required fonts are installed and enabled. (The encoding of the original font data is taken care and transparent to the user.)
+
+       8.3.1. THE TERMINAL CONFIGURATION
+
+       The Debian system can be configured to work with many international console arrangements using the console-setup package.
+
+         # dpkg-reconfigure console-setup
+
+       For the Linux console and the X Window system, this updates configuration parameters in "/etc/default/console-setup" to display many non-ASCII characters including accented characters used by many European languages can be made available.
+
+       There are several components to configure character console and ncurses(3) system features.
+
+        * The "/etc/terminfo/*/*" file (terminfo(5))
+        * The "$TERM" environment variable (term(7))
+        * setterm(1), stty(1), tic(1), and toe(1)
+       If the terminfo entry for xterm doesn't work with a non-Debian xterm, change your terminal type, "$TERM", from "xterm" to one of the feature-limited versions such as "xterm-r6" when you log in to a Debian system remotely. See "/usr/share/doc/libncurses5/FAQ" for more. "dumb" is the lowest common denominator for "$TERM".
+
+       8.3.2. EAST ASIAN AMBIGUOUS CHARACTER WIDTH CHARACTERS
+
+       Under the East Asian locale, the box drawing, Greek, and Cyrillic characters may be displayed wider than your desired width to cause the unaligned terminal output (see Unicode Standard Annex #11, 4.2 Ambiguous Characters).
+
+       You can work around this problem:
+
+        * gnome-terminal: Preferences → Profiles → Profile name → Compatibility → Ambiguous-wide characters → Narrow
+        * ncurses: Set environment export NCURSES_NO_UTF8_ACS=0.
+
+Debian Reference manual                 bundled documentation

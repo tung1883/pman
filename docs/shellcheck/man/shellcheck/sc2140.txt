@@ -1,0 +1,56 @@
+SHELLCHECK.SC2140(1)             Sandbox manual             SHELLCHECK.SC2140(1)
+
+       NAME
+
+       Word is of the form "A"B"C" (B indicated). Did you mean "ABC" or "A\"B\"C"? - echo "<img src="foo.png" />" > file.html
+
+       WORD IS OF THE FORM A B C (B INDICATED). DID YOU MEAN ABC OR A B C
+
+       WORD IS OF THE FORM A B C (B INDICATED). DID YOU MEAN ABC OR A B C
+
+       PROBLEMATIC CODE
+
+         echo "<img src="foo.png" />" > file.html
+
+       or
+
+         export "var"="42"
+
+       CORRECT CODE
+
+         echo "<img src=\"foo.png\" />" > file.html
+
+       or
+
+         export "var=42"
+
+       RATIONALE
+
+       This warning triggers when an unquoted literal string is found suspiciously sandwiched between two double quoted strings.
+
+       This usually indicates one of:
+
+        * quotes that were supposed to be nested, and therefore need to be escaped (like the example)
+        * quotes that are just plain unnecessary (like the export example).
+       Without escaping, the inner two quotes of the sandwich (the end quote of the first section and the start quote of the second section) are no-ops. The following two statements are identical, so the quotes that were intended to be part of the html output are instead removed:
+
+         echo "<img src="foo.png" />" > file.html
+         echo "<img src=foo.png />" > file.html
+
+       Similarly, these statements are identical, but work as intended:
+
+         export "var"="42"
+         export "var=42"
+
+       EXCEPTIONS
+
+       If you know that the quotes are ineffectual but you prefer it stylistically, you can ignore this message.
+
+       It's common not to realize that double quotes can span multiple elements, or to stylistically prefer to quote individual variables. For example, these statements are identical, but the first is laboriously and redundantly quoted:
+
+         http://"$user":"$password"@"$host"/"$path"
+         "http://$user:$password@$host/$path"
+
+       When ShellCheck detects the first style (i.e. the double quotes include only a single element each), it will suppress the warning.
+
+ShellCheck manual                       from the official documentation

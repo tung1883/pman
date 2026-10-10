@@ -1,0 +1,57 @@
+WEBAPI.REQUEST-FORMDATA(1)       Sandbox manual       WEBAPI.REQUEST-FORMDATA(1)
+
+       NAME
+
+       Request: formData() method - The formData() method of the Request interface
+
+       REQUEST: FORMDATA() METHOD
+
+       The formData() method of the Request interface reads the request body and returns it as a promise that resolves with a FormData object.
+
+       SYNTAX
+
+         formData()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that resolves with a FormData object.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown for one of the following reasons:
+            * The request body is disturbed or locked.
+            * There was an error decoding the body content (for example, because the Content-Encoding header is incorrect).
+            * The MIME type of the body cannot be determined from the Content-Type headers included in the request, or is not application/x-www-form-urlencoded or multipart/form-data.
+            * The body cannot be parsed as a FormData object.
+
+       EXAMPLES
+
+         const formData = new FormData();
+         const fileField = document.querySelector('input[type="file"]');
+
+         formData.append("username", "abc123");
+         formData.append("avatar", fileField.files[0]);
+
+         const request = new Request("/myEndpoint", {
+           method: "POST",
+           body: formData,
+         });
+
+         request.formData().then((data) => {
+           // do something with the formdata sent in the request
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Response.formData()
+
+Web APIs manual                         from the official documentation

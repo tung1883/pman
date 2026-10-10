@@ -1,0 +1,32 @@
+SHELLCHECK.SC2201(1)             Sandbox manual             SHELLCHECK.SC2201(1)
+
+       NAME
+
+       Brace expansion doesn't happen in [[ ]]. Use a loop. - for main in index.{htm,html,php}
+
+       BRACE EXPANSION DOESN'T HAPPEN IN . USE A LOOP
+
+       BRACE EXPANSION DOESN'T HAPPEN IN . USE A LOOP
+
+       PROBLEMATIC CODE
+
+         [[ "$file" = index.{htm,html,php} ]] && echo "This is the main file"
+
+       CORRECT CODE
+
+         for main in index.{htm,html,php}
+         do
+           [[ "$file" = "$main" ]] && echo "This is the main file"
+         done
+
+       RATIONALE
+
+       Brace expansions doesn't happen in [[ ]]. They will just be interpreted literally.
+
+       Instead, use a for loop to iterate over values, and apply your condition to each.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

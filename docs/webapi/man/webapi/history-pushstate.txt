@@ -1,0 +1,83 @@
+WEBAPI.HISTORY-PUSHSTATE(1)      Sandbox manual      WEBAPI.HISTORY-PUSHSTATE(1)
+
+       NAME
+
+       History: pushState() method - The pushState() method of the History interface adds an entry to the browser's
+
+       HISTORY: PUSHSTATE() METHOD
+
+       The pushState() method of the History interface adds an entry to the browser's session history stack.
+
+       SYNTAX
+
+         pushState(state, unused)
+         pushState(state, unused, url)
+
+       PARAMETERS
+
+        * state
+          * : The state object is a JavaScript object which is associated with the
+       new history entry created by pushState(). Whenever the user navigates to the new state, a popstate event is fired, and the state property of the event contains a copy of the history entry's state object.
+
+       The state object can be anything that can be serialized.
+
+       > Some browsers save state objects to the user's disk so they can be restored after the user restarts the browser, and impose a size limit on the serialized representation of a state object, and will throw an exception if you pass a state object whose serialized representation is larger than that size limit. So in cases where you want to ensure you have more space than what some browsers might impose, you're encouraged to use sessionStorage and/or localStorage.
+        * unused
+          * : This parameter exists for historical reasons, and cannot be omitted; passing an empty string is safe against future changes to the method.
+        * url (optional)
+          * : The new history entry's URL. Note that the browser won't
+       attempt to load this URL after a call to pushState(), but it may attempt to load the URL later, for instance, after the user restarts the browser. The new URL does not need to be absolute; if it's relative, it's resolved relative to the current URL. The new URL must be of the same origin as the current URL; otherwise, pushState() will throw an exception. If this parameter isn't specified, it's set to the document's current URL.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * SecurityError DOMException
+          * : Thrown if the associated document is not fully active, or if the provided url parameter is not a valid URL, or if the method is called too frequently.
+        * DataCloneError DOMException
+          * : Thrown if the provided state parameter is not serializable.
+
+       DESCRIPTION
+
+       In a sense, calling pushState() is similar to setting window.location = "#foo", in that both will also create and activate another history entry associated with the current document. But pushState() has a few advantages:
+
+        * The new URL can be any URL in the same origin as the current URL. In contrast,
+       setting window.location keeps you at the same document only if you modify only the hash.
+
+        * Changing the page's URL is optional. In contrast,
+       setting window.location = "#foo"; only creates a new history entry if the current hash isn't #foo.
+
+        * You can associate arbitrary data with your new history entry. With the hash-based
+       approach, you need to encode all of the relevant data into a short string.
+
+       Note that pushState() never causes a hashchange event to be fired, even if the new URL differs from the old URL only in its hash.
+
+       EXAMPLES
+
+       This creates a new browser history entry setting the _state_ and _url_.
+
+       JAVASCRIPT
+
+         const state = { page_id: 1, user_id: 5 };
+         const url = "hello-world.html";
+
+         history.pushState(state, "", url);
+
+       CHANGE A QUERY PARAMETER
+
+         const url = new URL(location);
+         url.searchParams.set("foo", "bar");
+         history.pushState({}, "", url);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Working with the History API
+        * Window: popstate event
+
+Web APIs manual                         from the official documentation

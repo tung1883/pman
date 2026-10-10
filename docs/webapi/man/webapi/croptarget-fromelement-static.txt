@@ -1,0 +1,64 @@
+WEBAPI.CROPTARGET-FROMELEMENT-STATIC(1) Sandbox manual WEBAPI.CROPTARGET-FROMELEMENT-STATIC(1)
+
+       NAME
+
+       CropTarget: fromElement() static method - The fromElement() static method of the CropTarget interface returns a CropTarget instance that can be used to crop a captured video track to
+
+       CROPTARGET: FROMELEMENT() STATIC METHOD
+
+       The fromElement() static method of the CropTarget interface returns a CropTarget instance that can be used to crop a captured video track to the area in which a specified element is rendered.
+
+       Because the Region Capture API crops to an area of the current browser tab rather than capturing a specific element, any content drawn on top of the cropped area will be shown in the capture.
+
+       SYNTAX
+
+         CropTarget.fromElement(element)
+
+       PARAMETERS
+
+        * element
+          * : A reference to an Element that you want to use as a crop target. For an element to be used as a crop target, it must be:
+            * On-screen
+            * Visible, that is, not hidden via display: none for example.
+       In addition, the element will not be captured if the track being restricted has clones (that is, created by BrowserCaptureMediaStreamTrack.clone()) or is captured from a different tab to the current user's tab (passed via Window.postMessage(), for example).
+
+       RETURN VALUE
+
+       A Promise that resolves to a CropTarget object instance, which can then be passed to BrowserCaptureMediaStreamTrack.CropTo() to crop the video captured in the track to just the area the specified DOM element is rendered in.
+
+       CropTarget objects are serializable. They can be passed to another document using mechanisms such as Window.postMessage().
+
+       EXAMPLES
+
+         // Options for getDisplayMedia()
+         const displayMediaOptions = {
+           preferCurrentTab: true,
+         };
+
+         // Create crop target from DOM element
+         const demoElem = document.querySelector("#demo");
+         const cropTarget = await CropTarget.fromElement(demoElem);
+
+         // Capture video stream from user's webcam and isolate video track
+         const stream =
+           await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+         const [track] = stream.getVideoTracks();
+
+         // Crop video track
+         await track.cropTo(cropTarget);
+
+         // Broadcast cropped stream in <video> element
+         videoElem.srcObject = stream;
+
+       See Using the Element Capture and Region Capture APIs for in-context example code.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Screen Capture API
+        * Using the Element Capture and Region Capture APIs
+
+Web APIs manual                         from the official documentation

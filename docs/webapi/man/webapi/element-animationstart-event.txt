@@ -1,0 +1,137 @@
+WEBAPI.ELEMENT-ANIMATIONSTART-EVENT(1) Sandbox manual WEBAPI.ELEMENT-ANIMATIONSTART-EVENT(1)
+
+       NAME
+
+       Element: animationstart event - The animationstart event is fired when a CSS Animation has started. If there is an animation-delay, this event will fire once the delay peri
+
+       ELEMENT: ANIMATIONSTART EVENT
+
+       The animationstart event is fired when a CSS Animation has started. If there is an animation-delay, this event will fire once the delay period has expired. A negative delay will cause the event to fire with an elapsedTime equal to the absolute value of the delay (and, correspondingly, the animation will begin playing at that time index into the sequence).
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("animationstart", (event) => { })
+
+         onanimationstart = (event) => { }
+
+       EVENT TYPE
+
+       An AnimationEvent. Inherits from Event.
+
+       AnimationEvent
+
+       EXAMPLES
+
+       This listens for the animationstart event and logs a message when it is fired:
+
+         const animated = document.querySelector(".animated");
+
+         animated.addEventListener("animationstart", () => {
+           console.log("Animation started");
+         });
+
+       The same, but using onanimationstart:
+
+         const animated = document.querySelector(".animated");
+
+         animated.onanimationstart = () => {
+           console.log("Animation started");
+         };
+
+       LIVE EXAMPLE
+
+       HTML
+
+         <div class="animation-example">
+           <div class="container">
+             <p class="animation">You chose a cold night to visit our planet.</p>
+           </div>
+           <button class="activate" type="button">Activate animation</button>
+           <div class="event-log"></div>
+         </div>
+
+       CSS
+
+         .container {
+           height: 3rem;
+         }
+
+         .event-log {
+           width: 25rem;
+           height: 2rem;
+           border: 1px solid black;
+           margin: 0.2rem;
+           padding: 0.2rem;
+         }
+
+         .animation.active {
+           animation-duration: 2s;
+           animation-name: slide-in;
+           animation-iteration-count: 2;
+         }
+
+         @keyframes slide-in {
+           from {
+             transform: translateX(100%) scaleX(3);
+           }
+           to {
+             transform: translateX(0) scaleX(1);
+           }
+         }
+
+       JAVASCRIPT
+
+         const animation = document.querySelector("p.animation");
+         const animationEventLog = document.querySelector(
+           ".animation-example>.event-log",
+         );
+         const applyAnimation = document.querySelector(
+           ".animation-example>button.activate",
+         );
+         let iterationCount = 0;
+
+         animation.addEventListener("animationstart", () => {
+           animationEventLog.textContent = `${animationEventLog.textContent}'animation started' `;
+         });
+
+         animation.addEventListener("animationiteration", () => {
+           iterationCount++;
+           animationEventLog.textContent = `${animationEventLog.textContent}'animation iterations: ${iterationCount}' `;
+         });
+
+         animation.addEventListener("animationend", () => {
+           animationEventLog.textContent = `${animationEventLog.textContent}'animation ended'`;
+           animation.classList.remove("active");
+           applyAnimation.textContent = "Activate animation";
+         });
+
+         animation.addEventListener("animationcancel", () => {
+           animationEventLog.textContent = `${animationEventLog.textContent}'animation canceled'`;
+         });
+
+         applyAnimation.addEventListener("click", () => {
+           animation.classList.toggle("active");
+           animationEventLog.textContent = "";
+           iterationCount = 0;
+           const active = animation.classList.contains("active");
+           applyAnimation.textContent = active
+             ? "Cancel animation"
+             : "Activate animation";
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * CSS Animations
+        * Using CSS Animations
+        * AnimationEvent
+        * Related events: animationend, animationiteration, animationcancel
+
+Web APIs manual                         from the official documentation

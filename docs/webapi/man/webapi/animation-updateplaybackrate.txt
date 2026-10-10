@@ -1,0 +1,56 @@
+WEBAPI.ANIMATION-UPDATEPLAYBACKRATE(1) Sandbox manual WEBAPI.ANIMATION-UPDATEPLAYBACKRATE(1)
+
+       NAME
+
+       Animation: updatePlaybackRate() method - The updatePlaybackRate() method of the Web Animations API's
+
+       ANIMATION: UPDATEPLAYBACKRATE() METHOD
+
+       The updatePlaybackRate() method of the Web Animations API's Animation Interface sets the speed of an animation after first synchronizing its playback position.
+
+       In some cases, an animation may run on a separate thread or process and will continue updating even while long-running JavaScript delays the main thread. In such a case, setting the playbackRate on the animation directly may cause the animation's playback position to jump since its playback position on the main thread may have drifted from the playback position where it is currently running.
+
+       updatePlaybackRate() is an asynchronous method that sets the speed of an animation after synchronizing with its current playback position, ensuring that the resulting change in speed does not produce a sharp jump. After calling updatePlaybackRate() the animation's playbackRate is _not_ immediately updated. It will be updated once the animation's ready promise is resolved.
+
+       SYNTAX
+
+         updatePlaybackRate(playbackRate)
+
+       PARAMETERS
+
+        * playbackRate
+          * : The new speed to set. This may be a positive number (to speed up or slow down
+       the animation), a negative number (to make it play backwards), or zero (to effectively pause the animation).
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       A speed selector component would benefit from smooth updating of updatePlaybackRate(), as demonstrated below:
+
+         speedSelector.addEventListener("input", (evt) => {
+           cartoon.updatePlaybackRate(parseFloat(evt.target.value));
+           cartoon.ready.then(() => {
+             console.log(`Playback rate set to ${cartoon.playbackRate}`);
+           });
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Animations API
+        * Animation.playbackRate — read back the current playback rate or set
+       it in a synchronous manner.
+
+        * Animation.reverse() — invert the playback rate and restart playback
+       if necessary.
+
+        * Animation — contains other methods and properties you can use to
+       control web page animation.
+
+Web APIs manual                         from the official documentation

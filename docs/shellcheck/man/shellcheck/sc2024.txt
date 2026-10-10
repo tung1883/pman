@@ -1,0 +1,62 @@
+SHELLCHECK.SC2024(1)             Sandbox manual             SHELLCHECK.SC2024(1)
+
+       NAME
+
+       sudo doesn't affect redirects. Use ..| sudo tee file - or "Use ..| sudo tee -a file" instead of >> to append.
+
+       SUDO DOESN'T AFFECT REDIRECTS. USE .. SUDO TEE FILE
+
+       SUDO DOESN'T AFFECT REDIRECTS. USE .. SUDO TEE FILE
+
+       or "Use ..| sudo tee -a file" instead of >> to append.
+
+       or "Use sudo cat file | .." instead of < to read.
+
+       PROBLEMATIC CODE
+
+         sudo echo 3 > /proc/sys/vm/drop_caches
+
+         # Append to a file
+         sudo echo 'export FOO=bar' >> /etc/profile
+
+         # Read from a file
+         sudo wc -l < /etc/shadow
+
+       CORRECT CODE
+
+         # Write to a file
+         echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
+
+         # Append to a file
+         echo 'export FOO=bar' | sudo tee -a /etc/profile > /dev/null
+
+         # Read from a file
+         sudo cat /etc/shadow | wc -l
+
+       RATIONALE
+
+       Redirections are performed by the current shell before sudo is started. This means that it will use the current shell's user and permissions to open and read from or write to the file.
+
+        * To read from a file that requires additional privileges, you can replace sudo command < file with sudo cat file | command.
+        * To write to a file that requires additional privileges, you can replace sudo command > file with command | sudo tee file > /dev/null
+        * To append to a file, use the above with tee -a.
+        * If the file does not require special privileges but the command does, then you are already doing the right thing: please [[ignore]] the message.
+       The substitutions work by having a command open the file for reading or writing, instead of relying on the current shell. Since the command is run with elevated privileges, it will have access to files that the current user does not.
+
+       Note: there is nothing special about tee. It's just the simplest command that can both truncate and append to files without help from the shell. Here are equivalent alternatives:
+
+       Truncating:
+
+         echo 'data' | sudo dd of=file
+         echo 'data' | sudo sed 'w file'
+
+       Appending:
+
+         echo 'data' | sudo awk '{ print $0 >> "file" }'
+         echo 'data' | sudo sh -c 'cat >> file'
+
+       EXCEPTIONS
+
+       If you want to run a command as root but redirect as the normal user, you can [[ignore]] this message.
+
+ShellCheck manual                       from the official documentation

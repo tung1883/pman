@@ -1,0 +1,35 @@
+SHELLCHECK.SC2247(1)             Sandbox manual             SHELLCHECK.SC2247(1)
+
+       NAME
+
+       Flip leading $ and " if this should be a quoted substitution. - var=$"(whoami)"
+
+       FLIP LEADING AND IF THIS SHOULD BE A QUOTED SUBSTITUTION
+
+       FLIP LEADING AND IF THIS SHOULD BE A QUOTED SUBSTITUTION
+
+       PROBLEMATIC CODE
+
+         var=$"(whoami)"
+
+       CORRECT CODE
+
+         var="$(whoami)"
+
+       RATIONALE
+
+       ShellCheck has found a $"( or $"{ . This is most likely due to flipping the dollar-sign and double quote:
+
+       echo $"(cmd)" # Supposed to be "$(cmd)" echo $"{var}" # Supposed to be "${var}"
+
+       Instead of quoted substitutions, these will be interpreted as localized string resources ($"..") containing literal parentheses or curly braces. If this was not intentional, you should flip the " and $ like in the example.
+
+       EXCEPTIONS
+
+       If you intentionally wanted a localized string literal $".." that starts with ( or {, either [[ignore]] this error or start it with a different character.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

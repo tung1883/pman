@@ -1,0 +1,76 @@
+WEBAPI.SUBSCRIBER-SIGNAL(1)      Sandbox manual      WEBAPI.SUBSCRIBER-SIGNAL(1)
+
+       NAME
+
+       Subscriber: signal property - The signal read-only property of the Subscriber interface provides an AbortSignal that is aborted when the subscription ends. A producer can
+
+       SUBSCRIBER: SIGNAL PROPERTY
+
+       The signal read-only property of the Subscriber interface provides an AbortSignal that is aborted when the subscription ends. A producer can pass this signal to APIs such as fetch() to cancel work when it is no longer needed.
+
+       VALUE
+
+       An internally created AbortSignal. It is aborted when Subscriber.complete() or Subscriber.error() is called, or when all observers unsubscribe.
+
+       DESCRIPTION
+
+       This is a different object from any signal passed to Observable.subscribe(). A signal passed to subscribe() controls the observers subscribed with that signal; subscriber.signal tracks the shared subscription. When one observer unsubscribes, subscriber.signal is not aborted if other observers are still subscribed.
+
+       > This shared-subscription behavior may change. A proposal to give each observer its own Subscriber would make each subscription start a separate execution instead of reusing an active subscription.
+       For cleanup that does not use an API accepting an AbortSignal, use Subscriber.addTeardown(). Unlike registering an abort event listener, addTeardown() also runs the callback immediately if the subscriber is already inactive.
+
+       EXAMPLES
+
+       CANCELING A FETCH REQUEST
+
+       This example wraps a request for /data.json in an observable. Passing subscriber.signal to fetch() associates the request with the subscription's lifetime.
+
+         const observable = new Observable((subscriber) => {
+           fetch("/data.json", { signal: subscriber.signal })
+             .then((response) => {
+               if (!response.ok) {
+                 throw new Error(`Request failed: ${response.status}`);
+               }
+               return response.json();
+             })
+             .then((data) => {
+               subscriber.next(data);
+               subscriber.complete();
+             })
+             .catch((error) => {
+               if (subscriber.active) {
+                 subscriber.error(error);
+               }
+             });
+         });
+
+         const controller = new AbortController();
+         observable.subscribe(
+           {
+             next(data) {
+               console.log(data);
+             },
+             error(error) {
+               console.error(error);
+             },
+           },
+           { signal: controller.signal },
+         );
+
+         // To cancel the subscription and any pending request:
+         // controller.abort();
+
+       If controller.abort() is called while the request is pending, the only observer unsubscribes, which aborts subscriber.signal and cancels the request. The promise rejection handler checks subscriber.active so that cancellation does not cause a call to error() on an inactive subscriber, which would report an error to the global object.
+
+       On success, the producer sends the parsed data and completes the subscription. Request failures are forwarded to the observer's error callback while the subscription is active.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Creating custom observables
+        * Observable explainer
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,67 @@
+WEBAPI.RESPONSE-ERROR-STATIC(1)  Sandbox manual  WEBAPI.RESPONSE-ERROR-STATIC(1)
+
+       NAME
+
+       Response: error() static method - The error() static method of the Response interface returns a new Response object associated with a network error.
+
+       RESPONSE: ERROR() STATIC METHOD
+
+       The error() static method of the Response interface returns a new Response object associated with a network error.
+
+       This is mainly useful when writing service workers: it enables a service worker to send a response from a fetch event handler that will cause the fetch() call in the main app code to reject the promise.
+
+       An error response has its type set to error.
+
+       SYNTAX
+
+         Response.error()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Response object.
+
+       EXAMPLES
+
+       RETURNING A NETWORK ERROR FROM A SERVICE WORKER
+
+       Suppose a web app has a service worker, which contains the following fetch event handler:
+
+         // service-worker.js
+
+         self.addEventListener("fetch", (event) => {
+           const url = new URL(event.request.url);
+           if (url.pathname === "/salamander.jpg") {
+             event.respondWith(Response.error());
+           }
+         });
+
+       With this service worker, all fetch requests from the app will pass through the service worker to the network, except for requests to fetch "salamander.jpg", which will reject. This means that the following main thread code would throw an error, and the catch handler will run.
+
+         // main.js
+
+         const image = document.querySelector("#image");
+
+         try {
+           const response = await fetch("salamander.jpg");
+           const blob = await response.blob();
+           const objectURL = URL.createObjectURL(blob);
+           image.src = objectURL;
+         } catch (e) {
+           console.error(e);
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ServiceWorker API
+        * HTTP access control (CORS)
+        * HTTP
+
+Web APIs manual                         from the official documentation

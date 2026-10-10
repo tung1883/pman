@@ -1,0 +1,65 @@
+DOCKER.COMPOSE-FILE-MODELS(1)    Sandbox manual    DOCKER.COMPOSE-FILE-MODELS(1)
+
+       NAME
+
+       Models - The top-level models section declares AI models that are used by your Compose application. These models are typically pulled as OCI artifact
+
+       MODELS
+
+       The top-level models section declares AI models that are used by your Compose application. These models are typically pulled as OCI artifacts, run by a model runner, and exposed as an API that your service containers can consume.
+
+       Services can only access models when explicitly granted by a models attribute within the services top-level element.
+
+       EXAMPLES
+
+       EXAMPLE 1
+
+         services:
+           app:
+             image: app
+             models:
+               - ai_model
+
+         models:
+           ai_model:
+             model: ai/model
+
+       In this basic example:
+
+        * The app service uses the ai_model.
+        * The ai_model is defined as an OCI artifact (ai/model) that is pulled and served by the model runner.
+        * Docker Compose injects connection info, for example AI_MODEL_URL, into the container.
+
+       EXAMPLE 2
+
+         services:
+           app:
+             image: app
+             models:
+               my_model:
+                 endpoint_var: MODEL_URL
+
+         models:
+           my_model:
+             model: ai/model
+             context_size: 1024
+             runtime_flags:
+               - "--a-flag"
+               - "--another-flag=42"
+
+       In this advanced setup:
+
+        * The service app references my_model using the long syntax.
+        * Compose injects the model runner's URL as the environment variable MODEL_URL.
+
+       ATTRIBUTES
+
+        * model (required): The OCI artifact identifier for the model. This is what Compose pulls and runs via the model runner.
+        * context_size: Defines the maximum token context size for the model.
+        * runtime_flags: A list of raw command-line flags passed to the inference engine when the model is started.
+
+       ADDITIONAL RESOURCES
+
+       For more examples and information on using model, see Use AI models in Compose
+
+Docker manual                           from the official documentation

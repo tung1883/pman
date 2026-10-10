@@ -1,0 +1,60 @@
+WEBAPI.IDBKEYRANGE-UPPER(1)      Sandbox manual      WEBAPI.IDBKEYRANGE-UPPER(1)
+
+       NAME
+
+       IDBKeyRange: upper property - The upper read-only property of the
+
+       IDBKEYRANGE: UPPER PROPERTY
+
+       The upper read-only property of the IDBKeyRange interface returns the upper bound of the key range.
+
+       VALUE
+
+       The upper bound of the key range (can be any type.)
+
+       EXAMPLES
+
+       The following example illustrates how you'd use a key range. Here we declare keyRangeValue = IDBKeyRange.upperBound("F", "W", true, true); — a range that includes everything between "F" and "W" but not including them — since both the upper and lower bounds have been declared as open (true). We open a transaction (using IDBTransaction) and an object store, and open a Cursor with IDBObjectStore.openCursor, declaring keyRangeValue as its optional key range value.
+
+       After declaring the key range, we log its upper property value to the console, which should appear as "W".
+
+       > For a more complete example allowing you to experiment with
+       > key range, have a look at our IDBKeyRange-example repo
+       > (view the example live too.)
+
+         function displayData() {
+           const keyRangeValue = IDBKeyRange.bound("F", "W", true, true);
+           console.log(keyRangeValue.upper);
+
+           const transaction = db.transaction(["fThings"], "readonly");
+           const objectStore = transaction.objectStore("fThings");
+
+           objectStore.openCursor(keyRangeValue).onsuccess = (event) => {
+             const cursor = event.target.result;
+             if (cursor) {
+               const listItem = document.createElement("li");
+               listItem.textContent = `${cursor.value.fThing}, ${cursor.value.fRating}`;
+               list.appendChild(listItem);
+
+               cursor.continue();
+             } else {
+               console.log("Entries all displayed.");
+             }
+           };
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

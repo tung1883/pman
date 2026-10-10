@@ -1,0 +1,45 @@
+WEBAPI.WINDOW-LAUNCHQUEUE(1)     Sandbox manual     WEBAPI.WINDOW-LAUNCHQUEUE(1)
+
+       NAME
+
+       Window: launchQueue property - The launchQueue read-only property of the Window interface provides access to the LaunchQueue class, which allows custom launch navigation h
+
+       WINDOW: LAUNCHQUEUE PROPERTY
+
+       The launchQueue read-only property of the Window interface provides access to the LaunchQueue class, which allows custom launch navigation handling to be implemented in a progressive web app (PWA), with the handling context signified by the launch_handler manifest field client_mode value.
+
+       The custom launch navigation handling functionality is controlled by the properties of the LaunchParams object passed into the LaunchQueue.setConsumer() callback function.
+
+       VALUE
+
+       A LaunchQueue object instance.
+
+       EXAMPLES
+
+         if ("launchQueue" in window) {
+           window.launchQueue.setConsumer((launchParams) => {
+             if (launchParams.targetURL) {
+               const params = new URL(launchParams.targetURL).searchParams;
+
+               // Assuming a music player app that gets a track passed to it to be played
+               const track = params.get("track");
+               if (track) {
+                 audio.src = track;
+                 title.textContent = new URL(track).pathname.substring(1);
+                 audio.play();
+               }
+             }
+           });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Launch Handler API
+        * Launch Handler API: Control how your app is launched
+        * Musicr 2.0 demo app
+
+Web APIs manual                         from the official documentation

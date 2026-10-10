@@ -1,0 +1,221 @@
+APACHE.CGI(1)                    Sandbox manual                    APACHE.CGI(1)
+
+       INTRODUCTION
+
+         Related Modules | Related Directives
+        * mod_alias
+        * mod_cgi
+        * mod_cgid
+        * AddHandler
+        * Options
+        * ScriptAlias
+       The CGI (Common Gateway Interface) defines a way for a web server to interact with external content-generating programs, which are often referred to as CGI programs or CGI scripts. It is a simple way to put dynamic content on your web site, using whatever programming language you're most familiar with. This document will be an introduction to setting up CGI on your httpd web server, and getting started writing CGI programs.
+
+       CONFIGURING HTTPD TO PERMIT CGI
+
+       Your httpd configuration must permit CGI execution before CGI programs will work. Several ways to do this are described below.
+
+       CGI support is provided by two modules: mod_cgid and mod_cgi. mod_cgid uses a dedicated external daemon to manage CGI processes and is required when httpd runs a threaded MPM (such as event or worker). mod_cgi runs CGI programs directly from within the server process and is used with non-threaded MPMs like prefork, or on Windows. From a configuration standpoint they are interchangeable — the directives are the same. See the mod_cgi and mod_cgid reference pages for implementation details.
+
+       If httpd has been built with shared module support, you need to ensure that the appropriate module is loaded. In your httpd.conf you need to make sure the LoadModule directive has not been commented out. For a threaded MPM:
+
+         LoadModule cgid_module modules/mod_cgid.so
+
+       For Windows, or a non-threaded MPM like prefork:
+
+         LoadModule cgi_module modules/mod_cgi.so
+
+       SCRIPTALIAS
+
+       The ScriptAlias directive tells httpd that a particular directory is set aside for CGI programs. httpd will assume that every file in this directory is a CGI program, and will attempt to execute it, when that particular resource is requested by a client.
+
+       The ScriptAlias directive looks like:
+
+         ScriptAlias "/cgi-bin/" "/usr/local/apache2/cgi-bin/"
+
+       The example shown is from your default httpd.conf configuration file, if you installed httpd in the default location. The ScriptAlias directive is much like the Alias directive, which defines a URL prefix that is to mapped to a particular directory. Alias and ScriptAlias are usually used for directories that are outside of the DocumentRoot directory. The difference between Alias and ScriptAlias is that ScriptAlias has the added meaning that everything under that URL prefix will be considered a CGI program. So, the example above tells httpd that any request for a resource beginning with /cgi-bin/ should be served from the directory /usr/local/apache2/cgi-bin/, and should be treated as a CGI program.
+
+       For example, if the URL http://www.example.com/cgi-bin/test.py is requested, httpd will attempt to execute the file /usr/local/apache2/cgi-bin/test.py and return the output. The file must exist, be executable, and produce output in the expected format; otherwise httpd returns an error.
+
+       CGI OUTSIDE OF SCRIPTALIAS DIRECTORIES
+
+       CGI programs are often restricted to ScriptAlias'ed directories for security reasons. In this way, administrators can tightly control who is allowed to use CGI programs. However, if the proper security precautions are taken, there is no reason why CGI programs cannot be run from arbitrary directories. For example, you may wish to let users have web content in their home directories with the UserDir directive. If they want to have their own CGI programs, but don't have access to the main cgi-bin directory, they will need to be able to run CGI programs elsewhere.
+
+       Allowing CGI execution in an arbitrary directory requires two steps. First, the cgi-script handler must be activated using the AddHandler or SetHandler directive. Second, ExecCGI must be specified in the Options directive.
+
+       EXPLICITLY USING OPTIONS TO PERMIT CGI EXECUTION
+
+       You could explicitly use the Options directive, inside your main server configuration file, to specify that CGI execution was permitted in a particular directory:
+
+         <Directory "/usr/local/apache2/htdocs/somedir">
+         Options +ExecCGI
+         </Directory>
+
+       The above directive tells httpd to permit the execution of CGI files. You will also need to tell the server what files are CGI files. The following AddHandler directive tells the server to treat all files with the cgi or py extension as CGI programs:
+
+         AddHandler cgi-script .cgi .py
+
+       HTACCESS FILES
+
+       The .htaccess tutorial shows how to activate CGI programs if you do not have access to httpd.conf.
+
+       USER DIRECTORIES
+
+       To allow CGI program execution for any file ending in .cgi in users' directories, you can use the following configuration.
+
+         <Directory "/home/*/public_html">
+         Options +ExecCGI
+         AddHandler cgi-script .cgi
+         </Directory>
+
+       To designate a cgi-bin subdirectory of a user's directory where everything will be treated as a CGI program, you can use the following.
+
+         <Directory "/home/*/public_html/cgi-bin">
+         Options ExecCGI
+         SetHandler cgi-script
+         </Directory>
+
+       WRITING A CGI PROGRAM
+
+       CGI programming differs from regular programming in two ways.
+
+       First, all output from your CGI program must be preceded by a MIME-type header. This is HTTP header that tells the client what sort of content it is receiving. Most of the time, this will look like:
+
+       Content-type: text/html
+
+       Secondly, your output needs to be in HTML, or some other format that a browser will be able to display. Most of the time, this will be HTML, but occasionally you might write a CGI program that outputs a GIF image, or other non-HTML content.
+
+       Apart from those two things, writing a CGI program will look a lot like any other program that you might write.
+
+       YOUR FIRST CGI PROGRAM
+
+       The following is an example CGI program that prints one line to your browser. Type in the following, save it to a file called first.py, and put it in your cgi-bin directory.
+
+         #!/usr/bin/env python3
+         print("Content-type: text/html\n")
+         print("Hello, World.")
+
+       The first line tells the operating system which interpreter to use. The first print call outputs the content-type header followed by a blank line (the \n in the string plus the newline that print() adds), which marks the end of HTTP headers. The second print call outputs the body. That is all a CGI program needs to produce a response.
+
+       If you open your favorite browser and tell it to get the address
+
+       http://www.example.com/cgi-bin/first.py
+
+       or wherever you put your file, you will see the one line Hello, World. appear in your browser window. It's not very exciting, but once you get that working, you'll have a good chance of getting about anything working.
+
+       BUT IT'S STILL NOT WORKING
+
+       Four basic things may appear in your browser when you try to access your CGI program from the web:
+
+         The output of your CGI program
+       Great! That means everything worked fine. If the output is correct, but the browser is not processing it correctly, make sure you have the correct Content-Type set in your CGI program.
+
+         The source code of your CGI program or a "POST Method Not Allowed" message
+       That means that you have not properly configured httpd to process your CGI program. Reread the section on configuring httpd and try to find what you missed.
+
+         A message starting with "Forbidden"
+       That means that there is a permissions problem. Check the httpd error log and the section below on file permissions.
+
+         A message saying "Internal Server Error"
+       If you check the httpd error log, you will probably find that it says "Premature end of script headers", possibly along with an error message generated by your CGI program. In this case, you will want to check each of the below sections to see what might be preventing your CGI program from emitting the proper HTTP headers.
+
+       FILE PERMISSIONS
+
+       Remember that the server does not run as you. That is, when the server starts up, it is running with the permissions of an unprivileged user - usually nobody, or www - and so it will need extra permissions to execute files that are owned by you. Usually, the way to give a file sufficient permissions to be executed by nobody is to give everyone execute permission on the file:
+
+         chmod a+x first.py
+
+       Also, if your program reads from, or writes to, any other files, those files will need to have the correct permissions to permit this.
+
+       PATH INFORMATION AND ENVIRONMENT
+
+       When you run a program from your command line, you have certain information that is passed to the shell without you thinking about it. For example, you have a PATH, which tells the shell where it can look for files that you reference.
+
+       When a program runs through the web server as a CGI program, it may not have the same PATH. Any programs that you invoke in your CGI program (like sendmail, for example) will need to be specified by a full path, so that the shell can find them when it attempts to execute your CGI program.
+
+       A common manifestation of this is the path to the script interpreter (often python3) indicated in the first line of your CGI program, which will look something like:
+
+         #!/usr/bin/env python3
+
+       Make sure that this is in fact the path to the interpreter.
+
+       When editing CGI scripts on Windows, end-of-line characters may be appended to the interpreter path. Ensure that files are then transferred to the server in ASCII mode. Failure to do so may result in "Command not found" warnings from the OS, due to the unrecognized end-of-line character being interpreted as a part of the interpreter filename.
+
+       MISSING ENVIRONMENT VARIABLES
+
+       If your CGI program depends on non-standard environment variables, you will need to assure that those variables are passed by httpd.
+
+       When you miss HTTP headers from the environment, make sure they are formatted according to RFC 2616, section 4.2: Header names must start with a letter, followed only by letters, numbers or hyphen. Any header violating this rule will be dropped silently.
+
+       PROGRAM ERRORS
+
+       Most of the time when a CGI program fails, it's because of a problem with the program itself. This is particularly true once you get the hang of this CGI stuff, and no longer make the above two mistakes. The first thing to do is to make sure that your program runs from the command line before testing it via the web server. For example, try:
+
+       cd /usr/local/apache2/cgi-bin  ./first.py
+
+       (Do not call the python3 interpreter directly. The shell and httpd should find the interpreter using the path information on the first line of the script.)
+
+       The first thing you see written by your program should be a set of HTTP headers, including the Content-Type, followed by a blank line. If you see anything else, httpd will return the Premature end of script headers error if you try to run it through the server. See Writing a CGI program above for more details.
+
+       ERROR LOGS
+
+       The error logs are your friend. Anything that goes wrong generates message in the error log. You should always look there first. If the place where you are hosting your web site does not permit you access to the error log, you should probably host your site somewhere else. Learn to read the error logs, and you'll find that almost all of your problems are quickly identified, and quickly solved.
+
+       SUEXEC
+
+       The suexec support program allows CGI programs to be run under different user permissions, depending on which virtual host or user home directory they are located in. Suexec has very strict permission checking, and any failure in that checking will result in your CGI programs failing with Premature end of script headers.
+
+       To check if you are using suexec, run apachectl -V and check for the location of SUEXEC_BIN. If httpd finds an suexec binary there on startup, suexec will be activated.
+
+       Unless you fully understand suexec, you should not be using it. To disable suexec, remove (or rename) the suexec binary pointed to by SUEXEC_BIN and then restart the server. If, after reading about suexec, you still wish to use it, then run suexec -V to find the location of the suexec log file, and use that log file to find what policy you are violating.
+
+       WHAT'S GOING ON BEHIND THE SCENES
+
+       As you become more advanced in CGI programming, it will become useful to understand more about what's happening behind the scenes. Specifically, how the browser and server communicate with one another. Because although it's all very well to write a program that prints "Hello, World.", it's not particularly useful.
+
+       ENVIRONMENT VARIABLES
+
+       Environment variables are values that float around you as you use your computer. They are useful things like your path (where the computer searches for the actual file implementing a command when you type it), your username, your terminal type, and so on. For a full list of your normal, every day environment variables, type env at a command prompt.
+
+       During the CGI transaction, the server and the browser also set environment variables, so that they can communicate with one another. These are things like the browser type (Chrome, Firefox, Lynx), the server type (httpd, Nginx, IIS), the name of the CGI program that is being run, and so on.
+
+       These variables are available to the CGI programmer, and are half of the story of the client-server communication. The complete list of required variables is at Common Gateway Interface RFC (RFC 3875).
+
+       This simple Python CGI program will display all of the environment variables that are being passed around. Two similar programs are included in the cgi-bin directory of the httpd distribution. Note that some variables are required, while others are optional, so you may see some variables listed that were not in the official list. In addition, httpd provides many different ways for you to add your own environment variables to the basic ones provided by default.
+
+         #!/usr/bin/env python3
+         import os
+
+         print("Content-type: text/html\n")
+         for key, value in os.environ.items():
+         print(f"{key} --> {value}<br>")
+
+       STDIN AND STDOUT
+
+       Other communication between the server and the client happens over standard input (STDIN) and standard output (STDOUT). In normal everyday context, STDIN means the keyboard, or a file that a program is given to act on, and STDOUT usually means the console or screen.
+
+       When you POST a web form to a CGI program, the data in that form is bundled up into a special format and gets delivered to your CGI program over STDIN. The program then can process that data as though it was coming in from the keyboard, or from a file
+
+       The "special format" is very simple. A field name and its value are joined together with an equals (=) sign, and pairs of values are joined together with an ampersand (&). Inconvenient characters like spaces, ampersands, and equals signs, are converted into their hex equivalent so that they don't gum up the works. The whole data string might look something like:
+
+       name=Rich%20Bowen&city=Lexington&state=KY&sidekick=Squirrel%20Monkey
+
+       You'll sometimes also see this type of string appended to a URL. When that is done, the server puts that string into the environment variable called QUERY_STRING. That's called a GET request. Your HTML form specifies whether a GET or a POST is used to deliver the data, by setting the METHOD attribute in the FORM tag.
+
+       Your program is then responsible for splitting that string up into useful information. Fortunately, libraries and modules are available to help you process this data, as well as handle other aspects of your CGI program.
+
+       CGI MODULES/LIBRARIES
+
+       When you write CGI programs, you should consider using a code library, or module, to do most of the grunt work for you. This leads to fewer errors, and faster development.
+
+       If you're writing CGI programs in Python, the standard library's cgi module (deprecated in Python 3.11, removed in 3.13) handled form parsing. For current Python versions, use the urllib.parse module to parse query strings and form data. For more complex applications, consider a lightweight WSGI framework, though that moves beyond the scope of traditional CGI.
+
+       FOR MORE INFORMATION
+
+       The current CGI specification is available in the Common Gateway Interface RFC (RFC 3875).
+
+       When you post a question about a CGI problem that you're having, whether to a mailing list, or to a newsgroup, make sure you provide enough information about what happened, what you expected to happen, and how what actually happened was different, what server you're running, what language your CGI program was in, and, if possible, the offending code. This will make finding your problem much simpler.
+
+       Questions about CGI problems should never be posted to the httpd bug database unless you are sure you have found a problem in the httpd source code.
+
+Apache HTTP Server manual               bundled documentation

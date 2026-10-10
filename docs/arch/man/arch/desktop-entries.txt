@@ -1,0 +1,437 @@
+ARCH.DESKTOP-ENTRIES(1)          Sandbox manual          ARCH.DESKTOP-ENTRIES(1)
+
+       The XDG Desktop Entry specification defines a standard for applications to integrate into application menus of desktop environments implementing the XDG Desktop Menu specification.
+
+       BASICS
+
+       The format of desktop entries is similar to INI files. These must have a .desktop extension, and contain a [Desktop Entry] section. Within the [Desktop Entry] section, keys named Type and Name are required; other keys can optionally define its appearance in the application menu and other behaviors.
+
+       The three available Types are:
+
+        * Type=Application defines how to launch an application and what MIME types it supports (used by XDG MIME Applications). With XDG Autostart Application entries can be started automatically by placing them in specific directories. Application entries use the .desktop file extension. See #Desktop entries for applications.
+        * Type=Link defines a shortcut to a URL. Link entries use the .desktop file extension.
+        * Type=Directory defines the appearance of a submenu in the application menu. Directory entries use the .directory file extension.
+       The following sections will roughly explain how these are created and validated.
+
+       DESKTOP ENVIRONMENT SUPPORT
+
+       The following table describes desktop environments' support for various features of the Desktop Entry specification.
+
+         Desktop environment | Launcher (Package) | Autostart | Application | Link
+         COSMIC | cosmic-launcher | Yes | Yes
+         Cinnamon | gio (glib2) | No | Yes | No
+         GNOME
+         GNOME Flashback
+         MATE
+         Deepin | dde-open1 (deepin-api) | Yes | Partially
+         Enlightenment | enlightenment_open (enlightenment)
+         KDE Plasma | kde-open2 (kde-cli-tools) | Yes | Yes | Yes
+         LXDE | pcmanfm (pcmanfm)
+         LXQt | pcmanfm-qt (pcmanfm-qt)
+         Xfce | exo-open3 (exo)
+         Environment-agnostic | gtk-launch4 (gtk3) | No | Partially | No
+         dex (dex) | Yes | Yes | No
+         xdg-open (xdg-utils) | No | Buggy | No
+         app2unit5 (app2unitAUR) | No6 | Yes | Yes
+         uwsm app5 (uwsm) | No6 | Yes | No
+         tomloader sd-xdg-v0.35 (tomloaderAUR) | No6 | Yes | No
+        * .desktop files of type Application must have the executable bit set to be launched by dde-open
+        * If KDE_SESSION_VERSION is unset, then kfmclient from konqueror will be used instead. (KDE Plasma should set this variable under any condition, though.)
+        * gio (from glib2) will also be tried
+        * Only if application is in /usr/share/applications
+        * Designed for systemd-managed graphical sessions
+        * Systemd manages XDG autostart natively
+
+       USAGE
+
+       Users commonly interact with desktop entries through the main menu of their desktop environment, such as GNOME's "Activity Overview," or a dock or keystroke launcher like dmenu.
+
+       Main menu entries are typically installed by new programs in a system-wide location, but users can create their own in their home directory. Menu entries can be modified with one of the graphical tools mentioned below, or with a plain text editor.
+
+       Desktop entries can also be invoked from the command line, with a tool like dex:
+
+         $ dex /usr/share/applications/firefox.desktop
+
+       DESKTOP ENTRIES FOR APPLICATIONS
+
+       Desktop entries for applications, or .desktop files, are basically comprised of a path to an executable with some metadata. They must have Type=Application and contain at least the Name= and Exec= keys, to locate the executable on disk.
+
+       These files usually reside in /usr/share/applications/ or /usr/local/share/applications/ for applications installed system-wide, or ~/.local/share/applications/ for user-specific applications. User entries take precedence over system entries, and can be used to, for example, hide or change the default icon of a system entry.
+
+       EXAMPLE .DESKTOP FILE
+
+       Following is an example of a .desktop file for launching an application, with comments to explain each key. It is only meant to give an impression and does not show how to utilize all possible entry keys.
+
+       System-wide application entries are typically found in /usr/share/applications; you can create your own in ~/.local/share/applications with a text editor, or use one of the available tools to help with that.
+
+       Note As discussed above, only the Type and Name keys are required.
+
+         ~/.local/share/applications/jmemorize.desktop
+
+         [Desktop Entry]
+
+         # The type as listed above
+         Type=Application
+
+         # The version of the desktop entry specification to which this file conforms
+         Version=1.0
+
+         # The name of the application
+         Name=jMemorize
+
+         # A comment which can/will be used as a tooltip
+         Comment=Flash card based learning tool
+
+         # The path to the folder in which the executable is run
+         Path=/opt/jmemorise
+
+         # The executable of the application, possibly with arguments.
+         Exec=jmemorize
+
+         # The name of the icon that will be used to display this entry
+         Icon=jmemorize
+
+         # Describes whether this application needs to be run in a terminal or not
+         Terminal=false
+
+         # Describes the categories in which this entry should be shown
+         Categories=Education;Languages;Java;
+
+       KEYS COMMONLY FOUND IN APPLICATION ENTRIES
+
+       All recognized entries can be found on the freedesktop site. Here are some examples:
+
+        * Type (required)
+       defines what type of desktop entry this is, as discussed above (required); commonly Type=Application
+
+        * Version
+       specifies which version of the Desktop Entry spec this entry conforms to (optional)
+
+        * Name (required)
+        * GenericName, Comment and Keywords
+       the name of the menu item or icon for this entry, along with other descriptive information about it
+
+        * TryExec and Exec
+       when Type=Application, these keys specify where to find the program it is intended to run
+
+       Although Comment and Keywords are not always exposed by the user interface (e.g. the main menu), they can help user to locate the application based on keywords or concepts. For example:
+
+         Name=Pidgin
+         GenericName=Internet messenger
+
+       or
+
+         Name=NoteCase
+         GenericName=Note manager
+         Comment=NoteCase is a hierarchical note manager (outliner), organizing notes in a tree-like structure
+
+       Some best practices:
+
+        * Name should be the official name of the application, as it would appear in the title bar or "About" box
+        * GenericName is what you would generally call an application that performs this application's functions, i.e., Firefox is a "Web Browser"
+
+       THE EXEC KEY
+
+       The Exec= key in an application entry is typically the name of an executable which is expected to be in the user's search path, but an absolute path can be specified for greater security.
+
+       The Exec key accepts several "field codes" which can be used to transmit arguments to the launched program, e.g., when used as a drag-and-drop target, or identified as the preferred application for opening a specific type of file or URL. These arguments are passed to the program such that internal whitespace and shell metacharacters are preserved, so you do not need to worry (as much) about quoting.
+
+       Here are the most useful field codes:
+
+         Field code (reference) | Expands to
+         %, %F | a single filename, or a list of files, each as a separate argument
+         %u, %U | a single URL, or a list of URLs
+         %i | two separate arguments to the program: --icon, followed by the value of the Icon
+
+       FLATPAK FILE FORWARDING
+
+       The Exec key for Flatpak applications often contains some syntax unique to flatpak run .
+
+         Exec=/usr/bin/flatpak run --command=imhex --file-forwarding net.werwolv.ImHex @@u %U @@
+
+       See flatpak-run(1) for the details, but in a nutshell:
+
+         --file-forwarding
+            […] all arguments that are enclosed between a pair of '@@' arguments are interpreted as
+            file paths, exported in the document store, and passed to the command in the form of the
+            resulting document path. Arguments between '@@u' and '@@' are considered uris, and any file:
+            uris are exported. The exports are non-persistent and with read and write permissions for the
+            application.
+
+       CONTEXT MENU ACTIONS
+
+       Some desktop environments and file managers also register contextual actions with desktop entries, e.g. right-click menu actions for a selected file or files. Pantheon is one example, using a background service called Contractor and desktop entries with a .contract extension.
+
+       Here is a simple example using notify-send(1) to send a desktop notification with the path of a selected file:
+
+         ~/.local/share/contractor/notify-send.contract
+
+         [Contractor Entry]
+         Name=Notify
+         Icon=dialog-information
+         Description=Create a notify-send notification with the current filename(s)
+         # appear in the context menu for every file type except directories
+         MimeType=!inode;
+         TryExec=notify-send
+         # %i is expanded as '--icon <Icon>'!
+         Exec=notify-send %i -u low "Message from Files" "%F"
+
+       Here is a more complex example that will convert any PNG files selected to PNMs in parallel:
+
+         ~/.local/share/contractor/png-to-pnm.contract
+
+         [Contractor Entry]
+         Name=Convert to PNM
+         Icon=image-x-generic
+         Description=Convert PNGs to PPMs
+         MimeType=image/png;
+         TryExec=parallel
+         TryExec=pngtopnm
+         # from the spec:
+         # > Note that the general escape rule for values of type string states
+         # > that the backslash character can be escaped as ("\\") as well and that
+         # > this escape rule is applied before the quoting rule.
+         Exec=sh -c 'parallel pngtopnm {} \\> {.}.pnm ::: "$@"' parallel %F
+
+       One thing to note from the above is that if either of the TryExec= keys fails, the entry is not shown. It may also be instructive to read what the spec has to say about quoting, but in general it behaves like you are used to from the shell, with the additional requirement that %% must be used to produce a literal %.
+
+       When troubleshooting complex command lines, it can be helpful to prefix the Exec command with echo and examine the system logs for the output (e.g. with journalctl -f SYSLOG_IDENTIFIER=org.elementary.Contractor), noting which characters do or do not get passed literally.
+
+       MAINTENANCE
+
+       Desktop entries for applications are typically put in place by package's installation scripts and need little attention. Over time, though, broken or outdated .desktop files can accumulate, particularly those installed to your home directory.
+
+       When the executable named by a desktop entry's Exec= or TryExec= cannot be found on the filesystem, that entry should be hidden from main menus and other launchers automatically. Still, it is worthwhile to do some cleanup of ~/.local/share/applications now and then. The following sections describe how to accomplish that.
+
+       VALIDATION
+
+       As some keys have become deprecated over time, you may want to validate your desktop entries using desktop-file-validate(1) which is part of the desktop-file-utils package. To validate, run:
+
+         $ desktop-file-validate your_file.desktop
+
+       This will give you very verbose and useful warnings and error messages.
+
+       INSTALLATION
+
+       Use desktop-file-install(1) to install desktop file into target directory. For example:
+
+         $ desktop-file-install --dir=$HOME/.local/share/applications ~/app.desktop
+
+       This is also useful for customizing existing desktop entries (e.g. from /usr/share/applications) via edit options.
+
+       UPDATE DATABASE OF DESKTOP ENTRIES
+
+       Usually, desktop entry changes are automatically picked up by the desktop environment.
+
+       If this is not the case, and you want to forcefully update the desktop entries defined in ~/.local/share/applications, run the following command:
+
+         $ update-desktop-database ~/.local/share/applications
+
+       Tip Add the -v (verbose) argument to show possible desktop entry errors.
+
+       ICONS
+
+       See also the Icon Theme Specification.
+
+       COMMON IMAGE FORMATS
+
+       Here is a short overview of image formats commonly used for icons.
+
+       Support for image formats for icons as specified by the freedesktop.org standard.
+
+         Extension | Full Name and/or Description | Graphics Type | Container Format | Supported
+         .png | Portable Network Graphics | Raster | No | Yes
+         .svg(z) | Scalable Vector Graphics | Vector | No | Yes (optional)
+         .xpm | X PixMap | Raster | No | Yes (deprecated)
+         .gif | Graphics Interchange Format | Raster | No | No
+         .ico | MS Windows Icon Format | Raster | Yes | No
+         .icns | Apple Icon Image | Raster | Yes | No
+
+       CONVERTING ICONS
+
+       See also ImageMagick#Usage.
+
+       If you stumble across an icon which is in a format that is not supported by the freedesktop.org standard (like gif or ico), you can use the magick tool (which is part of the imagemagick package) to convert it to a supported/recommended format, e.g.:
+
+         $ magick icon_name.gif icon_name.png
+
+       If you convert from a container format like ico, you will get all images that were encapsulated in the ico file in the form icon_name-number.png. If you want to know the size of the image, or the number of images in a container file like ico you can use the identify tool (also part of the imagemagick package):
+
+         $ identify /usr/share/vlc/vlc48x48.ico
+
+         /usr/share/vlc/vlc48x48.ico[0] ICO 32x32 32x32+0+0 8-bit DirectClass 84.3kb
+         /usr/share/vlc/vlc48x48.ico[1] ICO 16x16 16x16+0+0 8-bit DirectClass 84.3kb
+         /usr/share/vlc/vlc48x48.ico[2] ICO 128x128 128x128+0+0 8-bit DirectClass 84.3kb
+         /usr/share/vlc/vlc48x48.ico[3] ICO 48x48 48x48+0+0 8-bit DirectClass 84.3kb
+         /usr/share/vlc/vlc48x48.ico[4] ICO 32x32 32x32+0+0 8-bit DirectClass 84.3kb
+         /usr/share/vlc/vlc48x48.ico[5] ICO 16x16 16x16+0+0 8-bit DirectClass 84.3kb
+
+       As you can see, the example .ico file, although its name might suggest a single image of size 48x48, contains no less than 6 different sizes, of which one is even greater than 48x48, namely 128x128.
+
+       Alternatively, you can use icotool (from icoutils) to extract PNG images from ICO container:
+
+         $ icotool -x icon_name.ico
+
+       For extracting images from .icns container, you can use icns2png (provided by libicns):
+
+         $ icns2png -x icon_name.icns
+
+       OBTAINING ICONS
+
+       Although packages that already ship with a .desktop file most certainly contain an icon or a set of icons, there is sometimes the case when a developer has not created a .desktop file, but may ship icons, nonetheless. So a good start is to look for icons in the source package.
+
+       You can i.e. first filter for the extension with find and then use grep to filter further for certain buzzwords like the package name, "icon", "logo", etc, if there are quite a lot of images in the source package.
+
+         $ find /path/to/source/package -regex ".*\.\(svg\|png\|xpm\|gif\|ico\)$"
+
+       If the developers of an application do not include icons in their source packages, the next step would be to search on their web sites.
+
+       Some projects, like tvbrowserAUR have an artwork/logo page where additional icons may be found. If a project is multi-platform, there may be the case that even if the Linux/UNIX package does not come with an icon, the Windows package might provide one. If the project uses a Version control system like CVS/SVN/etc. and you have some experience with it, you also might consider browsing it for icons.
+
+       If everything fails, the project might simply have no icon/logo yet.
+
+       ICON PATH
+
+       The freedesktop.org standard specifies in which order and directories programs should look for icons:
+
+        * $HOME/.icons (for backwards compatibility)
+        * $XDG_DATA_DIRS/icons
+        * /usr/share/pixmaps
+
+       TOOLS
+
+       APPLICATION MENU EDITORS
+
+        * Alacarte — A graphical menu editor for GNOME using the freedesktop.org menu specification that also supports overriding desktop entries.
+       https://gitlab.gnome.org/GNOME/alacarte || alacarte
+
+        * AppEditor — Edit application entries in the application menu.
+       https://github.com/donadigo/appeditor || appeditor-gitAUR
+
+        * Ezame — Desktop and menu file editor.
+       https://github.com/linux-man/ezame || ezameAUR
+
+        * KMenuEdit — Edit one of the KDE application launchers. Part of plasma.
+       https://invent.kde.org/plasma/kmenuedit || kmenuedit
+
+        * lxmed — Application menu editor written in Java.
+       https://sourceforge.net/projects/lxmed/ || lxmedAUR
+
+        * jdDesktopEntryEdit — A graphical program using Qt to edit desktop entries.
+       https://codeberg.org/JakobDev/jdDesktopEntryEdit || jddesktopentryeditAUR
+
+        * LibreMenuEditor — A graphical program using libadwaita for editing desktop entries that aims to be feature-rich yet beginner-friendly.
+       https://codeberg.org/libre-menu-editor/libre-menu-editor || libre-menu-editorAUR
+
+        * MenuLibre — A graphical menu editor using GTK that provides modern features in a clean, easy-to-use interface.
+       https://github.com/bluesabre/menulibre || menulibreAUR
+
+        * Meow — Application menu editor written in Java.
+       https://pnmougel.github.io/meow/ || meow-binAUR
+
+        * Mozo — Change which applications are shown on the main menu.
+       https://github.com/mate-desktop/mozo || mozo
+
+        * Pin It! — Pin shortcuts for portable apps like raw executable files, AppImage files, etc. to the app launcher on your desktop.
+       https://github.com/ryonakano/pinit || pinitAUR
+
+        * Pins — Customize your app menu by editing .desktop files.
+       https://github.com/fabrialberio/Pins || pinsAUR
+
+       APPLICATION MENU GENERATORS
+
+        * MenuGenerator — Simple application menu generator following XDG menu spec for Fluxbox, Openbox and JWM.
+       https://github.com/BlackCodec/MenuGenerator/ || menugeneratorAUR
+
+        * MenuMaker — Heuristics-driven menu generator for Blackbox, Fluxbox, IceWM, Openbox, PekWM and WindowMaker.
+       https://menumaker.sourceforge.net/ || menumaker
+
+        * xdg-menu — Generate XDG application menus for various window managers.
+       https://github.com/p5n/archlinux-stuff/tree/master/xdg-menu || archlinux-xdg-menu
+
+        * xdgmenumaker — Command line tool that generates XDG menus for several window managers.
+       https://github.com/gapan/xdgmenumaker || xdgmenumakerAUR
+
+       OTHER
+
+        * Arronax — A graphical program to create and modify desktop entries for applications and locations.
+       https://www.florian-diesch.de/software/arronax/ || arronaxAUR
+
+        * fbrokendesktop — A Bash script to detect broken .desktop files with Exec values pointing to non-existent paths.
+       https://github.com/AndyCrowd/fbrokendesktop || fbrokendesktopAUR
+
+        * gendesk — A (formerly Arch-specific) tool for generating .desktop files by fetching needed information from PKGBUILD files or taking command-line arguments.
+       https://github.com/xyproto/gendesk || gendesk
+
+        * lsdesktopf — A utility to list available .desktop files or search their contents and perform MIME-type-related searches.
+       https://github.com/AndyCrowd/list-desktop-files || lsdesktopfAUR
+
+       TIPS AND TRICKS
+
+       MODIFY DESKTOP FILES
+
+       For system-wide .desktop files (e.g. those installed from a package), first copy the relevant .desktop file (e.g. from /usr/share/applications/) to $XDG_DATA_HOME/applications/ (e.g. ~/.local/share/applications/). This prevents your changes from being overwritten when the package gets updated during system upgrades. The local user-specific .desktop files should automatically take precedence over the system-wide files. Now you can modify the local user-specific .desktop file as needed.
+
+       Note If you have configured this application to autostart, there may already be a copy of the system desktop entry in $XDG_CONFIG_HOME/autostart, as per XDG Autostart. If you want to modify the behavior only while autostarting, proceed to edit this file. Otherwise, if you want to modify the behavior in all circumstances, you should:
+
+        * Move the desktop file from $XDG_CONFIG_HOME/autostart/ to $XDG_DATA_HOME/applications.
+        * Using ls -l, make sure that this desktop entry is a regular file you can edit, and not a link to the system location. If it is a link, replace it with a copy of the original as described above.
+        * Make a symbolic link to the user application directory (default XDG dirs substituted for convenience):
+
+         ln -s ~/.local/share/applications/desktop_entry ~/.config/autostart/
+
+       Now, the file in your application launcher will stay the same as the one that is autostarted.
+
+       MODIFY ENVIRONMENT VARIABLES
+
+       To set environment variables, in the .desktop file, edit the Exec= line to first use the env(1) command to set your variables. For example, with the original line commented out:
+
+         ~/.local/share/applications/abiword.desktop
+
+         ...
+         # Exec=abiword %U
+         Exec=env LANG=he_IL.UTF-8 abiword %U
+         ...
+
+       Also remove DBusActivatable=true (or set it to false) if present as it will cause the Exec line to be ignored.[1]
+
+       This technique can be appropriated to set a per-application desktop theme, provided you always launch that application from the system menu or another launcher which utilizes the desktop entry specification:
+
+         ~/.local/share/applications/gvim-dark.desktop
+
+         ...
+         Exec=/usr/bin/env GTK_THEME=Adwaita:dark gvim -f %F
+         ...
+
+       See Dark mode switching for more details.
+
+       MODIFY COMMAND LINE ARGUMENTS
+
+       To change or add the command line arguments, edit the Exec= line to append the desired options. As an example, with the original line commented out:
+
+         ~/.local/share/applications/steam.desktop
+
+         ...
+         # Exec=/usr/bin/steam-runtime %U
+         Exec=/usr/bin/steam-runtime -no-browser %U
+         ...
+
+       Also remove DBusActivatable=true (or set it to false) if present as it will cause the Exec line to be ignored.[2]
+
+       HIDE DESKTOP ENTRIES
+
+       The visibility of the desktop entry can be controlled in multiple ways. See the Desktop Entry Specification for more information. Add one of the following lines to your .desktop file:
+
+        * All desktop environments, choose one (or both) of the following:
+          * Add the line NoDisplay=true for applications that you do not want displayed in the menus.
+          * Add the line Hidden=true for applications that you consider deleted and do not want displayed in the menus.
+        * Specified desktop environments, choose one of the following where desktop_names is a semicolon-delimited list of desktop environments (e.g. GNOME, GNOME;Xfce;KDE;):
+          * Add the line NotShowIn=desktop_names to hide the entry only in the specified desktop environments.
+          * Add the line OnlyShowIn=desktop_names to show the entry only in the specified desktop environments.
+
+       SEE ALSO
+
+        * Wikipedia:.desktop
+        * Information for developers
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,39 @@
+WEBAPI.PERFORMANCEEVENTTIMING-TARGET(1) Sandbox manual WEBAPI.PERFORMANCEEVENTTIMING-TARGET(1)
+
+       NAME
+
+       PerformanceEventTiming: target property - The read-only target property returns the associated event's last target which is the node onto which the event was last dispatched.
+
+       PERFORMANCEEVENTTIMING: TARGET PROPERTY
+
+       The read-only target property returns the associated event's last target which is the node onto which the event was last dispatched.
+
+       VALUE
+
+       A Node onto which the event was last dispatched.
+
+       Or null if the Node is disconnected from the document's DOM or is in the shadow DOM.
+
+       EXAMPLES
+
+       OBSERVING EVENTS WITH A SPECIFIC LAST TARGET
+
+       The target property can be used when observing event-timing entries (PerformanceEventTiming). For example, to log and measure events for a given last target only.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             if (entry.target && entry.target.id === "myNode") {
+               const delay = entry.processingStart - entry.startTime;
+               console.log(entry.name, delay);
+             }
+           });
+         });
+
+         // Register the observer for events
+         observer.observe({ type: "event", buffered: true });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

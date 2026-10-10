@@ -1,0 +1,65 @@
+K8S.CONCEPTS-POLICY(1)           Sandbox manual           K8S.CONCEPTS-POLICY(1)
+
+       NAME
+
+       Policies - Kubernetes policies are configurations that manage other configurations or runtime behaviors. Kubernetes offers various forms of policies, d
+
+       POLICIES
+
+       Kubernetes policies are configurations that manage other configurations or runtime behaviors. Kubernetes offers various forms of policies, described below:
+
+       APPLY POLICIES USING API OBJECTS
+
+       Some API objects act as policies. Here are some examples:
+
+        * NetworkPolicies can be used to restrict ingress and egress traffic for a workload.
+        * LimitRanges manage resource allocation constraints across different object kinds.
+        * ResourceQuotas limit resource consumption for a namespace.
+
+       APPLY POLICIES USING ADMISSION CONTROLLERS
+
+       An admission controller runs in the API server and can validate or mutate API requests. Some admission controllers act to apply policies. For example, the AlwaysPullImages admission controller modifies a new Pod to set the image pull policy to Always.
+
+       Kubernetes has several built-in admission controllers that are configurable via the API server --enable-admission-plugins flag.
+
+       Details on admission controllers, with the complete list of available admission controllers, are documented in a dedicated section:
+
+        * Admission Controllers
+
+       APPLY POLICIES USING VALIDATINGADMISSIONPOLICY
+
+       Validating admission policies allow configurable validation checks to be executed in the API server using the Common Expression Language (CEL). For example, a ValidatingAdmissionPolicy can be used to disallow use of the latest image tag.
+
+       A ValidatingAdmissionPolicy operates on an API request and can be used to block, audit, and warn users about non-compliant configurations.
+
+       Details on the ValidatingAdmissionPolicy API, with examples, are documented in a dedicated section:
+
+        * Validating Admission Policy
+
+       APPLY POLICIES USING DYNAMIC ADMISSION CONTROL
+
+       Dynamic admission controllers (or admission webhooks) run outside the API server as separate applications that register to receive webhooks requests to perform validation or mutation of API requests.
+
+       Dynamic admission controllers can be used to apply policies on API requests and trigger other policy-based workflows. A dynamic admission controller can perform complex checks including those that require retrieval of other cluster resources and external data. For example, an image verification check can lookup data from OCI registries to validate the container image signatures and attestations.
+
+       Details on dynamic admission control are documented in a dedicated section:
+
+        * Dynamic Admission Control
+
+       IMPLEMENTATIONS #IMPLEMENTATIONS-ADMISSION-CONTROL
+
+       Dynamic Admission Controllers that act as flexible policy engines are being developed in the Kubernetes ecosystem, such as:
+
+        * Kubewarden
+        * Kyverno
+        * OPA Gatekeeper
+        * Polaris
+
+       APPLY POLICIES USING KUBELET CONFIGURATIONS
+
+       Kubernetes allows configuring the Kubelet on each worker node. Some Kubelet configurations act as policies:
+
+        * Process ID limits and reservations are used to limit and reserve allocatable PIDs.
+        * Node Resource Managers can manage compute, memory, and device resources for latency-critical and high-throughput workloads.
+
+Kubernetes manual                       from the official documentation

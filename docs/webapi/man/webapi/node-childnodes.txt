@@ -1,0 +1,66 @@
+WEBAPI.NODE-CHILDNODES(1)        Sandbox manual        WEBAPI.NODE-CHILDNODES(1)
+
+       NAME
+
+       Node: childNodes property - The read-only childNodes property of the Node interface returns a live
+
+       NODE: CHILDNODES PROPERTY
+
+       The read-only childNodes property of the Node interface returns a live NodeList of child nodes of the given element where the first child node is assigned index 0. Child nodes include elements, text and comments.
+
+       > The NodeList being live means that its content is changed each time
+       > new children are added or removed.
+       > Browsers insert text nodes into a document to represent whitespace in the source markup.
+       > Therefore a node obtained, for example, using Node.childNodes[0]
+       > may refer to a whitespace text node rather than the actual element the author intended to get.
+       > See Working with whitespace in the DOM for more information.
+       The items in the collection of nodes are objects, not strings. To get data from node objects, use their properties. For example, to get the name of the first childNode, you can use elementNodeReference.childNodes[0].nodeName.
+
+       The document object itself has two children: the Doctype declaration and the root element, typically referred to as documentElement. In HTML documents the latter is the element.
+
+       It is important to keep in mind that childNodes includes _all_ child nodes, including non-element nodes like text and comment. To get a collection containing only elements, use Element.children instead.
+
+       VALUE
+
+       A live NodeList containing the children of the node.
+
+       > Several calls to childNodes return the _same_ NodeList.
+
+       EXAMPLES
+
+       SIMPLE USAGE
+
+         // Note that para is an object reference to a <p> element
+
+         // First check that the element has child nodes
+         if (para.hasChildNodes()) {
+           let children = para.childNodes;
+
+           for (const node of children) {
+             // Do something with each child as children[i]
+             // NOTE: List is live! Adding or removing children will change the list's `length`
+           }
+         }
+
+       REMOVE ALL CHILDREN FROM A NODE
+
+         // This is one way to remove all children from a node
+         // box is an object reference to an element
+         while (box.firstChild) {
+           // The list is LIVE so it will re-index each call
+           box.removeChild(box.firstChild);
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Node.firstChild
+        * Node.lastChild
+        * Node.nextSibling
+        * Node.previousSibling
+        * Element.children
+
+Web APIs manual                         from the official documentation

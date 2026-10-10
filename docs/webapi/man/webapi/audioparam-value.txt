@@ -1,0 +1,72 @@
+WEBAPI.AUDIOPARAM-VALUE(1)       Sandbox manual       WEBAPI.AUDIOPARAM-VALUE(1)
+
+       NAME
+
+       AudioParam: value property - The value property of the AudioParam interface gets or sets the value of this AudioParam at the current time.
+
+       AUDIOPARAM: VALUE PROPERTY
+
+       The value property of the AudioParam interface gets or sets the value of this AudioParam at the current time. Initially, the value is set to AudioParam.defaultValue.
+
+       Setting value has the same effect as calling AudioParam.setValueAtTime with the time returned by the AudioContext's currentTime property.
+
+       VALUE
+
+       A floating-point Number indicating the parameter's value as of the current time. This value will be between the values specified by the minValue and maxValue properties.
+
+       DESCRIPTION
+
+       VALUE PRECISION AND VARIATION
+
+       The data type used internally to store value is a single-precision (32-bit) floating point number, while JavaScript uses 64-bit double-precision floating point numbers. As a result, the value you read from the value property may not always exactly equal what you set it to.
+
+       Consider this example:
+
+         const source = new AudioBufferSourceNode(/* … */);
+         const rate = 5.3;
+         source.playbackRate.value = rate;
+         console.log(source.playbackRate.value === rate);
+
+       The log output will be false, because the playback rate parameter, rate, was converted to the 32-bit floating-point number closest to 5.3, which yields 5.300000190734863. One solution is to use the Math.fround() method, which returns the single-precision value equivalent to the 64-bit JavaScript value specified—when setting value, like this:
+
+         const source = new AudioBufferSourceNode(/* … */);
+         const rate = Math.fround(5.3);
+         source.playbackRate.value = rate;
+         console.log(source.playbackRate.value === rate);
+
+       In this case, the log output will be true.
+
+       VALUE OF A PROPERTY WHICH IS CHANGING OVER TIME
+
+       The value of an AudioParam can either be fixed or can vary over time. This is reflected by the value getter, which returns the value of the parameter as of the audio rendering engine's most recent render quantum, or moment at which audio buffers are processed and updated. In addition to processing audio buffers, each render quantum updates the value of each AudioParam as needed given the current time and any established time-based parameter value changes.
+
+       Upon first creating the parameter, its value is set to its default value, given by AudioParam.defaultValue. This is the parameter's value at a time of 0.0 seconds, and will remain the parameter's value until the first render quantum in which the value is altered.
+
+       During each render quantum, the browser does the following things related to managing the value of a parameter:
+
+        * If the value setter has been used, the parameter's value is changed to the value given.
+        * If the current time equals or exceeds the time specified by a previous call to setValueAtTime(), the value is changed to the value passed into setValueAtTime().
+        * If any graduated or ramped value changing methods have been called and the current time is within the time range over which the graduated change should occur, the value is updated based on the appropriate algorithm.
+       These ramped or graduated value-changing methods include linearRampToValueAtTime(), setTargetAtTime(), and setValueCurveAtTime().
+
+       Thus, the value of a parameter is maintained to accurately reflect the state of the parameter over time.
+
+       EXAMPLES
+
+       This example instantly changes the volume of a GainNode to 40%.
+
+         const audioCtx = new AudioContext();
+         const gainNode = audioCtx.createGain();
+         gainNode.gain.value = 0.4;
+         // which is identical to:
+         gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

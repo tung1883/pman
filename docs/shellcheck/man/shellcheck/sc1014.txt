@@ -1,0 +1,81 @@
+SHELLCHECK.SC1014(1)             Sandbox manual             SHELLCHECK.SC1014(1)
+
+       NAME
+
+       Use if cmd; then .. to check exit code, or if [ "$(cmd)" = .. ] to check output. - if [ grep -q pattern file ]
+
+       USE IF CMD THEN .. TO CHECK EXIT CODE, OR IF (CMD) .. TO CHECK OUTPUT
+
+       USE IF CMD THEN .. TO CHECK EXIT CODE, OR IF (CMD) .. TO CHECK OUTPUT
+
+       PROBLEMATIC CODE
+
+         if [ grep -q pattern file ]
+         then
+           echo "Found a match"
+         fi
+
+         # WRONG
+         if ! [[ logname == $LOGNAME ]]
+         then
+             echo "Possible `su` shell"
+         fi
+
+       CORRECT CODE
+
+         if grep -q pattern file
+         then
+           echo "Found a match"
+         fi
+
+         if ! [[ $(logname) == $LOGNAME ]]
+         then
+             echo "Possible `su` shell"
+         fi
+
+       RATIONALE
+
+       [ ... ] as shell syntax is a simple command that tests for whether certain conditions are true or false, such as whether the value assigned to a variable has a non-zero length ([ -n "${foo}" ]) or whether a file system object is a directory ([ -d "${dir}" ]). If-then-(elif-then)-else-fi statements are logical constructs which themselves contain lists of commands which can include simple commands.
+
+       [ is just regular command, like whoami or grep, but with a funny name (see ls -l /bin/[). It's a shorthand for test. [[ is similar to both [ and test, but [[ offers some additional unary operators, such as '=~' the regular expression comparison operator. It allows one to use extglobs such as @(foo|bar) (a "bashism"), among some other less commonly used features.
+
+       [[, [ and test are often used within if...fi constructs in the conditional commands position: which is between the 'if' and the 'then.'
+
+       There are certain shell syntaxes which can be wrapped directly around simple commands, in particular:
+
+        * (1) { ...;}, group commands,
+        * (2) $( ... ), command substitutions,
+        * (3) <( ... ) and >( ... ), process substitutions,
+        * (4) ( ... ), subshells, and
+        * (5) $(( ... )) and (( ... )), arithmetic evaluations.
+       Some examples include:
+
+        * (1) { echo {a..z}; echo {0..9};} > ~/f,
+        * (2) [[ $(logname) == $LOGNAME ]],
+        * (3) readarray -t files < <( find ...),
+        * (4) (cd /foo || exit 1; tar ...), and
+        * (5) dd bs=$((2**12)) count=1 if=/dev/zero of=/tmp/zeroed-block, respectively.
+       Note how in example (2) logname is enclosed directly within a command substitution, which is itself enclosed within a [[ reserved word / conditional expression / compound command.
+
+       If you want to check the exit status of a certain command, use that command directly as demonstrated in the correct code, above.
+
+       If you want to check the output of a command, use "$(..)" to get its output, and then use test/[ or [[ to do a string comparison:
+
+         # Check output of `whoami` against the string `root`
+         if [ "$(whoami)" = "root" ]
+         then
+           echo "Running as root"
+         fi
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+       For more information, see this problem in the Bash Pitfall list, or generally Tests and Conditionals in the wooledge.org BashGuide
+
+        * How do I use a file grep comparison inside a bash if/else statement?
+        * [Bash Pitfalls: if [grep foo myfile]](https://mywiki.wooledge.org/BashPitfalls#if_.5Bgrep_foo_myfile.5D)
+
+ShellCheck manual                       from the official documentation

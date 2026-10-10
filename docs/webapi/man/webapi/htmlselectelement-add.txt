@@ -1,0 +1,128 @@
+WEBAPI.HTMLSELECTELEMENT-ADD(1)  Sandbox manual  WEBAPI.HTMLSELECTELEMENT-ADD(1)
+
+       NAME
+
+       HTMLSelectElement: add() method - The HTMLSelectElement.add() method adds an element to the
+
+       HTMLSELECTELEMENT: ADD() METHOD
+
+       The HTMLSelectElement.add() method adds an element to the collection of option elements for this select element.
+
+       SYNTAX
+
+         add(item)
+         add(item, before)
+
+       PARAMETERS
+
+        * item
+          * : An HTMLOptionElement or
+       HTMLOptGroupElement
+
+        * before (optional)
+          * : An element of the collection, or an index of type
+       _long_, representing the _item_ should be inserted before. If this parameter is null (or the index does not exist), the new element is appended to the end of the collection.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * HierarchyRequestError DOMException
+          * : Thrown if the _item_ passed to the method is an ancestor of the HTMLSelectElement.
+
+       EXAMPLES
+
+       CREATING ELEMENTS FROM SCRATCH
+
+         const sel = document.createElement("select");
+         const opt1 = document.createElement("option");
+         const opt2 = document.createElement("option");
+
+         opt1.value = "1";
+         opt1.text = "Option: Value 1";
+
+         opt2.value = "2";
+         opt2.text = "Option: Value 2";
+
+         sel.add(opt1, null);
+         sel.add(opt2, null);
+
+         /*
+           Produces the following, conceptually:
+
+           <select>
+             <option value="1">Option: Value 1</option>
+             <option value="2">Option: Value 2</option>
+           </select>
+         */
+
+       The before parameter is optional. So the following is accepted.
+
+         sel.add(opt1);
+         sel.add(opt2);
+
+       APPEND TO AN EXISTING COLLECTION
+
+         const sel = document.getElementById("existingList");
+
+         const opt = document.createElement("option");
+         opt.value = "3";
+         opt.text = "Option: Value 3";
+
+         sel.add(opt, null);
+
+         /*
+           Takes the existing following select object:
+
+           <select id="existingList">
+             <option value="1">Option: Value 1</option>
+             <option value="2">Option: Value 2</option>
+           </select>
+
+           And changes it to:
+
+           <select id="existingList">
+             <option value="1">Option: Value 1</option>
+             <option value="2">Option: Value 2</option>
+             <option value="3">Option: Value 3</option>
+           </select>
+         */
+
+       The before parameter is optional. So the following is accepted.
+
+         sel.add(opt);
+
+       INSERTING TO AN EXISTING COLLECTION
+
+         const sel = document.getElementById("existingList");
+
+         const opt = document.createElement("option");
+         opt.value = "3";
+         opt.text = "Option: Value 3";
+
+         sel.add(opt, sel.options[1]);
+
+         /*
+           Takes the existing following select object:
+
+           <select id="existingList">
+             <option value="1">Option: Value 1</option>
+             <option value="2">Option: Value 2</option>
+           </select>
+
+           And changes it to:
+
+           <select id="existingList">
+             <option value="1">Option: Value 1</option>
+             <option value="3">Option: Value 3</option>
+             <option value="2">Option: Value 2</option>
+           </select>
+         */
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

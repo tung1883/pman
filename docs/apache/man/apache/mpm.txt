@@ -1,0 +1,61 @@
+APACHE.MPM(1)                    Sandbox manual                    APACHE.MPM(1)
+
+       INTRODUCTION
+
+       The Apache HTTP Server is designed to be a powerful and flexible web server that can work on a very wide variety of platforms in a range of different environments. Different platforms and different environments often require different features, or may have different ways of implementing the same feature most efficiently. Apache httpd has always accommodated a wide variety of environments through its modular design. This design allows the webmaster to choose which features will be included in the server by selecting which modules to load either at compile-time or at run-time.
+
+       Apache HTTP Server 2.0 extends this modular design to the most basic functions of a web server. The server ships with a selection of Multi-Processing Modules (MPMs) which are responsible for binding to network ports on the machine, accepting requests, and dispatching children to handle the requests.
+
+       Extending the modular design to this level of the server allows two important benefits:
+
+        * Apache httpd can more cleanly and efficiently support a wide variety of operating systems. In particular, the Windows version of the server is now much more efficient, since mpm_winnt can use native networking features in place of the POSIX layer used in Apache httpd 1.3. This benefit also extends to other operating systems that implement specialized MPMs.
+        * The server can be better customized for the needs of the particular site. For example, sites that need a great deal of scalability can choose to use a threaded MPM like worker or event, while sites requiring stability or compatibility with older software can use a prefork.
+       At the user level, MPMs appear much like other Apache httpd modules. The main difference is that one and only one MPM must be loaded into the server at any time. The list of available MPMs appears on the module index page.
+
+       MPM DEFAULTS
+
+       The following table lists the default MPMs for various operating systems. This will be the MPM selected if you do not make another choice at compile-time.
+
+         Netware | mpm_netware
+         OS/2 | mpmt_os2
+         Unix | prefork, worker, or event, depending on platform capabilities
+         Windows | mpm_winnt
+       Here, 'Unix' is used to mean Unix-like operating systems, such as Linux, BSD, Solaris, Mac OS X, etc.
+
+       In the case of Unix, the decision as to which MPM is installed is based on two questions:
+
+       1. Does the system support threads?
+
+       2. Does the system support thread-safe polling (Specifically, the kqueue and epoll functions)?
+
+       If the answer to both questions is 'yes', the default MPM is event.
+
+       If The answer to #1 is 'yes', but the answer to #2 is 'no', the default will be worker.
+
+       If the answer to both questions is 'no', then the default MPM will be prefork.
+
+       In practical terms, this means that the default will almost always be event, as all modern operating systems support these two features.
+
+       BUILDING AN MPM AS A STATIC MODULE
+
+       MPMs can be built as static modules on all platforms. A single MPM is chosen at build time and linked into the server. The server must be rebuilt in order to change the MPM.
+
+       To override the default MPM choice, use the --with-mpm=NAME option of the configure script. NAME is the name of the desired MPM.
+
+       Once the server has been compiled, it is possible to determine which MPM was chosen by using ./httpd -l. This command will list every module that is compiled into the server, including the MPM.
+
+       BUILDING AN MPM AS A DSO MODULE
+
+       On Unix and similar platforms, MPMs can be built as DSO modules and dynamically loaded into the server in the same manner as other DSO modules. Building MPMs as DSO modules allows the MPM to be changed by updating the LoadModule directive for the MPM instead of by rebuilding the server.
+
+         LoadModule mpm_event_module modules/mod_mpm_event.so
+
+       Attempting to LoadModule more than one MPM will result in a startup failure with the following error.
+
+       AH00534: httpd: Configuration error: More than one MPM loaded.
+
+       This feature is enabled using the --enable-mpms-shared option of the configure script. With argument all, all possible MPMs for the platform will be installed. Alternately, a list of MPMs can be specified as the argument.
+
+       The default MPM, either selected automatically or specified with the --with-mpm option of the configure script, will be loaded in the generated server configuration file. Edit the LoadModule directive to select a different MPM.
+
+Apache HTTP Server manual               bundled documentation

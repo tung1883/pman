@@ -1,0 +1,191 @@
+ARCH.TIMESHIFT(1)                Sandbox manual                ARCH.TIMESHIFT(1)
+
+       Timeshift is a tool originally created by Tony George, that is now part of the Xapp project.
+
+       Timeshift helps create incremental snapshots of the file system at regular intervals, which can then be restored at a later date to undo all changes to the system.
+
+       It supports rsync snapshots for all filesystems, and uses the built-in snapshot features for Btrfs drives configured to use the @ and @home subvolume layout for root and home directories respectively.
+
+       INSTALLATION
+
+       Install the timeshift package and enable/start your chosen cron scheduler (see cron#Configuration). This will ensure that snapshots scheduled within the Timeshift application run as intended.
+
+       Note The timeshift package currently has a hard dependency on cronie as the cron scheduler. So in this case enable/start cronie.service.
+
+       Alternatively, timeshift-systemd-timerAUR can be installed instead of using a cron scheduler.
+
+       CONFIGURATION
+
+       Timeshift can be fully configured using the timeshift-gtk graphical user interface, but if running graphical applications is not an option, its configuration file can be edited directly. Copy the template file /etc/timeshift/default.json to /etc/timeshift/timeshift.json and edit settings you want to change.
+
+       Note
+
+        * If you want to enable btrfs mode, make sure that your subvolume layout is compatible. See #Configuring btrfs snapshots.
+        * The exclusion patterns are applied from top to bottom, with the first match overriding subsequent ones.
+        * The exclude option is not supported in Btrfs mode. See #Excluding directories from Btrfs snapshots.
+       Here is an example of a rsync-based configuration with three weekly snapshots and rules to exclude the /var/cache, /var/tmp and /home/archie directories, while including the /home/archie/.config directory and its content into the snapshots:
+
+         /etc/timeshift/timeshift.json
+
+         {
+             "backup_device_uuid" : "root-partition UUID",
+             "do_first_run" : "false",
+             "btrfs_mode" : "false",
+             "include_btrfs_home_for_backup" : "false",
+             "include_btrfs_home_for_restore" : "false",
+             "schedule_weekly" : "true",
+             "count_weekly" : "3",
+             "date_format" : "%Y-%m-%d %H:%M:%S",
+             "exclude" : [
+                 "/var/cache/**",
+                 "/var/tmp/**",
+                 "+ /home/archie/.config/***",
+                 "/home/archie/**"
+             ],
+             "exclude-apps" : []
+         }
+
+       USAGE
+
+       Snapshots can be managed through the timeshift-gtk graphical user interface, as well as the timeshift command-line user interface tool.
+
+       Tip Use the --scripted key when using timeshift in scripts.
+
+       Listing snapshots:
+
+         # timeshift --list
+
+       Creating a snapshot:
+
+         # timeshift --create --comments "comment"
+
+       Restoring a snapshot:
+
+         # timeshift --restore --snapshot "snapshot"
+
+       Deleting a snapshot:
+
+         # timeshift --delete --snapshot "snapshot"
+
+       CONFIGURING BTRFS SNAPSHOTS
+
+       Timeshift requires a flat Btrfs layout with subvolumes for / and optionally /home being named as /@ and /@home.
+
+       MAKING A SUPPORTED BTRFS LAYOUT DURING INSTALLATION
+
+       The instruction below assumes that you are following the installation guide.
+
+       Right after the Btrfs filesystem is created and mounted to /mnt, create subvolumes named /mnt/@ and /mnt/@home. Unmount /mnt and mount the subvolumes using the subvol parameter:
+
+         # mount -o subvol=@ /dev/root_partition /mnt
+         # mount --mkdir -o subvol=@home /dev/root_partition /mnt/home
+
+       Proceed with the installation as normal.
+
+       Warning Make sure to remove the subvolid mount parameter for / and /home from the Fstab file if it was generated using genfstab, or you will be unable to boot after restoring from a snapshot.
+
+       CONVERTING AN INSTALLED SYSTEM TO THE COMPATIBLE BTRFS LAYOUT
+
+       The following instructions assume that the system is installed in the top-level (ID=5) subvolume, you may need to adapt these depending on your configuration.
+
+       Start by creating a snapshot of your root named /@ and mount it to /mnt:
+
+         # btrfs subvolume snapshot / /@
+         # mount -o subvol=@ /dev/root-partition /mnt
+
+       Create the /@home subvolume, move the user data into it and mount it at /mnt/home:
+
+         # mv /mnt/home/* /@home
+         # mount -o subvol=@home /mnt/home
+
+       Mount your EFI system partition to /mnt/esp if you have one. Chroot into /mnt, reinstall and reconfigure the boot loader. For an amd64 EFI system with GRUB, just running:
+
+         # grub-install --target=x86_64-efi --efi-directory=esp --bootloader-id=GRUB
+         # grub-mkconfig -o /boot/grub/grub.cfg
+
+       would be enough, however if you use any other bootloader that has no automatic configuration, you need to manually add rootflags=subvol=@ to the kernel options (see Kernel parameters#Boot loader configuration).
+
+       Edit the fstab file so that the entry for / contains subvol=@ mount option, and add an entry for /home with subvol=@home mount option. Example of how it may look like:
+
+         ...
+         UUID=d8efe946-8d28-40d6-943a-70af51a8d2cd  /       btrfs   defaults,subvol=@      0    0
+         UUID=d8efe946-8d28-40d6-943a-70af51a8d2cd  /home   btrfs   defaults,subvol=@home  0    0
+         ...
+
+       Exit the chroot, reboot and confirm with the mount command that everything is done correctly. Mount the toplevel using mount -o subvolid=5 /dev/root-partition /mnt and cleanup the old root.
+
+       EXCLUDING DIRECTORIES FROM BTRFS SNAPSHOTS
+
+       Btrfs mode does not support the exclusion of individual files and directories from snapshots. However, it is possible to work around this to some extent by creating additional subvolumes at the top-level and mounting them in place of directories, which will effectively exclude them.
+
+       Here is an example of how to exclude the /var/log directory, to prevent the system logs from rolling back and make it easy to inspect them after a system breakage:
+
+       Start by mounting the top-level and create the subvolume inside of it:
+
+         # mount -o subvolid=5 /dev/root-partition /mnt
+         # btrfs subvolume create /mnt/@var_log
+
+       Add a new entry for it to fstab:
+
+         UUID=root-partition-UUID  /var/log   btrfs   defaults,subvol=@var_log  0    0
+
+       GRUB ENTRIES FOR BTRFS SNAPSHOTS
+
+       To add snapshots to the GRUB menu each time GRUB configuration is generated, install the grub-btrfs package. It comes with the grub-btrfsd.service, which can be enabled to automatically update the GRUB configuration whenever a new snapshot is created.
+
+       Note grub-btrfsd requires the inotify-tools package to function
+
+       To make grub-btrfsd work with Timeshift, edit the service by running:
+
+         # systemctl edit --full grub-btrfsd
+
+       and change the line:
+
+         ExecStart=/usr/bin/grub-btrfsd /.snapshots --syslog
+
+       to:
+
+         ExecStart=/usr/bin/grub-btrfsd --syslog --timeshift-auto
+
+       After saving the changes, restart the service.
+
+       TROUBLESHOOTING
+
+       TIMESHIFT GUI NOT LAUNCHING ON WAYLAND
+
+       Xwayland will only allow the user who started the X server to connect clients to it (see Privilege elevation for graphical applications#XWayland).
+
+       Due to Timeshift requiring root permissions, attempting to launch the Timeshift GUI via an application launcher or a terminal with the command timeshift-launcher will result in an error containing xhost: command not found.
+
+       Users encountering this error may also be presented with their authentication agent prompting for a password, only to find that the Timeshift GUI does not launch after entering the password. [1][dead link 2025-03-15—HTTP 404] This is because the command timeshift-launcher requires the xorg-xhost package: install it.
+
+       If GTK cannot open your display and you get a warning message in the terminal, it means that the root user need the access to the graphical X server (Display :0, :1, etc.)
+
+       Normally only the user who started the graphical session can open new windows in your compositor and since your need to execute timeshift with the root user, you are not able to open the GUI
+
+         $ xhost +SI:localuser:root
+
+       Warning This command can grant any local user access to your X screen. It is advised against running xhost on multi-user systems. See xhost and Privilege elevation for graphical applications for more details.
+
+       DELETE BUTTON DOES NOTHING/ DIRECTORY NOT EMPTY ERROR
+
+       If the delete button silently fails in GUI and timeshift --delete --snapshot snapshot results in
+
+         E: ERROR: Could not destroy subvolume/snapshot: Directory not empty
+
+       this means the snapshot contains one or more nested subvolumes and those need to be removed manually. In order to do so, you need to mount the toplevel subvolume and see the subvolume list:
+
+         # mount -o subvolid=5 /dev/root_partition /mnt
+         # btrfs subvolume list /mnt
+
+       If you see any subvolumes located inside the snapshot, make sure they do not contain anything you would like to copy first and remove them by running:
+
+         # btrfs subvolume remove /mnt/timeshift-btrfs/snapshots/snapshot/@/path/to/subvolume
+
+       And remove the snapshot using timeshift as normal. Alternatively, you can remove the whole snapshot and all the nested subvolumes by running rm -rf /mnt/timeshift-btrfs/snapshots/snapshot.
+
+       Typically, this issue occurs because systemd-nspawn creates /var/lib/machines and /var/lib/portables subvolumes automatically. You can avoid this by creating them as directories in advance [2]
+
+         # mkdir -p /var/lib/machines /var/lib/portables
+
+ArchWiki manual                         bundled documentation

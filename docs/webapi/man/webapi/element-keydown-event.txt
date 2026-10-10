@@ -1,0 +1,74 @@
+WEBAPI.ELEMENT-KEYDOWN-EVENT(1)  Sandbox manual  WEBAPI.ELEMENT-KEYDOWN-EVENT(1)
+
+       NAME
+
+       Element: keydown event - The keydown event is fired when a key is pressed.
+
+       ELEMENT: KEYDOWN EVENT
+
+       The keydown event is fired when a key is pressed.
+
+       Unlike the deprecated keypress event, the keydown event is fired for all keys, regardless of whether they produce a character value.
+
+       The keydown and keyup events provide a code indicating which key is pressed, while keypress indicates which character was entered. For example, a lowercase "a" will be reported as 65 by keydown and keyup, but as 97 by keypress. An uppercase "A" is reported as 65 by all events.
+
+       The event target of a key event is the currently focused element which is processing the keyboard activity. This includes: , , anything that is contentEditable, and anything else that can be interacted with the keyboard, such as , , and . If no suitable element is in focus, the event target will be the or the root. The event bubbles. It can reach Document and Window.
+
+       The event target might change between different key events. For example, the keydown target for pressing the Tab key would be different from the keyup target, because the focus has changed.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("keydown", (event) => { })
+
+         onkeydown = (event) => { }
+
+       EVENT TYPE
+
+       A KeyboardEvent. Inherits from UIEvent and Event.
+
+       KeyboardEvent
+
+       EXAMPLES
+
+       ADDEVENTLISTENER KEYDOWN EXAMPLE
+
+       This example logs the KeyboardEvent.code value whenever you press down a key inside the element.
+
+         <input placeholder="Click here, then press down a key." size="40" />
+         <p id="log"></p>
+
+         const input = document.querySelector("input");
+         const log = document.getElementById("log");
+
+         input.addEventListener("keydown", logKey);
+
+         function logKey(e) {
+           log.textContent += ` ${e.code}`;
+         }
+
+       KEYDOWN EVENTS WITH IME
+
+       Since Firefox 65, the keydown and keyup events are now fired during Input method editor composition, to improve cross-browser compatibility for CJKT users (Firefox bug 354358). To ignore all keydown events that are part of composition, do something like this (229 is a special value set for a keyCode relating to an event that has been processed by an IME):
+
+         eventTarget.addEventListener("keydown", (event) => {
+           if (event.isComposing || event.keyCode === 229) {
+             return;
+           }
+           // do something
+         });
+
+       > compositionstart may fire _after_ keydown when typing the first character that opens up the IME, and compositionend may fire _before_ keydown when typing the last character that closes the IME. In these cases, isComposing is false even when the event is part of composition. However, KeyboardEvent.keyCode is still 229 in these cases, so it's still advisable to check keyCode as well, although it's deprecated.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * input
+        * keypress
+        * keyup
+
+Web APIs manual                         from the official documentation

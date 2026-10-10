@@ -1,0 +1,27 @@
+SHELLCHECK.SC2065(1)             Sandbox manual             SHELLCHECK.SC2065(1)
+
+       NAME
+
+       This is interpreted as a shell file redirection, not a comparison. - A word that looks like a redirection in simple shell commands causes it to be interpreted as a redirection.
+
+       THIS IS INTERPRETED AS A SHELL FILE REDIRECTION, NOT A COMPARISON
+
+       THIS IS INTERPRETED AS A SHELL FILE REDIRECTION, NOT A COMPARISON
+
+       PROBLEMATIC CODE
+
+         [ 1 >2 ] || [ 3>'aaa bb' ] # Simple example of problematic code
+
+       CORRECT CODE
+
+         [ 1 -gt 2 ] || [ 3 \> 'aaa bb' ] # arithmetical, lexicographical
+
+       RATIONALE
+
+       A word that looks like a redirection in simple shell commands causes it to be interpreted as a redirection. ShellCheck would guess that you don't want it in tests.
+
+       EXCEPTIONS
+
+       When it's among a continuous list of redirections at the end of a simple test command, it's more likely that the user really meant to do a redirection. Or any other case that you mean to do that.
+
+ShellCheck manual                       from the official documentation

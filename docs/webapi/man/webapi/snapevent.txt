@@ -1,0 +1,70 @@
+WEBAPI.SNAPEVENT(1)              Sandbox manual              WEBAPI.SNAPEVENT(1)
+
+       NAME
+
+       SnapEvent - The SnapEvent interface defines the event object for the scrollsnapchanging and scrollsnapchange events. Respectively, these fire on a scrol
+
+       SNAPEVENT
+
+       The SnapEvent interface defines the event object for the scrollsnapchanging and scrollsnapchange events. Respectively, these fire on a scroll container when the browser determines that a new scroll snap target is pending (will be selected when the current scroll gesture ends), and when a new snap target is selected.
+
+       These events can be used to run code in response to new elements being snapped to; SnapEvent exposes references to the element snapped to in the inline and/or block direction. The property values available on SnapEvent correspond directly to the value of the scroll-snap-type CSS property set on the scroll container:
+
+        * If the snap axis is specified as block (or a physical axis value that equates to block in the current writing mode), only snapTargetBlock returns an element reference.
+        * If the snap axis is specified as inline (or a physical axis value that equates to inline in the current writing mode), only snapTargetInline returns an element reference.
+        * If the snap axis is specified as both, snapTargetBlock and snapTargetInline return an element reference.
+
+       CONSTRUCTOR
+
+        * SnapEvent() (experimental)
+          * : Creates a new SnapEvent object instance.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, Event._
+
+        * snapTargetBlock (read-only) (experimental)
+          * : Returns a reference to the element snapped to in the block direction when the event fired, or null if scroll snapping only occurs in the inline direction so no element is snapped to in the block direction.
+        * snapTargetInline (read-only) (experimental)
+          * : Returns a reference to the element snapped to in the inline direction when the event fired, or null if scroll snapping only occurs in the block direction so no element is snapped to in the inline direction.
+
+       EXAMPLES
+
+       SCROLLSNAPCHANGING EXAMPLE
+
+       In the following scrollsnapchanging handler function snippet, we set the snapTargetBlock element's class attribute to pending using the Element.className property, which could be used to style the element differently when it becomes a pending snap target.
+
+       Note that this handler is intended to be set on a block-direction scroll container (vertically-scrolling if the page is set to a horizontal writing-mode), therefore only the snapTargetBlock element will change between multiple events firing. SnapEvent.snapTargetInline will return null, because no snapping occurs in the inline direction.
+
+         scrollingElem.addEventListener("scrollsnapchanging", (event) => {
+           // Set current pending snap target class to "pending"
+           event.snapTargetBlock.className = "pending";
+
+           // Logs the new pending block-direction snap target element
+           console.log(event.snapTargetBlock);
+
+           // Logs null; no inline snapping occurs
+           console.log(event.snapTargetInline);
+         });
+
+       SCROLLSNAPCHANGE EXAMPLE
+
+       In the following scrollsnapchange handler function snippet, we set a selected class on the SnapEvent.snapTargetBlock element, which could be used to style a newly-selected snap target to look like it has been selected (for example, with an animation).
+
+         scrollingElem.addEventListener("scrollsnapchange", (event) => {
+           event.snapTargetBlock.className = "selected";
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * scrollsnapchanging event
+        * scrollsnapchange event
+        * CSS scroll snap module
+        * Using scroll snap events
+        * Scroll Snap Events on developer.chrome.com (2024)
+
+Web APIs manual                         from the official documentation

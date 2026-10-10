@@ -1,0 +1,237 @@
+ROCKY.CMS-DOKUWIKI_SERVER(1)     Sandbox manual     ROCKY.CMS-DOKUWIKI_SERVER(1)
+
+       NAME
+
+       The following lines are desirable for IPv6 capable hosts - Documentation can take many forms in an organization. Having a repository that you can reference for that documentation is invaluable. A wik
+
+       THE FOLLOWING LINES ARE DESIRABLE FOR IPV6 CAPABLE HOSTS
+
+       PREREQUISITES AND ASSUMPTIONS
+
+        * A Rocky Linux instance installed on a server, container, or virtual machine
+        * Comfort with modifying configuration files from the command line with an editor (the examples here use vi, but you can substitute your favorite editor)
+        * Some knowledge about web applications and setup
+        * Uses the Apache Sites Enabled for setup. Review that if necessary.
+        * This document will use "example.com" as the domain name throughout
+        * You must be root or able to sudo to elevate privileges
+        * Assuming a fresh install of the operating system, however, that is not a requirement
+
+       INTRODUCTION
+
+       Documentation can take many forms in an organization. Having a repository that you can reference for that documentation is invaluable. A wiki (meaning _quick_ in Hawaiian) is a way to keep documentation, process notes, corporate knowledge bases, and even code examples, in a centralized location. IT professionals who keep a wiki, even secretly, have a built-in insurance policy against forgetting an obscure routine.
+
+       DokuWiki is a mature, fast wiki that runs without a database, has built-in security features, and is not complex to deploy. For more information, examine their web page.
+
+       DokuWiki is one of many wikis available, though it is a good one. One big pro is that DokuWiki is relatively lightweight and can run on a server that is already running other services, provided you have available space and memory.
+
+       INSTALLING DEPENDENCIES
+
+       The minimum PHP version for DokuWiki is now 8. Rocky Linux 10 has PHP 8.3 by default. Note that some of the packages listed here might already exist:
+
+         dnf install tar wget httpd php php-gd php-xml php-json php-mbstring
+
+       Accept and install any additional dependencies listed with these packages.
+
+       CREATE DIRECTORIES AND CHANGE CONFIGURATION
+
+       APACHE CONFIGURATION
+
+       If you have read through the Apache Sites Enabled procedure, you know that you need to create a few directories. Start with the httpd configuration directory additions:
+
+         mkdir -p /etc/httpd/{sites-available,sites-enabled}
+
+       You need to edit the httpd.conf file:
+
+         vi /etc/httpd/conf/httpd.conf
+
+       Add this to the very bottom of the file:
+
+         Include /etc/httpd/sites-enabled
+
+       Create the site configuration file in sites-available:
+
+         vi /etc/httpd/sites-available/com.example
+
+       That configuration file will be similar to this:
+
+         <VirtualHost *>
+           ServerName    example.com
+           DocumentRoot  /var/www/sub-domains/com.example/html
+
+           <Directory ~ "/var/www/sub-domains/com.example/html/(bin/|conf/|data/|inc/)">
+               <IfModule mod_authz_core.c>
+                         AllowOverride All
+                   Require all denied
+               </IfModule>
+               <IfModule !mod_authz_core.c>
+                   Order allow,deny
+                   Deny from all
+               </IfModule>
+           </Directory>
+
+           ErrorLog   /var/log/httpd/example.com_error.log
+           CustomLog  /var/log/httpd/example.com_access.log combined
+         </VirtualHost>
+
+       Note that the "AllowOverride All" here allows the .htaccess (directory-specific security) file to work.
+
+       Go ahead and link the configuration file into sites-enabled, but do not start web services as yet:
+
+         ln -s /etc/httpd/sites-available/com.example /etc/httpd/sites-enabled/
+
+       APACHE _DOCUMENTROOT_
+
+       You need to create your _DocumentRoot_. Do this with:
+
+         mkdir -p /var/www/sub-domains/com.example/html
+
+       INSTALLING DOKUWIKI
+
+       In your server, change to the root directory.
+
+         cd /root
+
+       Get the latest stable version of DokuWiki. You can find this by going to the download page. On the left side of the page, under "Version," you will see "Stable (Recommended) (direct link)."
+
+       Right-click the "(direct link)" and copy the link. In the console of your DokuWiki server, type wget and a space, and then paste your copied link into the terminal. You should get something similar to this:
+
+         wget https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz
+
+       Before you decompress the archive, examine the contents with tar ztf:
+
+         tar ztvf dokuwiki-stable.tgz
+
+       Notice the named dated directory ahead of all the other files that look similar to this:
+
+         ... (more above)
+         dokuwiki-2020-07-29/inc/lang/fr/resetpwd.txt
+         dokuwiki-2020-07-29/inc/lang/fr/draft.txt
+         dokuwiki-2020-07-29/inc/lang/fr/recent.txt
+         ... (more below)
+
+       You do not want that leading named directory when decompressing the archive, so use tar options to exclude it. The first option is --strip-components=1, which removes the leading directory. The second option is the -C option, which tells tar where you want the archive decompressed. The decompression will be similar to this:
+
+         tar xzf dokuwiki-stable.tgz  --strip-components=1 -C /var/www/sub-domains/com.example/html/
+
+       Once you run this command, all of DokuWiki should be in your _DocumentRoot_.
+
+       You need to make a copy of the .htaccess.dist file that came with DokuWiki, and keep the old one in case you need to revert to the original.
+
+       In the process, you will rename it to .htaccess. This is what _apache_ will be looking for. To do this:
+
+         cp /var/www/sub-domains/com.example/html/.htaccess{.dist,}
+
+       Change ownership of the new directory and its files to the _apache_ user and group:
+
+         chown -Rf apache.apache /var/www/sub-domains/com.example/html
+
+       SETTING UP DNS OR /ETC/HOSTS
+
+       Before you can access the DokuWiki interface, you must set the name resolution for this site. You can use your /etc/hosts file for testing purposes.
+
+       In this example, assume that DokuWiki will run on a private IPv4 address of 10.56.233.179. Assume you are also modifying the /etc/hosts file on a Linux workstation. To do this, run:
+
+         sudo vi /etc/hosts
+
+       Then change your host file to look similar to this (note the IP address earlier in the example):
+
+         127.0.0.1 localhost
+         127.0.1.1 myworkstation-home
+         10.56.233.179 example.com     example
+
+         # The following lines are desirable for IPv6 capable hosts
+         ::1     ip6-localhost ip6-loopback
+         fe00::0 ip6-localnet
+         ff00::0 ip6-mcastprefix
+         ff02::1 ip6-allnodes
+         ff02::2 ip6-allrouters
+
+       Once you have finished testing and are ready to take things live for everyone, you must add this host to a DNS server. You could use a Private DNS Server, or a public-facing DNS server.
+
+       STARTING HTTPD
+
+       Before you start httpd, test to make sure that your configuration is OK:
+
+         httpd -t
+
+       You should get:
+
+         Syntax OK
+
+       If so, you should be ready to start httpd and then finish the setup. Start by enabling httpd to start on boot:
+
+         systemctl enable httpd
+
+       Then start it:
+
+         systemctl start httpd
+
+       TESTING DOKUWIKI
+
+       The next step is to open up a web browser and type this in the address bar:
+
+       
+
+       This will bring you to the setup screen:
+
+        * In the "Wiki Name" field, type the name for your wiki. Example "Technical Documentation"
+        * In the "Superuser" field, type the administrative username. Example "admin"
+        * In the "Real name" field, type the real name of the administrative user
+        * In the "E-Mail" field, type the email address of the administrative user
+        * In the "Password" field, type the secure password of the administrative user
+        * In the "once again" field, re-type that same password
+        * In the "Initial ACL Policy" drop-down, choose the option that works best for your environment
+        * Choose the appropriate checkbox of the license you want to put your content under
+        * Leave checked (or uncheck if you prefer) the "Once a month, send anonymous usage data to the DokuWiki developers" checkbox
+        * Click the "Save" button
+       Your wiki is now ready for you to add content.
+
+       SECURING DOKUWIKI
+
+       Besides the ACL policy that you just created, consider the following:
+
+       YOUR FIREWALLD FIREWALL
+
+       > Note:
+       This firewall example does not assume what other services you might need to allow on your DokuWiki server. These rules are based on your testing environment and ONLY deal with allowing access to a LOCAL network IP block. You will need more services allowed for a production server.
+
+       Before you call everything done, you need to consider security. First, you should run a firewall on the server.
+
+       The assumption is that anyone on the 10.0.0.0/8 network is on your private Local Area Network and that those are the only people who need access to the site.
+
+       If you are using firewalld as your firewall, use the following rule syntax:
+
+         firewall-cmd --zone=trusted --add-source=10.0.0.0/8 --permanent
+         firewall-cmd --zone=trusted --add-service=http --add-service=https --permanent
+         firewall-cmd --reload
+
+       Once you have these rules added and the firewalld service reloaded, list out your zone to make sure that everything is there that you need:
+
+         firewall-cmd --zone=trusted --list-all
+
+       This will look similar to this if all worked correctly:
+
+         trusted (active)
+           target: ACCEPT
+           icmp-block-inversion: no
+           interfaces:
+           sources: 10.0.0.0/8
+           services: http https
+           ports:
+           protocols:
+           forward: yes
+           masquerade: no
+           forward-ports:
+           source-ports:
+           icmp-blocks:
+           rich rules:
+
+       SSL/TLS
+
+       You should consider using an SSL/TLS for encrypted web traffic for the best security. You can purchase an SSL/TLS certificate from an SSL/TLS provider or use Let's Encrypt.
+
+       CONCLUSION
+
+       Whether you need to document processes, company policies, program code, or something else, a wiki is a great way to do it. DokuWiki is a secure, flexible, easy-to-use product that is also straightforward to install and deploy. It is also a stable project that has been around for many years.
+
+Rocky Linux manual                      from the official documentation

@@ -1,0 +1,70 @@
+WEBAPI.IDBREQUEST-RESULT(1)      Sandbox manual      WEBAPI.IDBREQUEST-RESULT(1)
+
+       NAME
+
+       IDBRequest: result property - The result read-only property of the IDBRequest interface returns the result of the request.
+
+       IDBREQUEST: RESULT PROPERTY
+
+       The result read-only property of the IDBRequest interface returns the result of the request.
+
+       The value depends on the request that was made. For example, the IDBObjectStore.getAllRecords() and IDBIndex.getAllRecords() methods populate this property with an array of IDBRecord instances on successful completion of the request.
+
+       VALUE
+
+       any.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown when attempting to access the property if the request is not completed, and therefore, the result is not available.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The following example requests a given record title. On success, the associated record is retrieved from the IDBObjectStore (made available as objectStoreTitleRequest.result), one property of the record is updated, and then the updated record is put back into the object store. For a full working example, see our To-do Notifications app (View the example live).
+
+         const title = "Walk dog";
+
+         // Open up a transaction as usual
+         const objectStore = db
+           .transaction(["toDoList"], "readwrite")
+           .objectStore("toDoList");
+
+         // Get the to-do list object that has this title as its title
+         const objectStoreTitleRequest = objectStore.get(title);
+
+         objectStoreTitleRequest.addEventListener("success", () => {
+           // Grab the data object returned as the result
+           const data = objectStoreTitleRequest.result;
+
+           // Update the notified value in the object to "yes"
+           data.notified = "yes";
+
+           // Create another request that inserts the item
+           // back into the database
+           const updateTitleRequest = objectStore.put(data);
+
+           // When this new request succeeds, run the displayData()
+           // function again to update the display
+           updateTitleRequest.addEventListener("success", () => {
+             displayData();
+           });
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

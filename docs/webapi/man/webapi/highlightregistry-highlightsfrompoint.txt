@@ -1,0 +1,183 @@
+WEBAPI.HIGHLIGHTREGISTRY-HIGHLIGHTSFROMPOINT(1) Sandbox manual WEBAPI.HIGHLIGHTREGISTRY-HIGHLIGHTSFROMPOINT(1)
+
+       NAME
+
+       HighlightRegistry: highlightsFromPoint() method - The highlightsFromPoint() method of the HighlightRegistry interface returns an array of objects representing the custom highlights applied a
+
+       HIGHLIGHTREGISTRY: HIGHLIGHTSFROMPOINT() METHOD
+
+       The highlightsFromPoint() method of the HighlightRegistry interface returns an array of objects representing the custom highlights applied at a specific point within the viewport.
+
+       SYNTAX
+
+         highlightsFromPoint(x, y)
+         highlightsFromPoint(x, y, options)
+
+       PARAMETERS
+
+        * x
+          * : The x-coordinate of the point within the viewport from which to return custom highlight information.
+        * y
+          * : The y-coordinate of the point within the viewport from which to return custom highlight information.
+        * options (optional)
+          * : An object containing options, which can include:
+            * shadowRoots
+              * : An array of ShadowRoot objects. Custom highlights that exist at the specified point inside shadow roots in the array will also be included in the return value, in addition to those present in the light DOM. By default, highlights inside shadow roots are not returned.
+
+       RETURN VALUE
+
+       An array of objects representing the custom highlights applied at the point in the viewport specified by the x and y parameters.
+
+       Each object contains the following properties:
+
+        * highlight
+          * : A Highlight object representing the applied custom highlight.
+        * ranges
+          * : An array of AbstractRange objects representing the ranges to which the custom highlight is applied.
+       If no custom highlights are applied at the specified point, or the specified point is outside the viewport, the method returns an empty array.
+
+       EXAMPLES
+
+       RETRIEVING CUSTOM HIGHLIGHTS APPLIED AT THE MOUSE POINTER POSITION
+
+       This example demonstrates how to use the highlightsFromPoint() method to return the content of all custom highlights located at the mouse pointer coordinates of a user's double-click.
+
+       In this example, multiple custom highlights can be created on a paragraph of text, and the highlights can overlap. When the user presses the h key after selecting some text, a new Highlight is named and registered. This example supports up to three custom highlights at a time. When the user double-clicks within the highlighted area, the content of all highlights at that point, if any, is displayed in the output area.
+
+       HTML
+
+       The markup includes a element and a element. The serves as the output area where the content of the double-clicked highlights are displayed.
+
+         <h1>highlightsFromPoint() demo</h1>
+         <h2>Highlightable content</h2>
+         <p class="highlightable-text">
+           Select a portion of text, and then press the "h" key. The selected text gets a
+           custom highlight, colored yellow, red, or blue, in that order. After the third
+           highlight, each new one replaces the oldest, cycling through the colors in the
+           same order. Next, double-click any highlighted text. The highlighted text will
+           appear in the output. If multiple highlights overlap a section, you'll see
+           multiple text sections in the output.
+         </p>
+         <h2>Text in double-clicked highlights</h2>
+         <section></section>
+
+       CSS
+
+       In the CSS, we define styling for three custom highlights named highlight1, highlight2, and highlight3. We target each custom highlight using the ::highlight() pseudo-element, making their backgrounds semi-transparent yellow, red, and blue, respectively. Where highlights overlap, the semi-transparent backgrounds combine to show a mixed color.
+
+         ::highlight(highlight1) {
+           background-color: rgb(255 255 0 / 0.75);
+         }
+
+         ::highlight(highlight2) {
+           background-color: rgb(255 0 0 / 0.3);
+         }
+
+         ::highlight(highlight3) {
+           background-color: rgb(0 0 255 / 0.3);
+         }
+
+         * {
+           box-sizing: border-box;
+         }
+
+         body {
+           background-color: white;
+           color: #333333;
+           font:
+             1em / 1.4 "Helvetica Neue",
+             "Helvetica",
+             "Arial",
+             sans-serif;
+           padding: 1em;
+           max-width: 800px;
+           margin: 0 auto;
+         }
+
+         section {
+           display: flex;
+           gap: 10px;
+         }
+
+         .highlightable-text,
+         article {
+           padding: 10px;
+           background-color: #eeeeee;
+           border: 2px solid #dddddd;
+           border-radius: 5px;
+         }
+
+       JAVASCRIPT
+
+       This example has two distinct areas of functionality. We first enable the creation of custom highlights when the user clicks the h key after selecting some text. We then enable writing the highlighted content to the page when the user double-clicks one or more custom highlights.
+
+       CREATING AND APPLYING CUSTOM HIGHLIGHTS
+
+       To create custom highlights, we start by grabbing references to the element and its contained text node. We also create a variable called highlightCount, initially set to 1, which is used to specify which custom highlight to apply later on.
+
+         const pElem = document.querySelector(".highlightable-text");
+         const textNode = pElem.firstChild;
+         let highlightCount = 1;
+
+       When the user presses the h key after selecting some text, we need to register and name a new Highlight object, supporting up to three custom highlights at a time. To do this, we define a keydown event handler that applies a custom highlight to any selected text if h is pressed on the keyboard. Inside, we start by grabbing the selected text using Window.getSelection() and converting it to a Range using Selection.getRangeAt().
+
+       We check that the selectedRange object's startContainer and endContainer are both equal to the paragraph textNode, to make sure we don't allow any cross-container highlights. If so, we set the custom highlightName we want to apply to the selectedRange using highlight${highlightCount++}. Since we are incrementing highlightCount but only have three highlights, when counter reaches 4 we set it back to 1, effectively cycling through the available highlights in the order they are set.
+
+       Finally, for the keydown event handler, we create a new highlight object using the Highlight() constructor, passing it the selectedRange we created earlier. We then apply the chosen custom highlight referenced in highlightName to highlight using the HighlightRegistry.set() method.
+
+         window.addEventListener("keydown", (event) => {
+           if (event.key === "h") {
+             const selection = window.getSelection();
+             const selectedRange = selection.getRangeAt(0);
+             if (
+               selectedRange.startContainer === textNode &&
+               selectedRange.endContainer === textNode
+             ) {
+               const highlightName = `highlight${highlightCount++}`;
+               if (highlightCount === 4) {
+                 highlightCount = 1;
+               }
+               const highlight = new Highlight(selectedRange);
+               CSS.highlights.set(highlightName, highlight);
+             }
+           }
+         });
+
+       RETURNING CUSTOM HIGHLIGHTS FROM A POINT
+
+       Now that we can create and apply custom highlights, we can use the highlightsFromPoint() method to return the custom highlights applied at a specific point.
+
+       We grab a reference to our element, then define a dblclick event handler function to handle outputting the highlighted text at the mouse cursor position when the event fires. Inside the handler, we pass the current mouse coordinates into a highlightsFromPoint() call, clear the contents of the element, then loop through each highlight in the highlights array.
+
+       For each highlight, we grab the first range in the ranges array (there is only ever one range in each highlight, in this case), then get the exact highlighted string using Range.toString() and add it to the element's innerHTML, inside an element.
+
+         const section = document.querySelector("section");
+
+         pElem.addEventListener("dblclick", (event) => {
+           const highlights = CSS.highlights.highlightsFromPoint(
+             event.clientX,
+             event.clientY,
+           );
+
+           section.innerHTML = "";
+           for (highlight of highlights) {
+             const range = highlight.ranges[0];
+             const textSelection = range.toString();
+             section.innerHTML += `<article>${textSelection}</article>`;
+           }
+         });
+
+       RESULT
+
+       To create a highlight, press h after selecting some text. You can create up to three highlights. Double-click on the highlights you created, preferably where they overlap, to write the content of the clicked highlights to the page.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * CSS Custom Highlight API
+        * CSS custom highlight API module
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,33 @@
+SHELLCHECK.SC2191(1)             Sandbox manual             SHELLCHECK.SC2191(1)
+
+       NAME
+
+       The = here is literal. To assign by index, use ( [index]=value ) with no spaces. To keep as literal, quote it. - array=( [index] = value )
+
+       THE HERE IS LITERAL. TO ASSIGN BY INDEX, USE ( INDEX VALUE ) WITH NO S
+
+       THE HERE IS LITERAL. TO ASSIGN BY INDEX, USE ( INDEX VALUE ) WITH NO S
+
+       PROBLEMATIC CODE
+
+         array=( [index] = value )
+
+       CORRECT CODE
+
+         array=( [index]=value )
+
+       RATIONALE
+
+       The shell doesn't care about the = sign in your array assignment because it's not part of a recognized index assignment. Instead, it's considered a literal character and becomes part of an array element's value.
+
+       In the example problematic code, this is because the = was intended to set the index, but the shell will not recognize it when it is surrounded by spaces.
+
+       Make sure to remove any spaces around the = when assigning by index, such as in the correct code.
+
+       If you wanted the = to be a literal part of the array element, add quotes around it, such as env=( "LC_CTYPE=C" ) or specialChars=( "=" "%" ";" ) .
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

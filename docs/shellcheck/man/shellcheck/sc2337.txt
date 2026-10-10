@@ -1,0 +1,37 @@
+SHELLCHECK.SC2337(1)             Sandbox manual             SHELLCHECK.SC2337(1)
+
+       NAME
+
+       In pipefail mode, flags like -q, -m, or -L can cause grep to exit early, aborting the pipeline with SIGPIPE. Use a non-pipe input like '< <(cmd)' or '<<<' instead. - set -o pipefail
+
+       IN PIPEFAIL MODE, FLAGS LIKE -Q, -M, OR -L CAN CAUSE GREP TO EXIT EARL
+
+       IN PIPEFAIL MODE, FLAGS LIKE -Q, -M, OR -L CAN CAUSE GREP TO EXIT EARL
+
+       PROBLEMATIC CODE
+
+         set -o pipefail
+         find . -exec ls | grep -q myfile
+
+       CORRECT CODE
+
+         set -o pipefail
+         grep -q myfile <(find . -exec ls)
+
+       RATIONALE
+
+       When -o pipefail is set and a barrage of input is provided to grep, a race condition makes it possible for the first command in the pipeline to fail to register its SIGPIPE, which leaves grep waiting for input indefinitely. This is dependent on a number of factors, including whether the script is executed interactively, so it can appear inconsistent, which makes the script more difficult to troubleshoot.
+
+       In the above example, if there is an issue with the ls command, such as access permissions or non-existent directory, it will either cause the entire pipeline to fail if it produces a non-zero exit code, or hang if it does provide a zero.
+
+       Using input redirection avoids a pipe, and therefore does not depend on the setting of -o pipefail in the script, causing consistent behavior.
+
+       EXCEPTIONS
+
+       If you are not providing a large number of lines through a pipeline to grep, then this warning can be ignored. For instance, it is less likely that a race condition will appear during the output of dig +short as compared to iptables -L.
+
+       RELATED RESOURCES
+
+        * Original GitHub Issue
+
+ShellCheck manual                       from the official documentation

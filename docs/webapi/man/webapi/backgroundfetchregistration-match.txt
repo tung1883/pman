@@ -1,0 +1,70 @@
+WEBAPI.BACKGROUNDFETCHREGISTRATION-MATCH(1) Sandbox manual WEBAPI.BACKGROUNDFETCHREGISTRATION-MATCH(1)
+
+       NAME
+
+       BackgroundFetchRegistration: match() method - The match() method of the BackgroundFetchRegistration interface returns the first matching BackgroundFetchRecord.
+
+       BACKGROUNDFETCHREGISTRATION: MATCH() METHOD
+
+       The match() method of the BackgroundFetchRegistration interface returns the first matching BackgroundFetchRecord.
+
+       SYNTAX
+
+         match(request)
+         match(request, options)
+
+       PARAMETERS
+
+        * request
+          * : The Request for which you are attempting to find records.
+       This can be a Request object or a URL.
+
+        * options (optional)
+          * : An object that sets options for the match operation. The available
+       options are:
+
+            * ignoreSearch (optional)
+              * : A boolean value that specifies whether to
+       ignore the query string in the URL. For example, if set to true the ?value=bar part of https://example.com/?value=bar would be ignored when performing a match. It defaults to false.
+
+            * ignoreMethod (optional)
+              * : A boolean value. When true,
+       prevents matching operations from validating the Request http method. If false (the default) only GET and HEAD are allowed.
+
+            * ignoreVary (optional)
+              * : A boolean value. When true indicates that the Vary header should be ignored.
+       It defaults to false.
+
+       RETURN VALUE
+
+       A Promise that resolves with the first BackgroundFetchRecord that matches the request or undefined if no match is found.
+
+       > BackgroundFetchRegistration.match() is basically identical to
+       > BackgroundFetchRegistration.matchAll(), except that rather than resolving with an array of
+       > all matching records, it resolves with the first matching record only.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Returned if you call match() when there are no fetches in progress. This state will be reflected by BackgroundFetchRegistration.recordsAvailable being set to false.
+
+       EXAMPLES
+
+       In this example we look for a record with the URL "/ep-5.mp3". If a BackgroundFetchRecord is found then we can return some information about it.
+
+         bgFetch.match("/ep-5.mp3").then(async (record) => {
+           if (!record) {
+             console.log("No record found");
+             return;
+           }
+
+           console.log(`Here's the request`, record.request);
+           const response = await record.responseReady;
+           console.log(`And here's the response`, response);
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

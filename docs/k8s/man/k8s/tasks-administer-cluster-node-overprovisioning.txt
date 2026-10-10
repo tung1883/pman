@@ -1,0 +1,143 @@
+K8S.TASKS-ADMINISTER-CLUSTER-NODE-OVERPROVISIONING(1) Sandbox manual K8S.TASKS-ADMINISTER-CLUSTER-NODE-OVERPROVISIONING(1)
+
+       NAME
+
+       Change the namespace name "example" - This page guides you through configuring Node
+
+       CHANGE THE NAMESPACE NAME EXAMPLE
+
+       This page guides you through configuring Node overprovisioning in your Kubernetes cluster. Node overprovisioning is a strategy that proactively reserves a portion of your cluster's compute resources. This reservation helps reduce the time required to schedule new pods during scaling events, enhancing your cluster's responsiveness to sudden spikes in traffic or workload demands.
+
+       By maintaining some unused capacity, you ensure that resources are immediately available when new pods are created, preventing them from entering a pending state while the cluster scales up.
+
+       ## PREREQUISITES
+
+        * You need to have a Kubernetes cluster, and the kubectl command-line tool must be configured to communicate with
+       your cluster.
+
+        * You should already have a basic understanding of
+       Deployments, Pod priority, and PriorityClasses.
+
+        * Your cluster must be set up with an autoscaler
+       that manages nodes based on demand.
+
+       CREATE A PRIORITYCLASS
+
+       Begin by defining a PriorityClass for the placeholder Pods. First, create a PriorityClass with a negative priority value, that you will shortly assign to the placeholder pods. Later, you will set up a Deployment that uses this PriorityClass
+
+         apiVersion: scheduling.k8s.io/v1
+         kind: PriorityClass
+         metadata:
+           name: placeholder # these Pods represent placeholder capacity
+         value: -1000
+         globalDefault: false
+         description: "Negative priority for placeholder pods to enable overprovisioning."
+
+       Then create the PriorityClass:
+
+         kubectl apply -f https://k8s.io/examples/priorityclass/low-priority-class.yaml
+
+       You will next define a Deployment that uses the negative-priority PriorityClass and runs a minimal container. When you add this to your cluster, Kubernetes runs those placeholder pods to reserve capacity. Any time there is a capacity shortage, the control plane will pick one these placeholder pods as the first candidate to preempt.
+
+       RUN PODS THAT REQUEST NODE CAPACITY
+
+       Review the sample manifest:
+
+         apiVersion: apps/v1
+         kind: Deployment
+         metadata:
+           name: capacity-reservation
+           # You should decide what namespace to deploy this into
+         spec:
+           replicas: 1
+           selector:
+             matchLabels:
+               app.kubernetes.io/name: capacity-placeholder
+           template:
+             metadata:
+               labels:
+                 app.kubernetes.io/name: capacity-placeholder
+               annotations:
+                 kubernetes.io/description: "Capacity reservation"
+             spec:
+               priorityClassName: placeholder
+               affinity: # Try to place these overhead Pods on different nodes
+                         # if possible
+                 podAntiAffinity:
+                   preferredDuringSchedulingIgnoredDuringExecution:
+                   - weight: 100
+                     podAffinityTerm:
+                       labelSelector:
+                         matchLabels:
+                           app.kubernetes.io/name: capacity-placeholder
+                       topologyKey: topology.kubernetes.io/hostname
+               containers:
+               - name: pause
+                 image: registry.k8s.io/pause:3.6
+                 resources:
+                   requests:
+                     cpu: "50m"
+                     memory: "512Mi"
+                   limits:
+                     memory: "512Mi"
+
+       PICK A NAMESPACE FOR THE PLACEHOLDER PODS
+
+       You should select, or create, a namespace that the placeholder Pods will go into.
+
+       CREATE THE PLACEHOLDER DEPLOYMENT
+
+       Create a Deployment based on that manifest:
+
+         # Change the namespace name "example"
+         kubectl --namespace example apply -f https://k8s.io/examples/deployments/deployment-with-capacity-reservation.yaml
+
+       ADJUST PLACEHOLDER RESOURCE REQUESTS
+
+       Configure the resource requests and limits for the placeholder pods to define the amount of overprovisioned resources you want to maintain. This reservation ensures that a specific amount of CPU and memory is kept available for new pods.
+
+       To edit the Deployment, modify the resources section in the Deployment manifest file to set appropriate requests and limits. You can download that file locally and then edit it with whichever text editor you prefer.
+
+       You can also edit the Deployment using kubectl:
+
+         kubectl edit deployment capacity-reservation
+
+       For example, to reserve a total of a 0.5 CPU and 1GiB of memory across 5 placeholder pods, define the resource requests and limits for a single placeholder pod as follows:
+
+           resources:
+             requests:
+               cpu: "100m"
+               memory: "200Mi"
+             limits:
+               cpu: "100m"
+
+       SET THE DESIRED REPLICA COUNT
+
+       CALCULATE THE TOTAL RESERVED RESOURCES
+
+       For example, with 5 replicas each reserving 0.1 CPU and 200MiB of memory: Total CPU reserved: 5 × 0.1 = 0.5 (in the Pod specification, you'll write the quantity 500m) Total memory reserved: 5 × 200MiB = 1GiB (in the Pod specification, you'll write 1 Gi)
+
+       To scale the Deployment, adjust the number of replicas based on your cluster's size and expected workload:
+
+         kubectl scale deployment capacity-reservation --replicas=5
+
+       Verify the scaling:
+
+         kubectl get deployment capacity-reservation
+
+       The output should reflect the updated number of replicas:
+
+         NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+         capacity-reservation   5/5     5            5           2m
+
+       > Note:
+       Some autoscalers, notably Karpenter, treat preferred affinity rules as hard rules when considering node scaling. If you use Karpenter or another node autoscaler that uses the same heuristic, the replica count you set here also sets a minimum node count for your cluster.
+
+       ## WHATSNEXT
+
+        * Learn more about PriorityClasses and how they affect pod scheduling.
+        * Explore node autoscaling to dynamically adjust your cluster's size based on workload demands.
+        * Understand Pod preemption, a
+       key mechanism for Kubernetes to handle resource contention. The same page covers _eviction_, which is less relevant to the placeholder Pod approach, but is also a mechanism for Kubernetes to react when resources are contended.
+
+Kubernetes manual                       from the official documentation

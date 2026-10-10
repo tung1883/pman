@@ -1,0 +1,97 @@
+WEBAPI.HIGHLIGHTREGISTRY(1)      Sandbox manual      WEBAPI.HIGHLIGHTREGISTRY(1)
+
+       NAME
+
+       HighlightRegistry - The HighlightRegistry interface of the CSS Custom Highlight API is used to register Highlight objects to be styled using the API.
+
+       HIGHLIGHTREGISTRY
+
+       The HighlightRegistry interface of the CSS Custom Highlight API is used to register Highlight objects to be styled using the API. It is accessed via CSS.highlights.
+
+       A HighlightRegistry instance is a Map-like object, in which each key is the name string for a custom highlight, and the corresponding value is the associated Highlight object.
+
+       INSTANCE PROPERTIES
+
+       _The HighlightRegistry interface doesn't inherit any properties._
+
+        * HighlightRegistry.size (read-only)
+          * : Returns the number of Highlight objects currently registered.
+
+       INSTANCE METHODS
+
+       _The HighlightRegistry interface doesn't inherit any methods_.
+
+        * HighlightRegistry.clear()
+          * : Remove all Highlight objects from the registry.
+        * HighlightRegistry.delete()
+          * : Remove the named Highlight object from the registry.
+        * HighlightRegistry.entries()
+          * : Returns a new iterator object that contains each Highlight object in the registry, in insertion order.
+        * HighlightRegistry.forEach()
+          * : Calls the given callback once for each Highlight object in the registry, in insertion order.
+        * HighlightRegistry.get()
+          * : Gets the named Highlight object from the registry.
+        * HighlightRegistry.has()
+          * : Returns a boolean asserting whether a Highlight object is present the registry or not.
+        * HighlightRegistry.highlightsFromPoint()
+          * : Returns an array of objects representing the custom highlights applied at a specific point within the viewport.
+        * HighlightRegistry.keys()
+          * : An alias for HighlightRegistry.values().
+        * HighlightRegistry.set()
+          * : Adds the given Highlight object to the registry with the given name, or updates the named Highlight object, if it already exists in the registry.
+        * HighlightRegistry.values()
+          * : Returns a new iterator object that yields the Highlight objects in the registry, in insertion order.
+
+       EXAMPLES
+
+       REGISTERING A HIGHLIGHT
+
+       The following example demonstrates how to create ranges, instantiate a new Highlight object for them, and register the highlight using the HighlightRegistry, to style it on the page:
+
+       HTML
+
+         <p id="foo">CSS Custom Highlight API</p>
+
+       CSS
+
+         ::highlight(my-custom-highlight) {
+           background-color: peachpuff;
+         }
+
+       JAVASCRIPT
+
+         const text = document.getElementById("foo").firstChild;
+
+         if (!CSS.highlights) {
+           text.textContent =
+             "The CSS Custom Highlight API is not supported in this browser!";
+         }
+
+         // Create a couple of ranges.
+         const range1 = new Range();
+         range1.setStart(text, 0);
+         range1.setEnd(text, 3);
+
+         const range2 = new Range();
+         range2.setStart(text, 21);
+         range2.setEnd(text, 24);
+
+         // Create a custom highlight for these ranges.
+         const highlight = new Highlight(range1, range2);
+
+         // Register the ranges in the HighlightRegistry.
+         CSS.highlights.set("my-custom-highlight", highlight);
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The CSS Custom Highlight API
+        * CSS custom highlight API module
+        * CSS Custom Highlight API: The Future of Highlighting Text Ranges on the Web
+
+Web APIs manual                         from the official documentation

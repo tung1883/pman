@@ -1,0 +1,37 @@
+SHELLCHECK.SC2240(1)             Sandbox manual             SHELLCHECK.SC2240(1)
+
+       NAME
+
+       The dot command does not support arguments in sh/dash. Set them as variables. - . include/myscript example.com 80
+
+       THE DOT COMMAND DOES NOT SUPPORT ARGUMENTS IN SH/DASH. SET THEM AS VAR
+
+       THE DOT COMMAND DOES NOT SUPPORT ARGUMENTS IN SH/DASH. SET THEM AS VAR
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         . include/myscript example.com 80
+
+       CORRECT CODE
+
+         #!/bin/sh
+         host=example.com port=80 . include/myscript
+
+       RATIONALE
+
+       In Bash and Ksh, you can use . myscript arg1 arg2.. to set $1 and $2 in the sourced script.
+
+       This is not the case in Dash, where any additional arguments are ignored, or in POSIX sh where the behavior is unspecified.
+
+       Instead, assign arguments to variables and rewrite the sourced script to read from them.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

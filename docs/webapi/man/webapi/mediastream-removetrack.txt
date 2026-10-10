@@ -1,0 +1,67 @@
+WEBAPI.MEDIASTREAM-REMOVETRACK(1) Sandbox manual WEBAPI.MEDIASTREAM-REMOVETRACK(1)
+
+       NAME
+
+       MediaStream: removeTrack() method - The removeTrack() method of the MediaStream interface removes a
+
+       MEDIASTREAM: REMOVETRACK() METHOD
+
+       The removeTrack() method of the MediaStream interface removes a MediaStreamTrack from a stream.
+
+       SYNTAX
+
+         removeTrack(track)
+
+       PARAMETERS
+
+        * track
+          * : A MediaStreamTrack that will be removed from the stream.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       The following example demonstrates how to remove the audio and video tracks from a MediaStream. fetchStreamFunction is an event handler for fetchStreamButton. When the button is clicked, audio and video are captured from the system's devices. removeTracksFunction is the event handler for removeTracksButton. When this button is clicked, the audio and video tracks are removed from the MediaStream.
+
+         let initialStream = null;
+         let newStream = null;
+
+         let fetchStreamButton = document.getElementById("fetchStream");
+         let removeTracksButton = document.getElementById("removeTracks");
+
+         async function fetchStreamFunction() {
+           initialStream = await navigator.mediaDevices.getUserMedia({
+             video: { width: 620, height: 310 },
+             audio: true,
+           });
+           if (initialStream) {
+             await attachToDOM(initialStream);
+           }
+         }
+
+         async function attachToDOM(stream) {
+           newStream = new MediaStream(stream.getTracks());
+           document.querySelector("video").srcObject = newStream;
+         }
+
+         async function removeTracksFunction() {
+           let videoTrack = newStream.getVideoTracks()[0];
+           let audioTrack = newStream.getAudioTracks()[0];
+
+           newStream.removeTrack(videoTrack);
+           newStream.removeTrack(audioTrack);
+
+           // Stream will be empty
+           console.log(newStream.getTracks());
+         }
+
+         fetchStreamButton.addEventListener("click", fetchStreamFunction);
+         removeTracksButton.addEventListener("click", removeTracksFunction);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

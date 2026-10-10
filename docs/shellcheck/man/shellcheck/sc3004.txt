@@ -1,0 +1,40 @@
+SHELLCHECK.SC3004(1)             Sandbox manual             SHELLCHECK.SC3004(1)
+
+       NAME
+
+       In POSIX sh, $".." is undefined - printf $"Hello, %s\n" "$USER"
+
+       IN POSIX SH, .. IS UNDEFINED
+
+       IN POSIX SH, .. IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         printf $"Hello, %s\n" "$USER"
+
+       CORRECT CODE
+
+         if ! type gettext > /dev/null 2>&1
+         then
+           # If not, create a dummy function that returns the input verbatim
+           gettext() { printf '%s' "$1"; }
+         fi
+
+         # Use gettext to get a translated version of the string
+         printf "$(gettext 'Hello, %s\n')" "$USER"
+
+       RATIONALE
+
+       Bash allows using $"..." to easily get a translated string according to the current locale. This is powered by the gettext infrastructure.
+
+       Neither $".." nor the gettext infrastructure or the gettext command is POSIX. A script targeting sh may choose to invoke gettext if the system has it (such as GNU or Solaris), or use the translated string verbatim if it doesn't (such as macOS or FreeBSD).
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

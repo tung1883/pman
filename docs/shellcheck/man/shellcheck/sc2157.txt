@@ -1,0 +1,43 @@
+SHELLCHECK.SC2157(1)             Sandbox manual             SHELLCHECK.SC2157(1)
+
+       NAME
+
+       Argument to implicit -n is always true due to literal strings. - (Or: Argument to -z is always false due to literal strings. )
+
+       ARGUMENT TO IMPLICIT -N IS ALWAYS TRUE DUE TO LITERAL STRINGS
+
+       ARGUMENT TO IMPLICIT -N IS ALWAYS TRUE DUE TO LITERAL STRINGS
+
+       (Or: Argument to -z is always false due to literal strings. )
+
+       PROBLEMATIC CODE
+
+         if [ "$foo " ]
+         then
+           echo "this is always true because of the trailing space"
+         fi
+
+       CORRECT CODE
+
+         if [ "$foo" ]
+         then
+           echo "correctly checks value"
+         fi
+
+       RATIONALE
+
+       Since [ str ] and [ -n str ] check that the string is non-empty, any literal characters in the string -- including a space character like in the example -- will cause the test to always be true.
+
+       Equivalently, since [ -z str ] checks that the string is empty, any literal character in the string will cause the test to always be false.
+
+       Double check the string: you may have added trailing characters, or bad quotes or syntax. Some examples include:
+
+        * [ "$foo " ] like in the example, where the space becomes part of the string
+        * [ "{$foo}" ] instead of [ "${foo}" ], where the { becomes part of the string
+        * [ "$foo -gt 0" ] instead of [ "$foo" -gt "0" ], where the -gt becomes part of the string
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

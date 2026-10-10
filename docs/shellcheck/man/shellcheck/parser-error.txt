@@ -1,0 +1,36 @@
+SHELLCHECK.PARSER-ERROR(1)       Sandbox manual       SHELLCHECK.PARSER-ERROR(1)
+
+       NAME
+
+       parser-error - This page is about how ShellCheck reports parser errors, to aid you in finding problems. If you're getting a parser error for code you know
+
+       PARSER-ERROR
+
+       This page is about how ShellCheck reports parser errors, to aid you in finding problems. If you're getting a parser error for code you know or think is correct, you should submit a bug with an example!
+
+       When ShellCheck is unable to parse a file, it'll output several errors to help pinpoint the problem:
+
+       Consider this script, with a missing double quote on line 1:
+
+         ssh host "$cmd
+         echo "Finished"
+
+       Bash says:
+
+       file: line 2: unexpected EOF while looking for matching "' file: line 3: syntax error: unexpected end of file
+
+       ShellCheck says:
+
+       In file line 1: ssh host "$cmd ^-- SC1009: The mentioned parser error was in this simple command.
+
+       In file line 2: echo "Finished" ^-- SC1073: Couldn't parse this double quoted string. ^-- SC1072: Unexpected eof. Fix any mentioned problems and try again.
+
+        1. One error showing the direct problem (SC1072, unexpected eof) (Note: see #1036)
+        1. One error showing the construct being parsed (SC1073)
+        1. One info showing the outer construct being parsed (SC1009)
+        1. Potentially some specific suggestions, such as when missing an fi.
+       Here, ShellCheck says that the command on line 1 is faulty, which makes it easier to find and fix the actual problem.
+
+       Most of ShellCheck's functionality (specifically, any checks with code >= SC2000) only applies to scripts that parse successfully, so make sure to rerun ShellCheck after fixing any syntax errors.
+
+ShellCheck manual                       from the official documentation

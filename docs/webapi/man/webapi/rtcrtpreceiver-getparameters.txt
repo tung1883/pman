@@ -1,0 +1,78 @@
+WEBAPI.RTCRTPRECEIVER-GETPARAMETERS(1) Sandbox manual WEBAPI.RTCRTPRECEIVER-GETPARAMETERS(1)
+
+       NAME
+
+       RTCRtpReceiver: getParameters() method - The getParameters() method of the RTCRtpReceiver interface returns an object describing the current configuration for how the receiver's tra
+
+       RTCRTPRECEIVER: GETPARAMETERS() METHOD
+
+       The getParameters() method of the RTCRtpReceiver interface returns an object describing the current configuration for how the receiver's track is decoded.
+
+       SYNTAX
+
+         getParameters()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       An object indicating the current configuration of the receiver.
+
+       
+
+        * codecs
+          * : An array of objects describing the media codecs that the receiver is ready to use.
+       This is the subset of codecs that the receiver has indicated it prefers and that the remote endpoint has indicated it is prepared to send. This parameter cannot be changed once initially set.
+
+       Each codec object in the array may have the following properties:
+
+            * channels (optional)
+              * : A positive integer indicating the number of channels supported by the codec.
+       For example, for audio codecs a value of 1 specifies monaural sound, while 2 indicates stereo.
+
+            * clockRate
+              * : A positive integer specifying the codec's clock rate in Hertz (Hz).
+       The clock rate is the rate at which the codec's RTP timestamp advances. Most codecs have specific values or ranges of values they permit. The IANA maintains a list of codecs and their parameters, including their clock rates.
+
+            * mimeType
+              * : A string indicating the codec's MIME media type and subtype, specified as a string of the form "type/subtype".
+       The MIME type strings used by RTP differ from those used elsewhere. IANA maintains a registry of valid MIME types. Also see Codecs used by WebRTC for details about potential codecs that might be referenced here.
+
+            * payloadType
+              * : The RTP payload type used to identify this codec.
+            * sdpFmtpLine (optional)
+              * : A string giving the format specific parameters field from the a=fmtp line in the SDP which corresponds to the codec SDP from the remote peer, if the field is present.
+       If there is no parameters field, this property is left out. See section 5.8 of the IETF specification for JSEP for more information.
+
+        * headerExtensions
+          * : An array of zero or more RTP header extensions, each identifying an extension supported by the sender or receiver.
+       Header extensions are described in 5.3.1. This parameter cannot be changed once initially set.
+
+        * rtcp
+          * : An object providing the configuration parameters used for RTCP on the sender or receiver.
+       This parameter cannot be changed once initially set.
+
+       The object may have the following properties:
+
+            * cname
+              * : A string giving the canonical name (CNAME) used by RTCP (e.g., in SDES messages).
+            * reducedSize
+              * : A boolean that is true if reduced-size RTCP is configured (5506), and false if compound RTCP is specified (3550).
+
+       EXAMPLES
+
+       This example obtains the canonical name (CNAME) being used for RTCP on an RTCRtpReceiver.
+
+         function getRtcpCNAME(receiver) {
+           let parameters = receiver.getParameters();
+
+           return parameters.rtcp.cname;
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

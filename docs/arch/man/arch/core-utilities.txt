@@ -1,0 +1,330 @@
+ARCH.CORE-UTILITIES(1)           Sandbox manual           ARCH.CORE-UTILITIES(1)
+
+       Core utilities are the basic, fundamental tools of a GNU/Linux system. This article provides an incomplete overview of them, links their documentation and describes useful alternatives. The scope of this article includes, but is not limited to, the GNU Core Utilities. Most core utilities are traditional Unix tools and many were standardized by POSIX but have been developed further to provide more features.
+
+       Most command-line interfaces are documented in man pages, utilities by the GNU Project are documented primarily in Info manuals, some shells provide a help command for shell builtin commands. Additionally most utilities print their usage when run with the --help flag.
+
+       ESSENTIALS
+
+       The following table lists some important utilities which Arch Linux users should be familiar with. See also intro(1).
+
+         Package | Utility | Description | Documentation | Alternatives
+         shell built-ins | cd | change directory | cd(1p) | #cd alternatives
+         GNU coreutils | ls | list directory | ls(1), info | tree, #ls alternatives
+         cat | concatenate files to stdout | cat(1), info | tac(1), #cat alternatives
+         mkdir | make directory | mkdir(1), info
+         rmdir | remove empty directory | rmdir(1), info
+         rm | remove files or directories | rm(1), info | shred unlink(1)
+         cp | copy files or directories | cp(1), info | #cp alternatives
+         mv | move files or directories | mv(1), info
+         ln | make hard or symbolic links | ln(1), info | sln(8) (soname recovery)
+         chown | change file owner and group | chown(1), info | chgrp(1)
+         chmod | change file permissions | chmod(1), info
+         dd | convert and copy a file | dd(1), info | #dd alternatives
+         df | report file system disk space usage | df(1), info | #df alternatives
+         du | estimate disk space used by files and directories | du(1), info | #du alternatives
+         GNU tar | tar | tar archiver | tar(1), info | archivers
+         GNU less | less | terminal pager | less(1) | terminal pagers
+         GNU findutils | find | search files or directories | find(1), info, GregsWiki | #find alternatives
+         GNU diffutils | diff | compare files line by line | diff(1), info | #diff alternatives
+         GNU grep | grep | print lines matching a pattern | grep(1), info | #grep alternatives
+         GNU sed | sed | stream editor | sed(1), info, one-liners | sad, sd
+         GNU AWK (gawk) | AWK | pattern scanning and processing language | gawk(1), info, one-liners | AWK#Alternative implementations
+         util-linux | dmesg | print or control the kernel ring buffer | dmesg(1) | systemd journal
+         lsblk | list block devices | lsblk(8)
+         mount | mount a filesystem | mount(8)
+         umount | unmount a filesystem | umount(8)
+         su | substitute user | su(1) | sudo, doas
+         kill | terminate a process | kill(1) | pkill(1), killall(1)
+         procps-ng | pgrep | look up processes by name or attributes | pgrep(1) | pidof(1)
+         ps | show information about processes | ps(1) | top(1), system monitors
+         free | display amount of free and used memory | free(1)
+
+       PREVENTING DATA LOSS
+
+       rm, mv, cp and shell redirections happily delete or overwrite files without asking. rm, mv, and cp all support the -i flag to prompt the user before every removal / overwrite. Some users like to enable the -i flag by default using aliases. Relying upon these shell options can be dangerous, because you get used to them, resulting in potential data loss when you use another system or user that does not have them. The best way to prevent data loss is to create backups.
+
+       NONESSENTIALS
+
+       This table lists core utilities that often come in handy.
+
+         Package | Utility | Description | Documentation | Alternatives
+         shell built-ins | alias | define or display aliases | alias(1p)
+         type | print the type of a command | type(1p) | command(1p), whereis(1), which(1)
+         time | time a command | time(1p)
+         GNU coreutils | tee | read stdin and write to stdout and files | tee(1), info | pee(1)
+         mktemp | make a temporary file or directory | mktemp(1), info
+         mknod | create named pipe or device node | mknod(1), mkfifo(1), info
+         truncate | shrink or extend the size of a file | truncate(1), info | fallocate(1)
+         basenc | encoding input and output it | basenc(1), base64(1), info
+         cut | print selected parts of lines | cut(1), info | colrm(1), hck, choose
+         tr | translate or delete characters | tr(1), info | uconv(1)
+         od | dump files in octal and other formats | od(1), info | hexdump(1), vim's xxd(1)
+         sort | sort lines | sort(1), info
+         uniq | report or omit repeated lines | uniq(1), info | anewer, runiqAUR, huniq-gitAUR
+         comm | compare two sorted files line by line | comm(1), info | zetAUR
+         head | output the first part of files | head(1), info
+         join | join lines of two inputs on a common field | join(1), info | combine(1) zetAUR
+         md5sum | calculate cryptography hash functions of inputs and output | sha256sum(1), sha512sum(1), info | shasum(1), rhash(1)
+         tail | output the last part of files, or follow files | tail(1), info
+         wc | print newline, word and byte count | wc(1), info
+         GNU binutils | strings | print printable characters in binary files | strings(1), info | stringsextAUR
+         util-linux | column | columnate file, optionally pretty-printing in table with grid | column(1) | paste(1), csviewAUR
+         GNU findutils | xargs | combine or template arguments from stdin to invoke external command | xargs(1) | parallel(1) (parallel_alternatives(7))
+         GNU glibc | iconv | convert character encodings | iconv(1) | recode, uconv(1)
+         GNU sharutils | uudecode | encode file into email friendly text | uuencode(1), uudecode(1), info | uudeview(1)
+         file | file | guess file type | file(1)
+       The moreutils package provides useful tools like sponge(1) that are missing from the GNU coreutils.
+
+       ALTERNATIVES
+
+       Alternative core utilities are provided by the following packages:
+
+        * 9base — A port of various original Plan9 tools to unix.
+       https://tools.suckless.org/9base || 9base
+
+        * BusyBox — Utilities for rescue and embedded systems.
+       https://busybox.net || busybox
+
+        * Heirloom Toolchest — Traditional implementations of standard Unix utilities.
+       https://heirloom.sourceforge.net || heirloom-shAUR, heirloom-doctoolsAUR
+
+        * sbase — A suckless variant of the *nix core utilities.
+       https://core.suckless.org/sbase || sbase-gitAUR
+
+        * Toybox — An all-in-one Linux command line.
+       https://landley.net/toybox || toyboxAUR
+
+        * ubase — An extension of the sbase utilities.
+       https://core.suckless.org/ubase || ubase-gitAUR
+
+        * uutils — Cross-platform Rust rewrite of the GNU coreutils.
+       https://github.com/uutils/coreutils || uutils-coreutils
+
+       CAT ALTERNATIVES
+
+        * bat — A cat clone with syntax highlighting and Git integration.
+       https://github.com/sharkdp/bat || bat
+
+       CD ALTERNATIVES
+
+        * autojump — A faster way to navigate your filesystem from the command line.
+       https://github.com/wting/autojump || autojumpAUR
+
+        * zoxide — A smart cd command that learns your habits, allowing you to navigate anywhere in just a few keystrokes.
+       https://github.com/ajeetdsouza/zoxide || zoxide
+
+       See also Bash#Auto "cd" when entering just a path and Zsh#Remembering recent directories.
+
+       CP ALTERNATIVES
+
+       Using rsync#As cp/mv alternative allows you to resume a failed transfer, to show the transfer status, to skip already existing files and to make sure of the destination files integrity using checksums.
+
+       LS ALTERNATIVES
+
+        * broot — A new way to see and navigate directory trees.
+       https://github.com/Canop/broot || broot
+
+        * Clifm — A file manager that can list files like ls(1) would (plus icons and RGB colors support).
+       https://github.com/leo-arch/clifm/wiki/Advanced#file-lister-ls-mode || clifmAUR
+
+        * eza — Another ls replacement with color support, tree view, git integration and other features. Based on exa, which is no longer supported.
+       https://github.com/eza-community/eza || eza
+
+        * lsd — Modern ls with a lot of pretty colors and awesome icons.
+       https://github.com/Peltoche/lsd || lsd
+
+       FIND ALTERNATIVES
+
+        * bfs — A breadth-first version of find.
+       https://github.com/tavianator/bfs || bfs
+
+        * fd — Simple, fast and user-friendly alternative to find. Ignores hidden and .gitignore'd files by default.
+       https://github.com/sharkdp/fd || fd
+
+        * fuzzy-find — Fuzzy completion for finding files.
+       https://github.com/silentbicycle/ff || ff-gitAUR
+
+        * plocate — A much faster locate.
+       https://plocate.sesse.net/ || plocate
+
+        * rawhide — find files using pretty C expressions.
+       https://raf.org/rawhide/ || rawhideAUR
+
+        * uutils-findutils — Rust rewrite of findutils
+       https://github.com/uutils/findutils || uutils-findutilsAUR
+
+       For graphical file searchers, see List of applications/Utilities#File searching.
+
+       DIFF ALTERNATIVES
+
+        * uutils-diffutils — Rust rewrite of diffutils.
+       https://github.com/uutils/diffutils || uutils-diffutilsAUR
+
+       While diffutils does not provide a word-wise diff, several other programs do:
+
+        * cwdiff — A GNU wdiff wrapper that colorizes the output.
+       https://github.com/junghans/cwdiff || cwdiffAUR
+
+        * dwdiff — A word diff front-end for the diff program; supports colors.
+       https://os.ghalkes.nl/dwdiff.html || dwdiffAUR
+
+        * git diff can do a word diff with --color-words, using --no-index it can also be used for files outside of Git working trees.
+        * git-delta — A syntax-highlighting pager for git, diff, and grep output.
+       https://dandavison.github.io/delta/ || git-delta
+
+        * icdiff — A colorized diff tool written in Python. "Improved color diff" is meant to supplement normal diff use.
+       https://github.com/jeffkaufman/icdiff || icdiffAUR
+
+        * wdiff — A wordwise implementation of GNU diff; does not support colors.
+       https://www.gnu.org/software/wdiff/ || wdiff
+
+       See also List of applications/Utilities#Comparison, diff, merge.
+
+       GREP ALTERNATIVES
+
+        * mgrep — A multiline grep.
+       https://sourceforge.net/projects/multiline-grep/ || mgrepAUR
+
+        * pdfgrep — A tool to search text in PDF files.
+       https://pdfgrep.org/ || pdfgrep
+
+        * ripgrep-all — Search in plain text and also in PDFs, E-Books, Office documents, zip, tar.gz.
+       https://github.com/phiresky/ripgrep-all || ripgrep-all
+
+       CODE SEARCHERS
+
+       These tools aim to replace grep for code search. They do recursive search by default, skip binary files and respect .gitignore.
+
+        * ack — A Perl-based grep replacement, aimed at programmers with large trees of heterogeneous source code.
+       https://beyondgrep.com/ || ackAUR
+
+        * pcre2grep — Perl-compatible grep, but it uses the PCRE2 regular expression library.
+       https://github.com/PCRE2Project/pcre2 || pcre2
+
+        * ripgrep (rg) — A search tool that combines the usability of ag with the raw speed of grep.
+       https://github.com/BurntSushi/ripgrep || ripgrep
+
+        * The Silver Searcher (ag) — Code searching tool similar to ack, but faster.
+       https://github.com/ggreer/the_silver_searcher || the_silver_searcher
+
+        * ugrep (ug) — Ultrafast grep with interactive user interface, fuzzy search, boolean queries, hexdumps and more.
+       https://github.com/Genivia/ugrep || ugrep
+
+       See also: cscope.
+
+       INTERACTIVE FILTERS
+
+        * fnf — An interactive fuzzy finder for the terminal.
+       https://github.com/leo-arch/fnf || fnfAUR
+
+        * fzf — General-purpose command-line fuzzy finder, powered by find by default.
+       https://github.com/junegunn/fzf || fzf
+
+        * fzy — A fast, simple fuzzy text selector with an advanced scoring algorithm.
+       https://github.com/jhawthorn/fzy || fzy
+
+        * peco — Simplistic interactive filtering tool.
+       https://github.com/peco/peco || peco
+
+        * percol — Adds flavor of interactive filtering to the traditional pipe concept of the UNIX shell.
+       https://github.com/mooz/percol || percolAUR
+
+        * skim — Fuzzy finder written in Rust, similar to fzf.
+       https://github.com/lotabout/skim || skim
+
+       DD ALTERNATIVES
+
+       See also: dd and ddrescue
+
+       ALTERNATIVE DD IMPLEMENTATIONS
+
+       This subsection lists dd implementations whose interface and default behaviour is mostly compliant with the POSIX specification of dd(1p).
+
+        * ddpt — A portable rewrite of sg_dd(8) by the SCSI subsystem maintainer of the Linux kernel, with optional but very specialised hardware I/O (SCSI command sets) support, plus many other features.
+       https://sg.danny.cz/sg/ddpt.html || ddptAUR
+
+        * sdd — A dd implementation portable across UNIX environments by Joerg Schilling, that can checksum the copied data and retry reading bad blocks.
+       https://schilytools.sourceforge.net/ || schily-tools-sddAUR
+
+       SPIN-OFFS OF GNU DD
+
+       The GNU implementation of dd found in coreutils also conforms to POSIX. This subsection lists its forks.
+
+        * dc3dd — Another patched version of GNU dd from the United States Department of Defense Cyber Crime Center (DC3), with similar goals and features to dcfldd.
+       https://sourceforge.net/projects/dc3dd/ || dc3ddAUR
+
+        * dcfldd — feature-enhanced fork of GNU dd for forensics and security scenarios, includes on-the-fly hashing capability, flexible wipes, write verification, output to multiple targets at the same time, split and piped output.
+       https://dcfldd.sourceforge.net || dcflddAUR
+
+       MODERNISED DD ANALOGUES
+
+       This subsection lists dd alternatives that do not conform to POSIX (in terms of the JCL-resembling command-line syntax and default behaviour).
+
+        * dd_rescue — A feature-packed, modernised dd analogue that is suitable for daily scripting, disk cloning, and data recovery.
+       https://www.garloff.de/kurt/linux/ddrescue/ || dd_rescue
+
+        * rw — Minimal and portable dd analogue with conventional command-line flags.
+       https://sortix.org/rw/ || rwAUR
+
+       BUFFER SPIN-OFFS
+
+       This subsection lists forks of bufferAUR, a general-purpose I/O buffering utility similar to dd but has a dynamic-sized buffer. It supports blockwise I/O and can be used when dumping from/to an LTO-tape to avoid shoe shining.
+
+        * mbuffer — Continuation of the buffer utility with threading and other features.
+       https://www.maier-komor.de/mbuffer.html || mbuffer
+
+       DF ALTERNATIVES
+
+        * duf — A disk usage/free utility.
+       https://github.com/muesli/duf || duf
+
+       DU ALTERNATIVES
+
+        * cdu — du wrapper with colors and a pretty histogram.
+       http://arsunik.free.fr/prog/cdu.html || cduAUR
+
+        * dua — Fast disk usage analyzer, supports deleting files, written in Rust.
+       https://github.com/Byron/dua-cli || dua-cli
+
+        * dust — A more intuitive version of du, in Rust.
+       https://github.com/bootandy/dust || dust
+
+        * gdu — Disk usage analyzer with console interface, written in Go.
+       https://github.com/Dundee/gdu || gdu
+
+        * ncdu — An extremely lightweight and simple ncurses based disk usage analyzer, written in Zig.
+       https://dev.yorhel.nl/ncdu || ncdu
+
+       See also List of applications/Utilities#Disk usage display.
+
+       POSIX SHELL UTILITIES
+
+       Many common packages already install most popular POSIX utilities as dependencies, but the posix metapackage can be installed to ensure all of them being always present.
+
+       Beside mandatory utilities, there are also metapackages for some of the optional categories:
+
+        * posix-c-development
+        * posix-software-development
+        * posix-user-portability
+        * posix-xsi
+       Note Not all optional utilities from given category are necessarily present in corresponding metapackage.
+
+       TIPS AND TRICKS
+
+       OVERRIDE OR ADD MISSING COREUTILS
+
+       Some commands (arch, kill, etc.) are missing from coreutils or taken from other packages. To complete them for compatibility, install uutils-coreutils and do:
+
+         # ln -sf /usr/bin/uu-coreutils /usr/local/bin/arch
+         # echo -e "#compdef arch=uu-arch\n_uu-arch" > /usr/local/share/zsh/site-functions/_arch
+         # echo "complete -c arch -w uu-arch" > /usr/local/share/fish/vendor_completions.d/arch.fish
+
+       SEE ALSO
+
+        * GNU Coreutils documentation
+        * GNU Coreutils FAQ
+        * Coreutils Gotchas: GNU coreutils maintainer's notes about some confusing behaviour in coreutils components
+        * POSIX utilities
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,60 @@
+WEBAPI.HTMLIFRAMEELEMENT-CONTENTWINDOW(1) Sandbox manual WEBAPI.HTMLIFRAMEELEMENT-CONTENTWINDOW(1)
+
+       NAME
+
+       HTMLIFrameElement: contentWindow property - The contentWindow property returns the Window object of an HTMLIFrameElement.
+
+       HTMLIFRAMEELEMENT: CONTENTWINDOW PROPERTY
+
+       The contentWindow property returns the Window object of an HTMLIFrameElement.
+
+       This attribute is read-only.
+
+       VALUE
+
+       A Window object.
+
+       DESCRIPTION
+
+       Access to the Window returned by contentWindow is subject to the rules defined by the same-origin policy, meaning that if the iframe is same-origin with the parent, then the parent can access the iframe's document and its internal DOM, and if they are cross-origin, it gets very limited access to the window's attributes. See "Cross-origin script API access" for details.
+
+       Pages can also use this property to find out which iframe sent a message using Window.postMessage(), by comparing it with the message event's source property.
+
+       EXAMPLES
+
+       ACCESSING AN IFRAME'S DOCUMENT
+
+       This example modifies the style attribute of the document body.
+
+       Note that this only works if the iframe's window is same-origin with its parent: otherwise attempting to access contentWindow.document will throw an exception.
+
+         const iframe = document.querySelector("iframe").contentWindow;
+
+         iframe.document.querySelector("body").style.backgroundColor = "blue";
+         // this would turn the 1st iframe in document blue.
+
+       MAPPING MESSAGE SOURCES TO IFRAMES
+
+       This example could run in a page that hosts several iframes, any of which can send it messages using Window.postMessage(). When the page receives a message, it wants to know which iframe contains the window that sent the message.
+
+       To do this, when it receives a message, the page first checks that the message was from the expected origin, and then finds the iframe that was the source of the message by comparing the message event's source property with the iframe's contentWindow property.
+
+         const expectedOrigin = "https://example.org";
+
+         const iframes = Array.from(document.querySelectorAll("iframe"));
+
+         window.addEventListener("message", (e) => {
+           if (e.origin !== expectedOrigin) return;
+
+           const sourceIframe = iframes.find(
+             (iframe) => iframe.contentWindow === e.source,
+           );
+
+           console.log(sourceIframe);
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,200 @@
+WEBAPI.DEVICE-ORIENTATION-EVENTS-DETECTING-DEVICE-ORIENTATION(1) Sandbox manual WEBAPI.DEVICE-ORIENTATION-EVENTS-DETECTING-DEVICE-ORIENTATION(1)
+
+       NAME
+
+       Detecting device orientation - Increasingly, web-enabled devices are capable of determining their orientation; that is, they can report data indicating changes to their or
+
+       DETECTING DEVICE ORIENTATION
+
+       Increasingly, web-enabled devices are capable of determining their orientation; that is, they can report data indicating changes to their orientation with relation to the pull of gravity. In particular, hand-held devices such as mobile phones can use this information to automatically rotate the display to remain upright, presenting a wide-screen view of the web content when the device is rotated so that its width is greater than its height.
+
+       There are two JavaScript events that handle orientation information. The first one is the DeviceOrientationEvent, which is sent when the accelerometer detects a change to the orientation of the device. By receiving and processing the data reported by these orientation events, it's possible to interactively respond to rotation and elevation changes caused by the user moving the device.
+
+       The second event is the DeviceMotionEvent, which is sent when a change in acceleration was added. It is different from the DeviceOrientationEvent because it is listening for changes in acceleration as opposed to orientation. Sensors that are commonly capable of detecting DeviceMotionEvent include sensors in laptops to protect moving storage devices. DeviceOrientationEvent is more commonly found in mobile devices.
+
+       REQUESTING PERMISSION
+
+       Some user agents require explicit permission from the user before accessing device orientation and motion data. In environments where this is needed, the DeviceOrientationEvent.requestPermission() and DeviceMotionEvent.requestPermission() static methods can be used to request this permission. Both methods return a Promise that resolves with "granted" or "denied", and both must be called from within a user gesture (such as a click event handler).
+
+       Because not all user agents implement these methods, you should feature-detect them before calling. The following example shows how to request both permissions from a button click handler:
+
+         function handleClick() {
+           if (typeof DeviceMotionEvent.requestPermission === "function") {
+             // The API requires permission — request it
+             Promise.all([
+               DeviceMotionEvent.requestPermission(),
+               DeviceOrientationEvent.requestPermission(),
+             ]).then(([motionPermission, orientationPermission]) => {
+               if (
+                 motionPermission === "granted" &&
+                 orientationPermission === "granted"
+               ) {
+                 window.addEventListener("devicemotion", handleMotion);
+                 window.addEventListener("deviceorientation", handleOrientation);
+               }
+             });
+           } else {
+             // No permission needed, add event listeners directly
+             window.addEventListener("devicemotion", handleMotion);
+             window.addEventListener("deviceorientation", handleOrientation);
+           }
+         }
+
+       PROCESSING ORIENTATION EVENTS
+
+       All you need to do in order to begin receiving orientation change is to listen to the deviceorientation event:
+
+         window.addEventListener("deviceorientation", handleOrientation);
+
+       After registering your event listener (in this case, a JavaScript function called handleOrientation()), your listener function periodically gets called with updated orientation data.
+
+       The orientation event contains four values:
+
+        * DeviceOrientationEvent.absolute
+        * DeviceOrientationEvent.alpha
+        * DeviceOrientationEvent.beta
+        * DeviceOrientationEvent.gamma
+       The event handler function can look something like this:
+
+         function handleOrientation(event) {
+           const absolute = event.absolute;
+           const alpha = event.alpha;
+           const beta = event.beta;
+           const gamma = event.gamma;
+
+           // Do stuff with the new orientation data
+         }
+
+       > parallax is a polyfill for normalizing the accelerometer and gyroscope data on mobile devices. This is useful for overcoming some of the differences in device support for device orientation.
+
+       ORIENTATION VALUES EXPLAINED
+
+       The value reported for each axis indicates the amount of rotation around a given axis in reference to a standard coordinate frame. These are described in greater detail in the Orientation and motion data explained article which is summarized below.
+
+        * The DeviceOrientationEvent.alpha value represents the motion of the device around the z axis, represented in degrees with values ranging from 0 (inclusive) to 360 (exclusive).
+        * The DeviceOrientationEvent.beta value represents the motion of the device around the x axis, represented in degrees with values ranging from -180 (inclusive) to 180 (exclusive). This represents a front to back motion of the device.
+        * The DeviceOrientationEvent.gamma value represents the motion of the device around the y axis, represented in degrees with values ranging from -90 (inclusive) to 90 (exclusive). This represents a left to right motion of the device.
+
+       ORIENTATION EXAMPLE
+
+       This example will work on any browser supporting the deviceorientation event and running on a device able to detect its orientation.
+
+       So let's imagine a ball in a garden:
+
+         <div class="garden">
+           <div class="ball"></div>
+         </div>
+         Hold the device parallel to the ground. Rotate along its x and y axes to see the
+         ball move up/down and left/right respectively.
+         <pre class="output"></pre>
+
+       This garden is 200 pixel wide (yes, it's a tiny one), and the ball is in the center:
+
+         .garden {
+           position: relative;
+           width: 200px;
+           height: 200px;
+           border: 5px solid #cccccc;
+           border-radius: 10px;
+         }
+
+         .ball {
+           position: absolute;
+           top: 90px;
+           left: 90px;
+           width: 20px;
+           height: 20px;
+           background: green;
+           border-radius: 100%;
+         }
+
+       Now, if we move our device, the ball will move accordingly:
+
+         const ball = document.querySelector(".ball");
+         const garden = document.querySelector(".garden");
+         const output = document.querySelector(".output");
+
+         const maxX = garden.clientWidth - ball.clientWidth;
+         const maxY = garden.clientHeight - ball.clientHeight;
+
+         function handleOrientation(event) {
+           let x = event.beta; // In degree in the range [-180,180)
+           let y = event.gamma; // In degree in the range [-90,90)
+
+           output.textContent = `beta: ${x}\n`;
+           output.textContent += `gamma: ${y}\n`;
+
+           // Because we don't want to have the device upside down
+           // We constrain the x value to the range [-90,90]
+           if (x > 90) {
+             x = 90;
+           }
+           if (x < -90) {
+             x = -90;
+           }
+
+           // To make computation easier we shift the range of
+           // x and y to [0,180]
+           x += 90;
+           y += 90;
+
+           // 10 is half the size of the ball
+           // It centers the positioning point to the center of the ball
+           ball.style.left = `${(maxY * y) / 180 - 10}px`; // rotating device around the y axis moves the ball horizontally
+           ball.style.top = `${(maxX * x) / 180 - 10}px`; // rotating device around the x axis moves the ball vertically
+         }
+
+         window.addEventListener("deviceorientation", handleOrientation);
+
+       Click here to open this example in a new window; because deviceorientation doesn't work in a cross-origin in all browsers.
+
+       PROCESSING MOTION EVENTS
+
+       Motion events are handled the same way as the orientation events except that they have their own event's name: devicemotion
+
+         window.addEventListener("devicemotion", handleMotion);
+
+       What's really changed are the information provided within the DeviceMotionEvent object passed as a parameter of the event listener (handleMotion() in our example).
+
+       The motion event contains four properties:
+
+        * DeviceMotionEvent.acceleration
+        * DeviceMotionEvent.accelerationIncludingGravity
+        * DeviceMotionEvent.rotationRate
+        * DeviceMotionEvent.interval
+
+       MOTION VALUES EXPLAINED
+
+       The DeviceMotionEvent objects provide web developers with information about the speed of changes for the device's position and orientation. The changes are provided along three axis (see Orientation and motion data explained for details).
+
+       For acceleration and accelerationIncludingGravity, those axes correspond to the following:
+
+        * x
+          * : Represents the axis from West to East
+        * y
+          * : Represents the axis from South to North
+        * z
+          * : Represents the axis perpendicular to the ground
+       For rotationRate, the situation is a bit different; the information corresponds to the following in each case:
+
+        * alpha
+          * : Represents a rotation rate along the axis perpendicular to the screen (or keyboard for desktop).
+        * beta
+          * : Represents a rotation rate along the axis going from left to right of the plane of the screen (or keyboard for desktop).
+        * gamma
+          * : Represents a rotation rate along the axis going from bottom to top of the plane of the screen (or keyboard for desktop).
+       Finally, interval represents the interval of time, in milliseconds, at which data are obtained from the device.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * DeviceOrientationEvent
+        * DeviceMotionEvent
+        * Orientation and motion data explained
+        * Using deviceorientation in 3D Transforms
+        * Cyber Orb: 2D maze game with device orientation
+
+Web APIs manual                         from the official documentation

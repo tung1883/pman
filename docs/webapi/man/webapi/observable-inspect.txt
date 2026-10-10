@@ -1,0 +1,108 @@
+WEBAPI.OBSERVABLE-INSPECT(1)     Sandbox manual     WEBAPI.OBSERVABLE-INSPECT(1)
+
+       NAME
+
+       Observable: inspect() method - The inspect() method of the Observable interface returns a new observable that mirrors the source observable and calls callbacks to inspect 
+
+       OBSERVABLE: INSPECT() METHOD
+
+       The inspect() method of the Observable interface returns a new observable that mirrors the source observable and calls callbacks to inspect its values and subscription lifecycle.
+
+       SYNTAX
+
+         inspect()
+         inspect(inspector)
+
+       PARAMETERS
+
+        * inspector (optional)
+          * : An object containing any of the following callback functions:
+            * next (optional)
+              * : A function called with each source value before it is forwarded to observers.
+            * error (optional)
+              * : A function called with the source's error before it is forwarded to observers.
+            * complete (optional)
+              * : A function called without arguments when the source completes, before completion is forwarded to observers.
+            * subscribe (optional)
+              * : A function called without arguments when the returned observable's subscription starts, before it subscribes to the source.
+            * abort (optional)
+              * : A function called with the abort reason when all observers unsubscribe from the returned observable. It is not called when the source completes or errors.
+       Alternatively, inspector can be a function, which is equivalent to passing an object with that function as its next callback. All callback return values are ignored.
+
+       RETURN VALUE
+
+       A new Observable. When subscribed to, it emits the source observable's values and forwards its completion or error, calling the corresponding inspector callbacks before forwarding each notification.
+
+       DESCRIPTION
+
+       Like other observable-returning operators, this method is lazy: calling it creates a new observable without subscribing to the source. Processing starts when the returned observable is subscribed to.
+
+       If a subscribe, next, error, or complete callback throws an exception, the returned observable errors with that exception. A thrown exception from subscribe prevents subscription to the source. An exception thrown by abort is reported to the global object.
+
+       The callbacks run synchronously. Returned promises are not awaited, and their rejections are not handled by inspect().
+
+       EXAMPLES
+
+       USING INSPECT()
+
+       This example counts the first three button clicks. The inspect() callbacks log the subscription's start, each event before the count is updated, and the final count when the subscription completes. Click Restart after the stream ends to try again.
+
+         <button>Click me</button>
+         <p>Click count: 0</p>
+         <button id="restart" disabled>Restart</button>
+
+         const btn = document.querySelector("button");
+         const para = document.querySelector("p");
+
+         let countValue = 0;
+
+         function increment() {
+           countValue++;
+           para.textContent = `Click count: ${countValue}`;
+         }
+
+         const restart = document.querySelector("#restart");
+
+         function start() {
+           restart.disabled = true;
+           countValue = 0;
+           para.textContent = "Click count: 0";
+           btn
+             .when("click")
+             .take(3)
+             .inspect({
+               subscribe() {
+                 console.log(`Subscription started`);
+               },
+               next(e) {
+                 console.log(`Count value before click: ${countValue}`);
+                 console.log(`Event type: ${e.type}`);
+               },
+               complete() {
+                 console.log(`Final count value: ${countValue}`);
+               },
+             })
+             .subscribe({
+               next: increment,
+               complete() {
+                 para.textContent = `No more clicks!`;
+                 restart.disabled = false;
+               },
+             });
+         }
+
+         restart.when("click").subscribe(start);
+         start();
+
+       Open the browser's console and click the button three times to see the logged notifications.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using observables
+        * Observable explainer
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,258 @@
+ARCH.PASS(1)                     Sandbox manual                     ARCH.PASS(1)
+
+       From the official website:
+
+       Password management should be simple and follow Unix philosophy. With pass, each password lives inside of a gpg encrypted file whose filename is the title of the website or resource that requires the password. These encrypted files may be organized into meaningful folder hierarchies, copied from computer to computer, and, in general, manipulated using standard command line file management utilities.
+
+       pass is a simple password manager for the command line. pass is a shell script that makes use of existing tools like GnuPG, tree and Git.
+
+       INSTALLATION
+
+       Install the pass package.
+
+       An optional Qt GUI is available via the qtpass package.
+
+       BASIC USAGE
+
+       Note To be able to use pass, set up GnuPG. The trust level of the key used for pass must be "ultimate".
+
+       To initialize the password store:
+
+         $ pass init gpg-id_or_email
+
+       To create a new password, first provide a descriptive hierarchical name. In this example, this is archlinux.org/wiki/username:
+
+         $ pass insert archlinux.org/wiki/username
+
+       To get a view of the password store do the following. Note the example output which shows the hierarchy we just created:
+
+         $ pass
+
+         Password Store
+         └── archlinux.org
+             └── wiki
+                 └── username
+
+       To generate a new random password for the above example, do the following, where n is the desired password length as a number:
+
+         $ pass generate archlinux.org/wiki/username n
+
+       To retrieve a password, enter the gpg passphrase at the following prompt, again using the example name from above:
+
+         $ pass archlinux.org/wiki/username
+
+       Users of Xorg with xclip installed can retrieve the password directly onto the clipboard temporarily (e.g., to paste into web forms). In a Wayland session, should use wl-clipboard instead. To do so, do the following (again with the same example hierarchical name from above):
+
+         $ pass -c archlinux.org/wiki/username
+
+       Note Users preferring the classical middle-click/paste can add the following to their respective ~/.shellrc for this behavior: export PASSWORD_STORE_X_SELECTION=primary
+
+       pass comes with a dmenu wrapper to enable easy searching/copying. To use it, install the optional dependency dmenu and run:
+
+         $ passmenu
+
+       Then selecting an entry will copy its password to the clipboard. See dmenu(1) for customization options such as case-insensitivity. You may want to set this to a systemwide keybinding in order to easily access passwords from any application.
+
+       DATA ORGANIZATION
+
+       By default, the credential file created with pass insert will only contain your password. However, it may not be enough since several applications ask for detail data like username, url, etc. You can edit an existing file the way you want with command pass edit password_name. Below is the preferred organizational scheme provided by pass-project page. When using the option -c or --clip with this scheme, only the password will be copied.
+
+         YwrZSNH35z164ym9pI
+         URL: *.amazon.com/*
+         Username: AmazonianChicken@example.com
+         Secret Question 1: What is your childhood best friend's most bizarre superhero fantasy? Oh god, Amazon, it's too awful to say...
+         Phone Support PIN #: 84719
+
+       MIGRATING TO PASS
+
+       There are multiple scripts listed on the pass-project page to import passwords from other programs
+
+       EXTENSIONS
+
+       Since version 1.7, pass supports extensions developed by the community. These extensions extend the features of pass with the support of new commands.
+
+        * pass-audit — An extension for auditing a password repository.
+       https://github.com/roddhjav/pass-audit || pass-auditAUR
+
+        * pass-coffin — A password store extension to hide data inside a signed and encrypted coffin
+       https://github.com/ayushnix/pass-coffin || pass-coffinAUR
+
+        * pass-import — A generic importer tool from other password managers.
+       https://github.com/roddhjav/pass-import || pass-importAUR
+
+        * pass-otp — Support for one-time-password (OTP) tokens.
+       https://github.com/tadfisher/pass-otp || pass-otp
+
+        * pass-phrase — An extension for generating passphrases.
+       https://github.com/programadoroccidental/pass-phrase || pass-phraseAUR
+
+        * pass-tessen — An Xorg/Wayland compatible command line fuzzy selection tool with copy and paste.
+       https://github.com/ayushnix/pass-tessen || pass-tessenAUR
+
+        * pass-tomb — Manage the whole tree of your password store encrypted inside a tomb.
+       https://github.com/roddhjav/pass-tomb || pass-tombAUR
+
+        * pass-update — An easy flow for updating passwords.
+       https://github.com/roddhjav/pass-update || pass-updateAUR
+
+        * passless — A FIDO2 authenticator backend (WebAuthn, CTAP); store and use passkeys with your web browser.
+       https://github.com/pando85/passless || passlessAUR
+
+        * tessen — A bash script for Wayland extending compatibility to dmenu type applications such as rofi and fuzzel.
+       https://github.com/ayushnix/tessen || tessenAUR
+
+       ADVANCED USAGE
+
+       Environment variables can be used to alter where pass looks to do store and git operations via:
+
+         PASSWORD_STORE_DIR=/path/to/store
+
+       For more information on how this can be used to support multiple pass repositories see this link. The following pw() example alias sends the second line of the named database to the clipboard before sending the first line five seconds thereafter and finally an OTP code five seconds after that. Assuming that a password occupies the first line and a username the second line and an OTP URI exists anywhere in the named database, the net effect is passing username > password > otp code for consecutive primary pasting into available (e.g. browser) entry fields:
+
+         pw() {
+         export PASSWORD_STORE_CLIP_TIME=8
+         export PASSWORD_STORE_X_SELECTION=primary
+         pass -c2 $1; sleep 5; pass -c $1; sleep 5; pass otp -c $1; exit
+         }
+
+       MULTIPLE PASS CONTEXTS (E.G. TEAMING)
+
+       One can use aliases to set up different pass contexts, which helps when collaborating with different teams. We have gotten this working in bash as follows:
+
+       Add aliases to your shell configuration file:
+
+         alias passred="PASSWORD_STORE_DIR=~/.pass/red pass"
+         alias passblue="PASSWORD_STORE_DIR=~/.pass/blue pass"
+
+       If using bash, add these for bash-completion to your ~/.bash_completion and make sure bash-completion is installed:
+
+         source /usr/share/bash-completion/completions/pass
+         _passred(){
+             PASSWORD_STORE_DIR=~/.pass/red/ _pass
+         }
+         complete -o filenames -o nospace -F _passred passred
+         _passblue(){
+             PASSWORD_STORE_DIR=~/.pass/blue/ _pass
+         }
+         complete -o filenames -o nospace -F _passblue passblue
+
+       Or for zsh (source: /usr/share/zsh/site-functions/_pass)
+
+         compdef _pass passred
+         zstyle ':completion::complete:passred::' prefix "$HOME/.pass/red"
+         passred() {
+           PASSWORD_STORE_DIR=$HOME/.pass/red pass $@
+         }
+         compdef _pass passblue
+         zstyle ':completion::complete:passblue::' prefix "$HOME/.pass/blue"
+         passblue() {
+           PASSWORD_STORE_DIR=$HOME/.pass/blue pass $@
+         }
+
+       Now you can initialize into ~/.pass/red and ~/.pass/blue and have two pass contexts with the passred and passblue aliases. You can generalize this further into as many contexts as you like.
+
+       GIT INTEGRATION
+
+       GIT HELPER USAGE
+
+       You can use pass as a credentials helper for git. Install the pass-git-helperAUR. Details are described in the github README file.
+
+       GIT CONFIGURATION
+
+       Configure pass-git-helper as a git credentials helper by calling:
+
+         $ git config --global credential.helper /usr/bin/pass-git-helper
+
+       MAPPING FILE
+
+       Create the file ~/.config/pass-git-helper/git-pass-mapping.ini. It is used to map git remote hosts to your pass database. The format is something like this:
+
+         [github.com]
+         target=dev/github
+
+         [*.fooo-bar.*]
+         target=dev/fooo-bar
+
+       You can use wildcards in the host part, as shown in the example.
+
+       PASSWORD STORE LAYOUT
+
+       As usual with pass, the helper assumes that the password is contained in the first line of the passwordstore entry. Additionally, if a second line is present, this line is interpreted as the username.
+
+       For this to work, you have to use pass insert --multiline to create a multi line password store entry.
+
+       CENTRAL GIT SERVER FOR PASS IN COMBINATION WITH GNUPG (SSH EXAMPLE)
+
+       You are able to setup a password management system by setting up a central Git server for pass. This allows you to synchronize your central password repository through multiple client environments.
+
+       INSTALL A BARE GIT REPOSITORY FOR PASS ON THE SERVER
+
+       On the server run git init --bare ~/.password-store to create a bare repository you can push to.
+
+       IMPORT AUTHORIZED PUBLIC SSH KEYS
+
+       See SSH keys#Copying the public key to the remote server
+
+       ON THE CLIENT
+
+       This section assumes you have configured GnuPG and have a key pair to encrypt passwords. On your local client ensure you have a local password store on the client, then enable management of local changes through Git, add your remote Git repository, and push your local pass history.
+
+       Create a local password store:
+
+         $ pass init gpg_key_id
+
+       Enable management of local changes through Git:
+
+         $ pass git init
+
+       Add the remote git repository as 'origin':
+
+         $ pass git remote add origin user@server:~/.password-store
+
+       Push your local pass history:
+
+         $ pass git push -u --all
+
+       Now you can use the standard Git commands, prefixed by pass. For example: pass git push, or pass git pull. pass will automatically create commits when you use it to modify your password store.
+
+       TROUBLESHOOTING
+
+       ENCRYPTION FAILED: UNUSABLE PUBLIC KEY
+
+       The following error can occur when attempting to insert a new entry:
+
+         $ pass insert archlinux.org/wiki/username
+
+         Enter password for archlinux.org/wiki/username:
+         Retype password for archlinux.org/wiki/username:
+         gpg: XXXXXXXXX: There is no assurance this key belongs to the named user
+         gpg: [stdin]: encryption failed: Unusable public key
+         Password encryption aborted.
+
+       This occurs if the trust level of the GnuPG key is set to anything other than "ultimate". Edit the key used for pass to set its trust level to "ultimate":
+
+         $ gpg --edit-key your_key_id
+
+         > trust
+         > 5
+
+       SECRET KEY EXPIRED
+
+       The following error can occur when your GPG key expires (e.g., after a year) and you try to add a new password:
+
+         gpg: Note: secret key 0xAAAABBBBCCCCDDEE expired at Thu 09 Jan 2020 01:15:15 PM UTC
+         gpg: AAAABBBBCCCCDDEE: skipped: Unusable public key
+
+       To fix this, either extend the current GPG key's expiration date or switch to a new one (i.e., key rotation).
+
+       To switch to a new key and re-encrypt the store:
+
+         $ pass init new_gpg-id_or_email
+
+       SEE ALSO
+
+        * A more comprehensive pass tutorial
+        * pass home page
+        * List of Compatible clients and possibilities for migration to pass
+
+ArchWiki manual                         bundled documentation

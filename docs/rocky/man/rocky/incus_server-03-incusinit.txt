@@ -1,0 +1,94 @@
+ROCKY.INCUS_SERVER-03-INCUSINIT(1) Sandbox manual ROCKY.INCUS_SERVER-03-INCUSINIT(1)
+
+       NAME
+
+       3 Incus initialization and user setup - Throughout this chapter, you must be root or able to sudo to become root. In addition, you are assumed to have set up a ZFS storage pool as
+
+       3 INCUS INITIALIZATION AND USER SETUP
+
+       Throughout this chapter, you must be root or able to sudo to become root. In addition, you are assumed to have set up a ZFS storage pool as described in Chapter 2. If you have chosen not to use ZFS, you can use a different storage pool, but you will need to adjust the initialization questions and answers.
+
+       INCUS INITIALIZATION
+
+       Your server environment is all set up. You are ready to initialize Incus. This is an automated script that asks a series of questions to get your Incus instance up and running:
+
+         incus admin init
+
+       Here are the questions and our answers for the script, with a little explanation where warranted:
+
+         Would you like to use clustering? (yes/no) [default=no]:
+
+       If interested in clustering, do some additional research on that here
+
+         Do you want to configure a new storage pool? (yes/no) [default=yes]:
+
+       This seems counterintuitive. You have already created your ZFS pool, but it will be clear in a later question. Accept the default.
+
+         Name of the new storage pool [default=default]: storage
+
+       Leaving this "default" is an option, but using the same name you gave our ZFS pool is better for clarity.
+
+         Name of the storage backend to use (btrfs, dir, lvm, zfs, ceph) [default=zfs]:
+
+       You want to accept the default.
+
+         Create a new ZFS pool? (yes/no) [default=yes]: no
+
+       Here is where the resolution of the earlier question about creating a storage pool comes into play.
+
+         Name of the existing ZFS pool or dataset: storage
+         Would you like to connect to a MAAS server? (yes/no) [default=no]:
+
+       Metal As A Service (MAAS) is outside the scope of this document.
+
+         Would you like to create a new local network bridge? (yes/no) [default=yes]:
+         What should the new bridge be called? [default=incusbr0]:
+         What IPv4 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]:
+         What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: none
+
+       You can turn on this option to use IPv6 on your Incus containers.
+
+         Would you like the Incus server to be available over the network? (yes/no) [default=no]: yes
+
+       This is necessary to snapshot the server.
+
+         Address to bind Incus to (not including port) [default=all]:
+         Port to bind Incus to [default=8443]:
+         Trust password for new clients:
+         Again:
+
+       This trust password is how you will connect to or back from the snapshot server. Set it with something that makes sense in your environment. Save this entry to a secure location, such as a password manager.
+
+         Would you like stale cached images to be updated automatically? (yes/no) [default=yes]
+         Would you like a YAML "incus admin init" preseed to be printed? (yes/no) [default=no]:
+
+       SETTING UP USER PRIVILEGES
+
+       Before you continue, you must create your "incusadmin" user and ensure it has the necessary privileges. You need the "incusadmin" user to be able to sudo to root, and you need it to be a member of the incus-admin group. To add the user and ensure it is a member of both groups, do the following:
+
+         useradd -G wheel,incus-admin incusadmin
+
+       Set the password:
+
+         passwd incusadmin
+
+       As with the other passwords, save this to a secure location.
+
+       SETTING SUBUID AND SUBGID VALUES FOR ROOT
+
+       You must set both the value of the root user's subuid and subgid(the range of subordinate user and group IDs). This value should be:
+
+         root:1000000:1000000000
+
+       To do this, edit the /etc/subuid and add that line. When completed, your file will be:
+
+         root:1000000:1000000000
+
+       Edit the /etc/subgid file and add that line. When completed, your file will be:
+
+         incusadmin:100000:65536
+         root:1000000:1000000000
+
+       Reboot the server before continuing.
+
+Rocky Linux manual                      from the official documentation

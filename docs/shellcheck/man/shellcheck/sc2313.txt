@@ -1,0 +1,35 @@
+SHELLCHECK.SC2313(1)             Sandbox manual             SHELLCHECK.SC2313(1)
+
+       NAME
+
+       Quote array indices to avoid them expanding as globs. - read -r foo[index]
+
+       QUOTE ARRAY INDICES TO AVOID THEM EXPANDING AS GLOBS
+
+       QUOTE ARRAY INDICES TO AVOID THEM EXPANDING AS GLOBS
+
+       PROBLEMATIC CODE
+
+         read -r foo[index]
+
+       CORRECT CODE
+
+         read -r "foo[index]"
+
+       RATIONALE
+
+       ShellCheck found an array element passed to read, where the [] was not quoted. This means the array index [index] will be treated as a glob range, and the word may be replaced or trigger failglob.
+
+       In the problematic example, having a directory named food will cause the command to become read -r food instead, since food matches the glob foo[index]. The result is assigning a value to the wrong variable.
+
+       Quote or escape the pattern as shown to ensure it always reads into the array foo at index index.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

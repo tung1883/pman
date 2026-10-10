@@ -1,0 +1,29 @@
+CSHARP.FIELD(1)                  Sandbox manual                  CSHARP.FIELD(1)
+
+       NAME
+
+       `field` - Field backed property declarations - The `field` contextual keyword - access the compiler synthesized backing field for a property
+
+       FIELD - FIELD BACKED PROPERTY DECLARATIONS
+
+       Use the contextual keyword field, introduced in C# 14, in a property accessor to access the compiler-synthesized backing field of a property. By using this syntax, you can define the body of a get or set accessor and let the compiler generate the other accessor as it would in an automatically implemented property.
+
+       The addition of the field contextual keyword provides a smooth path to add benefits such as range checking to an automatically implemented property. This practice is shown in the following example:
+
+         class TimePeriod4
+         {
+             public double Hours {
+                 get;
+                 set => field = (value >= 0)
+                     ? value
+                     : throw new ArgumentOutOfRangeException(nameof(value), "The value must not be negative");
+             }
+         }
+
+       You might implement the Hours property as an automatically implemented property. Then, you discover that you want to protect against a negative value. Use field and provide range checking in the set accessor. You don't need to declare the backing field by hand or provide a body for the get accessor.
+
+       For more information, see the Properties and Indexers articles.
+
+       C# LANGUAGE SPECIFICATION
+
+C# manual                               from the official documentation

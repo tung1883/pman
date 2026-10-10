@@ -1,0 +1,60 @@
+WEBAPI.WINDOW-MESSAGE-EVENT(1)   Sandbox manual   WEBAPI.WINDOW-MESSAGE-EVENT(1)
+
+       NAME
+
+       Window: message event - The message event is fired on a Window object when the window receives a message, for example from a call to Window.postMessage() from anoth
+
+       WINDOW: MESSAGE EVENT
+
+       The message event is fired on a Window object when the window receives a message, for example from a call to Window.postMessage() from another browsing context.
+
+       This event is not cancellable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("message", (event) => { })
+
+         onmessage = (event) => { }
+
+       EVENT TYPE
+
+       A MessageEvent. Inherits from Event.
+
+       MessageEvent
+
+       EXAMPLES
+
+       Suppose a script sends a message to a different browsing context, such as another , using code like this:
+
+         const targetFrame = window.top.frames[1];
+         const targetOrigin = "https://example.org";
+         const windowMessageButton = document.querySelector("#window-message");
+
+         windowMessageButton.addEventListener("click", () => {
+           targetFrame.postMessage("hello there", targetOrigin);
+         });
+
+       The receiver can listen for the message using addEventListener() with code like this:
+
+         window.addEventListener("message", (event) => {
+           console.log(`Received message: ${event.data}`);
+         });
+
+       Alternatively the listener could use the onmessage event handler property:
+
+         window.onmessage = (event) => {
+           console.log(`Received message: ${event.data}`);
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Related events: messageerror.
+        * Window.postMessage().
+
+Web APIs manual                         from the official documentation

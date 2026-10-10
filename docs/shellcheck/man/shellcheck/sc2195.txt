@@ -1,0 +1,41 @@
+SHELLCHECK.SC2195(1)             Sandbox manual             SHELLCHECK.SC2195(1)
+
+       NAME
+
+       This pattern will never match the case statement's word. Double check them. - case "$var " in      # Trailing space
+
+       THIS PATTERN WILL NEVER MATCH THE CASE STATEMENT'S WORD. DOUBLE CHECK
+
+       THIS PATTERN WILL NEVER MATCH THE CASE STATEMENT'S WORD. DOUBLE CHECK
+
+       PROBLEMATIC CODE
+
+         case "$var " in      # Trailing space
+           value) echo "Match"
+         esac
+
+       CORRECT CODE
+
+         case "${var}" in     # No trailing space
+           value) echo "Match"
+         esac
+
+       RATIONALE
+
+       ShellCheck has detected that one of the patterns in a case statement will never match.
+
+       Often, this is due to mistakes in the case statement word that results in unintended literal characters. In the problematic code, there's a trailing space that will prevent the match from ever succeeding.
+
+       For more examples of when this could happen, see SC2193 for the equivalent warning for [[ .. ]] statements.
+
+       Note that ShellCheck warns about individual patterns in a branch, and will flag *.png in this example even though the branch is not dead:
+
+         case "${img}.jpg" in
+           *.png | *.jpg) echo "It's an image"
+         esac
+
+       EXCEPTIONS
+
+       None. If you encounter a bug and wish to [[ignore]] this warning, make sure the directive goes in front of the case and not the individual branch.
+
+ShellCheck manual                       from the official documentation

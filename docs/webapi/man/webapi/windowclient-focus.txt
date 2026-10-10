@@ -1,0 +1,60 @@
+WEBAPI.WINDOWCLIENT-FOCUS(1)     Sandbox manual     WEBAPI.WINDOWCLIENT-FOCUS(1)
+
+       NAME
+
+       WindowClient: focus() method - service
+
+       WINDOWCLIENT: FOCUS() METHOD
+
+       service
+
+       The focus() method of the WindowClient interface gives user input focus to the current client and returns a Promise that resolves to the existing WindowClient.
+
+       SYNTAX
+
+         focus()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that resolves to the existing WindowClient.
+
+       EXCEPTIONS
+
+        * InvalidAccessError DOMException
+          * : The promise is rejected with this exception if none of the windows in the app's origin have transient activation.
+
+       SECURITY REQUIREMENTS
+
+        * At least one window in the app's origin must have transient activation.
+
+       EXAMPLES
+
+         self.addEventListener("notificationclick", (event) => {
+           console.log("On notification click: ", event.notification.tag);
+           event.notification.close();
+
+           // This looks to see if the current is already open and
+           // focuses if it is
+           event.waitUntil(
+             clients
+               .matchAll({
+                 type: "window",
+               })
+               .then((clientList) => {
+                 for (const client of clientList) {
+                   if (client.url === "/" && "focus" in client) return client.focus();
+                 }
+                 if (clients.openWindow) return clients.openWindow("/");
+               }),
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

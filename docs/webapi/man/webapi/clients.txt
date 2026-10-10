@@ -1,0 +1,67 @@
+WEBAPI.CLIENTS(1)                Sandbox manual                WEBAPI.CLIENTS(1)
+
+       NAME
+
+       Clients - service
+
+       CLIENTS
+
+       service
+
+       The Clients interface provides access to Client objects. Access it via self.clients within a service worker.
+
+       INSTANCE METHODS
+
+        * Clients.get()
+          * : Returns a Promise for a Client matching a given id.
+        * Clients.matchAll()
+          * : Returns a Promise for an array of Client objects. An options argument allows you to control the types of clients returned.
+        * Clients.openWindow()
+          * : Opens a new browser window for a given URL and returns a Promise for the new WindowClient.
+        * Clients.claim()
+          * : Allows an active service worker to set itself as the controller for all clients within its scope.
+
+       EXAMPLES
+
+       The following example shows an existing chat window or creates a new one when the user clicks a notification.
+
+         addEventListener("notificationclick", (event) => {
+           event.waitUntil(
+             (async () => {
+               const allClients = await clients.matchAll({
+                 includeUncontrolled: true,
+               });
+
+               let chatClient;
+
+               // Let's see if we already have a chat window open:
+               for (const client of allClients) {
+                 const url = new URL(client.url);
+
+                 if (url.pathname === "/chat/") {
+                   // Excellent, let's use it!
+                   client.focus();
+                   chatClient = client;
+                   break;
+                 }
+               }
+
+               // If we didn't find an existing chat window,
+               // open a new one:
+               chatClient ??= await clients.openWindow("/chat/");
+
+               // Message the client:
+               chatClient.postMessage("New chat messages!");
+             })(),
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+
+Web APIs manual                         from the official documentation

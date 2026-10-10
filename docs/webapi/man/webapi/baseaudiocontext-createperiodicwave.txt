@@ -1,0 +1,71 @@
+WEBAPI.BASEAUDIOCONTEXT-CREATEPERIODICWAVE(1) Sandbox manual WEBAPI.BASEAUDIOCONTEXT-CREATEPERIODICWAVE(1)
+
+       NAME
+
+       BaseAudioContext: createPeriodicWave() method - The createPeriodicWave() method of the BaseAudioContext interface is used to create a PeriodicWave. This wave is used to define a periodic w
+
+       BASEAUDIOCONTEXT: CREATEPERIODICWAVE() METHOD
+
+       The createPeriodicWave() method of the BaseAudioContext interface is used to create a PeriodicWave. This wave is used to define a periodic waveform that can be used to shape the output of an OscillatorNode.
+
+       SYNTAX
+
+         createPeriodicWave(real, imag)
+         createPeriodicWave(real, imag, constraints)
+
+       PARAMETERS
+
+        * real
+          * : An array of cosine terms (traditionally the A terms).
+        * imag
+          * : An array of sine terms (traditionally the B terms).
+       The real and imag arrays must have the same length, otherwise an error is thrown.
+
+        * constraints (optional)
+          * : A dictionary object that specifies whether normalization should be disabled. If not specified, normalization is enabled by default. It takes one property:
+            * disableNormalization
+              * : If set to true, normalization is disabled for the periodic wave. The default is false.
+       > If normalized, the resulting wave will have a maximum absolute peak value of 1.
+
+       RETURN VALUE
+
+       A PeriodicWave.
+
+       EXAMPLES
+
+       The following example illustrates simple usage of createPeriodicWave(), to create a PeriodicWave object containing a simple sine wave.
+
+         const real = new Float32Array(2);
+         const imag = new Float32Array(2);
+         const ac = new AudioContext();
+         const osc = ac.createOscillator();
+
+         real[0] = 0;
+         imag[0] = 0;
+         real[1] = 1;
+         imag[1] = 0;
+
+         const wave = ac.createPeriodicWave(real, imag, { disableNormalization: true });
+
+         osc.setPeriodicWave(wave);
+
+         osc.connect(ac.destination);
+
+         osc.start();
+         osc.stop(2);
+
+       This works because a sound that contains only a fundamental tone is by definition a sine wave.
+
+       Here, we create a PeriodicWave with two values. The first value is the DC offset, which is the value at which the oscillator starts. A value of 0 is good here because it starts the curve at the middle of the [-1.0; 1.0] range. The second and subsequent values are sine and cosine components, similar to the result of a Fourier transform, which converts time domain values to frequency domain values. Here, with createPeriodicWave(), you specify the frequencies, and the browser performs an inverse Fourier transform to get a time domain buffer for the frequency of the oscillator. In this example, we set only one component at full volume (1.0) on the fundamental tone, so we get a sine wave. Bear in mind that the fundamental tone corresponds to the oscillator's frequency (which, by default, is 440 Hz). Therefore, altering the oscillator's frequency effectively shifts the frequency of this periodic wave along with it.
+
+       The coefficients of the Fourier transform should be given in _ascending_ order (i.e., (a+bi)ei,(c+di)e2i,(f+gi)e3i\left(a+bi\right)e^{i} , \left(c+di\right)e^{2i} ,\left(f+gi\right)e^{3i} etc.) and can be positive or negative. A simple way of manually obtaining such coefficients (though not the best) is to use a graphing calculator.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

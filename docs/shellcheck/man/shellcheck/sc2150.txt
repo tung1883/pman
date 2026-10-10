@@ -1,0 +1,38 @@
+SHELLCHECK.SC2150(1)             Sandbox manual             SHELLCHECK.SC2150(1)
+
+       NAME
+
+       -exec does not automatically invoke a shell. Use -exec sh -c .. for that. - find . -type f -exec 'cat {} | wc -l' \;
+
+       EXEC DOES NOT AUTOMATICALLY INVOKE A SHELL. USE -EXEC SH -C .. FOR THA
+
+       EXEC DOES NOT AUTOMATICALLY INVOKE A SHELL. USE -EXEC SH -C .. FOR THA
+
+       PROBLEMATIC CODE
+
+         find . -type f -exec 'cat {} | wc -l' \;
+
+       CORRECT CODE
+
+         find . -type f -exec sh -c 'cat {} | wc -l' \;         # Insecure
+         find . -type f -exec sh -c 'cat "$1" | wc -l' _ {} \;  # Secure
+
+       Sometimes the command can also be rewritten to not require find to invoke a shell:
+
+         find . -type f -exec wc -l {} \; | cut -d ' ' -f 1
+
+       RATIONALE
+
+       find -exec and -execdir uses execve(2) style semantics, meaning it expects an executable and zero or more arguments that should be passed to it.
+
+       It does not use system(3) style semantics, meaning it does not accept a shell command as a string, to be parsed and evaluated by the system's command interpreter.
+
+       If you want find to execute a shell command, you have to specify sh (or bash) as the executable, -c as first argument and your shell command as the second.
+
+       To prevent command injection, the filename can be passed as a separate argument to sh and referenced as a positional parameter.
+
+       EXCEPTIONS
+
+       This warning would trigger falsely if executing a program with spaces in the path, if no other arguments were specified.
+
+ShellCheck manual                       from the official documentation

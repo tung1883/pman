@@ -1,0 +1,163 @@
+WEBAPI.DOCUMENT-WRITE(1)         Sandbox manual         WEBAPI.DOCUMENT-WRITE(1)
+
+       NAME
+
+       Document: write() method - > [!WARNING]
+
+       DOCUMENT: WRITE() METHOD
+
+       > Use of the document.write() method is strongly discouraged.
+       > Avoid using it, and where possible replace it in existing code.
+       > As the HTML spec itself warns>):
+       > This method has very idiosyncratic behavior.
+       > In some cases, this method can affect the state of the HTML parser while the parser is running, resulting in a DOM that does not correspond to the source of the document (e.g., if the string written is the string "" or "<!--").
+       > In other cases, the call can clear the current page first, as if document.open() had been called.
+       > In yet more cases, the method is simply ignored, or throws an exception. Users agents are explicitly allowed to avoid executing script elements inserted via this method.
+       > And to make matters even worse, the exact behavior of this method can in some cases be dependent on network latency, which can lead to failures that are very hard to debug.
+       > For all these reasons, use of this method is strongly discouraged.
+       > This method parses its input as HTML, writing the result into the DOM.
+       > APIs like this are known as injection sinks, and are potentially a vector for cross-site scripting (XSS) attacks, if the input originally came from an attacker.
+       > You can mitigate this risk by always passing TrustedHTML objects instead of strings and enforcing trusted types.
+       > See Security considerations for more information.
+       The write() method of the Document interface writes text in one or more TrustedHTML or string parameters to a document stream opened by document.open().
+
+       SYNTAX
+
+         write(markup)
+         write(markup, markup2)
+         write(markup, markup2, /* …, */ markupN)
+
+       PARAMETERS
+
+        * markup, …, markupN
+          * : TrustedHTML objects or strings containing the markup to be written to the document.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : The method was called on an XML document, or called when the parser is currently executing a custom element constructor.
+        * TypeError
+          * : A string is passed as one of the parameters when Trusted Types are enforced and no default policy has been defined for creating TrustedHTML objects.
+
+       DESCRIPTION
+
+       document.write() parses the markup text in the objects passed as parameters into the open document's object model (DOM), in the order that the parameters are specified.
+
+       Because document.write() writes to the document stream, calling document.write() on a closed (loaded) document (without first calling document.open()) automatically calls document.open(), which will clear the document.
+
+       The exception is that if the document.write() call is embedded within an inline HTML tag, then it will not automatically call document.open():
+
+         <script>
+           document.write("<h1>Main title</h1>");
+         </script>
+
+       document.write() (and document.writeln) cannot be used with XML or XHTML, and attempting to do so will throw an InvalidStateError exception. This is the case if opening a local file with a .xhtml file extension or for any document served with an application/xhtml+xml MIME type. More information is available in the W3C XHTML FAQ.
+
+       Using document.write() in deferred or asynchronous scripts will be ignored and you'll get a message like "A call to document.write() from an asynchronously-loaded external script was ignored" in the error console.
+
+       In Edge only, calling document.write() more than once in an causes the error "SCRIPT70: Permission denied".
+
+       SECURITY CONSIDERATIONS
+
+       The method is a possible vector for cross-site scripting (XSS) attacks, where potentially unsafe strings provided by a user are injected into the DOM without first being sanitized. While the method may block elements from executing when they are injected in some browsers (see Intervening against document.write() for Chrome), it is susceptible to many other ways that attackers can craft HTML to run malicious JavaScript.
+
+       You can mitigate these issues by always passing TrustedHTML objects instead of strings, and enforcing trusted types using the require-trusted-types-for CSP directive. This ensures that the input is passed through a transformation function, which has the chance to sanitize the input to remove potentially dangerous markup (such as elements and event handler attributes), before it is injected.
+
+       EXAMPLES
+
+       WRITING TRUSTEDHTML
+
+       This example uses the Trusted Types API to sanitize HTML strings of elements before they are written to a document.
+
+       The example initially displays some default text and a button. When the button is clicked, the current document is opened, three strings of HTML are converted to TrustedHTML instances and written into the document, and the document is then closed. This replaces the document in the example frame, including the original HTML for the button and the JavaScript that made the update!
+
+       HTML
+
+         <p>Some original document content.</p>
+         <button id="replace" type="button">Replace document content</button>
+
+       JAVASCRIPT
+
+       First we use the Window.trustedTypes property to access the global TrustedTypePolicyFactory, and use its createPolicy() method to define a policy called "docPolicy".
+
+       The new policy defines a transformation function createHTML() for creating the TrustedHTML objects that we will pass to the write() method. This method can do anything it likes with the input string: the trusted types API just requires that you pass the input through a policy transformation function, not that the transformation function does anything in particular.
+
+       You'd use the method to sanitize the input by removing potentially unsafe features such as tags or event handler attributes. Sanitization is hard to get right, so this process typically uses a reputable third-party library such as DOMPurify.
+
+       For the purposes of demonstration, here we implement a rudimentary "sanitizer" that replaces < symbols in script opening and closing tags with the < character.
+
+         const policy = trustedTypes.createPolicy("docPolicy", {
+           createHTML(string) {
+             return string
+               .replace("<script", "&lt;script")
+               .replace("</script", "&lt;/script");
+           },
+         });
+
+       We can then use the TrustedTypePolicy.createHTML() method on the returned policy to create TrustedHTML objects from our original input strings. These are then passed to the write() function when the user clicks the button.
+
+         const oneInput = "<h1>Out with the old</h1>";
+         const twoInput = "<p>in with the new!</p>";
+         const threeInput = "<script>alert('evil afoot')<" + "/script>";
+         const replace = document.querySelector("#replace");
+
+         replace.addEventListener("click", () => {
+           document.open();
+           document.write(
+             policy.createHTML(oneInput),
+             policy.createHTML(twoInput),
+             policy.createHTML(threeInput),
+           );
+           document.close();
+         });
+
+       RESULTS
+
+       Press the button and note that the HTML elements that we trust (in this example) are injected, but the untrusted element is now rendered as plain text.
+
+       WRITING STRINGS
+
+       This is the same as the preceding example, except that trusted types are not used or enforced. We're writing unsanitized strings, which may provide a path for XSS attacks.
+
+       The example initially displays some default text and a button. When the button is clicked, the current document is opened, three strings of HTML are written into the document, and the document is then closed. This replaces the document in the example frame, including the original HTML for the button and the JavaScript that made the update.
+
+       HTML
+
+         <p>Some original document content.</p>
+         <button id="replace" type="button">Replace document content</button>
+
+       JAVASCRIPT
+
+         const replace = document.querySelector("#replace");
+
+         const oneInput = "<h1>Out with the old</h1>";
+         const twoInput = "<p>in with the new!</p>";
+         const threeInput = "<script>alert('evil afoot')<" + "/script>";
+
+         replace.addEventListener("click", () => {
+           document.open();
+           document.write(oneInput, twoInput, threeInput);
+           document.close();
+         });
+
+       RESULTS
+
+       Press the button and note that all the HTML elements are injected. This includes the element, which in a real application might have executed harmful code.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * document.writeln()
+        * element.innerHTML
+        * document.createElement()
+        * Trusted Types API
+        * Cross-site scripting (XSS)
+
+Web APIs manual                         from the official documentation

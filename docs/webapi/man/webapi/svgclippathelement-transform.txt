@@ -1,0 +1,69 @@
+WEBAPI.SVGCLIPPATHELEMENT-TRANSFORM(1) Sandbox manual WEBAPI.SVGCLIPPATHELEMENT-TRANSFORM(1)
+
+       NAME
+
+       SVGClipPathElement: transform property - The read-only transform property of the SVGClipPathElement interface reflects the transform attribute of a clipPath element, that is a list 
+
+       SVGCLIPPATHELEMENT: TRANSFORM PROPERTY
+
+       The read-only transform property of the SVGClipPathElement interface reflects the transform attribute of a clipPath element, that is a list of transformations applied to the element.
+
+       VALUE
+
+       An SVGTransformList.
+
+       EXAMPLES
+
+         html,
+         body,
+         svg {
+           height: 100%;
+         }
+
+         <div>
+           <svg viewBox="0 0 100 100" width="200" height="200">
+             <clipPath
+               id="clip1"
+               clipPathUnits="objectBoundingBox"
+               transform="skewX(40) scale(1 0.5)">
+               <circle cx=".5" cy=".5" r=".35" />
+             </clipPath>
+
+             <rect id="r1" x="0" y="0" width="100" height="100" />
+
+             <use clip-path="url(#clip1)" href="#r1" fill="lightblue" />
+           </svg>
+         </div>
+         <pre id="log"></pre>
+
+         const translateType = [
+           "unknown",
+           "matrix()",
+           "translate()",
+           "scale()",
+           "rotate()",
+           "skewx()",
+           "skewy()",
+         ];
+
+         const clipPath1 = document.getElementById("clip1");
+
+         const log = document.getElementById("log");
+
+         let result = "The following transformation have been applied:\n";
+         for (const transform of clipPath1.transform.baseVal) {
+           result += `- A transform of type '${translateType[transform.type]}' found.\n`;
+         }
+
+         log.textContent = result;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * clipPathUnits
+        * clipPath
+
+Web APIs manual                         from the official documentation

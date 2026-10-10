@@ -1,0 +1,236 @@
+APACHE.AVOID(1)                  Sandbox manual                  APACHE.AVOID(1)
+
+       SIMPLE REDIRECTION
+
+       mod_alias provides the Redirect and RedirectMatch directives, which provide a means to redirect one URL to another. This kind of simple redirection of one URL, or a class of URLs, to somewhere else, should be accomplished using these directives rather than RewriteRule. RedirectMatch allows you to include a regular expression in your redirection criteria, providing many of the benefits of using RewriteRule.
+
+       A common use for RewriteRule is to redirect an entire class of URLs. For example, all URLs in the /one directory must be redirected to http://one.example.com/, or perhaps all http requests must be redirected to https.
+
+       These situations are better handled by the Redirect directive. Remember that Redirect preserves path information. That is to say, a redirect for a URL /one will also redirect all URLs under that, such as /one/two.html and /one/three/four.html.
+
+       To redirect URLs under /one to http://one.example.com, do the following:
+
+         Redirect "/one/" "http://one.example.com/"
+
+       To redirect one hostname to another, for example example.com to www.example.com, see the Canonical Hostnames recipe.
+
+       To redirect http URLs to https, a Redirect in a dedicated HTTP virtual host is the cleanest approach. See the Forcing HTTPS recipe for the recommended configuration and the mod_rewrite alternative for .htaccess use.
+
+       PROCESSING ORDER
+
+       If you do mix Redirect and RewriteRule in the same context, be aware that their execution order depends on where they appear. In server/virtual-host context, mod_rewrite runs first; in per-directory context (.htaccess), mod_alias runs first. See Module Processing Order for details.
+
+       URL ALIASING
+
+       The Alias directive provides mapping from a URL-path to a directory - usually a directory outside of your DocumentRoot. Although it is possible to perform this mapping with mod_rewrite, Alias is the preferred method, for reasons of simplicity and performance.
+
+       USING ALIAS
+
+         Alias "/cats" "/var/www/virtualhosts/felines/htdocs"
+
+       The use of mod_rewrite to perform this mapping may be appropriate when you do not have access to the server configuration files. Alias may only be used in server or virtualhost context, and not in a .htaccess file.
+
+       Symbolic links would be another way to accomplish the same thing, if you have Options FollowSymLinks enabled on your server.
+
+       SIMPLE PROXYING
+
+       RewriteRule provides the [P] flag to pass rewritten URIs through mod_proxy.
+
+         RewriteRule "^/?images(.*)" "http://imageserver.local/images$1" [P]
+
+       However, in many cases, when there is no actual pattern matching needed, as in the example shown above, the ProxyPass directive is a better choice. The example here could be rendered as:
+
+         ProxyPass "/images/" "http://imageserver.local/images/"
+
+       Note that whether you use RewriteRule or ProxyPass, you'll still need to use the ProxyPassReverse directive to catch redirects issued from the back-end server:
+
+         ProxyPassReverse "/images/" "http://imageserver.local/images/"
+
+       You may need to use RewriteRule instead when there are other RewriteRules in effect in the same scope, as a RewriteRule will usually take effect before a ProxyPass, and so may preempt what you're trying to accomplish.
+
+       One case where RewriteRule is genuinely useful for proxying is when you want to proxy requests only for content that doesn't exist locally - for example, during a migration from one server to another:
+
+         RewriteCond "%{REQUEST_FILENAME}"       !-f
+         RewriteCond "%{REQUEST_FILENAME}"       !-d
+         RewriteRule "^/(.*)"                    "http://old.example.com/$1" [P]
+         ProxyPassReverse "/" "http://old.example.com/"
+
+       In this example, requests for resources that haven't been migrated yet are transparently proxied to the old server. As content is migrated, the local files take precedence. Remember to always include a ProxyPassReverse directive to ensure that any redirects issued by the backend are correctly passed on to the client.
+
+       ENVIRONMENT VARIABLE TESTING
+
+       mod_rewrite is frequently used to take a particular action based on the presence or absence of a particular environment variable or request header. This can be done more efficiently using the <If> directive.
+
+       Consider, for example, the common scenario where RewriteRule is used to enforce a canonical hostname, such as www.example.com instead of example.com. This can be done using the <If> directive, as shown here:
+
+         <If "req('Host') != 'www.example.com'">
+             Redirect "/" "http://www.example.com/"
+         </If>
+
+       This technique can be used to take actions based on any request header, response header, or environment variable, replacing mod_rewrite in many common scenarios.
+
+       See especially the expression evaluation documentation for a overview of what types of expressions you can use in <If> sections, and in certain other directives.
+
+       FRONT CONTROLLER / RESOURCE ROUTING
+
+       A very common use of mod_rewrite is to route all requests for non-existent resources to a single front controller script (e.g. index.php). This is the basis of most modern web framework routing.
+
+       The typical mod_rewrite approach is:
+
+         RewriteEngine On
+         RewriteCond "%{REQUEST_FILENAME}" !-f
+         RewriteCond "%{REQUEST_FILENAME}" !-d
+         RewriteRule "^(.*)$" "/index.php" [L]
+
+       This can be accomplished far more simply with the FallbackResource directive:
+
+         FallbackResource /index.php
+
+       FallbackResource does the same thing - requests for existing files and directories are served normally, while everything else is routed to the specified resource - but without the overhead and complexity of the rewrite engine. It works in both server configuration and .htaccess context.
+
+       To disable a FallbackResource set in a parent directory:
+
+         FallbackResource disabled
+
+       CONDITIONAL CONFIGURATION WITH EXPRESSIONS
+
+       Many uses of RewriteCond can be replaced by the <If> directive, which supports a rich expression syntax and integrates cleanly with other Apache directives.
+
+       Redirect based on a query string parameter:
+
+         <If "%{QUERY_STRING} =~ /lang=fr/">
+             Redirect "/welcome" "/bienvenue"
+         </If>
+
+       Restrict access by request method:
+
+         <If "%{REQUEST_METHOD} IN {'DELETE', 'PUT', 'PATCH'}">
+             Require ip 10.0.0.0/8
+         </If>
+
+       Block requests missing a Host header (HTTP/1.0 clients):
+
+         <If "-z req('Host')">
+             Require all denied
+         </If>
+
+       See the expression evaluation documentation for the full syntax available in <If> blocks.
+
+       FORBIDDING IMAGE HOTLINKING
+
+         Description:
+       "Hotlinking" is the practice of other sites including your images inline in their pages, using your bandwidth to serve content for someone else's site. You can prevent this without mod_rewrite.
+
+         Solution:
+       Use SetEnvIf with Require:
+
+         SetEnvIf Referer example\.com localreferer
+         <FilesMatch "\.(jpg|png|gif)$">
+             Require env localreferer
+         </FilesMatch>
+
+         Discussion:
+       If you need more complex logic - such as serving an alternate image to hotlinkers instead of denying the request - you may need mod_rewrite. The following examples rely on the HTTP_REFERER header, which is optional and can be spoofed. The !^$ condition allows requests with no Referer header at all, so that users who type the URL directly, or whose browsers suppress the Referer, are not blocked.
+
+       Deny the request outright:
+
+         RewriteCond "%{HTTP_REFERER}"  "!^$"
+         RewriteCond "%{HTTP_REFERER}"  "!www.example.com" [NC]
+         RewriteRule "\.(gif|jpg|png)$" "-"                [F,NC]
+
+       Serve an alternate image:
+
+         RewriteCond "%{HTTP_REFERER}"  "!^$"
+         RewriteCond "%{HTTP_REFERER}"  "!www.example.com"      [NC]
+         RewriteRule "\.(gif|jpg|png)$" "/images/go-away.png"   [R,NC]
+
+       BLOCKING OF ROBOTS
+
+         Description:
+       You wish to block persistent requests from a particular robot or user agent that ignores your /robots.txt.
+
+         Solution:
+       Use SetEnvIfNoCase with Require:
+
+         SetEnvIfNoCase User-Agent ^NameOfBadRobot goaway
+         <Location "/secret/files">
+             <RequireAll>
+                 Require all granted
+                 Require not env goaway
+             </RequireAll>
+         </Location>
+
+         Discussion:
+       Any technique that relies on the USER_AGENT string can be trivially circumvented, since that string can be changed by the client. If you are experiencing a sustained attack, you should consider blocking it at a higher level, such as at your firewall.
+
+       If you need to combine user-agent and IP address matching, mod_rewrite can be used as a fallback:
+
+         RewriteCond "%{HTTP_USER_AGENT}"   "^NameOfBadRobot"
+         RewriteCond "%{REMOTE_ADDR}"       "=123\.45\.67\.[8-9]"
+         RewriteRule "^/secret/files/"      "-"                   [F]
+
+       DENYING HOSTS IN A REJECT LIST
+
+         Description:
+       We wish to maintain a list of hosts and have those hosts blocked from accessing our server.
+
+         Solution:
+       For simple IP-based blocking, use Require directly:
+
+         <Location "/">
+             Require all granted
+             Require not ip 193.102.180.41
+             Require not ip 192.76.162.40
+         </Location>
+
+         Discussion:
+       If you need a dynamic, file-based deny list (rather than enumerating addresses in the configuration), mod_rewrite with a RewriteMap can be used:
+
+         RewriteEngine on
+         RewriteMap    hosts-deny  "txt:/path/to/hosts.deny"
+         RewriteCond   "${hosts-deny:%{REMOTE_ADDR}|NOT-FOUND}" "!=NOT-FOUND" [OR]
+         RewriteCond   "${hosts-deny:%{REMOTE_HOST}|NOT-FOUND}" "!=NOT-FOUND"
+         RewriteRule   "^"                                      "-"           [F]
+
+       The map file contains one entry per line, with IP addresses or hostnames as keys and a dummy value (since RewriteMap requires key/value pairs):
+
+       ## hosts.deny  193.102.180.41 -  192.76.162.40 -
+
+       The second RewriteCond assumes HostnameLookups is enabled. If not, drop it and remove the [OR] flag from the first condition.
+
+       VIRTUAL HOSTING
+
+       Although it is possible to handle virtual hosts with mod_rewrite, it is seldom the right way. Creating individual <VirtualHost> blocks is almost always the right way to go. In the event that you have an enormous number of virtual hosts, consider using mod_vhost_alias to create these hosts automatically.
+
+       Modules such as mod_macro are also useful for creating a large number of virtual hosts dynamically.
+
+       Using mod_rewrite for vitualhost creation may be appropriate if you are using a hosting service that does not provide you access to the server configuration files, and you are therefore restricted to configuration using .htaccess files.
+
+       See the virtual hosts with mod_rewrite document for more details on how you might accomplish this if it still seems like the right approach.
+
+       LOAD BALANCING
+
+         Description:
+       We wish to distribute load across several back-end servers.
+
+         Solution:
+       Use mod_proxy_balancer, which provides a flexible and featureful load-balancing solution. It supports several balancing algorithms, session stickiness, health checks, and dynamic configuration via the Balancer Manager - none of which are possible with a mod_rewrite approach.
+
+         <Proxy "balancer://mycluster">
+             BalancerMember "http://one.example.com"
+             BalancerMember "http://two.example.com"
+             BalancerMember "http://three.example.com"
+         </Proxy>
+         ProxyPass        "/"  "balancer://mycluster/"
+         ProxyPassReverse "/"  "balancer://mycluster/"
+
+         Discussion:
+       It is possible to accomplish rudimentary random load balancing using mod_rewrite with a rnd RewriteMap:
+
+         RewriteEngine on
+         RewriteMap  lb       "rnd:/path/to/serverlist.txt"
+         RewriteRule "^/(.*)" "http://${lb:servers}/$1"     [P,L]
+
+       However, mod_proxy_balancer is far more flexible and featureful than anything you can cobble together using mod_rewrite, and is the recommended approach.
+
+Apache HTTP Server manual               bundled documentation

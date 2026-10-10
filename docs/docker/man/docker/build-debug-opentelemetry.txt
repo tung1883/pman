@@ -1,0 +1,33 @@
+DOCKER.BUILD-DEBUG-OPENTELEMETRY(1) Sandbox manual DOCKER.BUILD-DEBUG-OPENTELEMETRY(1)
+
+       NAME
+
+       OpenTelemetry support - Both Buildx and BuildKit support OpenTelemetry.
+
+       OPENTELEMETRY SUPPORT
+
+       Both Buildx and BuildKit support OpenTelemetry.
+
+       To capture the trace to Jaeger, set JAEGER_TRACE environment variable to the collection address using a driver-opt.
+
+       First create a Jaeger container:
+
+         $ docker run -d --name jaeger -p "6831:6831/udp" -p "16686:16686" --restart unless-stopped jaegertracing/all-in-one
+
+       Then create a docker-container builder that will use the Jaeger instance via the JAEGER_TRACE environment variable:
+
+         $ docker buildx create --use \
+           --name mybuilder \
+           --driver docker-container \
+           --driver-opt "network=host" \
+           --driver-opt "env.JAEGER_TRACE=localhost:6831"
+
+       Boot and inspect mybuilder:
+
+         $ docker buildx inspect --bootstrap
+
+       Buildx commands should be traced at http://127.0.0.1:16686/:
+
+       
+
+Docker manual                           from the official documentation

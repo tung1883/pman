@@ -1,0 +1,266 @@
+WEBAPI.CONSOLE(1)                Sandbox manual                WEBAPI.CONSOLE(1)
+
+       NAME
+
+       console - The console object provides access to the debugging console (e.g., the Web console in Firefox).
+
+       CONSOLE
+
+       The console object provides access to the debugging console (e.g., the Web console in Firefox).
+
+       Implementations of the console API may differ between runtimes. In particular, some console methods may work differently or not work at all in some online editors and IDEs. To see the behavior described in this documentation, try the methods in your browser's developer tools, although even here, there are some differences between browsers.
+
+       The console object is available in any global scope. For example:
+
+         console.log("Failed to open the specified link");
+
+       INSTANCE METHODS
+
+        * console.assert()
+          * : Log an error message to console if the first argument is false.
+        * console.clear()
+          * : Clear the console.
+        * console.count()
+          * : Log the number of times this line has been called with the given label.
+        * console.countReset()
+          * : Resets the value of the counter with the given label.
+        * console.debug()
+          * : Outputs a message to the console with the debug log level.
+        * console.dir()
+          * : Displays an interactive listing of the properties of a specified JavaScript object. This listing lets you use disclosure triangles to examine the contents of child objects.
+        * console.dirxml()
+          * : Displays an XML/HTML Element representation of the specified object if possible or the JavaScript Object view if it is not possible.
+        * console.error()
+          * : Outputs a message to the console with the error log level.
+        * console.exception() {{Non-standard_inline}} (deprecated)
+          * : An alias for console.error().
+        * console.group()
+          * : Creates a new inline group, indenting all following output by another level. To move back out a level, call console.groupEnd().
+        * console.groupCollapsed()
+          * : Creates a new inline group, indenting all following output by another level. However, unlike console.group() this starts with the inline group collapsed requiring the use of a disclosure button to expand it. To move back out a level, call console.groupEnd().
+        * console.groupEnd()
+          * : Exits the current inline group.
+        * console.info()
+          * : Outputs a message to the console with the info log level.
+        * console.log()
+          * : Outputs a message to the console.
+        * console.profile() {{Non-standard_inline}}
+          * : Starts the browser's built-in profiler (for example, the Firefox performance tool). You can specify an optional name for the profile.
+        * console.profileEnd() {{Non-standard_inline}}
+          * : Stops the profiler. You can see the resulting profile in the browser's performance tool (for example, the Firefox performance tool).
+        * console.table()
+          * : Displays tabular data as a table.
+        * console.time()
+          * : Starts a timer with a name specified as an input parameter. Up to 10,000 simultaneous timers can run on a given page.
+        * console.timeEnd()
+          * : Stops the specified timer and logs the elapsed time in milliseconds since it started.
+        * console.timeLog()
+          * : Logs the value of the specified timer to the console.
+        * console.timeStamp() {{Non-standard_inline}}
+          * : Adds a marker to a performance recording in developer tools that support it. Recording and display depend on the browser and profiling tool.
+        * console.trace()
+          * : Outputs a stack trace.
+        * console.warn()
+          * : Outputs a message to the console with the warning log level.
+
+       EXAMPLES
+
+       OUTPUTTING TEXT TO THE CONSOLE
+
+       The console's most frequently used feature is logging text and other data. There are several categories of output you can generate using the console.log(), console.info(), console.warn(), console.error(), or console.debug() methods. Each of these results in output styled differently in the log, and you can use the filtering controls provided by your browser to view only the kinds of output that interest you.
+
+       There are two ways to use each of the output methods:
+
+        * Pass in a variable number of arguments whose string representations get concatenated into one string, then output to the console.
+        * Pass in a string containing zero or more substitution strings followed by a variable number of arguments to replace them.
+
+       OUTPUTTING A SINGLE OBJECT
+
+       The simplest way to use the logging methods is to output a single object:
+
+         const someObject = { str: "Some text", id: 5 };
+         console.log(someObject);
+
+       The output looks something like this:
+
+         {str:"Some text", id:5}
+
+       The browser will display as much information about the object as it can and wishes to. For example, private state of the object may be displayed too. Certain types of objects, such as DOM elements or functions, may also be displayed in a special way.
+
+       SNAPSHOTTING OBJECTS
+
+       Information about an object is lazily retrieved. This means that the log message shows the content of an object at the time when it's first viewed, not when it was logged. For example:
+
+         const obj = {};
+         console.log(obj);
+         obj.prop = 123;
+
+       This will output {}. However, if you expand the object's details, you will see prop: 123.
+
+       If you are going to mutate your object and you want to prevent the logged information from being updated, you can deep-clone the object before logging it. A common way is to JSON.stringify() and then JSON.parse() it:
+
+         console.log(JSON.parse(JSON.stringify(obj)));
+
+       There are other alternatives that work in browsers, such as structuredClone(), which are more effective at cloning different types of objects.
+
+       OUTPUTTING MULTIPLE OBJECTS
+
+       You can also output multiple objects by listing them when calling the logging method, like this:
+
+         const car = "Dodge Charger";
+         const someObject = { str: "Some text", id: 5 };
+         console.info("My first car was a", car, ". The object is:", someObject);
+
+       The output will look like this:
+
+         My first car was a Dodge Charger . The object is: {str:"Some text", id:5}
+
+       USING STRING SUBSTITUTIONS
+
+       The first parameter to the logging methods can be a string containing zero or more substitution strings. Each substitution string is replaced by the corresponding argument value.
+
+        * %o
+          * : Outputs a JavaScript object in the "optimally useful formatting" style, for example DOM elements may be displayed the same way as they would appear in the element inspector.
+        * %O
+          * : Outputs a JavaScript object in the "generic JavaScript object formatting" style, usually in the form of an expandable tree. This is similar to console.dir().
+        * %d or %i
+          * : Outputs an integer.
+        * %s
+          * : Outputs a string.
+        * %f
+          * : Outputs a floating-point value.
+        * %c
+          * : Applies CSS style rules to all following text. See Styling console output.
+       Some browsers may implement additional format specifiers. For example, Safari and Firefox support the C-style precision formatting %.f. For example console.log("Foo %.2f", 1.1) will output the number to 2 decimal places: Foo 1.10, while console.log("Foo %.2d", 1.1) will output the number as two significant figures with a leading 0: Foo 01.
+
+       Each of these pulls the next argument after the format string off the parameter list. For example:
+
+         for (let i = 0; i < 5; i++) {
+           console.log("Hello, %s. You've called me %d times.", "Bob", i + 1);
+         }
+
+       The output looks like this:
+
+         Hello, Bob. You've called me 1 times.
+         Hello, Bob. You've called me 2 times.
+         Hello, Bob. You've called me 3 times.
+         Hello, Bob. You've called me 4 times.
+         Hello, Bob. You've called me 5 times.
+
+       STYLING CONSOLE OUTPUT
+
+       You can use the %c directive to apply a CSS style to console output:
+
+         console.log(
+           "This is %cMy stylish message",
+           "color: yellow; font-style: italic; background-color: blue;padding: 2px",
+         );
+
+       The text before the directive will not be affected, but the text after the directive will be styled using the CSS declarations in the parameter.
+
+       
+
+       You may use %c multiple times:
+
+       
+
+         console.log(
+           "Multiple styles: %cred %corange",
+           "color: red",
+           "color: orange",
+           "Additional unformatted message",
+         );
+
+       The properties usable along with the %c syntax are as follows (at least, in Firefox — they may differ in other browsers):
+
+        * background and its longhand equivalents
+        * border and its longhand equivalents
+        * border-radius
+        * box-decoration-break
+        * box-shadow
+        * clear and float
+        * color
+        * cursor
+        * display
+        * font and its longhand equivalents
+        * line-height
+        * margin
+        * outline and its longhand equivalents
+        * padding
+        * text-* properties such as text-transform
+        * white-space
+        * word-spacing and word-break
+        * writing-mode
+       > Each console message behaves like an inline element by default. If you want properties such as padding, margin, and so on to have any effect, you can set the display property to display: inline-block.
+       > In order to support both light and dark color schemes, color_value/light-dark can be used when specifying colors; for example: color: light-dark(#D00000, #FF4040);
+
+       USING GROUPS IN THE CONSOLE
+
+       You can use nested groups to help organize your output by visually combining related material. To create a new nested block, call console.group(). The console.groupCollapsed() method is similar but creates the new block collapsed, requiring the use of a disclosure button to open it for reading.
+
+       To exit the current group, call console.groupEnd(). For example, given this code:
+
+         console.log("This is the outer level");
+         console.group("First group");
+         console.log("In the first group");
+         console.group("Second group");
+         console.log("In the second group");
+         console.warn("Still in the second group");
+         console.groupEnd();
+         console.log("Back to the first group");
+         console.groupEnd();
+         console.debug("Back to the outer level");
+
+       The output looks like this:
+
+       
+
+       TIMERS
+
+       You can start a timer to calculate the duration of a specific operation. To start one, call the console.time() method, giving it a name as the only parameter. To stop the timer, and to get the elapsed time in milliseconds, just call the console.timeEnd() method, again passing the timer's name as the parameter. Up to 10,000 timers can run simultaneously on a given page.
+
+       For example, given this code:
+
+         console.time("answer time");
+         alert("Click to continue");
+         console.timeLog("answer time");
+         alert("Do a bunch of other stuff…");
+         console.timeEnd("answer time");
+
+       Will log the time needed by the user to dismiss the alert box, log the time to the console, wait for the user to dismiss the second alert, and then log the ending time to the console:
+
+       
+
+       Notice that the timer's name is displayed both when the timer is started and when it's stopped.
+
+       STACK TRACES
+
+       The console object also supports outputting a stack trace; this will show you the call path taken to reach the point at which you call console.trace(). Given code like this:
+
+         function foo() {
+           function bar() {
+             console.trace();
+           }
+           bar();
+         }
+
+         foo();
+
+       The output in the console looks something like this:
+
+       
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Firefox Developer Tools
+        * Web console — how the Web console in Firefox handles console API calls
+        * about:debugging — how to see console output when the debugging target is a mobile device
+        * Google Chrome DevTools
+        * Microsoft Edge DevTools
+        * Safari Web Inspector
+
+Web APIs manual                         from the official documentation

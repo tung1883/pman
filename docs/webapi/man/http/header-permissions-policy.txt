@@ -1,0 +1,310 @@
+HTTP.HEADER-PERMISSIONS-POLICY(1) Sandbox manual HTTP.HEADER-PERMISSIONS-POLICY(1)
+
+       NAME
+
+       Permissions-Policy header - The HTTP Permissions-Policy response header provides a mechanism to allow and deny the use of browser features in a document or within any <
+
+       PERMISSIONS-POLICY HEADER
+
+       The HTTP Permissions-Policy response header provides a mechanism to allow and deny the use of browser features in a document or within any elements in the document.
+
+       Violations of a policy can be reported using the Reporting API. Reports may be sent to a server indicated by name in a per-directive report-to parameter, or otherwise to the server endpoint named "default" (the mapping between server endpoint names and URLs is set using the Reporting-Endpoints HTTP response header). Reports can also be observed in the page for which the policy is being enforced using a ReportingObserver. The format of the report and additional detail is provided in PermissionsPolicyViolationReport.
+
+       For more information, see the main Permissions Policy article.
+
+       Header type Response header
+
+       SYNTAX
+
+         # Single directive
+         Permissions-Policy: <directive>=<allowlist>
+
+         # Single directive with reporting endpoint
+         Permissions-Policy: <directive>=<allowlist>;report-to=<endpoint>
+
+         # Multiple directives, with and without server reporting endpoints
+         Permissions-Policy: <directive>=<allowlist>, <directive>=<allowlist>;report-to=<endpoint>, ...
+
+       The header can be used to set the allowlists for one or more directives, and optionally a per-directive report-to parameter indicating the server endpoint to send policy violation reports to. The entries for each directive are comma separated.
+
+        * 
+          * : The Permissions Policy directive to apply the allowlist to. See Directives below for a list of the permitted directive names.
+        * 
+          * : An allowlist is a list of origins that takes one or more of the following values contained in parentheses, separated by spaces:
+            * * (wildcard)
+              * : The feature will be allowed in this document, and all nested browsing contexts (s) regardless of their origin.
+            * () (empty allowlist)
+              * : The feature is disabled in top-level and nested browsing contexts. The equivalent for allow attributes is 'none'.
+            * self
+              * : The feature will be allowed in this document, and in all nested browsing contexts (s) in the same origin only. The feature is not allowed in cross-origin documents in nested browsing contexts. self can be considered shorthand for https://your-site.example.com. The equivalent for allow attributes is self.
+            * src
+              * : The feature will be allowed in this , as long as the document loaded into it comes from the same origin as the URL in its attribute. This value is only used in the allow attribute, and is the _default_ allowlist value in s.
+            * ""
+              * : The feature is allowed for specific origins (for example, "https://a.example.com"). Origins should be separated by spaces. Note that origins in allow attributes are not quoted.
+       The values * and () may only be used on their own, while self and src may be used in combination with one or more origins.
+
+       > Directives have a default allowlist, which is always one of *, self, or none for the Permissions-Policy HTTP header, and governs the default behavior if they are not explicitly listed in a policy.
+       > These are specified on the individual directive reference pages. For allow attributes, the default behavior is always src.
+        * report-to= (optional)
+          * : The report-to parameter can be used to indicate the name of a reporting endpoint where reports will be sent if there is a policy violation for the associated directive.
+       The endpoint name and its associated URL must be specified in a separate Reporting-Endpoints HTTP response header.
+
+       If omitted, reports will be send to the default reporting endpoint if one has been defined. See Reporting API for more information.
+
+       Where supported, you can include wildcards in Permissions Policy origins. This means that instead of having to explicitly specify several different subdomains in an allowlist, you can specify them all in a single origin with a wildcard.
+
+       So instead of:
+
+         ("https://example.com" "https://a.example.com" "https://b.example.com" "https://c.example.com")
+
+       You can specify:
+
+         ("https://example.com" "https://*.example.com")
+
+       > "https://*.example.com" does not match "https://example.com".
+
+       DIRECTIVES
+
+        * accelerometer (experimental)
+          * : Controls whether the current document is allowed to gather information about the acceleration of the device through the Accelerometer interface.
+        * ambient-light-sensor (experimental)
+          * : Controls whether the current document is allowed to gather information about the amount of light in the environment around the device through the AmbientLightSensor interface.
+        * aria-notify (experimental)
+          * : Controls whether the current document is allowed to use the ariaNotify() method to fire screen reader announcements.
+        * attribution-reporting (deprecated) {{non-standard_inline}}
+          * : Controls whether the current document is allowed to use the Attribution Reporting API.
+        * autoplay (experimental)
+          * : Controls whether the current document is allowed to autoplay media requested through the HTMLMediaElement interface. When this policy is disabled and there were no user gestures, the Promise returned by HTMLMediaElement.play() will reject with a NotAllowedError DOMException. The autoplay attribute on and elements will be ignored.
+        * bluetooth (experimental)
+          * : Controls whether the use of the Web Bluetooth API is allowed. When this policy is disabled, the methods of the Bluetooth object returned by Navigator.bluetooth will either return false or reject the returned Promise with a SecurityError DOMException.
+        * browsing-topics (deprecated) {{non-standard_inline}}
+          * : Controls access to the Topics API. Where a policy specifically disallows the use of the Topics API, any attempts to call the Document.browsingTopics() method or send a request with a Sec-Browsing-Topics header will fail with a NotAllowedError DOMException.
+        * camera (experimental)
+          * : Controls whether the current document is allowed to use video input devices.
+       The Promise returned by getUserMedia() will reject with a NotAllowedError DOMException if the permission is not allowed.
+
+        * captured-surface-control (experimental)
+          * : Controls whether or not the document is permitted to use the Captured Surface Control API.
+       The promise returned by the API's main methods will reject with a NotAllowedError DOMException if the permission is not allowed.
+
+        * ch-ua-high-entropy-values (experimental)
+          * : Controls whether or not the document is permitted to use the NavigatorUAData.getHighEntropyValues() method to retrieve high-entropy user-agent data.
+       If the permission is not allowed, the method will only return the brands, mobile, and platform low-entropy data.
+
+        * compute-pressure (experimental)
+          * : Controls access to the Compute Pressure API.
+        * cross-origin-isolated (experimental)
+          * : Controls whether the current document can be treated as cross-origin isolated.
+        * deferred-fetch (experimental)
+          * : Controls the allocation of the top-level origin's fetchLater() quota.
+        * deferred-fetch-minimal (experimental)
+          * : Controls the allocation of the shared cross-origin subframe fetchLater() quota.
+        * display-capture (experimental)
+          * : Controls whether or not the current document is permitted to use the getDisplayMedia() method to capture screen contents. When this policy is disabled, the promise returned by getDisplayMedia() will reject with a NotAllowedError DOMException if permission is not obtained to capture the display's contents.
+        * encrypted-media (experimental)
+          * : Controls whether the current document is allowed to use the Encrypted Media Extensions API (EME). When this policy is disabled, the Promise returned by Navigator.requestMediaKeySystemAccess() will reject with a SecurityError DOMException.
+        * fullscreen (experimental)
+          * : Controls whether the current document is allowed to use Element.requestFullscreen(). When this policy is disabled, the returned Promise rejects with a TypeError.
+        * gamepad (experimental)
+          * : Controls whether the current document is allowed to use the Gamepad API.
+       When this policy is disabled, calls to Navigator.getGamepads() will throw a SecurityError DOMException, and the gamepadconnected and gamepaddisconnected events will not fire.
+
+        * geolocation (experimental)
+          * : Controls whether the current document is allowed to use the Geolocation Interface. When this policy is disabled, calls to getCurrentPosition() and watchPosition() will cause those functions' callbacks to be invoked with a GeolocationPositionError code of PERMISSION_DENIED.
+        * gyroscope (experimental)
+          * : Controls whether the current document is allowed to gather information about the orientation of the device through the Gyroscope interface.
+        * hid (experimental)
+          * : Controls whether the current document is allowed to use the WebHID API to connect to uncommon or exotic human interface devices such as alternative keyboards or gamepads.
+        * identity-credentials-get (experimental)
+          * : Controls whether the current document is allowed to use the Federated Credential Management API (FedCM).
+        * idle-detection (experimental)
+          * : Controls whether the current document is allowed to use the Idle Detection API to detect when users are interacting with their devices, for example to report "available"/"away" status in chat applications.
+        * language-detector (experimental)
+          * : Controls access to the language detection functionality of the Translator and Language Detector APIs.
+        * language-model (experimental)
+          * : Controls access to the Prompt API.
+        * local-fonts (experimental)
+          * : Controls whether the current document is allowed to gather data on the user's locally-installed fonts via the Window.queryLocalFonts() method (see also the Local Font Access API).
+        * local-network (experimental)
+          * : Controls whether the current document is allowed to make network requests to local addresses.
+        * local-network-access (experimental)
+          * : Controls whether the current document is allowed to make network requests to local and loopback addresses. This policy directive is an alias for the more granular local-network and loopback-network directives.
+        * loopback-network (experimental)
+          * : Controls whether the current document is allowed to make network requests to loopback addresses.
+        * magnetometer (experimental)
+          * : Controls whether the current document is allowed to gather information about the orientation of the device through the Magnetometer interface.
+        * microphone (experimental)
+          * : Controls whether the current document is allowed to use audio input devices. When this policy is disabled, the Promise returned by MediaDevices.getUserMedia() will reject with a NotAllowedError DOMException.
+        * midi (experimental)
+          * : Controls whether the current document is allowed to use the Web MIDI API. When this policy is disabled, the Promise returned by Navigator.requestMIDIAccess() will reject with a SecurityError DOMException.
+        * on-device-speech-recognition (experimental)
+          * : Controls access to the on-device speech recognition functionality of the Web Speech API.
+        * otp-credentials (experimental)
+          * : Controls whether the current document is allowed to use the WebOTP API to request a one-time password (OTP) from a specially-formatted SMS message sent by the app's server, i.e., via navigator.credentials.get({otp: ..., ...}).
+        * payment (experimental)
+          * : Controls whether the current document is allowed to use the Payment Request API. When this policy is enabled, the PaymentRequest() constructor will throw a SecurityError DOMException.
+        * picture-in-picture (experimental)
+          * : Controls whether the current document is allowed to play a video in a Picture-in-Picture mode via the corresponding API.
+        * private-state-token-issuance (experimental)
+          * : Controls usage of private state token token-request operations.
+        * private-state-token-redemption (experimental)
+          * : Controls usage of private state token token-redemption and send-redemption-record operations.
+        * publickey-credentials-create (experimental)
+          * : Controls whether the current document is allowed to use the Web Authentication API to create new asymmetric key credentials, i.e., via navigator.credentials.create({publicKey: ..., ...}).
+        * publickey-credentials-get (experimental)
+          * : Controls whether the current document is allowed to use the Web Authentication API to retrieve already stored public-key credentials, i.e., via navigator.credentials.get({publicKey: ..., ...}).
+        * screen-wake-lock (experimental)
+          * : Controls whether the current document is allowed to use Screen Wake Lock API to indicate that device should not turn off or dim the screen.
+        * serial (experimental)
+          * : Controls whether the current document is allowed to use the Web Serial API to communicate with serial devices, either directly connected via a serial port, or via USB or Bluetooth devices emulating a serial port.
+        * speaker-selection (experimental)
+          * : Controls whether the current document is allowed to use the Audio Output Devices API to list and select speakers.
+        * storage-access (experimental)
+          * : Controls whether a document loaded in a third-party context (i.e., embedded in an ) is allowed to use the Storage Access API to request access to unpartitioned cookies.
+        * translator (experimental)
+          * : Controls access to the translation functionality of the Translator and Language Detector APIs.
+        * summarizer (experimental)
+          * : Controls access to the Summarizer API.
+        * unload (experimental) {{non-standard_inline}}
+          * : Controls whether the current document is allowed to run unload event handlers.
+        * usb (experimental)
+          * : Controls whether the current document is allowed to use the WebUSB API.
+        * web-share (experimental)
+          * : Controls whether or not the current document is allowed to use the Navigator.share() of Web Share API to share text, links, images, and other content to arbitrary destinations of user's choice, e.g., mobile apps.
+        * window-management (experimental)
+          * : Controls whether or not the current document is allowed to use the Window Management API to manage windows on multiple displays.
+        * xr-spatial-tracking (experimental)
+          * : Controls whether or not the current document is allowed to use the WebXR Device API to interact with a WebXR session.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       PERMISSIONS-POLICY HEADER
+
+       To allow all origins access to geolocation, you would do this:
+
+         Permissions-Policy: geolocation=*
+
+       Or to allow access to a subset of origins, you'd do this:
+
+         Permissions-Policy: geolocation=(self "https://a.example.com" "https://b.example.com")
+
+       Several features can be controlled at the same time by sending the header with a comma-separated list of policies, or by sending a separate header for each policy.
+
+       For example, the following are equivalent:
+
+         Permissions-Policy: picture-in-picture=(), geolocation=(self https://example.com/), camera=*
+
+         Permissions-Policy: picture-in-picture=()
+         Permissions-Policy: geolocation=(self https://example.com/)
+         Permissions-Policy: camera=*
+
+       IFRAMES
+
+       For an to have a feature enabled its allowed origin must also be in the allowlist for the parent page. Because of this inheritance behavior, it is a good idea to specify the widest acceptable support for a feature in the HTTP header, and then specify the subset of support you need in each .
+
+       To allow all origins access to geolocation, you would do this:
+
+         <iframe src="https://example.com" allow="geolocation *"></iframe>
+
+       To apply a policy to the current origin and others, you'd do this:
+
+         <iframe
+           src="https://example.com"
+           allow="geolocation 'self' https://a.example.com https://b.example.com"></iframe>
+
+       This is important: By default, if an navigates to another origin, the policy is not applied to the origin that the navigates to. By listing the origin that the navigates to in the allow attribute, the Permissions Policy that was applied to the original will be applied to the origin the navigates to.
+
+       Several features can be controlled at the same time by including a semi-colon-separated list of policy directives inside the allow attribute.
+
+         <iframe
+           src="https://example.com"
+           allow="geolocation 'self' https://a.example.com https://b.example.com; fullscreen 'none'"></iframe>
+
+       It is worth giving the src value a special mention. We mentioned above that using this allowlist value will mean that the associated feature will be allowed in this , as long as the document loaded into it comes from the same origin as the URL in its attribute. This value is the _default_ allowlist value for features listed in allow, so the following are equivalent:
+
+         <iframe src="https://example.com" allow="geolocation 'src'"></iframe>
+         <iframe src="https://example.com" allow="geolocation"></iframe>
+
+       DENYING ACCESS TO POWERFUL FEATURES
+
+       SecureCorp Inc. wants to disable Microphone (for example MediaDevices.getUserMedia()) and Geolocation APIs in its application. It can do so using the following response header:
+
+         Permissions-Policy: microphone=(), geolocation=()
+
+       By specifying () for the origin list, the specified features will be disabled for all browsing contexts (this includes all s), regardless of their origin.
+
+       COMBINING HTTP HEADER AND POLICIES
+
+       For example, let's say that we wanted to enable geolocation usage on our own origin, and in embedded content coming from our trusted ad network. We could set up the page-wide Permissions Policy like this:
+
+         Permissions-Policy: geolocation=(self https://trusted-ad-network.com)
+
+       Over in our ad s, we could set access to the https://trusted-ad-network.com origin like this:
+
+         <iframe src="https://trusted-ad-network.com" allow="geolocation"></iframe>
+
+       If a different origin ended up getting loaded into , it would not have access to geolocation:
+
+         <iframe src="https://rogue-origin-example.com" allow="geolocation"></iframe>
+
+       REPORTING VIOLATIONS
+
+       This example shows how to configure reporting of Permissions-Policy violations to a server endpoint.
+
+       The response headers below block geolocation and define the reporting endpoint name for the feature as "geo_endpoint". The Reporting-Endpoints HTTP response header is used to define the URL of this endpoint name.
+
+         Reporting-Endpoints: geo_endpoint="https://example.com/reports"
+         Permissions-Policy: geolocation=();report-to=geo_endpoint
+
+       > To send all violation reports to the same endpoint we might instead define the "default" reporting endpoint:
+       > http
+       > Reporting-Endpoints: default="https://example.com/reports"
+       > Permissions-Policy: geolocation=()
+       A violation occurs when a page attempts to use the blocked feature, for example:
+
+         navigator.geolocation.getCurrentPosition(
+           () => {},
+           () => {},
+         );
+
+       The report payload sent to the endpoint might look like this:
+
+         [
+           {
+             "age": 48512,
+             "body": {
+               "columnNumber": 29,
+               "disposition": "enforce",
+               "lineNumber": 44,
+               "message": "Permissions policy violation: geolocation access has been blocked because of a permissions policy applied to the current document.",
+               "featureId": "geolocation",
+               "sourceFile": "https://example.com/"
+             },
+             "type": "permissions-policy-violation",
+             "url": "https://example.com/",
+             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+           }
+         ]
+
+       > Chrome's server-side serialization of violation reports uses policyId rather than featureId for the feature name in the body of a server report.
+       > The PermissionsPolicyViolationReport returned by a ReportingObserver follows the specification.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Permissions Policy
+        * Permissions-Policy-Report-Only
+        * Document.featurePolicy and FeaturePolicy
+        * Content-Security-Policy
+        * Referrer-Policy
+        * Reporting-Endpoints
+        * PermissionsPolicyViolationReport
+        * ReportingObserver
+        * Reporting API
+
+HTTP manual                             from the official documentation

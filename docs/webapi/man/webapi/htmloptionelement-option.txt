@@ -1,0 +1,86 @@
+WEBAPI.HTMLOPTIONELEMENT-OPTION(1) Sandbox manual WEBAPI.HTMLOPTIONELEMENT-OPTION(1)
+
+       NAME
+
+       HTMLOptionElement: Option() constructor - The Option() constructor creates a new
+
+       HTMLOPTIONELEMENT: OPTION() CONSTRUCTOR
+
+       The Option() constructor creates a new HTMLOptionElement.
+
+       SYNTAX
+
+         new Option()
+         new Option(text)
+         new Option(text, value)
+         new Option(text, value, defaultSelected)
+         new Option(text, value, defaultSelected, selected)
+
+       PARAMETERS
+
+        * text (optional)
+          * : A string representing the content of the element, i.e., the
+       displayed text. If this is not specified, a default value of "" (empty string) is used.
+
+        * value (optional)
+          * : A string representing the value of the
+       HTMLOptionElement, i.e., the value attribute of the equivalent . If this is not specified, the value of text is used as the value, e.g., for the associated element's value when the form is submitted to the server.
+
+        * defaultSelected (optional)
+          * : A value of either true or false that sets the selected
+       attribute value, i.e., so that this will be the default value selected in the element when the page is first loaded. If this is not specified, a default value of false is used. Note that a value of true does not set the option to selected if it is not already selected.
+
+        * selected (optional)
+          * : A value of either true or false that sets the option's selected state; the default is false
+       (not selected). If omitted, even if the defaultSelected argument is true, the option is not selected.
+
+       EXAMPLES
+
+       JUST ADD NEW OPTIONS
+
+         /* assuming we have the following HTML
+         <select id='s'>
+
+         </select>
+         */
+
+         const s = document.getElementById("s");
+         const options = [Four, Five, Six];
+
+         options.forEach((element, key) => {
+           s[key] = new Option(element, key);
+         });
+
+       APPEND OPTIONS WITH DIFFERENT PARAMETERS
+
+         <select id="s"></select>
+
+         const s = document.getElementById("s");
+         const options = ["zero", "one", "two"];
+
+         options.forEach((element, key) => {
+           if (element === "zero") {
+             s[key] = new Option(element, s.options.length, false, false);
+           }
+           if (element === "one") {
+             s[key] = new Option(element, s.options.length, true, false); // Will add the "selected" attribute
+           }
+           if (element === "two") {
+             s[key] = new Option(element, s.options.length, false, true); // Will actually be selected in the view
+           }
+         });
+
+       Result:
+
+         <select id="s">
+           <option value="0">zero</option>
+           <option value="1" selected>one</option>
+           <option value="2">two</option>
+           <!-- User will see two as 'selected' -->
+         </select>
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

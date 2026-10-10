@@ -1,0 +1,73 @@
+WEBAPI.PERFORMANCERESOURCETIMING-NEXTHOPPROTOCOL(1) Sandbox manual WEBAPI.PERFORMANCERESOURCETIMING-NEXTHOPPROTOCOL(1)
+
+       NAME
+
+       PerformanceResourceTiming: nextHopProtocol property - The nextHopProtocol read-only property is a string representing the network protocol used to fetch the resource, as identified by the ALPN P
+
+       PERFORMANCERESOURCETIMING: NEXTHOPPROTOCOL PROPERTY
+
+       The nextHopProtocol read-only property is a string representing the network protocol used to fetch the resource, as identified by the ALPN Protocol ID (RFC7301).
+
+       When a proxy is used, if a tunnel connection is established, this property returns the ALPN Protocol ID of the tunneled protocol. Otherwise, this property returns the ALPN Protocol ID of the first hop to the proxy.
+
+       VALUE
+
+       The nextHopProtocol property can have the following values:
+
+        * A string representing the network protocol used to fetch the resource, as identified by the ALPN Protocol ID (RFC7301). Typical values are:
+          * "http/0.9"
+          * "http/1.0"
+          * "http/1.1"
+          * "h2"
+          * "h2c"
+          * "h3"
+        * An empty string if the resource is a cross-origin request and no Timing-Allow-Origin HTTP response header is used.
+
+       EXAMPLES
+
+       LOGGING RESOURCES THAT USE NEITHER HTTP/2 NOR HTTP/3
+
+       The nextHopProtocol property can be used to see resources that don't use the HTTP/2 or HTTP/3 protocols.
+
+       Example using a PerformanceObserver, which notifies of new resource performance entries as they are recorded in the browser's performance timeline. Use the buffered option to access entries from before the observer creation.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             const protocol = entry.nextHopProtocol;
+             if (protocol && !(protocol === "h2" || protocol === "h3")) {
+               console.log(`${entry.name} uses ${protocol}.`);
+             }
+           });
+         });
+
+         observer.observe({ type: "resource", buffered: true });
+
+       Example using Performance.getEntriesByType(), which only shows resource performance entries present in the browser's performance timeline at the time you call this method:
+
+         const resources = performance.getEntriesByType("resource");
+         resources.forEach((entry) => {
+           const protocol = entry.nextHopProtocol;
+           if (protocol && !(protocol === "h2" || protocol === "h3")) {
+             console.log(`${entry.name} uses ${protocol}.`);
+           }
+         });
+
+       CROSS-ORIGIN NETWORK PROTOCOL INFORMATION
+
+       If the value of the nextHopProtocol property is an empty string, the resource might be a cross-origin request. To expose cross-origin network protocol information, the Timing-Allow-Origin HTTP response header needs to be set.
+
+       For example, to allow https://developer.mozilla.org to see network protocol information, the cross-origin resource should send:
+
+         Timing-Allow-Origin: https://developer.mozilla.org
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Timing-Allow-Origin
+        * HTTP/2
+        * HTTP/3
+
+Web APIs manual                         from the official documentation

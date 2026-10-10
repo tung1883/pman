@@ -1,0 +1,155 @@
+WEBAPI.SELECTION(1)              Sandbox manual              WEBAPI.SELECTION(1)
+
+       NAME
+
+       Selection - A Selection object represents the range of text selected by the user or the current position of the caret. Each document is associated with 
+
+       SELECTION
+
+       A Selection object represents the range of text selected by the user or the current position of the caret. Each document is associated with a unique selection object, which can be retrieved by document.getSelection() or window.getSelection() and then be examined and modified.
+
+       A user may make a selection from left to right (in document order) or right to left (reverse of document order). The _anchor_ is where the user began the selection and the _focus_ is where the user ends the selection. If you make a selection with a desktop mouse, the anchor is placed where you pressed the mouse button, and the focus is placed where you released the mouse button.
+
+       > _Anchor_ and _focus_ should not be confused with the _start_ and _end_ positions of a selection. The anchor can be placed before the focus or vice versa, depending on the direction you made your selection.
+
+       INSTANCE PROPERTIES
+
+        * Selection.anchorNode (read-only)
+          * : Returns the Node in which the selection begins. Can return null if selection never existed in the document (e.g., an iframe that was never clicked on).
+        * Selection.anchorOffset (read-only)
+          * : Returns a number representing the offset of the selection's anchor within the anchorNode. If anchorNode is a text node, this is the number of characters within anchorNode preceding the anchor. If anchorNode is an element, this is the number of child nodes of the anchorNode preceding the anchor.
+        * Selection.direction (read-only)
+          * : A string describing the direction of the current selection.
+        * Selection.focusNode (read-only)
+          * : Returns the Node in which the selection ends. Can return null if selection never existed in the document (e.g., an iframe that was never clicked on).
+        * Selection.focusOffset (read-only)
+          * : Returns a number representing the offset of the selection's focus within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of child nodes of the focusNode preceding the focus.
+        * Selection.isCollapsed (read-only)
+          * : Returns a Boolean indicating whether the selection's start and end points are at the same position.
+        * Selection.rangeCount (read-only)
+          * : Returns the number of ranges in the selection.
+        * Selection.type (read-only)
+          * : Returns a string describing the type of the current selection.
+
+       INSTANCE METHODS
+
+        * Selection.addRange()
+          * : A Range object that will be added to the selection.
+        * Selection.collapse()
+          * : Collapses the current selection to a single point.
+        * Selection.collapseToEnd()
+          * : Collapses the selection to the end of the last range in the selection.
+        * Selection.collapseToStart()
+          * : Collapses the selection to the start of the first range in the selection.
+        * Selection.containsNode()
+          * : Indicates if a certain node is part of the selection.
+        * Selection.deleteFromDocument()
+          * : Deletes the selection's content from the document.
+        * Selection.empty()
+          * : Removes all ranges from the selection, leaving the anchorNode and focusNode properties equal to null and nothing selected.
+        * Selection.extend()
+          * : Moves the focus of the selection to a specified point.
+        * Selection.getComposedRanges()
+          * : Returns an array of StaticRange objects, each that represents a selection that might cross shadow DOM boundaries.
+        * Selection.getRangeAt()
+          * : Returns a Range object representing one of the ranges currently selected.
+        * Selection.modify()
+          * : Changes the current selection.
+        * Selection.removeRange()
+          * : Removes a range from the selection.
+        * Selection.removeAllRanges()
+          * : Removes all ranges from the selection.
+        * Selection.selectAllChildren()
+          * : Adds all the children of the specified node to the selection.
+        * Selection.setBaseAndExtent()
+          * : Sets the selection to be a range including all or parts of two specified DOM nodes, and any content located between them.
+        * Selection.setPosition()
+          * : Collapses the current selection to a single point.
+        * Selection.toString()
+          * : Returns a string currently being represented by the selection object, i.e., the currently selected text.
+
+       NOTES
+
+       STRING REPRESENTATION OF A SELECTION
+
+       Calling the Selection.toString() method returns the text contained within the selection, e.g.:
+
+         const selObj = window.getSelection();
+         window.alert(selObj);
+
+       Note that using a selection object as the argument to window.alert will call the object's toString method.
+
+       MULTIPLE RANGES IN A SELECTION
+
+       A selection object represents the Ranges that the user has selected. Typically, it holds only one range, accessed as follows:
+
+         const selObj = window.getSelection();
+         const range = selObj.getRangeAt(0);
+
+        * selObj is a Selection object
+        * range is a Range object
+       As the Selection API specification notes, the Selection API was initially created by Netscape and allowed multiple ranges (for instance, to allow the user to select a column from a ). However, browsers other than Gecko did not implement multiple ranges, and the specification also requires the selection to always have a single range.
+
+       SELECTION AND INPUT FOCUS
+
+       Selection and input focus (indicated by Document.activeElement) have a complex relationship that varies by browser. In cross-browser compatible code, it's better to handle them separately.
+
+       Safari and Chrome (unlike Firefox) currently focus the element containing selection when modifying the selection programmatically; it's possible that this may change in the future (see W3C bug 14383 and WebKit bug 38696).
+
+       BEHAVIOR OF SELECTION API IN TERMS OF EDITING HOST FOCUS CHANGES
+
+       The Selection API has a common behavior (i.e., shared between browsers) that governs how focus behavior changes for _editing hosts_ after certain methods are called.
+
+       The behavior is as follows:
+
+        1. An editing host gains focus if the previous selection was outside of it.
+        2. A Selection API method is called, causing a new selection to be made with the selection range inside the editing host.
+        3. Focus then moves to the editing host.
+       > The Selection API methods may only move focus to an editing host, not to other focusable elements (e.g., ).
+       The above behavior applies to selections made using the following methods:
+
+        * Selection.collapse()
+        * Selection.collapseToStart()
+        * Selection.collapseToEnd()
+        * Selection.extend()
+        * Selection.selectAllChildren()
+        * Selection.addRange()
+        * Selection.setBaseAndExtent()
+       And when the Range is modified using the following methods:
+
+        * Range.setStart()
+        * Range.setEnd()
+        * Range.setStartBefore()
+        * Range.setStartAfter()
+        * Range.setEndBefore()
+        * Range.setEndAfter()
+        * Range.collapse()
+        * Range.selectNode()
+        * Range.selectNodeContents()
+
+       GLOSSARY
+
+       Other key terms used in this section.
+
+        * anchor
+          * : The anchor of a selection is the beginning point of the selection. When making a selection with a mouse, the anchor is where in the document the mouse button is initially pressed. As the user changes the selection using the mouse or the keyboard, the anchor does not move.
+        * editing host
+          * : An editable element (e.g., an HTML element with contenteditable set, or the HTML child of a document that has designMode enabled).
+        * focus of a selection
+          * : The _focus_ of a selection is the end point of the selection. When making a selection with a mouse, the focus is where in the document the mouse button is released. As the user changes the selection using the mouse or the keyboard, the focus is the end of the selection that moves.
+       > This is not the same as the focused _element_ of the document, as returned by document.activeElement.
+        * range
+          * : A _range_ is a contiguous part of a document. A range can contain entire nodes as well as portions of nodes (such as a portion of a text node). A user will normally only select a single range at a time, but it's possible for a user to select multiple ranges (e.g., by using the Control key). A range can be retrieved from a selection as a range object. Range objects can also be created via the DOM and programmatically added or removed from a selection.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Window.getSelection, Document.getSelection, Range
+        * Selection-related events: selectionchange and selectstart
+        * HTML inputs provide simpler helper APIs for working with selection (see HTMLInputElement.setSelectionRange())
+        * Document.activeElement, HTMLElement.focus, and HTMLElement.blur
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,66 @@
+WEBAPI.SERVICEWORKERGLOBALSCOPE-PAYMENTREQUEST-EVENT(1) Sandbox manual WEBAPI.SERVICEWORKERGLOBALSCOPE-PAYMENTREQUEST-EVENT(1)
+
+       NAME
+
+       ServiceWorkerGlobalScope: paymentrequest event - service
+
+       SERVICEWORKERGLOBALSCOPE: PAYMENTREQUEST EVENT
+
+       service
+
+       The paymentrequest event of the ServiceWorkerGlobalScope interface is fired on a payment app when a payment flow has been initiated on the merchant website via the PaymentRequest.show() method.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("paymentrequest", (event) => { })
+
+         onpaymentrequest = (event) => { }
+
+       EVENT TYPE
+
+       A PaymentRequestEvent. Inherits from ExtendableEvent.
+
+       PaymentRequestEvent
+
+       EXAMPLES
+
+       When the PaymentRequest.show() method is invoked, a paymentrequest event is fired on the service worker of the payment app. This event is listened for inside the payment app's service worker to begin the next stage of the payment process.
+
+         let paymentRequestEvent;
+         const resolver = Promise.withResolvers();
+         let client;
+
+         // `self` is the global object in service worker
+         self.addEventListener("paymentrequest", async (e) => {
+           if (paymentRequestEvent) {
+             // If there's an ongoing payment transaction, reject it.
+             resolver.reject();
+           }
+           // Preserve the event for future use
+           paymentRequestEvent = e;
+
+           // …
+         });
+
+       When a paymentrequest event is received, the payment app can open a payment handler window by calling PaymentRequestEvent.openWindow(). The payment handler window will present the customers with a payment app interface where they can authenticate, choose shipping address and options, and authorize the payment.
+
+       When the payment has been handled, PaymentRequestEvent.respondWith() is used to pass the payment result back to the merchant website.
+
+       See Receive a payment request event from the merchant for more details of this stage.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web-based Payment Handler API
+        * Web-based payment apps overview
+        * Setting up a payment method
+        * Life of a payment transaction
+        * Using the Payment Request API
+        * Payment processing concepts
+
+Web APIs manual                         from the official documentation

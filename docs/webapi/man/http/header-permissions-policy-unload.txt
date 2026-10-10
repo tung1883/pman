@@ -1,0 +1,63 @@
+HTTP.HEADER-PERMISSIONS-POLICY-UNLOAD(1) Sandbox manual HTTP.HEADER-PERMISSIONS-POLICY-UNLOAD(1)
+
+       NAME
+
+       Permissions-Policy: unload directive - The HTTP Permissions-Policy header unload directive controls whether the current document is allowed to run unload event handlers.
+
+       PERMISSIONS-POLICY: UNLOAD DIRECTIVE
+
+       {{non-standard_header}}
+
+       The HTTP Permissions-Policy header unload directive controls whether the current document is allowed to run unload event handlers.
+
+       Where a defined policy disallows use of this feature, unload event handlers registered in the document will not run.
+
+       unload handlers are unreliable and prevent pages from being stored in the back/forward cache (bfcache). Blocking them lets a page stay eligible for the bfcache, even if third-party scripts in the page add unload handlers. See the usage notes for the unload event for alternatives.
+
+       SYNTAX
+
+         Permissions-Policy: unload=<allowlist>;
+
+        * 
+          * : A list of origins for which permission is granted to use the feature. See Permissions-Policy > Syntax for more details.
+
+       DEFAULT POLICY
+
+       In Chrome, the default allowlist for unload is (), which means that unload handlers do not run unless a document opts in. Chrome originally used a default allowlist of *, and changed it gradually.
+
+       EXAMPLES
+
+       BLOCKING UNLOAD HANDLERS
+
+       A site wants to make sure that no unload handlers run in its pages or in any of their embedded iframes, so that the pages remain eligible for the bfcache. It can do so by delivering the following HTTP response header:
+
+         Permissions-Policy: unload=()
+
+       ALLOWING UNLOAD HANDLERS
+
+       A site that still depends on unload handlers can allow them to run in its top-level pages by delivering the following HTTP response header:
+
+         Permissions-Policy: unload=self
+
+       To also allow unload handlers in a cross-origin iframe whose origin is https://example.com, the embedding page must include that origin in its allowlist:
+
+         Permissions-Policy: unload=(self "https://example.com")
+
+       It must also include an attribute on the element:
+
+         <iframe src="https://example.com/embed" allow="unload"></iframe>
+
+       The document loaded in the iframe must also allow unload handlers, using its own Permissions-Policy: unload=self response header.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Permissions-Policy header
+        * Permissions Policy
+        * unload event
+        * Deprecating the unload event on developer.chrome.com
+
+HTTP manual                             from the official documentation

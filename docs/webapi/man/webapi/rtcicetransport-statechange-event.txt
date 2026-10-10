@@ -1,0 +1,69 @@
+WEBAPI.RTCICETRANSPORT-STATECHANGE-EVENT(1) Sandbox manual WEBAPI.RTCICETRANSPORT-STATECHANGE-EVENT(1)
+
+       NAME
+
+       RTCIceTransport: statechange event - A statechange event occurs when the RTCIceTransport changes state. The state can be used to determine how far through the process of examini
+
+       RTCICETRANSPORT: STATECHANGE EVENT
+
+       A statechange event occurs when the RTCIceTransport changes state. The state can be used to determine how far through the process of examining, verifying, and selecting a valid candidate pair is prior to successfully connecting the two peers for WebRTC communications.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("statechange", (event) => { })
+
+         onstatechange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       Given an RTCPeerConnection, pc, the following code creates an event handler that calls a function named handleFailure() if the ICE transport enters a failure state.
+
+         let iceTransport = pc.getSenders()[0].transport.iceTransport;
+
+         iceTransport.addEventListener("statechange", (ev) => {
+           if (iceTransport.state === "failed") {
+             handleFailure(pc);
+           }
+         });
+
+       The same code, using the onstatechange event handler property, looks like this:
+
+         let iceTransport = pc.getSenders()[0].transport.iceTransport;
+
+         iceTransport.onstatechange = (ev) => {
+           if (iceTransport.state === "failed") {
+             handleFailure(pc);
+           }
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * WebRTC connectivity
+
+       RELATED RTCICETRANSPORT EVENTS
+
+        * gatheringstatechange
+        * selectedcandidatepairchange
+
+       RELATED RTCPEERCONNECTION EVENTS
+
+        * negotiationneeded
+        * signalingstatechange
+        * iceconnectionstatechange
+        * icegatheringstatechange
+        * connectionstatechange
+
+Web APIs manual                         from the official documentation

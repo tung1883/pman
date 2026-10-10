@@ -1,0 +1,38 @@
+SHELLCHECK.SC3009(1)             Sandbox manual             SHELLCHECK.SC3009(1)
+
+       NAME
+
+       In POSIX sh, brace expansion is undefined. - for i in {1..5}; do ...
+
+       IN POSIX SH, BRACE EXPANSION IS UNDEFINED
+
+       IN POSIX SH, BRACE EXPANSION IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+
+         for i in {1..5}; do ...
+
+       Here, $i expands to {1..5}. It does not expand to the sequence 1 2 3 4 5
+
+       CORRECT CODE
+
+         #!/bin/sh
+         i=1
+         while [ "${i}" -le 5 ]; do ...
+
+           # something that will occur 5 times
+
+           i=$((i + 1))
+         done
+
+       You can also use the seq command, e.g. seq 1 5, but seq is not a POSIX utility.
+
+       RATIONALE
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

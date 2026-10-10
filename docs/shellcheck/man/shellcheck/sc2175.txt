@@ -1,0 +1,29 @@
+SHELLCHECK.SC2175(1)             Sandbox manual             SHELLCHECK.SC2175(1)
+
+       NAME
+
+       Quote this invalid brace expansion since it should be passed literally to eval - eval echo {1..$n}
+
+       QUOTE THIS INVALID BRACE EXPANSION SINCE IT SHOULD BE PASSED LITERALLY
+
+       QUOTE THIS INVALID BRACE EXPANSION SINCE IT SHOULD BE PASSED LITERALLY
+
+       PROBLEMATIC CODE
+
+         eval echo {1..$n}
+
+       CORRECT CODE
+
+         eval "echo {1..$n}"
+
+       RATIONALE
+
+       Using eval somecommand {1..$n} depends both on bash silently failing to interpret the brace expansion, and on it passing failing brace expansions literally.
+
+       Rather than depending on these questionable features (which already behave differently in other shells), use the explicit, predictable way of passing values literally: quoting.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

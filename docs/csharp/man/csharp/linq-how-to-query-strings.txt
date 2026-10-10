@@ -1,0 +1,235 @@
+CSHARP.LINQ-HOW-TO-QUERY-STRINGS(1) Sandbox manual CSHARP.LINQ-HOW-TO-QUERY-STRINGS(1)
+
+       NAME
+
+       How to: Use LINQ to query strings - You can query a string as a sequence of characters in LINQ. This article contains several examples you can use or modify to suit your needs.
+
+       HOW TO: USE LINQ TO QUERY STRINGS
+
+       Strings are stored as a sequence of characters. As a sequence of characters, they can be queried using LINQ. In this article, there are several example queries that query strings for different characters or words, filter strings, or mix queries with regular expressions.
+
+       HOW TO QUERY FOR CHARACTERS IN A STRING
+
+       The following example queries a string to determine the number of numeric digits it contains.
+
+         string aString = "ABCDE99F-J74-12-89A";
+
+         // Select only those characters that are numbers
+         var stringQuery = from ch in aString
+                           where Char.IsDigit(ch)
+                           select ch;
+
+         // Execute the query
+         foreach (char c in stringQuery)
+             Console.Write(c + " ");
+
+         // Call the Count method on the existing query.
+         int count = stringQuery.Count();
+         Console.WriteLine($"Count = {count}");
+
+         // Select all characters before the first '-'
+         var stringQuery2 = aString.TakeWhile(c => c != '-');
+
+         // Execute the second query
+         foreach (char c in stringQuery2)
+             Console.Write(c);
+         /* Output:
+           Output: 9 9 7 4 1 2 8 9
+           Count = 8
+           ABCDE99F
+         */
+
+       The preceding query shows how you can treat a string as a sequence of characters.
+
+       HOW TO COUNT OCCURRENCES OF A WORD IN A STRING
+
+       The following example shows how to use a LINQ query to count the occurrences of a specified word in a string. To perform the count, first the Split* method is called to create an array of words. There's a performance cost to the Split* method. If the only operation on the string is to count the words, consider using the Matches* or IndexOf* methods instead.
+
+         string text = """
+             Historically, the world of data and the world of objects
+             have not been well integrated. Programmers work in C# or Visual Basic
+             and also in SQL or XQuery. On the one side are concepts such as classes,
+             objects, fields, inheritance, and .NET APIs. On the other side
+             are tables, columns, rows, nodes, and separate languages for dealing with
+             them. Data types often require translation between the two worlds; there are
+             different standard functions. Because the object world has no notion of query, a
+             query can only be represented as a string without compile-time type checking or
+             IntelliSense support in the IDE. Transferring data from SQL tables or XML trees to
+             objects in memory is often tedious and error-prone.
+             """;
+
+         string searchTerm = "data";
+
+         //Convert the string into an array of words
+         char[] separators = ['.', '?', '!', ' ', ';', ':', ','];
+         string[] source = text.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+         // Create the query.  Use the InvariantCultureIgnoreCase comparison to match "data" and "Data"
+         var matchQuery = from word in source
+                          where word.Equals(searchTerm, StringComparison.InvariantCultureIgnoreCase)
+                          select word;
+
+         // Count the matches, which executes the query.
+         int wordCount = matchQuery.Count();
+         Console.WriteLine($"""{wordCount} occurrences(s) of the search term "{searchTerm}" were found.""");
+         /* Output:
+            3 occurrences(s) of the search term "data" were found.
+         */
+
+       The preceding query shows how you can view strings as a sequence of words, after splitting a string into a sequence of words.
+
+       HOW TO SORT OR FILTER TEXT DATA BY ANY WORD OR FIELD
+
+       The following example shows how to sort lines of structured text, such as comma-separated values, by any field in the line. The field can be dynamically specified at run time. Assume that the fields in scores.csv represent a student's ID number, followed by a series of four test scores:
+
+         111, 97, 92, 81, 60
+         112, 75, 84, 91, 39
+         113, 88, 94, 65, 91
+         114, 97, 89, 85, 82
+         115, 35, 72, 91, 70
+         116, 99, 86, 90, 94
+         117, 93, 92, 80, 87
+         118, 92, 90, 83, 78
+         119, 68, 79, 88, 92
+         120, 99, 82, 81, 79
+         121, 96, 85, 91, 60
+         122, 94, 92, 91, 91
+
+       The following query sorts the lines based on the score of the first exam, stored in the second column:
+
+         // Create an IEnumerable data source
+         string[] scores = File.ReadAllLines("scores.csv");
+
+         // Change this to any value from 0 to 4.
+         int sortField = 1;
+
+         Console.WriteLine($"Sorted highest to lowest by field [{sortField}]:");
+
+         // Split the string and sort on field[num]
+         var scoreQuery = from line in scores
+                          let fields = line.Split(',')
+                          orderby fields[sortField] descending
+                          select line;
+
+         foreach (string str in scoreQuery)
+         {
+             Console.WriteLine(str);
+         }
+         /* Output (if sortField == 1):
+            Sorted highest to lowest by field [1]:
+             116, 99, 86, 90, 94
+             120, 99, 82, 81, 79
+             111, 97, 92, 81, 60
+             114, 97, 89, 85, 82
+             121, 96, 85, 91, 60
+             122, 94, 92, 91, 91
+             117, 93, 92, 80, 87
+             118, 92, 90, 83, 78
+             113, 88, 94, 65, 91
+             112, 75, 84, 91, 39
+             119, 68, 79, 88, 92
+             115, 35, 72, 91, 70
+          */
+
+       The preceding query shows how you can manipulate strings by splitting them into fields, and querying the individual fields.
+
+       HOW TO QUERY FOR SENTENCES WITH SPECIFIC WORDS
+
+       The following example shows how to find sentences in a text file that contain matches for each of a specified set of words. Although the array of search terms is hard-coded, it could also be populated dynamically at run time. The query returns the sentences that contain the words "Historically," "data," and "integrated."
+
+         string text = """
+         Historically, the world of data and the world of objects
+         have not been well integrated. Programmers work in C# or Visual Basic
+         and also in SQL or XQuery. On the one side are concepts such as classes,
+         objects, fields, inheritance, and .NET APIs. On the other side
+         are tables, columns, rows, nodes, and separate languages for dealing with
+         them. Data types often require translation between the two worlds; there are
+         different standard functions. Because the object world has no notion of query, a
+         query can only be represented as a string without compile-time type checking or
+         IntelliSense support in the IDE. Transferring data from SQL tables or XML trees to
+         objects in memory is often tedious and error-prone.
+         """;
+
+         // Split the text block into an array of sentences.
+         string[] sentences = text.Split(['.', '?', '!']);
+
+         // Define the search terms. This list could also be dynamically populated at run time.
+         string[] wordsToMatch = [ "Historically", "data", "integrated" ];
+
+         // Find sentences that contain all the terms in the wordsToMatch array.
+         // Note that the number of terms to match is not specified at compile time.
+         char[] separators = ['.', '?', '!', ' ', ';', ':', ','];
+         var sentenceQuery = from sentence in sentences
+                             let w = sentence.Split(separators,StringSplitOptions.RemoveEmptyEntries)
+                             where w.Distinct().Intersect(wordsToMatch).Count() == wordsToMatch.Count()
+                             select sentence;
+
+         foreach (string str in sentenceQuery)
+         {
+             Console.WriteLine(str);
+         }
+         /* Output:
+         Historically, the world of data and the world of objects have not been well integrated
+         */
+
+       The query first splits the text into sentences, and then splits each sentence into an array of strings that hold each word. For each of these arrays, the Distinct* method removes all duplicate words, and then the query performs an Intersect* operation on the word array and the wordsToMatch array. If the count of the intersection is the same as the count of the wordsToMatch array, all words were found in the words and the original sentence is returned.
+
+       The call to Split* uses punctuation marks as separators in order to remove them from the string. If you didn't do remove punctuation, for example you could have a string "Historically," that wouldn't match "Historically" in the wordsToMatch array. You might have to use extra separators, depending on the types of punctuation found in the source text.
+
+       HOW TO COMBINE LINQ QUERIES WITH REGULAR EXPRESSIONS
+
+       The following example shows how to use the Regex class to create a regular expression for more complex matching in text strings. The LINQ query makes it easy to filter on exactly the files that you want to search with the regular expression, and to shape the results.
+
+         string startFolder = """C:\Program Files\dotnet\sdk""";
+         // Or
+         // string startFolder = "/usr/local/share/dotnet/sdk";
+
+         // Take a snapshot of the file system.
+         var fileList = from file in Directory.GetFiles(startFolder, "*.*", SearchOption.AllDirectories)
+                         let fileInfo = new FileInfo(file)
+                         select fileInfo;
+
+         // Create the regular expression to find all things "Visual".
+         System.Text.RegularExpressions.Regex searchTerm =
+             new System.Text.RegularExpressions.Regex(@"microsoft.net.(sdk|workload)");
+
+         // Search the contents of each .htm file.
+         // Remove the where clause to find even more matchedValues!
+         // This query produces a list of files where a match
+         // was found, and a list of the matchedValues in that file.
+         // Note: Explicit typing of "Match" in select clause.
+         // This is required because MatchCollection is not a
+         // generic IEnumerable collection.
+         var queryMatchingFiles =
+             from file in fileList
+             where file.Extension == ".txt"
+             let fileText = File.ReadAllText(file.FullName)
+             let matches = searchTerm.Matches(fileText)
+             where matches.Count > 0
+             select new
+             {
+                 name = file.FullName,
+                 matchedValues = from System.Text.RegularExpressions.Match match in matches
+                                 select match.Value
+             };
+
+         // Execute the query.
+         Console.WriteLine($"""The term "{searchTerm}" was found in:""");
+
+         foreach (var v in queryMatchingFiles)
+         {
+             // Trim the path a bit, then write
+             // the file name in which a match was found.
+             string s = v.name.Substring(startFolder.Length - 1);
+             Console.WriteLine(s);
+
+             // For this file, write out all the matching strings
+             foreach (var v2 in v.matchedValues)
+             {
+                 Console.WriteLine($"  {v2}");
+             }
+         }
+
+       You can also query the MatchCollection object returned by a RegEx search. Only the value of each match is produced in the results. However, it's also possible to use LINQ to perform all kinds of filtering, sorting, and grouping on that collection. Because MatchCollection is a nongeneric IEnumerable collection, you have to explicitly state the type of the range variable in the query.
+
+C# manual                               from the official documentation

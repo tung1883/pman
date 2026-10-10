@@ -1,0 +1,149 @@
+SHELLCHECK.GITHUB-ACTIONS(1)     Sandbox manual     SHELLCHECK.GITHUB-ACTIONS(1)
+
+       NAME
+
+       Basic Usage - GitHub Actions is a powerful automation platform that can run ShellCheck against your shell scripts. ShellCheck is pre-installed on GitHub's
+
+       BASIC USAGE
+
+       GitHub Actions is a powerful automation platform that can run ShellCheck against your shell scripts. ShellCheck is pre-installed on GitHub's Ubuntu runners, making it easy to integrate into your workflows.
+
+       BASIC USAGE
+
+       The simplest way to run ShellCheck is directly using the pre-installed binary:
+
+         name: "ShellCheck"
+         on: [push, pull_request]
+
+         jobs:
+           shellcheck:
+             name: ShellCheck
+             runs-on: ubuntu-latest
+             steps:
+             - uses: actions/checkout@v4
+             - name: Run ShellCheck
+               run: find . -type f -name "*.sh" -exec shellcheck {} +
+
+       GITHUB ADVANCED SECURITY INTEGRATION
+
+       To use ShellCheck with GitHub Advanced Security code scanning, you can use shellcheck-scan which generates SARIF reports:
+
+         name: ShellCheck SARIF
+         on: [push, pull_request]
+
+         jobs:
+           scan:
+             name: ShellCheck Analysis
+             runs-on: ubuntu-latest
+             permissions:
+               security-events: write  # required for uploading SARIF results
+               actions: read          # only required for workflows in private repositories
+               contents: read
+             steps:
+             - uses: actions/checkout@v4
+             - name: Run ShellCheck with SARIF output
+               uses: reactive-firewall/shellcheck-scan@v1
+
+       DIFFERENTIAL SHELLCHECK
+
+       GitHub action for running ShellCheck differentially. New findings are reported directly at GitHub pull requests (using SARIF format).
+
+        * Source: @redhat-plumbers-in-action/differential-shellcheck
+       Usage:
+
+         name: Differential ShellCheck
+         on:
+           push:
+             branches: [ main ]
+           pull_request:
+             branches: [main]
+
+         permissions:
+           contents: read
+
+         jobs:
+           lint:
+             runs-on: ubuntu-latest
+
+             permissions:
+               # required for all workflows
+               security-events: write
+
+               # only required for workflows in private repositories
+               actions: read
+               contents: read
+
+             steps:
+               - name: Repository checkout
+                 uses: actions/checkout@v4
+                 with:
+                   fetch-depth: 0
+
+               - name: Differential ShellCheck
+                 uses: redhat-plumbers-in-action/differential-shellcheck@v5
+                 with:
+                   token: ${{ secrets.GITHUB_TOKEN }}
+
+       ADVANCED CONFIGURATION
+
+       CUSTOMIZING SHELLCHECK OPTIONS
+
+       ShellCheck supports various options that can be used in your workflow (in this case, set minimum severity, specify shell dialect, and set output format):
+
+         - name: Run ShellCheck
+           run: |
+             find . -type f -name "*.sh" -exec shellcheck \
+               --severity=warning \
+               --shell=bash \
+               --format=gcc \
+               {} +
+
+       COMMON OPTIONS
+
+        * -S [error|warning|info|style]: Set minimum severity of errors to consider
+        * -s [sh|bash|dash|ksh]: Specify shell dialect
+        * -e [SC1234,SC2345]: Exclude specific error codes
+        * -f [checkstyle|diff|gcc|json|quiet|tty]: Set output format
+
+       VERSION PINNING
+
+       To ensure reproducible builds, you can pin to a specific ShellCheck version:
+
+         - name: Install specific ShellCheck version
+           run: |
+             wget https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz
+             tar -xf shellcheck-v0.9.0.linux.x86_64.tar.xz
+             sudo cp shellcheck-v0.9.0/shellcheck /usr/bin/
+
+       EXAMPLE CONFIGURATIONS
+
+       CHECK ALL SHELL SCRIPTS
+
+         - name: Run ShellCheck
+           run: find . -type f -name "*.sh" -exec shellcheck {} +
+
+       USING WITH MATRIX STRATEGY
+
+         jobs:
+           shellcheck:
+             strategy:
+               matrix:
+                 shell: [bash, sh, dash, ksh]
+             steps:
+             - name: Run ShellCheck
+               run: shellcheck --shell=${{ matrix.shell }} **/*.sh
+
+       SELECTIVE CHECKING
+
+         - name: Check scripts in specific directory
+           run: shellcheck scripts/*.sh src/scripts/*.sh
+
+       ADDITIONAL RESOURCES
+
+        * ShellCheck Documentation
+        * GitHub Actions Documentation
+        * shellcheck-scan Action
+        * @redhat-plumbers-in-action/differential-shellcheck
+       --- _Last updated: 2024-12-21 by @reactive-firewall_
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,45 @@
+SHELLCHECK.SC1063(1)             Sandbox manual             SHELLCHECK.SC1063(1)
+
+       NAME
+
+       You need a line feed or semicolon before the do. - for file in  do
+
+       YOU NEED A LINE FEED OR SEMICOLON BEFORE THE DO
+
+       YOU NEED A LINE FEED OR SEMICOLON BEFORE THE DO
+
+       PROBLEMATIC CODE
+
+         for file in * do
+           echo "$file"
+         done
+
+       CORRECT CODE
+
+         for file in *; do
+           echo "$file"
+         done
+
+         for file in *
+         do
+           echo "$file"
+         done
+
+       RATIONALE
+
+       ShellCheck found a do on the same line as a loop, but do only starts a loop block at the start of a line/statement. Make the do the start of a new line/statement by inserting a linefeed or semicolon in front of it.
+
+       EXCEPTIONS
+
+       If you wanted to treat do as a literal string, you can quote it to make this clear to ShellCheck and humans:
+
+         for f in "for" "do" "done"
+         do
+           echo "Shell keywords include: $f"
+         done
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

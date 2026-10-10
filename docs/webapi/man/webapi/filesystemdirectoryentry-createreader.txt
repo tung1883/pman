@@ -1,0 +1,62 @@
+WEBAPI.FILESYSTEMDIRECTORYENTRY-CREATEREADER(1) Sandbox manual WEBAPI.FILESYSTEMDIRECTORYENTRY-CREATEREADER(1)
+
+       NAME
+
+       FileSystemDirectoryEntry: createReader() method - The FileSystemDirectoryEntry interface's method
+
+       FILESYSTEMDIRECTORYENTRY: CREATEREADER() METHOD
+
+       The FileSystemDirectoryEntry interface's method createReader() returns a FileSystemDirectoryReader object which can be used to read the entries in the directory.
+
+       SYNTAX
+
+         createReader()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A FileSystemDirectoryReader object which can be used to read the directory's entries.
+
+       EXAMPLES
+
+       This example creates an async function called readDirectory(), which fetches all of the entries in the specified FileSystemDirectoryEntry and returns them in an array.
+
+         async function readDirectory(directory) {
+           const dirReader = directory.createReader();
+           const entries = [];
+
+           while (true) {
+             const results = await new Promise((resolve, reject) => {
+               dirReader.readEntries(resolve, reject);
+             });
+
+             if (!results.length) {
+               break;
+             }
+
+             for (const entry of results) {
+               entries.push(entry);
+             }
+           }
+
+           return entries;
+         }
+
+       This works by calling readEntries() repetitively to get all the entries in the directory, concatenating each batch to the array. When it returns an empty array, all entries have been read, and the loop ends.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File and Directory Entries API
+        * FileSystemDirectoryReader
+        * FileSystemDirectoryEntry
+        * FileSystemFileEntry
+        * FileSystemEntry
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,40 @@
+WEBAPI.RTCICECANDIDATESTATS-PRIORITY(1) Sandbox manual WEBAPI.RTCICECANDIDATESTATS-PRIORITY(1)
+
+       NAME
+
+       RTCIceCandidateStats: priority property - The priority property of the RTCIceCandidateStats dictionary is a positive integer value indicating the priority (or desirability) of the de
+
+       RTCICECANDIDATESTATS: PRIORITY PROPERTY
+
+       The priority property of the RTCIceCandidateStats dictionary is a positive integer value indicating the priority (or desirability) of the described candidate.
+
+       VALUE
+
+       A positive integer indicating the priority of the RTCIceCandidate described by the RTCIceCandidateStats object. The value may be anywhere from 1 to 2,147,483,647.
+
+       DESCRIPTION
+
+       During ICE negotiation while setting up a WebRTC peer connection, the priority values reported to the remote peer by a user agent are used to determine which candidates are considered "more desirable". The higher the value, the more desirable the candidate is.
+
+       DETERMINING PRIORITY
+
+       The ICE specification describes how user agents and other software using WebRTC should calculate the priority. The priority of a candidate is calculated using the following variables as inputs:
+
+        * The preferability of the candidate type (local, server reflexive, peer reflexive, or relayed)
+        * The preferability of the candidate's specific IP address (for multihomed agents)
+        * The candidate's component ID (1 for RTP, 2 for RTCP)
+       The candidate's priority is computed using the formula (_ptype_ is the priority of the candidate's type and _plocal_ is the priority of the IP address):
+
+       priority=224×ptype+28×plocal+(256-componentID)\mathit{priority} = 2^{24} \times p_{type} + 2^{8} \times p_{local} + \left(\right. 256 - \mathit{componentID} \left.\right)
+
+       This is equivalent to mapping the priorities of the candidate type, the local IP, and the component ID into various bit ranges within the 32-bit priority value.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * 4.1.2.1: Recommended Formula section in the ICE specification
+
+Web APIs manual                         from the official documentation

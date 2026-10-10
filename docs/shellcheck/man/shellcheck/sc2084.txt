@@ -1,0 +1,53 @@
+SHELLCHECK.SC2084(1)             Sandbox manual             SHELLCHECK.SC2084(1)
+
+       NAME
+
+       Remove $ or use =$((expr)) to avoid executing output. - i=4
+
+       REMOVE OR USE ((EXPR)) TO AVOID EXECUTING OUTPUT
+
+       REMOVE OR USE _ ((EXPR)) TO AVOID EXECUTING OUTPUT
+
+       PROBLEMATIC CODE
+
+         i=4
+         $(( i++ ))
+
+       CORRECT CODE
+
+       Bash, Ksh:
+
+         i=4
+         (( i++ ))
+
+       POSIX (assuming ++ is supported):
+
+         i=4
+         _=$(( i++ ))
+
+       Alternative POSIX version that does not preserve the exit code:
+
+         : $(( i++ ))
+
+       RATIONALE
+
+       $((..)) expands to a number. If it's the only word on the line, the shell will try to execute this number as a command name:
+
+         $ i=4
+         $ $(( i++ ))
+         4: command not found
+         $ echo $i
+         5
+
+       To avoid trying to execute the number as a command name, use one of the methods mentioned:
+
+         $ i=4
+         $ _=$(( i++ ))
+         $ echo $i
+         5
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

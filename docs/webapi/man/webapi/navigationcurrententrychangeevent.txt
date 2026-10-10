@@ -1,0 +1,54 @@
+WEBAPI.NAVIGATIONCURRENTENTRYCHANGEEVENT(1) Sandbox manual WEBAPI.NAVIGATIONCURRENTENTRYCHANGEEVENT(1)
+
+       NAME
+
+       NavigationCurrentEntryChangeEvent - The NavigationCurrentEntryChangeEvent interface of the Navigation API is the event object for the currententrychange event, which fires when
+
+       NAVIGATIONCURRENTENTRYCHANGEEVENT
+
+       The NavigationCurrentEntryChangeEvent interface of the Navigation API is the event object for the currententrychange event, which fires when the Navigation.currentEntry has changed.
+
+       This event will fire for same-document navigations (e.g., back() or traverseTo()), replacements (i.e., a navigate() call with history set to replace), or other calls that change the entry's state (e.g., updateCurrentEntry(), or the History API's History.replaceState()).
+
+       This event fires after the navigation is committed, meaning that the visible URL has changed and the NavigationHistoryEntry update has occurred. It is useful for migrating from usage of older API features like the hashchange or popstate events.
+
+       CONSTRUCTOR
+
+        * NavigationCurrentEntryChangeEvent()
+          * : Creates a new NavigationCurrentEntryChangeEvent object instance.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, Event._
+
+        * from (read-only)
+          * : Returns the NavigationHistoryEntry that was navigated from.
+        * navigationType (read-only)
+          * : Returns the type of the navigation that resulted in the change.
+
+       EXAMPLES
+
+       Navigation data reporting:
+
+         navigation.addEventListener("currententrychange", () => {
+           const data = navigation.currentEntry.getState();
+           submitAnalyticsData(data.analytics);
+         });
+
+       Setting up a per-entry event:
+
+         navigation.addEventListener("currententrychange", () => {
+           navigation.currentEntry.addEventListener("dispose", genericDisposeHandler);
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+        * Navigation API live demo (view demo source)
+
+Web APIs manual                         from the official documentation

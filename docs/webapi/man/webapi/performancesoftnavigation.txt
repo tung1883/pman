@@ -1,0 +1,78 @@
+WEBAPI.PERFORMANCESOFTNAVIGATION(1) Sandbox manual WEBAPI.PERFORMANCESOFTNAVIGATION(1)
+
+       NAME
+
+       PerformanceSoftNavigation - The PerformanceSoftNavigation interface provides timing information about soft navigations as used by client-side routing on single-page app
+
+       PERFORMANCESOFTNAVIGATION
+
+       The PerformanceSoftNavigation interface provides timing information about soft navigations as used by client-side routing on single-page application (SPA) sites. It is emitted when a browser observes a soft navigation to have taken place.
+
+       INSTANCE PROPERTIES
+
+       This interface directly defines the following properties:
+
+        * PerformanceSoftNavigation.interactionId (read-only) (experimental)
+          * : The id of the navigation, unique to this page load.
+        * PerformanceSoftNavigation.navigationType (read-only) (experimental)
+          * : The type of the navigation.
+        * PerformanceSoftNavigation.paintTime (read-only) (experimental)
+          * : Returns the timestamp of when the first rendering phase ended and the paint phase started.
+        * PerformanceSoftNavigation.presentationTime (read-only) (experimental)
+          * : Returns the timestamp of when the first painted pixels were actually drawn on the screen.
+       It also extends the following PerformanceEntry properties, qualifying and constraining them as described:
+
+        * PerformanceEntry.entryType (read-only) (experimental)
+          * : Returns "soft-navigation".
+        * PerformanceEntry.duration (read-only) (experimental)
+          * : Returns the result of PerformanceSoftNavigation.presentationTime - PerformanceEntry.startTime.
+        * PerformanceEntry.name (read-only) (experimental)
+          * : The new URL navigated to.
+        * PerformanceEntry.startTime (read-only) (experimental)
+          * : Returns the timestamp of the interaction that resulted in the soft navigation.
+
+       INSTANCE METHODS
+
+        * PerformanceSoftNavigation.getLargestInteractionContentfulPaint() (experimental)
+          * : Returns the current largest InteractionContentfulPaint for this soft navigation.
+        * PerformanceSoftNavigation.toJSON() (experimental)
+          * : Returns a JSON-serializable plain object representing the PerformanceSoftNavigation object. Automatically called by JSON.stringify().
+
+       DESCRIPTION
+
+       The PerformanceSoftNavigation interface is driven by the browser observing the following:
+
+        * A trusted user interaction.
+        * A visible, contentful paint as a result of that interaction updating the screen.
+        * A URL update in the user's address bar as a result of that interaction.
+       Having the browser provide this rather than a routing framework calling an API to emit this entry allows SPA performance timing to be measured consistently regardless of how different applications handle navigations (for example, updating the URL at the start or the end of navigation processing).
+
+       The PerformanceSoftNavigation interface allows developers to measure SPA performance metrics such as:
+
+        * First Contentful Paint (FCP): Can be measured as the first paint from the soft navigation time.
+        * Largest Contentful Paint (LCP): Can be measured via the InteractionContentfulPaint for the soft navigation.
+        * Cumulative Layout Shift (CLS): Can be calculated between navigations.
+        * Interaction to Next Paint (INP): Can be calculated between navigations.
+
+       EXAMPLES
+
+       OBSERVING SOFT NAVIGATIONS
+
+       In the following example, a PerformanceObserver is used to log the soft navigations. The buffered flag is used to access data from before observer creation.
+
+         const observer = new PerformanceObserver((list) => {
+           for (const entry of list.getEntries()) {
+             console.log("Soft Nav:", entry.startTime, entry.name);
+           }
+         });
+         observer.observe({ type: "soft-navigation", buffered: true });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Measuring soft navigations on developer.chrome.com (2026)
+
+Web APIs manual                         from the official documentation

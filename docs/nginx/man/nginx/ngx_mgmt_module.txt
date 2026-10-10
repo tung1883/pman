@@ -1,0 +1,187 @@
+NGINX.NGX_MGMT_MODULE(1)         Sandbox manual         NGINX.NGX_MGMT_MODULE(1)
+
+       MODULE NGX_MGMT_MODULE
+
+         Example Configuration Directives  mgmt  enforce_initial_report  license_token  license_pending_token  proxy  proxy_username  proxy_password  resolver  ssl_crl  ssl_trusted_certificate  ssl_verify  state_path  usage_report
+       The ngx_mgmt_module module enables NGINX Plus license verification and usage reporting. This is mandatory for each NGINX Plus instance since 1.27.2 ( NGINX Plus R33).
+
+       A JWT license file named license.jwt should be located at /etc/nginx/ for Linux or /usr/local/etc/nginx/ for FreeBSD or at the path specified by the license_token directive. The license file is available from MyF5.
+
+       Usage report is sent directly or via proxy to F5 licensing endpoint every hour using the secure connection. Optionally, in network-restricted environments reporting can be configured to F5 NGINX Instance Manager from which the report can be sent to F5 licensing endpoint.
+
+       By default, if the initial usage report is not received by F5 licensing endpoint, nginx will stop processing traffic.
+
+       Automatic license renewal is supported since 1.29.0 (NGINX Plus R35) for instances that report directly to the F5 licensing endpoint. On renewal, NGINX downloads the updated JWT from F5 licensing endpoint and applies it without configuration reload. The updated license is stored in the state_path directory.
+
+       > This module is available as part of our commercial subscription.
+
+       EXAMPLE CONFIGURATION
+
+         mgmt {
+             # in case if custom path is required
+             license_token custom/file/path/license.jwt;
+
+             # in case of reporting to NGINX Instance Manager
+             usage_report endpoint=NIM_FQDN;
+         }
+
+       DIRECTIVES
+
+       MGMT
+
+         Syntax: | mgmt { ... }
+         Default: | —
+         Context: | main
+       Provides the configuration file context in which usage reporting and license management directives are specified.
+
+       ENFORCE_INITIAL_REPORT
+
+         Syntax: | enforce_initial_report on | off;
+
+         enforce_initial_report on;
+
+       Default:
+
+         Context: | mgmt
+       This directive appeared in version 1.27.2.
+
+       Enables or disables the 180-day grace period for sending the initial usage report.
+
+       The initial usage report is sent immediately upon nginx first start after installation. By default, if the initial report is not received by F5 licensing endpoint, nginx stops processing traffic until the report is successfully delivered. Setting the directive value to off enables the 180-day grace period during which the initial usage report must be received by F5 licensing endpoint.
+
+       LICENSE_TOKEN
+
+         Syntax: | license_token file;
+
+         license_token license.jwt;
+
+       Default:
+
+         Context: | mgmt
+       This directive appeared in version 1.27.2.
+
+       Specifies a JWT license file. By default, the license.jwt file is expected to be at /etc/nginx/ for Linux or at /usr/local/etc/nginx/ for FreeBSD.
+
+       LICENSE_PENDING_TOKEN
+
+         Syntax: | license_pending_token file | off;
+         Default: | —
+         Context: | mgmt
+       This directive appeared in version 1.31.3.
+
+       Controls how a renewed JWT license token is handled after it is received from the F5 licensing endpoint. By default, the renewed token is saved and applied immediately.
+
+       When set to a file path, the renewed token is saved to the specified file but not applied. The path is relative to state_path. The token can be copied to the active license token file or applied using the PUT method of the /api/10/license API endpoint.
+
+       When set to off, the renewal event is logged but the token is discarded. In this case, JWT license renewal is managed entirely through the PUT method of the /api/10/license API endpoint.
+
+       PROXY
+
+         Syntax: | proxy host:port;
+         Default: | —
+         Context: | mgmt
+       This directive appeared in version 1.27.4.
+
+       Sets the HTTP CONNECT proxy used for sending the usage report.
+
+       PROXY_USERNAME
+
+         Syntax: | proxy_username string;
+         Default: | —
+         Context: | mgmt
+       This directive appeared in version 1.27.4.
+
+       Sets the user name used for authentication on the proxy.
+
+       PROXY_PASSWORD
+
+         Syntax: | proxy_password string;
+         Default: | —
+         Context: | mgmt
+       This directive appeared in version 1.27.4.
+
+       Sets the password used for authentication on the proxy.
+
+       The password is sent unencrypted by default. If the proxy supports TLS, the connection to the proxy can be protected with the stream module:
+
+         mgmt {
+             proxy          127.0.0.1:8080;
+             proxy_username <name>;
+             proxy_password <password>;
+         }
+
+         stream {
+             server {
+                 listen 127.0.0.1:8080;
+
+                 proxy_ssl                     on;
+                 proxy_ssl_verify              on;
+                 proxy_ssl_trusted_certificate <proxy_ca_file>;
+
+                 proxy_pass <proxy_host>:<proxy_port>;
+             }
+         }
+
+       RESOLVER
+
+         Syntax: | resolver address ... [valid=time] [ipv4=on|off] [ipv6=on|off] [status_zone=zone];
+         Default: | —
+         Context: | mgmt
+       Configures name servers used to resolve usage reporting endpoint name. By default, the system resolver is used.
+
+       See resolver for details.
+
+       SSL_CRL
+
+         Syntax: | ssl_crl file;
+         Default: | —
+         Context: | mgmt
+       Specifies a file with revoked certificates (CRL) in the PEM format used to verify the certificate of the usage reporting endpoint. When using intermediate certificates, their CRLs should be specified in the same file.
+
+       SSL_TRUSTED_CERTIFICATE
+
+         Syntax: | ssl_trusted_certificate file;
+
+         ssl_trusted_certificate system CA bundle;
+
+       Default:
+
+         Context: | mgmt
+       Specifies a file with trusted CA certificates in the PEM format used to verify the certificate of the usage reporting endpoint.
+
+       SSL_VERIFY
+
+         Syntax: | ssl_verify on | off;
+
+         ssl_verify on;
+
+       Default:
+
+         Context: | mgmt
+       Enables or disables verification of the usage reporting endpoint certificate.
+
+       > Before 1.27.2, the default value was off.
+
+       STATE_PATH
+
+         Syntax: | state_path path;
+         Default: | —
+         Context: | mgmt
+       This directive appeared in version 1.27.2.
+
+       Defines a directory for storing state files (nginx-mgmt-*) created by the ngx_mgmt_module module. The default directory for Linux is /var/lib/nginx/state, for FreeBSD is /var/db/nginx/state.
+
+       USAGE_REPORT
+
+         Syntax: | usage_report [endpoint=address] [interval=time];
+
+         usage_report endpoint=product.connect.nginx.com interval=1h;
+
+       Default:
+
+         Context: | mgmt
+       Sets the address and port of the usage reporting endpoint. The interval parameter sets an interval between two consecutive reports.
+
+       > Before 1.27.2, the default values were nginx-mgmt.local and 30m.
+
+nginx manual                            bundled documentation

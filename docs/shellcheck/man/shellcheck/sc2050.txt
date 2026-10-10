@@ -1,0 +1,39 @@
+SHELLCHECK.SC2050(1)             Sandbox manual             SHELLCHECK.SC2050(1)
+
+       NAME
+
+       This expression is constant. Did you forget the $ on a variable? - if [ myvar = "test" ]
+
+       THIS EXPRESSION IS CONSTANT. DID YOU FORGET THE ON A VARIABLE
+
+       THIS EXPRESSION IS CONSTANT. DID YOU FORGET THE ON A VARIABLE
+
+       PROBLEMATIC CODE
+
+         if [ myvar = "test" ]
+         then
+           echo "Test mode"
+         fi
+
+       CORRECT CODE
+
+         if [ "$myvar" = "test" ]
+         then
+           echo "Test mode"
+         fi
+
+       RATIONALE
+
+       ShellCheck has found a [ .. ] or [[ .. ]] comparison that only involves literal strings. The intention was probably to check a variable or command output instead.
+
+       This is usually due to missing $ or bad quoting:
+
+       if [[ "myvar" = "test" ]] # always false because myvar is a literal string if [[ "$myvar" = "test" ]] # correctly compares a variable
+
+       if [ 'grep -c foo bar' -ge 10 ] # always false because grep doesn't run if [ "$(grep -c foo bar)" -ge 10 ] # correctly checks grep output
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

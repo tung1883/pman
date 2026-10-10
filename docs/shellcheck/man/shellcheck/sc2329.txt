@@ -1,0 +1,42 @@
+SHELLCHECK.SC2329(1)             Sandbox manual             SHELLCHECK.SC2329(1)
+
+       NAME
+
+       This function is never invoked. Check usage (or ignored if invoked indirectly). - f() {
+
+       THIS FUNCTION IS NEVER INVOKED. CHECK USAGE (OR IGNORED IF INVOKED IND
+
+       THIS FUNCTION IS NEVER INVOKED. CHECK USAGE (OR IGNORED IF INVOKED IND
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         f() {
+           echo "Hello World"
+         }
+         exit
+
+       CORRECT CODE
+
+         #!/bin/sh
+         f() {
+           echo "Hello World"
+         }
+         f
+         exit
+
+       RATIONALE
+
+       ShellCheck found a function that goes out of scope before it's ever invoked. Verify that the function is called. It could be misspelled, or its invocation could also be unreachable (as in f() { ..; }; exit; f).
+
+       Note that if the example script did not end in exit, this warning would not be emitted. This is because the function could be invoked by another script that sources it.
+
+       EXCEPTIONS
+
+       ShellCheck is currently bad at figuring out functions that are invoked via trap. In such cases, please [[ignore]] the message with a directive.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

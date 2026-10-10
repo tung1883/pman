@@ -1,0 +1,96 @@
+ARCH.SYSTEMD-FAQ(1)              Sandbox manual              ARCH.SYSTEMD-FAQ(1)
+
+       FAQ
+
+       For an up-to-date list of known issues, look at the upstream TODO.
+
+       WHY DO I GET LOG MESSAGES ON MY CONSOLE
+
+       You must set the kernel loglevel yourself. Historically, /etc/rc.sysinit did this for us and set dmesg's loglevel to 3, which was a reasonably quiet loglevel. Either add loglevel=3 or quiet to your kernel parameters.
+
+       HOW DO I CHANGE THE DEFAULT NUMBER OF GETTYS
+
+       Currently, only one getty is launched by default. If you switch to another TTY, a getty will be launched there (socket-activation style). In other words, Ctl+Alt+F2 will launch a new getty on tty2.
+
+       By default, the number of auto-activated gettys is capped at six. Thus F7 through F12 will not launch a getty.
+
+       If you want to change this behavior, then edit /etc/systemd/logind.conf and change the value of NAutoVTs. If you want all Fx keys to start a getty, increase the value of NAutoVTs to 12. If you are forwarding journald to tty12, increase the value of NAutoVTs to 11 (thus leaving tty12 free).
+
+       You can also pre-activate gettys which will be running from boot.
+
+       To add another pre-activated getty, enable and start getty@ttyX.service.
+
+       To remove a getty, disable and stop the relevant getty@ttyX.service.
+
+       systemd does not use the /etc/inittab file.
+
+       HOW DO I GET MORE VERBOSE OUTPUT DURING BOOT
+
+       If you see no output at all in console after the initram message, this means you have the quiet parameter in your kernel line. It is best to remove it, at least the first time you boot with systemd, to see if everything is ok. Then, you will see a list [ OK ] in green or [ FAILED ] in red.
+
+       Any messages are logged to the system log and if you want to find out about the status of your system, use systemctl or look at the boot/system log with journalctl.
+
+       HOW DO I AVOID CLEARING THE CONSOLE AFTER BOOT
+
+       See getty#Have boot messages stay on tty1.
+
+       WHAT KERNEL OPTIONS ARE REQUIRED FOR SYSTEMD
+
+       Kernels prior to 3.0 are unsupported.
+
+       If you use a custom kernel, you will need to make sure that systemd's options are selected.
+
+       If you are compiling a new kernel for use with an installed version of systemd, the required and recommended options are listed in the systemd README file /usr/share/doc/systemd/README.
+
+       If you are preparing to install a new version of systemd and are running a custom kernel, the most recent version of the file can be found in the systemd GitHub repository.
+
+       WHAT OTHER UNITS DOES A UNIT DEPEND ON
+
+       For example, if you want to figure out which services a target like multi-user.target pulls in, use something like this:
+
+         $ systemctl show -p "Wants" multi-user.target
+
+         Wants=rc-local.service avahi-daemon.service rpcbind.service NetworkManager.service acpid.service dbus.service atd.service crond.service auditd.service ntpd.service udisks.service bluetooth.service org.cups.cupsd.service wpa_supplicant.service getty.target modem-manager.service portreserve.service abrtd.service yum-updatesd.service upowerd.service test-first.service pcscd.service rsyslog.service haldaemon.service remote-fs.target plymouth-quit.service systemd-update-utmp-runlevel.service sendmail.service lvm2-monitor.service cpuspeed.service udev-post.service mdmonitor.service iscsid.service livesys.service livesys-late.service irqbalance.service iscsi.service
+
+       Instead of Wants you might also try WantedBy, Requires, RequiredBy, Conflicts, ConflictedBy, Before, After for the respective types of dependencies and their inverse.
+
+       MY COMPUTER SHUTS DOWN, BUT THE POWER STAYS ON
+
+       Use systemctl poweroff instead of systemctl halt.
+
+       HOW CAN I MAKE A SCRIPT START DURING THE BOOT PROCESS
+
+       Create a new file as /etc/systemd/system/myscript.service and add the following contents:
+
+         /etc/systemd/system/myscript.service
+
+         [Unit]
+         Description=My script
+
+         [Service]
+         ExecStart=/usr/bin/my-script
+
+         [Install]
+         WantedBy=multi-user.target
+
+       This example assumes you want your script to start up when the target multi-user is launched. Make sure the script is executable.
+
+       Enable myscript.service to start the service at boot.
+
+       Note In case you want to start a shell script, make sure you have #!/bin/sh in the first line of the script. Do not write something like ExecStart=/bin/sh /path/to/script.sh because that will not work.
+
+       SERVICE UNIT ACTIVE STATE IS ACTIVE (EXITED) IN GREEN
+
+       This is the expected behaviour for oneshot services that also use RemainAfterExit=yes. See systemd.service(5) § OPTIONS for more information. Some examples of oneshot services that behave this way are systemd-user-sessions.services, nftables.service, and iptables.service.
+
+       FAILURE TO ENABLE UNIT DUE TO PREEXISTING SYMLINK
+
+       You may encounter the following error when attempting to enable a unit:
+
+         Failed to enable unit: File /etc/systemd/system/symlink already exists and is a symlink to file.
+
+       This can occur when the symlink created by enabling a unit already exists in /etc/systemd/system/. This typically happens when switching from one display manager to another one (for instance GDM to SDDM, which can be enabled with gdm.service and sddm.service, respectively) and the corresponding symlink /etc/systemd/system/display-manager.service already exists.
+
+       To solve this problem, either first disable the relevant display manager before enabling the new one, or use the -f/--force option when enabling the new one to overwrite any existing conflicting symlinks (per systemctl(1) § OPTIONS).
+
+ArchWiki manual                         bundled documentation

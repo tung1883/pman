@@ -1,0 +1,133 @@
+UBUNTU.EXPLANATION-INTRO-TO-HIGH-AVAILABILITY(1) Sandbox manual UBUNTU.EXPLANATION-INTRO-TO-HIGH-AVAILABILITY(1)
+
+       NAME
+
+       Introduction to High Availability - A definition of high availability clusters from Wikipedia:
+
+       INTRODUCTION TO HIGH AVAILABILITY
+
+       A definition of high availability clusters from Wikipedia:
+
+       HIGH AVAILABILITY CLUSTERS
+
+       > High-availability clusters (also known as HA clusters , failover clusters or Metroclusters Active/Active ) are groups of computers that support server) applications that can be reliably utilised with a minimum amount of down-time.They operate by using high availability software to harness redundant) computers in groups or clusters that provide continued service when system components fail. Without clustering, if a server running a particular application crashes, the application will be unavailable until the crashed server is fixed. HA clustering remedies this situation by detecting hardware/software faults, and immediately restarting the application on another system without requiring administrative intervention, a process known as failover. As part of this process, clustering software may configure the node before starting the application on it. For example, appropriate file systems may need to be imported and mounted, network hardware may have to be configured, and some supporting applications may need to be running as well.
+       > HA clusters are often used for critical databases, file sharing on a network, business applications, and customer services such as electronic commerce websites.
+
+       HIGH AVAILABILITY CLUSTER HEARTBEAT
+
+       > HA cluster implementations attempt to build redundancy into a cluster to eliminate single points of failure, including multiple network connections and data storage which is redundantly connected via storage area networks.
+       > HA clusters usually use a heartbeat) private network connection which is used to monitor the health and status of each node in the cluster. One subtle but serious condition all clustering software must be able to handle is split-brain), which occurs when all of the private links go down simultaneously, but the cluster nodes are still running. If that happens, each node in the cluster may mistakenly decide that every other node has gone down and attempt to start services that other nodes are still running. Having duplicate instances of services may cause data corruption on the shared storage.
+
+       HIGH AVAILABILITY CLUSTER QUORUM
+
+       > HA clusters often also use quorum) witness storage (local or cloud) to avoid this scenario. A witness device cannot be shared between two halves of a split cluster, so in the event that all cluster members cannot communicate with each other (e.g., failed heartbeat), if a member cannot access the witness, it cannot become active.
+
+       EXAMPLE OF HA CLUSTER QUORUM
+
+       
+
+       FENCING
+
+       Fencing protects your data from being corrupted, and prevents your application from becoming unavailable, due to unintended concurrent access by rogue nodes. If a node is unresponsive, it doesn’t mean it has stopped accessing your data. The only way to be absolutely sure your data is safe is to use fencing, which ensures that the unresponsive node is truly offline before the data can be accessed by another node.
+
+       In cases where a clustered service cannot be stopped, a cluster can use fencing to force the whole node offline, making it safe to start the service elsewhere. The most popular example of fencing is cutting a host’s power. Key benefits:
+
+        * An active counter-measure taken by a functioning host to isolate a misbehaving (usually dead) host from shared data.
+        * Fencing is the most critical part of a cluster using Storage Area Network (SAN) or other shared storage technology (Ubuntu HA Clusters can only be supported if the fencing mechanism is configured).
+        * Required by OCFS2, GFS2, clvmd (before Ubuntu 20.04 LTS), lvmlockd (from 20.04 LTS onward).
+
+       LINUX HIGH AVAILABILITY PROJECTS
+
+       There are many upstream high availability related projects that are included in Ubuntu Linux. This section will describe the most important ones. The following packages are present in the latest Ubuntu LTS release:
+
+       MAIN UBUNTU HA PACKAGES
+
+       Packages in this list are supported just like any other package available in the main repository:
+
+         Package  |  URL
+         -  |  -
+         libqb  |  {lpsrc}libqb \  |  Upstream
+         kronosnet  |  {lpsrc}kronosnet \  |  Upstream
+         corosync  |  {lpsrc}corosync \  |  Upstream
+         pacemaker  |  {lpsrc}pacemaker \  |  Upstream
+         resource-agents  |  {lpsrc}resource-agents \  |  Upstream
+         fence-agents  |  {lpsrc}fence-agents \  |  Upstream
+         crmsh  |  {lpsrc}crmsh \  |  Upstream
+         pcs*  |  {lpsrc}pcs \  |  Upstream
+         cluster-glue  |  {lpsrc}cluster-glue \  |  Upstream
+         drbd-utils  |  {lpsrc}drbd-utils \  |  Upstream
+         dlm  |  {lpsrc}dlm \  |  Upstream
+         gfs2-utils  |  {lpsrc}gfs2-utils \  |  Upstream
+         keepalived  |  {lpsrc}keepalived \  |  Upstream
+        * libqb - Library which provides a set of high performance client-server reusable features. It offers high performance logging, tracing, IPC and poll. Its initial features were spun off the corosync cluster communication suite to make them accessible for other projects.
+        * Kronosnet - Kronosnet, often referred to as knet, is a network abstraction layer designed for High Availability. corosync uses Kronosnet to provide multiple networks for its interconnect (replacing the old Totem Redundant Ring Protocol) and adds support for some more features like interconnect network hot-plug.
+        * corosync - or Cluster Membership Layer, provides reliable messaging, membership and quorum information about the cluster. Currently, Pacemaker supports corosync as this layer.
+        * Pacemaker - or Cluster Resource Manager, provides the brain that processes and reacts to events that occur in the cluster. Events might be: nodes joining or leaving the cluster, resource events caused by failures, maintenance, or scheduled activities. To achieve the desired availability, Pacemaker may start and stop resources and fence nodes.
+        * Resource Agents - Scripts or operating system components that start, stop or monitor resources, given a set of resource parameters. These provide a uniform interface between pacemaker and the managed services.
+        * Fence Agents - Scripts that execute node fencing actions, given a target and fence device parameters.
+        * crmsh - Advanced command-line interface for High-Availability cluster management in GNU/Linux.
+        * pcs - Pacemaker command line interface and GUI. It permits users to easily view, modify and create pacemaker based clusters. pcs also provides pcsd, which operates as a GUI and remote server for pcs. Together pcs and pcsd form the recommended configuration tool for use with pacemaker. NOTE: It was added to the main repository in Ubuntu Lunar Lobster (23.10).
+        * cluster-glue - Reusable cluster components for Linux HA. This package contains node fencing plugins, an error reporting utility, and other reusable cluster components from the Linux HA project.
+        * DRBD - Distributed Replicated Block Device, DRBD is a distributed replicated storage system for the Linux platform. It is implemented as a kernel driver, several userspace management applications, and some shell scripts. DRBD is traditionally used in high availability (HA) clusters.
+        * DLM - A distributed lock manager (DLM) runs in every machine in a cluster, with an identical copy of a cluster-wide lock database. In this way DLM provides software applications which are distributed across a cluster on multiple machines with a means to synchronize their accesses to shared resources.
+        * gfs2-utils - Global File System 2 - filesystem tools. The Global File System allows a cluster of machines to concurrently access shared storage hardware like SANs or iSCSI and network block devices.
+        * Keepalived - Provides simple and robust facilities for load balancing and high availability to Linux systems and Linux-based infrastructures. The load balancing framework relies on the well-known and widely used Linux Virtual Server (IPVS) kernel module which provides Layer4 load balancing. It implements a set of checkers to dynamically and adaptively maintain and manage a load-balanced server pool according to their health, while high availability is achieved by the VRRP protocol.
+
+       UBUNTU HA COMMUNITY PACKAGES
+
+       The HA packages in this list are supported just like any other package available in the universe repository.
+
+         Package  |  URL
+         -  |  -
+         pcs*  |  Ubuntu \  |  Upstream
+         csync2  |  Ubuntu \  |  Upstream
+         corosync-qdevice  |  Ubuntu \  |  Upstream
+         fence-virt  |  Ubuntu \  |  Upstream
+         sbd  |  Ubuntu \  |  Upstream
+         booth  |  Ubuntu \  |  Upstream
+        * Corosync-Qdevice - Primarily used for even-node clusters and operates at the corosync (quorum) layer. Corosync-Qdevice is an independent arbiter for solving split-brain situations. (qdevice-net supports multiple algorithms).
+        * SBD - It is a fencing block device that can be particularly useful in environments where traditional fencing mechanisms are not possible. SBD integrates with Pacemaker, which serves as a watchdog device and shared storage, to arrange for nodes to reliably self-terminate when fencing is required.
+       > Note: pcs was added to the main repository in Ubuntu Lunar Lobster (23.04).
+
+       UBUNTU HA DEPRECATED PACKAGES
+
+       Packages in this list are only supported by the upstream community . All bugs opened against these agents will be forwarded to upstream if it makes sense (the affected version is closer to upstream).
+
+         Package  |  URL
+         -  |  -
+         ocfs2-tools  |  Ubuntu \  |  Upstream
+
+       UBUNTU HA RELATED PACKAGES
+
+       Packages in this list aren't necessarily HA related packages, but they play a very important role in High Availability Clusters and are supported like any other package provided by the main repository.
+
+         Package  |  URL
+         -  |  -
+         multipath-tools  |  Ubuntu \  |  Upstream
+         open-iscsi  |  Ubuntu \  |  Upstream
+         sg3-utils  |  Ubuntu \  |  Upstream
+         tgt OR targetcli-fb*  |  Ubuntu \  |  Upstream
+         lvm2  |  Ubuntu \  |  Upstream
+        * LVM2 in a Shared-Storage Cluster Scenario
+       CLVM - supported before Ubuntu 20.04 LTS
+
+       A distributed lock manager (DLM) is used to broker concurrent LVM metadata accesses. Whenever a cluster node needs to modify the LVM metadata, it must secure permission from its local clvmd , which is in constant contact with other clvmd daemons in the cluster and can communicate a need to lock a particular set of objects. lvmlockd(8) - supported after Ubuntu 20.04 LTS As of 2017, a stable LVM component that is designed to replace clvmd by making the locking of LVM objects transparent to the rest of LVM, without relying on a distributed lock manager. The lvmlockd benefits over clvm are:
+
+          * lvmlockd supports two cluster locking plugins: DLM and SANLOCK. SANLOCK plugin can supports up to ~2000 nodes that benefits LVM usage in big virtualization / storage cluster, while DLM plugin fits HA cluster.
+          * lvmlockd has better design than clvmd. clvmd is a command-line level based locking system, which means the whole LVM software will freeze if any LVM command gets a dead-locking issue.
+          * lvmlockd can work with lvmetad.
+       > Note: targetcli-fb (Linux LIO) will likely replace tgt in future Ubuntu versions.
+
+       UPSTREAM DOCUMENTATION
+
+       The Server documentation is not intended to document every option for all the HA related software described in this page. More complete documentation can be found upstream at:
+
+        * ClusterLabs
+          * Clusters From Scratch
+          * Managing Pacemaker Clusters
+          * Pacemaker Configuration Explained
+        * Other
+          * Ubuntu Bionic HA in Shared Disk Environments (Azure)
+       > A very special thanks and all the credit to ClusterLabs Project for their detailed documentation.
+
+Ubuntu Server manual                    from the official documentation

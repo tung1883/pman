@@ -1,0 +1,58 @@
+WEBAPI.PERFORMANCE-GETENTRIESBYTYPE(1) Sandbox manual WEBAPI.PERFORMANCE-GETENTRIESBYTYPE(1)
+
+       NAME
+
+       Performance: getEntriesByType() method - The getEntriesByType() method returns an array of PerformanceEntry objects currently present in the performance timeline for a given type.
+
+       PERFORMANCE: GETENTRIESBYTYPE() METHOD
+
+       The getEntriesByType() method returns an array of PerformanceEntry objects currently present in the performance timeline for a given _type_.
+
+       If you are interested in performance entries of certain name, see getEntriesByName(). For all performance entries, see getEntries().
+
+       > This method does not notify you about new performance entries; you will only get entries that are present in the performance timeline at the time you call this method.
+       > To receive notifications about entries as they become available, use a PerformanceObserver.
+       The following entry types are not supported by this method at all and won't be returned even if entries for these types might exist:
+
+        * "element" (PerformanceElementTiming)
+        * "event" (PerformanceEventTiming)
+        * "largest-contentful-paint" (LargestContentfulPaint)
+        * "layout-shift" (LayoutShift)
+        * "longtask" (PerformanceLongTaskTiming)
+       To access entries of these types, you must use a PerformanceObserver instead.
+
+       SYNTAX
+
+         getEntriesByType(type)
+
+       PARAMETERS
+
+        * type
+          * : The type of entry to retrieve such as "mark". The valid entry types are listed in PerformanceEntry.entryType. The supported entryTypes can be retrieved using the static property PerformanceObserver.supportedEntryTypes.
+
+       RETURN VALUE
+
+       An Array of PerformanceEntry objects that have the specified type. The items will be in chronological order based on the entries' startTime. If no objects have the specified type, or no argument is provided, an empty array is returned.
+
+       EXAMPLES
+
+       LOGGING RESOURCE ENTRIES
+
+       The following example logs all entries with the type "resource".
+
+         const resources = performance.getEntriesByType("resource");
+         resources.forEach((entry) => {
+           console.log(`${entry.name}'s startTime: ${entry.startTime}`);
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Performance.getEntries()
+        * Performance.getEntriesByName()
+        * PerformanceObserver.supportedEntryTypes
+
+Web APIs manual                         from the official documentation

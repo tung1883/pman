@@ -1,0 +1,69 @@
+SHELLCHECK.SC2302(1)             Sandbox manual             SHELLCHECK.SC2302(1)
+
+       NAME
+
+       This loops over values. To loop over keys, use "${!array[@]}". - Plus companion warning [[SC2303]]: i is an array value, not a key. Use directly or loop over keys instead.
+
+       THIS LOOPS OVER VALUES. TO LOOP OVER KEYS, USE ARRAY
+
+       THIS LOOPS OVER VALUES. TO LOOP OVER KEYS, USE ARRAY
+
+       Plus companion warning [[SC2303]]: i is an array value, not a key. Use directly or loop over keys instead.
+
+       PROBLEMATIC CODE
+
+         array=(foo bar)
+         for v in "${array[@]}"
+         do
+           echo "Value is ${array[$v]}"
+         done
+
+       CORRECT CODE
+
+       Either loop over values
+
+         for v in "${array[@]}"
+         do
+           echo "Value is $v"
+         done
+
+       or loop over keys:
+
+         for k in "${!array[@]}"  # Note `!`
+         do
+           echo "Key is $k"
+           echo "Value is ${array[$k]}"
+         done
+
+       RATIONALE
+
+       ShellCheck found a for loop over array values, where the variable is used as an array key.
+
+       In the problematic example, the loop will print Value is foo twice. On the second iteration, v=bar, and bar is unset and considered zero, so ${array[$v]} becomes ${array[bar]} becomes ${array[0]} becomes foo.
+
+       If you don't care about the key, simply loop over array values and use $v to refer to the array value, like in the first correct example.
+
+       If you do want the key, loop over array keys with "${!array[@]}", use $k to refer to the array key, and ${array[$k]} to refer to the array value.
+
+       EXCEPTIONS
+
+       If you do want to use values from the arrays as keys in the same array, you can [[ignore]] these messages with a directive:
+
+         declare -A fatherOf=(
+           ["Eric Bloodaxe"]="Harald Fairhair"
+           ["Harald Fairhair"]="Halfdan the Black"
+           ["Halfdan the Black"]="Gudrød the Hunter"
+           ["Gudrød the Hunter"]="Halfdan the Mild"
+         )
+
+         # shellcheck disable=SC2302,SC2303
+         for i in "${fatherOf[@]}"
+         do
+           echo "${fatherOf[$i]:-(missing)} begat $i"
+         done
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

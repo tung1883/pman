@@ -1,0 +1,63 @@
+WEBAPI.RESPONSE-BLOB(1)          Sandbox manual          WEBAPI.RESPONSE-BLOB(1)
+
+       NAME
+
+       Response: blob() method - The blob() method of the Response interface takes
+
+       RESPONSE: BLOB() METHOD
+
+       The blob() method of the Response interface takes a Response stream and reads it to completion. It returns a promise that resolves with a Blob.
+
+       SYNTAX
+
+         blob()
+
+       PARAMETERS
+
+       None.
+
+       > If the Response has a
+       > Response.type of "opaque", the resulting Blob
+       > will have a Blob.size of 0 and a Blob.type of
+       > empty string "", which renders it _useless_ for methods like
+       > URL.createObjectURL().
+
+       RETURN VALUE
+
+       A promise that resolves with a Blob whose data is the body's bytes and the media type is the response's Content-Type header's value.
+
+       EXCEPTIONS
+
+        * AbortError DOMException
+          * : The request was aborted.
+        * TypeError
+          * : Thrown for one of the following reasons:
+            * The response body is disturbed or locked.
+            * There was an error decoding the body content (for example, because the Content-Encoding header is incorrect).
+
+       EXAMPLES
+
+       In our fetch request example (run fetch request live), we create a new request using the Request() constructor, then use it to fetch a JPG. When the fetch is successful, we read a Blob out of the response using blob(), put it into an object URL using URL.createObjectURL(), and then set that URL as the source of an element to display the image.
+
+         const myImage = document.querySelector("img");
+
+         const myRequest = new Request("flowers.jpg");
+
+         fetch(myRequest)
+           .then((response) => response.blob())
+           .then((myBlob) => {
+             const objectURL = URL.createObjectURL(myBlob);
+             myImage.src = objectURL;
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ServiceWorker API
+        * HTTP access control (CORS)
+        * HTTP
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,353 @@
+CSHARP.FUNDAMENTALS-RECORDS(1)   Sandbox manual   CSHARP.FUNDAMENTALS-RECORDS(1)
+
+       NAME
+
+       Use record types - Build a small app that models temperature data with records, compares record behavior, and uses with expressions for nondestructive mutation
+
+       USE RECORD TYPES
+
+       > New to developing software? Start with the Get started tutorials first. You get comfortable with classes, methods, and loops there.
+       > Experienced in another language? This tutorial focuses on C# record features you use every day: value equality, positional syntax, and with expressions.
+       In this tutorial, you build a console app that models daily temperatures by using records and record structs.
+
+       In this tutorial, you learn how to:
+
+        * Declare positional records and record structs.
+        * Build a small record hierarchy.
+        * Use compiler-generated equality and formatting.
+        * Use with expressions for nondestructive mutation.
+
+       PREREQUISITES
+
+       CREATE THE APP AND YOUR FIRST RECORD
+
+       Create a folder for your app, run dotnet new console, and open the generated project.
+
+       Add a file named DailyTemperature.cs, and add a positional readonly record struct for temperature values:
+
+         ﻿namespace record_types;
+
+         public readonly record struct DailyTemperature(double HighTemp, double LowTemp)
+         {
+             public double Mean => (HighTemp + LowTemp) / 2.0;
+         }
+
+       Add a file named Program.cs, and create sample temperature data:
+
+         ﻿namespace record_types;
+
+         class Program
+         {
+             private static DailyTemperature[] data = [
+                 new DailyTemperature(HighTemp: 57, LowTemp: 30),
+                 new DailyTemperature(60, 35),
+                 new DailyTemperature(63, 33),
+                 new DailyTemperature(68, 29),
+                 new DailyTemperature(72, 47),
+                 new DailyTemperature(75, 55),
+                 new DailyTemperature(77, 55),
+                 new DailyTemperature(72, 58),
+                 new DailyTemperature(70, 47),
+                 new DailyTemperature(77, 59),
+                 new DailyTemperature(85, 65),
+                 new DailyTemperature(87, 65),
+                 new DailyTemperature(85, 72),
+                 new DailyTemperature(83, 68),
+                 new DailyTemperature(77, 65),
+                 new DailyTemperature(72, 58),
+                 new DailyTemperature(77, 55),
+                 new DailyTemperature(76, 53),
+                 new DailyTemperature(80, 60),
+                 new DailyTemperature(85, 66)
+             ];
+
+             static void Main(string[] args)
+             {
+                 var heatingDegreeDays = new HeatingDegreeDays(65, data);
+                 Console.WriteLine(heatingDegreeDays);
+
+                 var coolingDegreeDays = new CoolingDegreeDays(65, data);
+                 Console.WriteLine(coolingDegreeDays);
+
+                 // Growing degree days measure warming to determine plant growing rates
+                 var growingDegreeDays = coolingDegreeDays with { BaseTemperature = 41 };
+                 Console.WriteLine(growingDegreeDays);
+
+                 // showing moving accumulation of 5 days using range syntax
+                 List<CoolingDegreeDays> movingAccumulation = new();
+                 int rangeSize = (data.Length > 5) ? 5 : data.Length;
+                 for (int start = 0; start < data.Length - rangeSize; start++)
+                 {
+                     var fiveDayTotal = growingDegreeDays with { TempRecords = data[start..(start + rangeSize)] };
+                     movingAccumulation.Add(fiveDayTotal);
+                 }
+                 Console.WriteLine();
+                 Console.WriteLine("Total degree days in the last five days");
+                 foreach(var item in movingAccumulation)
+                 {
+                     Console.WriteLine(item);
+                 }
+             }
+         }
+
+       This syntax gives you concise data modeling with immutable value semantics.
+
+       ADD BEHAVIOR TO THE RECORD STRUCT
+
+       In DailyTemperature.cs, the record struct already has a computed Mean property:
+
+         public double Mean => (HighTemp + LowTemp) / 2.0;
+
+       A record struct works well here because each value is small and self-contained.
+
+       BUILD RECORD TYPES FOR DEGREE-DAY CALCULATIONS
+
+       > Heating degree-days and cooling degree-days measure how much the daily average temperature deviates from a base temperature (typically 65°F/18°C). Heating degree-days accumulate on cold days when the average is below the base, while cooling degree-days accumulate on warm days when the average is above the base. These calculations help estimate energy consumption for heating or cooling buildings, making them useful for utility companies, building managers, and climate analysis.
+       Create a file named DegreeDays.cs with a hierarchy for heating and cooling degree-day calculations:
+
+         ﻿namespace InterimSteps
+         {
+             public readonly record struct DailyTemperature(double HighTemp, double LowTemp);
+
+         }
+
+         namespace InterimSteps2
+         {
+             public readonly record struct DailyTemperature(double HighTemp, double LowTemp)
+             {
+                 public double Mean => (HighTemp + LowTemp) / 2.0;
+             }
+
+             public abstract record DegreeDays(double BaseTemperature, IEnumerable<DailyTemperature> TempRecords);
+
+             public sealed record HeatingDegreeDays(double BaseTemperature, IEnumerable<DailyTemperature> TempRecords)
+                 : DegreeDays(BaseTemperature, TempRecords)
+             {
+                 public double DegreeDays => TempRecords.Where(s => s.Mean < BaseTemperature).Sum(s => BaseTemperature - s.Mean);
+             }
+
+             public sealed record CoolingDegreeDays(double BaseTemperature, IEnumerable<DailyTemperature> TempRecords)
+                 : DegreeDays(BaseTemperature, TempRecords)
+             {
+                 public double DegreeDays => TempRecords.Where(s => s.Mean > BaseTemperature).Sum(s => s.Mean - BaseTemperature);
+             }
+         }
+
+       Now calculate totals from your Main method in Program.cs:
+
+         ﻿namespace record_types;
+
+         class Program
+         {
+             private static DailyTemperature[] data = [
+                 new DailyTemperature(HighTemp: 57, LowTemp: 30),
+                 new DailyTemperature(60, 35),
+                 new DailyTemperature(63, 33),
+                 new DailyTemperature(68, 29),
+                 new DailyTemperature(72, 47),
+                 new DailyTemperature(75, 55),
+                 new DailyTemperature(77, 55),
+                 new DailyTemperature(72, 58),
+                 new DailyTemperature(70, 47),
+                 new DailyTemperature(77, 59),
+                 new DailyTemperature(85, 65),
+                 new DailyTemperature(87, 65),
+                 new DailyTemperature(85, 72),
+                 new DailyTemperature(83, 68),
+                 new DailyTemperature(77, 65),
+                 new DailyTemperature(72, 58),
+                 new DailyTemperature(77, 55),
+                 new DailyTemperature(76, 53),
+                 new DailyTemperature(80, 60),
+                 new DailyTemperature(85, 66)
+             ];
+
+             static void Main(string[] args)
+             {
+                 var heatingDegreeDays = new HeatingDegreeDays(65, data);
+                 Console.WriteLine(heatingDegreeDays);
+
+                 var coolingDegreeDays = new CoolingDegreeDays(65, data);
+                 Console.WriteLine(coolingDegreeDays);
+
+                 // Growing degree days measure warming to determine plant growing rates
+                 var growingDegreeDays = coolingDegreeDays with { BaseTemperature = 41 };
+                 Console.WriteLine(growingDegreeDays);
+
+                 // showing moving accumulation of 5 days using range syntax
+                 List<CoolingDegreeDays> movingAccumulation = new();
+                 int rangeSize = (data.Length > 5) ? 5 : data.Length;
+                 for (int start = 0; start < data.Length - rangeSize; start++)
+                 {
+                     var fiveDayTotal = growingDegreeDays with { TempRecords = data[start..(start + rangeSize)] };
+                     movingAccumulation.Add(fiveDayTotal);
+                 }
+                 Console.WriteLine();
+                 Console.WriteLine("Total degree days in the last five days");
+                 foreach(var item in movingAccumulation)
+                 {
+                     Console.WriteLine(item);
+                 }
+             }
+         }
+
+       The generated ToString output is useful for quick diagnostics while you iterate.
+
+       OVERRIDE PRINTMEMBERS TO CUSTOMIZE OUTPUT
+
+       When the default output includes too much noise, override PrintMembers in the base record:
+
+         ﻿using System.Text;
+
+         namespace record_types;
+
+         public abstract record DegreeDays(double BaseTemperature, IEnumerable<DailyTemperature> TempRecords)
+         {
+             protected virtual bool PrintMembers(StringBuilder stringBuilder)
+             {
+                 stringBuilder.Append($"BaseTemperature = {BaseTemperature}");
+                 return true;
+             }
+         }
+
+         public record HeatingDegreeDays(double BaseTemperature, IEnumerable<DailyTemperature> TempRecords)
+             : DegreeDays(BaseTemperature, TempRecords)
+         {
+             public double DegreeDays => TempRecords.Where(s => s.Mean < BaseTemperature).Sum(s => BaseTemperature - s.Mean);
+         }
+
+         public sealed record CoolingDegreeDays(double BaseTemperature, IEnumerable<DailyTemperature> TempRecords)
+             : DegreeDays(BaseTemperature, TempRecords)
+         {
+             public double DegreeDays => TempRecords.Where(s => s.Mean > BaseTemperature).Sum(s => s.Mean - BaseTemperature);
+         }
+
+       The override keeps the output focused on the information you need.
+
+       USE WITH EXPRESSIONS FOR NONDESTRUCTIVE MUTATION
+
+       Use with to create modified copies without mutating the original record:
+
+         ﻿namespace record_types;
+
+         class Program
+         {
+             private static DailyTemperature[] data = [
+                 new DailyTemperature(HighTemp: 57, LowTemp: 30),
+                 new DailyTemperature(60, 35),
+                 new DailyTemperature(63, 33),
+                 new DailyTemperature(68, 29),
+                 new DailyTemperature(72, 47),
+                 new DailyTemperature(75, 55),
+                 new DailyTemperature(77, 55),
+                 new DailyTemperature(72, 58),
+                 new DailyTemperature(70, 47),
+                 new DailyTemperature(77, 59),
+                 new DailyTemperature(85, 65),
+                 new DailyTemperature(87, 65),
+                 new DailyTemperature(85, 72),
+                 new DailyTemperature(83, 68),
+                 new DailyTemperature(77, 65),
+                 new DailyTemperature(72, 58),
+                 new DailyTemperature(77, 55),
+                 new DailyTemperature(76, 53),
+                 new DailyTemperature(80, 60),
+                 new DailyTemperature(85, 66)
+             ];
+
+             static void Main(string[] args)
+             {
+                 var heatingDegreeDays = new HeatingDegreeDays(65, data);
+                 Console.WriteLine(heatingDegreeDays);
+
+                 var coolingDegreeDays = new CoolingDegreeDays(65, data);
+                 Console.WriteLine(coolingDegreeDays);
+
+                 // Growing degree days measure warming to determine plant growing rates
+                 var growingDegreeDays = coolingDegreeDays with { BaseTemperature = 41 };
+                 Console.WriteLine(growingDegreeDays);
+
+                 // showing moving accumulation of 5 days using range syntax
+                 List<CoolingDegreeDays> movingAccumulation = new();
+                 int rangeSize = (data.Length > 5) ? 5 : data.Length;
+                 for (int start = 0; start < data.Length - rangeSize; start++)
+                 {
+                     var fiveDayTotal = growingDegreeDays with { TempRecords = data[start..(start + rangeSize)] };
+                     movingAccumulation.Add(fiveDayTotal);
+                 }
+                 Console.WriteLine();
+                 Console.WriteLine("Total degree days in the last five days");
+                 foreach(var item in movingAccumulation)
+                 {
+                     Console.WriteLine(item);
+                 }
+             }
+         }
+
+       Extend that idea to compute rolling totals from slices of your input data:
+
+         ﻿namespace record_types;
+
+         class Program
+         {
+             private static DailyTemperature[] data = [
+                 new DailyTemperature(HighTemp: 57, LowTemp: 30),
+                 new DailyTemperature(60, 35),
+                 new DailyTemperature(63, 33),
+                 new DailyTemperature(68, 29),
+                 new DailyTemperature(72, 47),
+                 new DailyTemperature(75, 55),
+                 new DailyTemperature(77, 55),
+                 new DailyTemperature(72, 58),
+                 new DailyTemperature(70, 47),
+                 new DailyTemperature(77, 59),
+                 new DailyTemperature(85, 65),
+                 new DailyTemperature(87, 65),
+                 new DailyTemperature(85, 72),
+                 new DailyTemperature(83, 68),
+                 new DailyTemperature(77, 65),
+                 new DailyTemperature(72, 58),
+                 new DailyTemperature(77, 55),
+                 new DailyTemperature(76, 53),
+                 new DailyTemperature(80, 60),
+                 new DailyTemperature(85, 66)
+             ];
+
+             static void Main(string[] args)
+             {
+                 var heatingDegreeDays = new HeatingDegreeDays(65, data);
+                 Console.WriteLine(heatingDegreeDays);
+
+                 var coolingDegreeDays = new CoolingDegreeDays(65, data);
+                 Console.WriteLine(coolingDegreeDays);
+
+                 // Growing degree days measure warming to determine plant growing rates
+                 var growingDegreeDays = coolingDegreeDays with { BaseTemperature = 41 };
+                 Console.WriteLine(growingDegreeDays);
+
+                 // showing moving accumulation of 5 days using range syntax
+                 List<CoolingDegreeDays> movingAccumulation = new();
+                 int rangeSize = (data.Length > 5) ? 5 : data.Length;
+                 for (int start = 0; start < data.Length - rangeSize; start++)
+                 {
+                     var fiveDayTotal = growingDegreeDays with { TempRecords = data[start..(start + rangeSize)] };
+                     movingAccumulation.Add(fiveDayTotal);
+                 }
+                 Console.WriteLine();
+                 Console.WriteLine("Total degree days in the last five days");
+                 foreach(var item in movingAccumulation)
+                 {
+                     Console.WriteLine(item);
+                 }
+             }
+         }
+
+       This approach is useful when you need transformations while you preserve original values.
+
+       NEXT STEPS
+
+        * Review C# record types for deeper guidance.
+        * Continue with Object-oriented C# for broader design patterns.
+        * Explore Converting types to combine records with safe conversion patterns.
+
+C# manual                               from the official documentation

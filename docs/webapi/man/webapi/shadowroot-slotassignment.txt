@@ -1,0 +1,60 @@
+WEBAPI.SHADOWROOT-SLOTASSIGNMENT(1) Sandbox manual WEBAPI.SHADOWROOT-SLOTASSIGNMENT(1)
+
+       NAME
+
+       ShadowRoot: slotAssignment property - The read-only slotAssignment property of the ShadowRoot interface returns the slot assignment mode for the shadow DOM tree. Nodes are either
+
+       SHADOWROOT: SLOTASSIGNMENT PROPERTY
+
+       The read-only slotAssignment property of the ShadowRoot interface returns the _slot assignment mode_ for the shadow DOM tree. Nodes are either automatically assigned based on name matching (named) or manually assigned (manual).
+
+       The value of this property is defined using the slotAssignment option when calling Element.attachShadow(), or using the shadowrootslotassignment attribute on a element when declaratively creating a shadow root.
+
+       VALUE
+
+       A string that can be one of:
+
+        * named
+          * : Elements are automatically assigned to elements within this shadow root.
+       Any top-level children of the host with a slot attribute that matches the name attribute of a within this shadow root will be assigned to that slot. Any top-level children of the host with no slot attribute will be assigned to a with no name attribute (the "default slot"), if one is present.
+
+        * manual
+          * : Elements are not automatically assigned to elements.
+       Instead, they must be manually assigned with HTMLSlotElement.assign().
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       In the example below, the assign() method is used to display the correct tab in a tabbed application. The function is called and passed the panel to show, which is then assigned to the slot. We test if the slotAssignment is named to prevent an exception from being raised when HTMLSlotElement.assign() is called.
+
+         function UpdateDisplayTab(elem, tabIdx) {
+           const shadow = elem.shadowRoot;
+
+           // This test is usually not needed, but can be useful when debugging
+           if (shadow.slotAssignment === "named") {
+             console.error(
+               "Trying to manually assign a slot on an automatically-assigned (named) slot",
+             );
+           }
+           const slot = shadow.querySelector("slot");
+           const panels = elem.querySelectorAll("tab-panel");
+           if (panels.length && tabIdx && tabIdx <= panels.length) {
+             slot.assign(panels[tabIdx - 1]);
+           } else {
+             slot.assign();
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Element.attachShadow()
+        * HTMLSlotElement.assign()
+        * shadowrootslotassignment attribute of the element
+        * HTMLTemplateElement.shadowRootSlotAssignment
+
+Web APIs manual                         from the official documentation

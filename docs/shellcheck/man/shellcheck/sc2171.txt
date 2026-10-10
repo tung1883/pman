@@ -1,0 +1,43 @@
+SHELLCHECK.SC2171(1)             Sandbox manual             SHELLCHECK.SC2171(1)
+
+       NAME
+
+       Found trailing ] outside test. Add missing [ or quote if intentional. - if foo -eq bar ]; then true; fi
+
+       FOUND TRAILING OUTSIDE TEST. ADD MISSING OR QUOTE IF INTENTIONAL
+
+       FOUND TRAILING OUTSIDE TEST. ADD MISSING OR QUOTE IF INTENTIONAL
+
+       PROBLEMATIC CODE
+
+         if foo -eq bar ]; then true; fi
+
+       or
+
+         tr -d ]
+
+       CORRECT CODE
+
+         if [ foo -eq bar ]; then true; fi
+
+       or
+
+         tr -d ']'
+
+       RATIONALE
+
+       ShellCheck found a non-test command that ends with ] or ]].
+
+       If this was intended to be a test expression like in the first example, add the missing [ or [[.
+
+       If the ] was intended to be literal, like in tr -d ], you can quote to make this obvious.
+
+       EXCEPTIONS
+
+       tr -d ] is valid and not different from tr -d ']', so in these cases you can ignore the error instead.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

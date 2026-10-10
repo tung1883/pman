@@ -1,0 +1,92 @@
+DOCKER.ENGINE-CLI-FORMATTING(1)  Sandbox manual  DOCKER.ENGINE-CLI-FORMATTING(1)
+
+       NAME
+
+       Format command and log output - Docker supports Go templates which you
+
+       FORMAT COMMAND AND LOG OUTPUT
+
+       Docker supports Go templates which you can use to manipulate the output format of certain commands and log drivers.
+
+       Docker provides a set of basic functions to manipulate template elements. All of these examples use the docker inspect command, but many other CLI commands have a --format flag, and many of the CLI command references include examples of customizing the output format.
+
+       > When using the --format flag, you need to observe your shell environment.
+       > In a POSIX shell, you can run the following with a single quote:
+       > console
+       > $ docker inspect --format '{{join .Args " , "}}'
+       > Otherwise, in a Windows shell (for example, PowerShell), you need to use single quotes, but
+       > escape the double quotes inside the parameters as follows:
+       > console
+       > $ docker inspect --format '{{join .Args \" , \"}}'
+
+       JOIN
+
+       join concatenates a list of strings to create a single string. It puts a separator between each element in the list.
+
+         $ docker inspect --format '{{join .Args " , "}}' container
+
+       TABLE
+
+       table specifies which fields you want to see its output.
+
+         $ docker image list --format "table {{.ID}}\t{{.Repository}}\t{{.Tag}}\t{{.Size}}"
+
+       JSON
+
+       json encodes an element as a json string.
+
+         $ docker inspect --format '{{json .Mounts}}' container
+
+       LOWER
+
+       lower transforms a string into its lowercase representation.
+
+         $ docker inspect --format "{{lower .Name}}" container
+
+       SPLIT
+
+       split slices a string into a list of strings separated by a separator.
+
+         $ docker inspect --format '{{split .Image ":"}}' container
+
+       TITLE
+
+       title capitalizes the first character of a string.
+
+         $ docker inspect --format "{{title .Name}}" container
+
+       UPPER
+
+       upper transforms a string into its uppercase representation.
+
+         $ docker inspect --format "{{upper .Name}}" container
+
+       PAD
+
+       pad adds whitespace padding to a string. You can specify the number of spaces to add before and after the string.
+
+         $ docker image list --format '{{pad .Repository 5 10}}'
+
+       This example adds 5 spaces before the image repository name and 10 spaces after.
+
+       TRUNCATE
+
+       truncate shortens a string to a specified length. If the string is shorter than the specified length, it remains unchanged.
+
+         $ docker image list --format '{{truncate .Repository 15}}'
+
+       This example displays the image repository name, truncating it to the first 15 characters if it's longer.
+
+       PRINTLN
+
+       println prints each value on a new line.
+
+         $ docker inspect --format='{{range .NetworkSettings.Networks}}{{println .IPAddress}}{{end}}' container
+
+       HINT
+
+       To find out what data can be printed, show all content as json:
+
+         $ docker container ls --format='{{json .}}'
+
+Docker manual                           from the official documentation

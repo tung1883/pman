@@ -1,0 +1,45 @@
+SHELLCHECK.SC3002(1)             Sandbox manual             SHELLCHECK.SC3002(1)
+
+       NAME
+
+       In POSIX sh, extglob is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, EXTGLOB IS UNDEFINED
+
+       IN POSIX SH, EXTGLOB IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         rm !(*.hs)
+
+       CORRECT CODE
+
+       Either switch the shebang to a shell that does support extglob, like bash or ksh, or rewrite in terms of a loop with a case or grep match:
+
+         #!/bin/sh
+         for file in *
+         do
+           case "$file" in
+             *.hs) true;;
+             *) rm "$file" ;;
+           esac
+         done
+
+       RATIONALE
+
+       Extglobs are extensions in bash and ksh, while your shebang says you're using sh or dash.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

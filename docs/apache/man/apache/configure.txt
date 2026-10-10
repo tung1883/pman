@@ -1,0 +1,364 @@
+APACHE.CONFIGURE(1)              Sandbox manual              APACHE.CONFIGURE(1)
+
+       SYNOPSIS
+
+       You should call the configure script from within the root directory of the distribution.
+
+       ./configure [OPTION]... [VAR=VALUE]...
+
+       To assign environment variables (e.g. CC, CFLAGS ...), specify them as VAR=VALUE. See below for descriptions of some of the useful variables.
+
+       OPTIONS
+
+        * Configuration options
+        * Installation directories
+        * System types
+        * Optional features
+        * Options for support programs
+
+       CONFIGURATION OPTIONS
+
+       The following options influence the behavior of configure itself.
+
+         -C
+         --config-cache
+       This is an alias for --cache-file=config.cache
+
+         --cache-file=FILE
+       The test results will be cached in file FILE. This option is disabled by default.
+
+         -h
+         --help [short|recursive]
+       Output the help and exit. With the argument short only options specific to this package will displayed. The argument recursive displays the short help of all the included packages.
+
+         -n
+         --no-create
+       The configure script is run normally but does not create output files. This is useful to check the test results before generating makefiles for compilation.
+
+         -q
+         --quiet
+       Do not print checking ... messages during the configure process.
+
+         --srcdir=DIR
+       Defines directory DIR to be the source file directory. Default is the directory where configure is located, or the parent directory.
+
+         --silent
+       Same as --quiet
+
+         -V
+         --version
+       Display copyright information and exit.
+
+       INSTALLATION DIRECTORIES
+
+       These options define the installation directory. The installation tree depends on the selected layout.
+
+         --prefix=PREFIX
+       Install architecture-independent files in PREFIX. By default the installation directory is set to /usr/local/apache2.
+
+         --exec-prefix=EPREFIX
+       Install architecture-dependent files in EPREFIX. By default the installation directory is set to the PREFIX directory.
+
+       By default, make install will install all the files in /usr/local/apache2/bin, /usr/local/apache2/lib etc. You can specify an installation prefix other than /usr/local/apache2 using --prefix, for instance --prefix=$HOME.
+
+       DEFINE A DIRECTORY LAYOUT
+
+         --enable-layout=LAYOUT
+       Configure the source code and build scripts to assume an installation tree based on the layout LAYOUT. This allows you to separately specify the locations for each type of file within the Apache HTTP Server installation. The config.layout file contains several example configurations, and you can also create your own custom configuration following the examples. The different layouts in this file are grouped into <Layout FOO>...</Layout> sections and referred to by name as in FOO. The default layout is Apache.
+
+       FINE TUNING OF THE INSTALLATION DIRECTORIES
+
+       For better control of the installation directories, use the options below. Please note that the directory defaults are set by autoconf and are overwritten by the corresponding layout setting.
+
+         --bindir=DIR
+       Install user executables in DIR. The user executables are supporting programs like htpasswd, dbmmanage, etc. which are useful for site administrators. By default DIR is set to EPREFIX/bin.
+
+         --datadir=DIR
+       Install read-only architecture-independent data in DIR. By default datadir is set to PREFIX/share. This option is offered by autoconf and currently unused.
+
+         --includedir=DIR
+       Install C header files in DIR. By default includedir is set to EPREFIX/include.
+
+         --infodir=DIR
+       Install info documentation in DIR. By default infodir is set to PREFIX/info. This option is currently unused.
+
+         --libdir=DIR
+       Install object code libraries in DIR. By default libdir is set to EPREFIX/lib.
+
+         --libexecdir=DIR
+       Install the program executables (i.e., shared modules) in DIR. By default libexecdir is set to EPREFIX/modules.
+
+         --localstatedir=DIR
+       Install modifiable single-machine data in DIR. By default localstatedir is set to PREFIX/var. This option is offered by autoconf and currently unused.
+
+         --mandir=DIR
+       Install the man documentation in DIR. By default mandir is set to EPREFIX/man.
+
+         --oldincludedir=DIR
+       Install C header files for non-gcc in DIR. By default oldincludedir is set to /usr/include. This option is offered by autoconf and currently unused.
+
+         --sbindir=DIR
+       Install the system administrator executables in DIR. Those are server programs like httpd, apachectl, suexec, etc. which are necessary to run the Apache HTTP Server. By default sbindir is set to EPREFIX/bin (the same as bindir).
+
+         --sharedstatedir=DIR
+       Install modifiable architecture-independent data in DIR. By default sharedstatedir is set to PREFIX/com. This option is offered by autoconf and currently unused.
+
+         --sysconfdir=DIR
+       Install read-only single-machine data like the server configuration files httpd.conf, mime.types, etc. in DIR. By default sysconfdir is set to PREFIX/conf.
+
+       SYSTEM TYPES
+
+       These options are used to cross-compile the Apache HTTP Server to run on another system. In normal cases, when building and running the server on the same system, these options are not used.
+
+         --build=BUILD
+       Defines the system type of the system on which the tools are being built. It defaults to the result of the script config.guess.
+
+         --host=HOST
+       Defines the system type of the system on which the server will run. HOST defaults to BUILD.
+
+         --target=TARGET
+       Configure for building compilers for the system type TARGET. It defaults to HOST. This option is offered by autoconf and not necessary for the Apache HTTP Server.
+
+       OPTIONAL FEATURES
+
+       These options are used to fine tune the features your HTTP server will have.
+
+       GENERAL SYNTAX
+
+       Generally you can use the following syntax to enable or disable a feature:
+
+         --disable-FEATURE
+       Do not include FEATURE. This is the same as --enable-FEATURE=no.
+
+         --enable-FEATURE[=ARG]
+       Include FEATURE. The default value for ARG is yes.
+
+         --enable-MODULE=shared
+       The corresponding module will be built as a DSO module. By default enabled modules are linked dynamically.
+
+         --enable-MODULE=static
+       The corresponding module will be linked statically.
+
+       NOTE
+
+       configure will not complain about --enable-foo even if foo doesn't exist, so you need to type carefully.
+
+       CHOOSING MODULES TO COMPILE
+
+       Most modules are compiled by default and have to be disabled explicitly or by using the keyword few (see --enable-modules, --enable-mods-shared and --enable-mods-static below for further explanation) or --enable-modules=none to be removed as a group.
+
+       Other modules are not compiled by default and have to be enabled explicitly or by using the keywords all or reallyall to be available.
+
+       To find out which modules are compiled by default, run ./configure -h or ./configure --help and look under Optional Features. Suppose you are interested in mod_example1 and mod_example2, and you see this:
+
+         Optional Features:
+           ...
+           --disable-example1     example module 1
+           --enable-example2      example module 2
+           ...
+
+       Then mod_example1 is enabled by default, and you would use --disable-example1 to not compile it. mod_example2 is disabled by default, and you would use --enable-example2 to compile it.
+
+       MULTI-PROCESSING MODULES
+
+       Multi-Processing Modules, or MPMs, implement the basic behavior of the server. A single MPM must be active in order for the server to function. The list of available MPMs appears on the module index page.
+
+       MPMs can be built as DSOs for dynamic loading or statically linked with the server, and are enabled using the following options:
+
+         --with-mpm=MPM
+       Choose the default MPM for your server. If MPMs are built as DSO modules (see --enable-mpms-shared), this directive selects the MPM which will be loaded in the default configuration file. Otherwise, this directive selects the only available MPM, which will be statically linked into the server.
+
+       If this option is omitted, the default MPM for your operating system will be used.
+
+         --enable-mpms-shared=MPM-LIST
+       Enable a list of MPMs as dynamic shared modules. One of these modules must be loaded dynamically using the LoadModule directive.
+
+       MPM-LIST is a space-separated list of MPM names enclosed by quotation marks. For example:
+
+       --enable-mpms-shared='prefork worker'
+
+       Additionally you can use the special keyword all, which will select all MPMs which support dynamic loading on the current platform and build them as DSO modules. For example:
+
+       --enable-mpms-shared=all
+
+       THIRD-PARTY MODULES
+
+       To add additional third-party modules use the following options:
+
+         --with-module=module-type:module-file[, module-type:module-file]
+       Add one or more third-party modules to the list of statically linked modules. The module source file module-file will be searched in the modules/module-type subdirectory of your Apache HTTP server source tree. If it is not found there configure is considering module-file to be an absolute file path and tries to copy the source file into the module-type subdirectory. If the subdirectory doesn't exist it will be created and populated with a standard Makefile.in.
+
+       This option is useful to add small external modules consisting of one source file. For more complex modules you should read the vendor's documentation.
+
+       NOTE
+
+       If you want to build a DSO module instead of a statically linked use apxs.
+
+       CUMULATIVE AND OTHER OPTIONS
+
+         --enable-maintainer-mode
+       Turn on debugging and compile time warnings and load all compiled modules.
+
+         --enable-mods-shared=MODULE-LIST
+       Defines a list of modules to be enabled and build as dynamic shared modules. This mean, these module have to be loaded dynamically by using the LoadModule directive.
+
+       MODULE-LIST is a space separated list of modulenames enclosed by quotation marks. The module names are given without the preceding mod_. For example:
+
+       --enable-mods-shared='headers rewrite dav'
+
+       Additionally you can use the special keywords reallyall, all, most and few. For example,
+
+       --enable-mods-shared=most
+
+       will compile most modules and build them as DSO modules,
+
+       --enable-mods-shared=few
+
+       will only compile a very basic set of modules.
+
+       The default set is most.
+
+       The LoadModule directives for the chosen modules will be automatically generated in the main configuration file. By default, all those directives will be commented out except for the modules that are either required or explicitly selected by a configure --enable-foo argument. You can change the set of loaded modules by activating or deactivating the LoadModule directives in httpd.conf. In addition the LoadModule directives for all built modules can be activated via the configure option --enable-load-all-modules.
+
+         --enable-mods-static=MODULE-LIST
+       This option behaves similar to --enable-mods-shared, but will link the given modules statically. This mean, these modules will always be present while running httpd. They need not be loaded with LoadModule.
+
+         --enable-modules=MODULE-LIST
+       This option behaves like to --enable-mods-shared, and will also link the given modules dynamically. The special keyword none disables the build of all modules.
+
+         --enable-v4-mapped
+       Allow IPv6 sockets to handle IPv4 connections.
+
+         --with-port=PORT
+       This defines the port on which httpd will listen. This port number is used when generating the configuration file httpd.conf. The default is 80.
+
+         --with-program-name
+       Define an alternative executable name. The default is httpd.
+
+       OPTIONAL PACKAGES
+
+       These options are used to define optional packages.
+
+       GENERAL SYNTAX
+
+       Generally you can use the following syntax to define an optional package:
+
+         --with-PACKAGE[=ARG]
+       Use the package PACKAGE. The default value for ARG is yes.
+
+         --without-PACKAGE
+       Do not use the package PACKAGE. This is the same as --with-PACKAGE=no. This option is provided by autoconf but not very useful for the Apache HTTP Server.
+
+       SPECIFIC PACKAGES
+
+         --with-apr=DIR|FILE
+       The Apache Portable Runtime (APR) is part of the httpd source distribution and will automatically be build together with the HTTP server. If you want to use an already installed APR instead you have to tell configure the path to the apr-config script. You may set the absolute path and name or the directory to the installed APR. apr-config must exist within this directory or the subdirectory bin.
+
+         --with-apr-util=DIR|FILE
+       The Apache Portable Runtime Utilities (APU) are part of the httpd source distribution and will automatically be build together with the HTTP server. If you want to use an already installed APU instead you have to tell configure the path to the apu-config script. You may set the absolute path and name or the directory to the installed APU. apu-config must exist within this directory or the subdirectory bin.
+
+         --with-ssl=DIR
+       If mod_ssl has been enabled configure searches for an installed OpenSSL. You can set the directory path to the SSL/TLS toolkit instead.
+
+         --with-z=DIR
+       configure searches automatically for an installed zlib library if your source configuration requires one (e.g., when mod_deflate is enabled). You can set the directory path to the compression library instead.
+
+       Several features of the Apache HTTP Server, including mod_authn_dbm and mod_rewrite's DBM RewriteMap use simple key/value databases for quick lookups of information. SDBM is included in the APU, so this database is always available. If you would like to use other database types, use the following options to enable them:
+
+         --with-gdbm[=path]
+       If no path is specified, configure will search for the include files and libraries of a GNU DBM installation in the usual search paths. An explicit path will cause configure to look in path/lib and path/include for the relevant files. Finally, the path may specify specific include and library paths separated by a colon.
+
+         --with-ndbm[=path]
+       Like --with-gdbm, but searches for a New DBM installation.
+
+         --with-berkeley-db[=path]
+       Like --with-gdbm, but searches for a Berkeley DB installation.
+
+       NOTE
+
+       The DBM options are provided by the APU and passed through to its configuration script. They are useless when using an already installed APU defined by --with-apr-util.
+
+       You may use more then one DBM implementation together with your HTTP server. The appropriated DBM type will be configured within the runtime configuration at each time.
+
+       OPTIONS FOR SUPPORT PROGRAMS
+
+         --enable-static-support
+       Build a statically linked version of the support binaries. This means, a stand-alone executable will be built with all the necessary libraries integrated. Otherwise the support binaries are linked dynamically by default.
+
+         --enable-suexec
+       Use this option to enable suexec, which allows you to set uid and gid for spawned processes. Do not use this option unless you understand all the security implications of running a suid binary on your server. Further options to configure suexec are described below.
+
+       It is possible to create a statically linked binary of a single support program by using the following options:
+
+         --enable-static-ab
+       Build a statically linked version of ab.
+
+         --enable-static-checkgid
+       Build a statically linked version of checkgid.
+
+         --enable-static-htdbm
+       Build a statically linked version of htdbm.
+
+         --enable-static-htdigest
+       Build a statically linked version of htdigest.
+
+         --enable-static-htpasswd
+       Build a statically linked version of htpasswd.
+
+         --enable-static-logresolve
+       Build a statically linked version of logresolve.
+
+         --enable-static-rotatelogs
+       Build a statically linked version of rotatelogs.
+
+       SUEXEC CONFIGURATION OPTIONS
+
+       The following options are used to fine tune the behavior of suexec. See Configuring and installing suEXEC for further information.
+
+         --with-suexec-bin
+       This defines the path to suexec binary. Default is --sbindir (see Fine tuning of installation directories).
+
+         --with-suexec-caller
+       This defines the user allowed to call suexec. It should be the same as the user under which httpd normally runs.
+
+         --with-suexec-docroot
+       This defines the directory tree under which suexec access is allowed for executables. Default value is --datadir/htdocs.
+
+         --with-suexec-gidmin
+       Define this as the lowest GID allowed to be a target user for suexec. The default value is 100.
+
+         --with-suexec-logfile
+       This defines the filename of the suexec logfile. By default the logfile is named suexec_log and located in --logfiledir.
+
+         --with-suexec-safepath
+       Define the value of the environment variable PATH to be set for processes started by suexec. Default value is /usr/local/bin:/usr/bin:/bin.
+
+         --with-suexec-userdir
+       This defines the subdirectory under the user's directory that contains all executables for which suexec access is allowed. This setting is necessary when you want to use suexec together with user-specific directories (as provided by mod_userdir). The default is public_html.
+
+         --with-suexec-uidmin
+       Define this as the lowest UID allowed to be a target user for suexec. The default value is 100.
+
+         --with-suexec-umask
+       Set umask for processes started by suexec. It defaults to your system settings.
+
+       ENVIRONMENT VARIABLES
+
+       There are some useful environment variables to override the choices made by configure or to help it to find libraries and programs with nonstandard names or locations.
+
+         CC
+       Define the C compiler command to be used for compilation.
+
+         CFLAGS
+       Set C compiler flags you want to use for compilation.
+
+         CPP
+       Define the C preprocessor command to be used.
+
+         CPPFLAGS
+       Set C/C++ preprocessor flags, e.g. -Iincludedir if you have headers in a nonstandard directory includedir.
+
+         LDFLAGS
+       Set linker flags, e.g. -Llibdir if you have libraries in a nonstandard directory libdir.
+
+Apache HTTP Server manual               bundled documentation

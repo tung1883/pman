@@ -1,0 +1,58 @@
+WEBAPI.PERFORMANCEEVENTTIMING-INTERACTIONID(1) Sandbox manual WEBAPI.PERFORMANCEEVENTTIMING-INTERACTIONID(1)
+
+       NAME
+
+       PerformanceEventTiming: interactionId property - The read-only interactionId property of the PerformanceEventTiming interface returns an ID that uniquely identifies a user interaction which
+
+       PERFORMANCEEVENTTIMING: INTERACTIONID PROPERTY
+
+       The read-only interactionId property of the PerformanceEventTiming interface returns an ID that uniquely identifies a user interaction which triggered a series of associated events.
+
+       VALUE
+
+       A number. For event types where an interaction ID is not calculated the value is 0.
+
+       DESCRIPTION
+
+       When a user interacts with a web page, a user interaction (for example a click) usually triggers a sequence of events, such as pointerdown, pointerup, and click events. To measure the latency of this series of events, the events share the same interactionId.
+
+       An interactionId is only computed for the following event types belonging to a user interaction. It is 0 otherwise.
+
+         Event types  |  User interaction
+         pointerdown, pointerup, click  |  click / tap / drag
+         keydown, keyup  |  key press
+       The interactionId is also needed to calculate the Interaction to next paint metric, which helps analyze responsiveness to user interaction over the lifetime of a page.
+
+       EXAMPLES
+
+       USING INTERACTIONID
+
+       The following example collects event duration for all events corresponding to an interaction. The eventLatencies map can then be used to find events with maximum duration for a user interaction, for example.
+
+         // The key is the interaction ID.
+         let eventLatencies = {};
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             if (entry.interactionId > 0) {
+               const interactionId = entry.interactionId;
+               if (!eventLatencies.has(interactionId)) {
+                 eventLatencies[interactionId] = [];
+               }
+               eventLatencies[interactionId].push(entry.duration);
+             }
+           });
+         });
+
+         observer.observe({ type: "event", buffered: true });
+
+         // Log events with maximum event duration for a user interaction
+         Object.entries(eventLatencies).forEach(([k, v]) => {
+           console.log(Math.max(...v));
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,54 @@
+WEBAPI.MESSAGECHANNEL-MESSAGECHANNEL(1) Sandbox manual WEBAPI.MESSAGECHANNEL-MESSAGECHANNEL(1)
+
+       NAME
+
+       MessageChannel: MessageChannel() constructor - The MessageChannel() constructor of the MessageChannel
+
+       MESSAGECHANNEL: MESSAGECHANNEL() CONSTRUCTOR
+
+       The MessageChannel() constructor of the MessageChannel interface returns a new MessageChannel object with two new MessagePort objects.
+
+       SYNTAX
+
+         new MessageChannel()
+
+       PARAMETERS
+
+       None (undefined).
+
+       RETURN VALUE
+
+       A new MessageChannel object.
+
+       EXAMPLES
+
+       In the following code block, you can see a new channel being created using the MessageChannel() constructor. When the has loaded, we pass port2 to the using MessagePort.postMessage along with a message. The handleMessage handler then responds to a message being sent back from the (using onmessage), putting it into a paragraph. The port1 is listened to, to check when the message arrives.
+
+         const channel = new MessageChannel();
+         const para = document.querySelector("p");
+
+         const ifr = document.querySelector("iframe");
+         const otherWindow = ifr.contentWindow;
+
+         ifr.addEventListener("load", iframeLoaded);
+
+         function iframeLoaded() {
+           otherWindow.postMessage("Hello from the main page!", "*", [channel.port2]);
+         }
+
+         channel.port1.onmessage = handleMessage;
+         function handleMessage(e) {
+           para.innerHTML = e.data;
+         }
+
+       For a full working example, see our channel messaging basic demo on GitHub (run it live too).
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using channel messaging
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,330 @@
+WEBAPI.HTML-SANITIZER-API-DEFAULT-SANITIZER-CONFIGURATION(1) Sandbox manual WEBAPI.HTML-SANITIZER-API-DEFAULT-SANITIZER-CONFIGURATION(1)
+
+       NAME
+
+       Default sanitizer configuration - The default sanitizer configuration defines the configuration returned by the Sanitizer() constructor if no configuration is passed as an ar
+
+       DEFAULT SANITIZER CONFIGURATION
+
+       The default sanitizer configuration defines the configuration returned by the Sanitizer() constructor if no configuration is passed as an argument. This same configuration is implicitly used if you call the safe sanitization methods, such as Element.setHTML(), ShadowRoot.setHTML(), and Document.parseHTML(), without specifying a custom sanitizer.
+
+       This configuration removes the following sorts of items:
+
+        1. Those that are known to be XSS-unsafe:
+          * , , , , , , and use.
+          * All event handler content attributes, such as onafterprint, onbeforeinput, and so on.
+        2. Items that might be used in clickjacking, spoofing, or other attacks.
+        3. Deprecated items.
+        4. Comments and data-* attributes.
+       It therefore provides a sanitizer with a minimal attack surface, which is still suitable for the majority of sanitization use cases.
+
+       > Calling Sanitizer.removeUnsafe(), or passing a custom sanitizer to the safe sanitization method, only removes the XSS-unsafe items.
+       > It does not remove the additional items, comments, and data-* attributes.
+       The following sections list all the elements, with a &check; mark indicating those that are _allowed_ by the default configuration (the ❌ therefore indicates those that will be removed). The "Additional allowed attributes" column lists the attributes that are allowed for the corresponding elements; any other attributes on the element would be removed (unless allowed by the global attributes). The Global attributes section lists the attributes that are allowed on all elements (the attributes that are not removed when the configuration is used).
+
+       HTML ELEMENTS
+
+         Element  |  Allowed  |  Additional allowed attributes
+         &check;  |  href, hreflang, type
+         &check;
+         ❌
+         &check;
+         ❌
+         &check;
+         &check;
+         ❌
+         &check;
+         ❌
+         &check;
+         &check;
+         ❌
+         &check;  |  cite
+         &check;
+         &check;
+         ❌
+         ❌
+         &check;
+         ❌
+         &check;
+         &check;
+         &check;  |  span
+         &check;  |  span
+         &check;  |  value
+         ❌
+         &check;
+         &check;  |  cite, datetime
+         ❌
+         &check;
+         ❌
+         ❌
+         &check;
+         &check;
+         &check;
+         &check;
+         ❌
+         ❌
+         ❌
+         &check;
+         &check;
+         ❌
+         &check;
+         ❌
+         ❌
+         ❌
+         &check;
+         &check;
+         &check;
+         &check;
+         &check;
+         &check;
+         &check;
+         ❌
+         ❌
+         ❌
+         &check;  |  cite, datetime
+         &check;
+         ❌
+         ❌
+         &check;  |  value
+         ❌
+         &check;
+         ❌
+         &check;
+         ❌
+         &check;
+         ❌
+         ❌
+         &check;
+         ❌
+         ❌
+         ❌
+         ❌
+         ❌
+         &check;  |  reversed, start, type
+         ❌
+         ❌
+         ❌
+         &check;
+         ❌
+         ❌
+         ❌
+         &check;
+         ❌
+         &check;
+         ❌
+         &check;
+         &check;
+         ❌
+         &check;
+         &check;
+         &check;
+         ❌
+         &check;
+         &check;
+         ❌
+         ❌
+         ❌
+         &check;
+         ❌
+         &check;
+         ❌
+         &check;
+         ❌
+         &check;
+         ❌
+         &check;
+         &check;
+         &check;
+         &check;  |  colspan, headers, rowspan
+         ❌
+         ❌
+         &check;
+         &check;  |  abbr, colspan, headers, rowspan, scope
+         &check;
+         &check;  |  datetime
+         &check;
+         &check;
+         ❌
+         ❌
+         &check;
+         &check;
+         &check;
+         ❌
+         &check;
+         ❌
+
+       SVG ELEMENTS
+
+         Element  |  Allowed  |  Additional allowed attributes
+         a  |  &check;  |  href, hreflang, type
+         animate  |  ❌
+         animateMotion  |  ❌
+         animateTransform  |  ❌
+         circle  |  &check;  |  cx, cy, pathLength, r
+         clipPath  |  ❌
+         defs  |  &check;
+         desc  |  &check;
+         ellipse  |  &check;  |  cx, cy, pathLength, rx, ry
+         feBlend  |  ❌
+         feColorMatrix  |  ❌
+         feComponentTransfer  |  ❌
+         feComposite  |  ❌
+         feConvolveMatrix  |  ❌
+         feDiffuseLighting  |  ❌
+         feDisplacementMap  |  ❌
+         feDistantLight  |  ❌
+         feDropShadow  |  ❌
+         feFlood  |  ❌
+         feFuncA  |  ❌
+         feFuncB  |  ❌
+         feFuncG  |  ❌
+         feFuncR  |  ❌
+         feGaussianBlur  |  ❌
+         feImage  |  ❌
+         feMerge  |  ❌
+         feMergeNode  |  ❌
+         feMorphology  |  ❌
+         feOffset  |  ❌
+         fePointLight  |  ❌
+         feSpecularLighting  |  ❌
+         feSpotLight  |  ❌
+         feTile  |  ❌
+         feTurbulence  |  ❌
+         filter  |  ❌
+         foreignObject  |  &check;  |  height, width, x, y
+         g  |  &check;
+         image  |  ❌
+         line  |  &check;  |  pathLength, x1, x2, y1, y2
+         linearGradient  |  ❌
+         marker  |  &check;  |  markerHeight, markerUnits, markerWidth, orient, preserveAspectRatio, refX, refY, viewBox
+         mask  |  ❌
+         metadata  |  &check;
+         mpath  |  ❌
+         path  |  &check;  |  d, pathLength
+         pattern  |  ❌
+         polygon  |  &check;  |  pathLength, points
+         polyline  |  &check;  |  pathLength, points
+         radialGradient  |  ❌
+         rect  |  &check;  |  height, pathLength, rx, ry, width, x, y
+         script  |  ❌
+         set  |  ❌
+         stop  |  ❌
+         style  |  ❌
+         svg  |  &check;  |  height, preserveAspectRatio, viewBox, width, x, y
+         switch  |  ❌
+         symbol  |  ❌
+         text  |  &check;  |  dx, dy, lengthAdjust, rotate, textLength, x, y
+         textPath  |  &check;  |  lengthAdjust, method, path, side, spacing, startOffset, textLength
+         title  |  &check;
+         tspan  |  &check;  |  dx, dy, lengthAdjust, rotate, textLength, x, y
+         use  |  ❌
+         view  |  ❌
+
+       MATHML ELEMENTS
+
+         Element  |  Allowed  |  Additional allowed attributes
+         annotation  |  ❌
+         annotation-xml  |  ❌
+         maction  |  ❌
+         math  |  &check;
+         menclose  |  ❌
+         merror  |  &check;
+         mfenced  |  ❌
+         mfrac  |  &check;
+         mi  |  &check;
+         mmultiscripts  |  &check;
+         mn  |  &check;
+         mo  |  &check;  |  fence, form, largeop, lspace, maxsize, minsize, movablelimits, rspace, separator, stretchy, symmetric
+         mover  |  &check;  |  accent
+         mpadded  |  &check;  |  depth, height, lspace, voffset, width
+         mphantom  |  &check;
+         mprescripts  |  &check;
+         mroot  |  &check;
+         mrow  |  &check;
+         ms  |  &check;
+         mspace  |  &check;  |  depth, height, width
+         msqrt  |  &check;
+         mstyle  |  &check;
+         msub  |  &check;
+         msubsup  |  &check;
+         msup  |  &check;
+         mtable  |  &check;
+         mtd  |  &check;  |  columnspan, rowspan
+         mtext  |  &check;
+         mtr  |  &check;
+         munder  |  &check;  |  accentunder
+         munderover  |  &check;  |  accent, accentunder
+         semantics  |  &check;
+
+       GLOBAL ATTRIBUTES
+
+       The default configuration allows the following attributes on all elements.
+
+       HTML GLOBAL ATTRIBUTES
+
+        * dir
+        * lang
+        * title
+
+       MATHML GLOBAL ATTRIBUTES
+
+        * displaystyle
+        * mathbackground
+        * mathcolor
+        * mathsize
+        * scriptlevel
+
+       SVG ATTRIBUTES
+
+        * alignment-baseline
+        * baseline-shift
+        * clip-path
+        * clip-rule
+        * color
+        * color-interpolation
+        * cursor
+        * direction
+        * display
+        * dominant-baseline
+        * fill
+        * fill-opacity
+        * fill-rule
+        * font-family
+        * font-size
+        * font-size-adjust
+        * font-stretch
+        * font-style
+        * font-variant
+        * font-weight
+        * letter-spacing
+        * marker-end
+        * marker-mid
+        * marker-start
+        * opacity
+        * paint-order
+        * pointer-events
+        * shape-rendering
+        * stop-color
+        * stop-opacity
+        * stroke
+        * stroke-dasharray
+        * stroke-dashoffset
+        * stroke-linecap
+        * stroke-linejoin
+        * stroke-miterlimit
+        * stroke-opacity
+        * stroke-width
+        * text-anchor
+        * text-decoration
+        * text-overflow
+        * text-rendering
+        * transform
+        * transform-origin
+        * unicode-bidi
+        * vector-effect
+        * visibility
+        * white-space
+        * word-spacing
+        * writing-mode
+
+Web APIs manual                         from the official documentation

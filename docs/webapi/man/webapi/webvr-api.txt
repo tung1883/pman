@@ -1,0 +1,128 @@
+WEBAPI.WEBVR-API(1)              Sandbox manual              WEBAPI.WEBVR-API(1)
+
+       NAME
+
+       WebVR API - > [!NOTE]
+
+       WEBVR API
+
+       {{Non-standard_header}}
+
+       > WebVR API is replaced by WebXR API. WebVR was never ratified as a standard, was implemented and enabled by default in very few browsers and supported a small number of devices.
+       WebVR provides support for exposing virtual reality devices — for example, head-mounted displays like the Oculus Rift or HTC Vive — to web apps, enabling developers to translate position and movement information from the display into movement around a 3D scene. This has numerous, interesting applications, from virtual product tours and interactive training apps to immersive first-person games.
+
+       CONCEPTS AND USAGE
+
+       Any VR devices attached to your computer will be returned by the Navigator.getVRDisplays() method; each one will be represented by a VRDisplay object.
+
+       
+
+       VRDisplay is the central interface in the WebVR API — via its properties and methods you can access functionality to:
+
+        * Retrieve useful information to allow us to identify the display, what capabilities it has, controllers associated with it, and more.
+        * Retrieve frame data for each frame of content you want to present in a display, and submit those frames for display at a consistent rate.
+        * Start and stop presenting to the display.
+       A typical (simple) WebVR app would work like so:
+
+        1. Navigator.getVRDisplays() is used to get a reference to your VR display.
+        2. VRDisplay.requestPresent() is used to start presenting to the VR display.
+        3. WebVR's dedicated VRDisplay.requestAnimationFrame() method is used to run the app's rendering loop at the correct refresh rate for the display.
+        4. Inside the rendering loop, you grab the data required to display the current frame (VRDisplay.getFrameData()), draw the displayed scene twice — once for the view in each eye, then submit the rendered view to the display to show to the user (VRDisplay.submitFrame()).
+       In addition, WebVR 1.1 adds a number of events on the Window object to allow JavaScript to respond to changes to the status of the display.
+
+       > You can find a lot more out about how the API works in our Using the WebVR API and WebVR Concepts articles.
+
+       API AVAILABILITY
+
+       The WebVR API, which was never ratified as a web standard, has been deprecated in favor of the WebXR API, which is well on track toward finishing the standardization process. As such, you should try to update existing code to use the newer API instead. Generally the transition should be fairly painless.
+
+       Additionally, on some devices and/or browsers, WebVR requires that the page be loaded using a secure context, over an HTTPS connection. If the page is not fully secure, the WebVR methods and functions will not be available. You can easily test for this by checking to see if the Navigator method getVRDisplays() is NULL:
+
+         if (!navigator.getVRDisplays) {
+           console.error("WebVR is not available");
+         } else {
+           /* Use WebVR */
+         }
+
+       USING CONTROLLERS: COMBINING WEBVR WITH THE GAMEPAD API
+
+       Many WebVR hardware setups feature controllers that go along with the headset. These can be used in WebVR apps via the Gamepad API, and specifically the Gamepad Extensions API that adds API features for accessing controller pose, haptic actuators, and more.
+
+       > Our Using VR controllers with WebVR article explains the basics of how to use VR controllers with WebVR apps.
+
+       WEBVR INTERFACES
+
+        * VRDisplay
+          * : Represents any VR device supported by this API. It includes generic information such as device IDs and descriptions, as well as methods for starting to present a VR scene, retrieving eye parameters and display capabilities, and other important functionality.
+        * VRDisplayCapabilities
+          * : Describes the capabilities of a VRDisplay — its features can be used to perform VR device capability tests, for example can it return position information.
+        * VRDisplayEvent
+          * : Represents the event object of WebVR-related events (see the window events listed below).
+        * VRFrameData
+          * : Represents all the information needed to render a single frame of a VR scene; constructed by VRDisplay.getFrameData().
+        * VRPose
+          * : Represents the position state at a given timestamp (which includes orientation, position, velocity, and acceleration).
+        * VREyeParameters
+          * : Provides access to all the information required to correctly render a scene for each given eye, including field of view information.
+        * VRFieldOfView
+          * : Represents a field of view defined by 4 different degree values describing the view from a center point.
+        * VRLayerInit
+          * : Represents a layer to be presented in a VRDisplay.
+        * VRStageParameters
+          * : Represents the values describing the stage area for devices that support room-scale experiences.
+
+       EXTENSIONS TO OTHER INTERFACES
+
+       The WebVR API extends the following APIs, adding the listed features.
+
+       GAMEPAD
+
+        * Gamepad.displayId (read-only)
+          * : _Returns the VRDisplay.displayId of the associated VRDisplay — the VRDisplay that the gamepad is controlling the displayed scene of._
+
+       NAVIGATOR
+
+        * Navigator.activeVRDisplays (read-only)
+          * : Returns an array containing every VRDisplay object that is currently presenting (VRDisplay.isPresenting is true).
+        * Navigator.getVRDisplays()
+          * : Returns a promise that resolves to an array of VRDisplay objects representing any available VR displays connected to the computer.
+
+       WINDOW EVENTS
+
+        * vrdisplaypresentchange
+          * : Fired when the presenting state of a VR display changes — i.e., goes from presenting to not presenting or vice versa.
+        * vrdisplayconnect
+          * : Fired when a compatible VR display has been connected to the computer.
+        * vrdisplaydisconnect
+          * : Fired when a compatible VR display has been disconnected from the computer.
+        * vrdisplayactivate
+          * : Fired when a display is able to be presented to.
+        * vrdisplaydeactivate
+          * : Fired when a display can no longer be presented to.
+
+       EXAMPLES
+
+       You can find a number of examples at these locations:
+
+        * webvr-tests — very simple examples to accompany the MDN WebVR documentation.
+        * Carmel starter kit — nice simple, well-commented examples that go along with Carmel, Facebook's WebVR browser.
+        * WebVR.info samples — slightly more in-depth examples plus source code
+        * A-Frame homepage — examples showing A-Frame usage
+
+       SPECIFICATIONS
+
+       This API was specified in the old WebVR API that has been superseded by the WebXR Device API. It is no longer on track to becoming a standard.
+
+       Until all browsers have implemented the new WebXR APIs, it is recommended to rely on frameworks, like A-Frame, Babylon.js, or Three.js, or a polyfill, to develop WebXR applications that will work across all browsers. Read Meta's Porting from WebVR to WebXR guide for more information.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * A-Frame — Open source web framework for building VR experiences.
+        * webvr.info — Up-to-date information about WebVR, browser setup, and community.
+        * threejs-vr-boilerplate — A useful starter template for writing WebVR apps into.
+        * Web VR polyfill — JavaScript implementation of WebVR.
+        * WebVR Directory — List of quality WebVR sites.
+
+Web APIs manual                         from the official documentation

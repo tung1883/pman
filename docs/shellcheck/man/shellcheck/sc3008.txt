@@ -1,0 +1,45 @@
+SHELLCHECK.SC3008(1)             Sandbox manual             SHELLCHECK.SC3008(1)
+
+       NAME
+
+       In POSIX sh, select loops are undefined. - echo "Select file to show"
+
+       IN POSIX SH, SELECT LOOPS ARE UNDEFINED
+
+       IN POSIX SH, SELECT LOOPS ARE UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         echo "Select file to show"
+         select input in *
+         do
+           ls -l "$input"
+         done
+
+       CORRECT CODE
+
+       Either switch to bash:
+
+         #!/usr/bin/env bash
+         echo "Select file to show"
+         select input in *
+         do
+           ls -l "$input"
+         done
+
+       Or write your own menu.
+
+       RATIONALE
+
+       Your script uses a shell feature not supported by the shebang. Either rewrite the script to be portable, or change the shebang to explicitly require a shell like Bash. There is no simple substitution for a select loop, so either write your own using compatible constructs like for loops, or switch to a shell that supports them.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

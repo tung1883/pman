@@ -1,0 +1,135 @@
+CSHARP.YIELD(1)                  Sandbox manual                  CSHARP.YIELD(1)
+
+       NAME
+
+       yield statement - provide the next element - Use the yield statement in iterators to provide the next value or signal the end of an iteration
+
+       YIELD STATEMENT - PROVIDE THE NEXT ELEMENT
+
+       Use the yield statement in an iterator to provide the next value or signal the end of an iteration. The yield statement has the two following forms:
+
+        * yield return: to provide the next value in iteration, as the following example shows:
+        * yield break: to explicitly signal the end of iteration, as the following example shows:
+       Iteration also finishes when control reaches the end of an iterator.
+
+       In the preceding examples, the return type of iterators is IEnumerable1. In nongeneric cases, use IEnumerable as the return type of an iterator. You can also use IAsyncEnumerable1 as the return type of an iterator. That makes an iterator async. Use the await foreach statement to iterate over iterator's result, as the following example shows:
+
+         await foreach (int n in GenerateNumbersAsync(5))
+         {
+             Console.Write(n);
+             Console.Write(" ");
+         }
+         // Output: 0 2 4 6 8
+
+         async IAsyncEnumerable<int> GenerateNumbersAsync(int count)
+         {
+             for (int i = 0; i < count; i++)
+             {
+                 yield return await ProduceNumberAsync(i);
+             }
+         }
+
+         async Task<int> ProduceNumberAsync(int seed)
+         {
+             await Task.Delay(1000);
+             return 2 * seed;
+         }
+
+       IEnumerator1 or IEnumerator can also be the return type of an iterator. Use those return types when you implement the GetEnumerator method in the following scenarios:
+
+        * You design the type that implements IEnumerable1 or IEnumerable interface.
+        * You add an instance or extension GetEnumerator method to enable iteration over the type's instance with the foreach statement, as the following example shows:
+       You can't use the yield statements in:
+
+        * methods with in, ref, or out parameters.
+        * lambda expressions and anonymous methods.
+        * unsafe blocks. Before C# 13, yield was invalid in any method with an unsafe block. Beginning with C# 13, you can use yield in methods with unsafe blocks, but not in the unsafe block.
+        * yield return and yield break can't be used in catch and finally blocks, or in try blocks with a corresponding catch block. The yield return and yield break statements can be used in a try block with no catch blocks, only a finally block.
+
+       USING STATEMENTS IN ITERATORS
+
+       You can use using statements in iterator methods. Since using statements compile into try blocks with finally clauses (and no catch blocks), they work correctly with iterators. The disposable resources are properly managed throughout the iterator's execution:
+
+         Console.WriteLine("=== Using in Iterator Example ===");
+
+         // Demonstrate that using statements work correctly in iterators
+         foreach (string line in ReadLinesFromResource())
+         {
+             Console.WriteLine($"Read: {line}");
+             // Simulate processing only first two items
+             if (line == "Line 2") break;
+         }
+
+         Console.WriteLine("Iteration stopped early - resource should still be disposed.");
+
+         static IEnumerable<string> ReadLinesFromResource()
+         {
+             Console.WriteLine("Opening resource...");
+             using var resource = new StringWriter(); // Use StringWriter as a simple IDisposable
+             resource.WriteLine("Resource initialized");
+
+             // These lines would typically come from the resource (e.g., file, database)
+             string[] lines = { "Line 1", "Line 2", "Line 3", "Line 4" };
+
+             foreach (string line in lines)
+             {
+                 Console.WriteLine($"About to yield: {line}");
+                 yield return line;
+                 Console.WriteLine($"Resumed after yielding: {line}");
+             }
+
+             Console.WriteLine("Iterator completed - using block will dispose resource.");
+         }
+
+       As the preceding example shows, the resource acquired in the using statement remains available throughout the iterator's execution, even when the iterator suspends and resumes execution at yield return statements. The resource is disposed when the iterator completes (either by reaching the end or via yield break) or when the iterator itself is disposed (for example, when the caller breaks out of enumeration early).
+
+       EXECUTION OF AN ITERATOR
+
+       Calling an iterator doesn't execute it immediately, as the following example shows:
+
+         var numbers = ProduceEvenNumbers(5);
+         Console.WriteLine("Caller: about to iterate.");
+         foreach (int i in numbers)
+         {
+             Console.WriteLine($"Caller: {i}");
+         }
+
+         IEnumerable<int> ProduceEvenNumbers(int upto)
+         {
+             Console.WriteLine("Iterator: start.");
+             for (int i = 0; i <= upto; i += 2)
+             {
+                 Console.WriteLine($"Iterator: about to yield {i}");
+                 yield return i;
+                 Console.WriteLine($"Iterator: yielded {i}");
+             }
+             Console.WriteLine("Iterator: end.");
+         }
+         // Output:
+         // Caller: about to iterate.
+         // Iterator: start.
+         // Iterator: about to yield 0
+         // Caller: 0
+         // Iterator: yielded 0
+         // Iterator: about to yield 2
+         // Caller: 2
+         // Iterator: yielded 2
+         // Iterator: about to yield 4
+         // Caller: 4
+         // Iterator: yielded 4
+         // Iterator: end.
+
+       As the preceding example shows, when you start to iterate over an iterator's result, the iterator executes until the first yield return statement is reached. Then, the execution of the iterator is suspended and the caller gets the first iteration value and processes it. On each subsequent iteration, the execution of the iterator resumes after the yield return statement that caused the previous suspension and continues until the next yield return statement is reached. The iteration completes when control reaches the end of an iterator or a yield break statement.
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information, see [The yield statement] section of the [C# language specification].
+
+       SEE ALSO
+
+        * Iterators
+        * Iterate through collections in C#
+        * foreach
+        * await foreach
+
+C# manual                               from the official documentation

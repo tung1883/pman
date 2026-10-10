@@ -1,0 +1,85 @@
+SHELLCHECK.SC2294(1)             Sandbox manual             SHELLCHECK.SC2294(1)
+
+       NAME
+
+       eval negates the benefit of arrays. Drop eval to preserve whitespace/symbols (or eval as string). - check() {
+
+       EVAL NEGATES THE BENEFIT OF ARRAYS. DROP EVAL TO PRESERVE WHITESPACE/S
+
+       EVAL NEGATES THE BENEFIT OF ARRAYS. DROP EVAL TO PRESERVE WHITESPACE/S
+
+       PROBLEMATIC CODE
+
+         check() {
+           eval "$@" || exit
+         }
+
+       CORRECT CODE
+
+         check() {
+           "$@" || exit
+         }
+
+       RATIONALE
+
+       ShellCheck found eval used on an array (or equivalently, "$@"). This is problematic because it effectively throws away all boundary information and rebuilds it from shell words.
+
+       Let's say you invoke check sed -i '$d' "my file.txt":
+
+       eval "$@" will:
+
+        1. Join the elements on spaces: sed -i $d my file.txt
+        2. Split the string on shell word boundaries: sed, -i, $d, my file.txt
+        3. Perform shell expansions (assuming $d is unset): sed, -i, my, file.txt
+        4. Execute the first element as the command and the rest as its arguments, as if running sed -i 'my' 'file.txt'
+       "$@" will
+
+        1. Execute the first element as the command and the rest as its arguments, as if running sed -i '$d' 'my file.txt'
+       Note that while "$@" is essentially always better than eval "$@", it's easy to unintentionally introduce a dependency on bad behavior through the shell debugging anti-strategy of "adding quotes until it works":
+
+         # Works with problematic example because of double-escaping, fails with correct example
+         check ls -l "'My File.txt'"
+
+         # Works with correct example the way it was always intended:
+         check ls -l "My File.txt"
+
+       The correct example is still better, but the function invocation has to be tweaked as well.
+
+       EXCEPTIONS
+
+       If each of the array elements is a carefully escaped shell command or word, use * instead of @ to explicitly join the elements on spaces which is what would happen anyways:
+
+         on_exit=(
+           'rm /tmp/myfile; '
+           'echo "Finished on $(date)" > log.txt; '
+         )
+
+         # Equivalent to `eval "${on_exit[@]}"`, but more explicit
+         eval "${on_exit[*]}"
+
+         # Even better in this case, as it does not require
+         # semicolons and commands don't interfere:
+         for cmd in "${on_exit[@]}"
+         do
+           eval "$cmd"
+         done
+
+       If you require eval for another part of the command, explicitly transform the array into a series of escaped shell words. This ensures that the array elements will eval back to themselves:
+
+         # Assumed to be outside of our control,
+         # otherwise we would output this in an array as well:
+         COMMAND='dialog --menu "Choose file:" 15 40 4'
+
+         # Our array:
+         array=(
+           1 "My File.txt"
+           2 "My Other File.txt"
+         )
+         eval "$COMMAND ${array[*]@Q}"                     # Bash 4+
+         eval "$COMMAND $(printf "%q " "${array[@]}")"     # Bash 1+
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

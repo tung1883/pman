@@ -1,0 +1,41 @@
+SHELLCHECK.SC2002(1)             Sandbox manual             SHELLCHECK.SC2002(1)
+
+       NAME
+
+       Useless cat. Consider cmd < file | .. or cmd file | .. instead. - This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for mor
+
+       USELESS CAT. CONSIDER CMD FILE .. OR CMD FILE .. INSTEAD
+
+       OPTIONAL - USELESS-USE-OF-CAT
+
+       This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for more details. In short, you have to enable it with the long name instead of the "SC" code like you would with a normal rule:
+
+       SHELLCHECKRC
+
+         enable=useless-use-of-cat # SC2002
+
+       (Note that this check was not optional prior to version 0.11.0.)
+
+       PROBLEMATIC CODE
+
+         cat file | tr ' ' _ | nl
+         cat file | while IFS= read -r i; do echo "${i%?}"; done
+
+       CORRECT CODE
+
+         < file tr ' ' _ | nl
+         while IFS= read -r i; do echo "${i%?}"; done < file
+
+       RATIONALE
+
+       cat is a tool for con"cat"enating files. Reading a single file as input to a program is considered a Useless Use Of Cat (UUOC)#Useless_use_of_cat).
+
+       It's more efficient and less roundabout to simply use redirection. This is especially true for programs that can benefit from seekable input, like tail or tar.
+
+       Many tools also accept optional filenames, e.g. grep -q foo file instead of cat file | grep -q foo.
+
+       EXCEPTIONS
+
+       Pointing out UUOC is a long standing shell programming tradition, and removing them from a short-lived pipeline in a loop can speed it up by 2x. However, it's not necessarily a good use of time in practice, and rarely affects correctness. [[Ignore]] as you see fit.
+
+ShellCheck manual                       from the official documentation

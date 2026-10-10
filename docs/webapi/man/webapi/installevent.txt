@@ -1,0 +1,84 @@
+WEBAPI.INSTALLEVENT(1)           Sandbox manual           WEBAPI.INSTALLEVENT(1)
+
+       NAME
+
+       InstallEvent - The parameter passed into an install event handler function, the InstallEvent interface represents an install action that is dispatched on t
+
+       INSTALLEVENT
+
+       The parameter passed into an install event handler function, the InstallEvent interface represents an install action that is dispatched on the ServiceWorkerGlobalScope of a ServiceWorker. As a child of ExtendableEvent, it ensures that functional events such as FetchEvent are not dispatched during installation.
+
+       This interface inherits from the ExtendableEvent interface.
+
+       CONSTRUCTOR
+
+        * InstallEvent()
+          * : Creates a new InstallEvent object.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, ExtendableEvent_.
+
+       INSTANCE METHODS
+
+       _Inherits methods from its parent, ExtendableEvent_.
+
+        * addRoutes()
+          * : Specifies one or more static routes, which define rules for fetching specified resources that will be used even before service worker startup.
+
+       EXAMPLES
+
+       This code snippet is from the service worker prefetch sample (see prefetch running live.) The code calls ExtendableEvent.waitUntil() in ServiceWorkerGlobalScope.oninstall and delays treating the ServiceWorkerRegistration.installing worker as installed until the passed promise resolves successfully. The promise resolves when all resources have been fetched and cached, or when any exception occurs.
+
+       The code snippet also shows a best practice for versioning caches used by the service worker. Although this example has only one cache, you can use this approach for multiple caches. The code maps a shorthand identifier for a cache to a specific, versioned cache name.
+
+       > Logging statements are visible in Google Chrome via the "Inspect" interface for the relevant service worker accessed via chrome://serviceworker-internals.
+
+         const CACHE_VERSION = 1;
+         const CURRENT_CACHES = {
+           prefetch: `prefetch-cache-v${CACHE_VERSION}`,
+         };
+
+         self.addEventListener("install", (event) => {
+           const urlsToPrefetch = [
+             "./static/pre_fetched.txt",
+             "./static/pre_fetched.html",
+             "https://www.chromium.org/_/rsrc/1302286216006/config/customLogo.gif",
+           ];
+
+           console.log(
+             "Handling install event. Resources to pre-fetch:",
+             urlsToPrefetch,
+           );
+
+           event.waitUntil(
+             caches
+               .open(CURRENT_CACHES["prefetch"])
+               .then((cache) =>
+                 cache.addAll(
+                   urlsToPrefetch.map(
+                     (urlToPrefetch) => new Request(urlToPrefetch, { mode: "no-cors" }),
+                   ),
+                 ),
+               )
+               .then(() => {
+                 console.log("All resources have been fetched and cached.");
+               })
+               .catch((error) => {
+                 console.error("Pre-fetching failed:", error);
+               }),
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * install event
+        * NotificationEvent
+        * Promise
+        * Fetch API
+
+Web APIs manual                         from the official documentation

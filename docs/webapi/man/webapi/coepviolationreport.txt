@@ -1,0 +1,184 @@
+WEBAPI.COEPVIOLATIONREPORT(1)    Sandbox manual    WEBAPI.COEPVIOLATIONREPORT(1)
+
+       NAME
+
+       COEPViolationReport - The COEPViolationReport dictionary of the Reporting API represents a report generated when a document violates its Cross-Origin-Embedder-Pol
+
+       COEPVIOLATIONREPORT
+
+       The COEPViolationReport dictionary of the Reporting API represents a report generated when a document violates its Cross-Origin-Embedder-Policy (COEP).
+
+       Reports of this type can be observed from within a page using a ReportingObserver, or a serialized version can be sent to a reporting server endpoint.
+
+       INSTANCE PROPERTIES
+
+        * body
+          * : The body of the report.
+       This is an object with the following properties:
+
+            * type
+              * : A string representing the cause of the violation that triggered the report.
+       This can have one of the following values:
+
+                * "corp"
+                  * : A document with Cross-Origin-Embedder-Policy set to require-corp attempted to load a cross-origin sub-resource that does not explicitly allow itself to be embedded (by setting an appropriate Cross-Origin-Resource-Policy).
+                * "navigation"
+                  * : An in a document that has either COEP require-corp or credentialless directives loads a document that:
+                    * Has neither the COEP require-corp nor credentialless directive
+                    * Is cross-origin with the embedding document, and does not have a CORP header that allows embedding in the parent
+                * "worker initialization"
+                  * : A dedicated worker created by a document with either the COEP require-corp or credentialless directives tries to load a worker script with neither of these set.
+            * blockedURL
+              * : A string containing the URL of the resource that was blocked from loading by an enforced COEP violation.
+            * destination {{non-standard_inline}}
+              * : A string indicating the _destination_ of the blocked resource.
+       This can have one of the values of Request.destination.
+
+            * disposition
+              * : A string indicating whether the violation was enforced or only reported.
+       This can have one of the following values:
+
+                * "enforce"
+                  * : The violation caused loading of the embedded resource to be blocked.
+       This is set for violations of policies set with Cross-Origin-Embedder-Policy.
+
+                * "reporting"
+                  * : The violation was reported without blocking the resource from loading.
+       This is set for violations of policies set with Cross-Origin-Embedder-Policy-Report-Only.
+
+        * type
+          * : The string "coep", indicating that this is a COEP violation report.
+        * url
+          * : A string representing the URL of the document that generated the report.
+
+       DESCRIPTION
+
+       A document's policies for loading and embedding cross-origin resources that are requested in no-cors mode are configured and enforced using the Cross-Origin-Embedder-Policy HTTP header, and may also be reported but not enforced using the Cross-Origin-Embedder-Policy-Report-Only header.
+
+       COEP policy violations may be reported whenever a policy set by those headers blocks (or would block) the loading of a resource.
+
+       You can monitor for COEP violation reports within the page that sets the policy using the Reporting API. To do this you create a ReportingObserver object to listen for reports, passing a callback method and an (optional) options property specifying the types of reports that you want to report on. The callback method is then called with reports of the requested types, passing a report object. For COEP violations, the object will be a COEPViolationReport (which has the type property set to "coep").
+
+       The structure of a typical report is shown below. Note that we can see the URL of both the page that had its policy violated (url) and the resource that was blocked from loading (body.blockedURL). We can also see that the report was triggered by a corp violation, and from the body.disposition that it was enforced (and not just reported).
+
+         {
+           "type": "coep",
+           "url": "https://url-of-page-attempting-to-load-resource-in-violation",
+           "body": {
+             "type": "corp",
+             "blockedURL": "https://url-of-blocked-resource",
+             "destination": "image",
+             "disposition": "enforce"
+           }
+         }
+
+       Violation reports may also be sent as a JSON object in a POST to a configured reporting server endpoint. The reporting server endpoint name is specified in the report-to policy directive of the Cross-Origin-Embedder-Policy or Cross-Origin-Embedder-Policy-Report-Only header. Valid endpoint names and their mapping to a particular URL are defined using the Reporting-Endpoints header.
+
+       The structure of the server report is almost exactly the same as COEPViolationReport, except that it additionally includes age and user_agent fields.
+
+         [
+           {
+             "age": 967132,
+             "body": {
+               "blockedURL": "https://url-of-resource-that-was-blocked",
+               "destination": "image",
+               "disposition": "enforce",
+               "type": "corp"
+             },
+             "type": "coep",
+             "url": "https://url-of-document-that-generated-report",
+             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+           }
+         ]
+
+       EXAMPLES
+
+       USING THE REPORTINGOBSERVER INTERFACE
+
+       This example shows how you can obtain COEP violation reports using a ReportingObserver.
+
+       First consider the case where we have an HTML file hosted on the origin https://example.com, which includes an element that sets as its source the (cross-origin) resource some-image.png. Since the element does not set the crossorigin attribute, it will be requested in no-cors mode. By default, if some-image.png is not served with the Cross-Origin-Embedder-Policy header, this request will succeed.
+
+         <img src="https://another-example.com/some-image.png" />
+
+       In order to ensure that the document only loads cross-origin resources that indicate that they are safe to load in our document origin, we can set the Cross-Origin-Embedder-Policy header with the require-corp directive as shown:
+
+         Cross-Origin-Embedder-Policy: require-corp
+
+       This header enforces that all resources must be served with the Cross-Origin-Resource-Policy header and a value of cross-origin in order to be loaded into the document's origin (https://example.com). Provided the server hosting some-image.png doesn't set the header, we don't need to do anything else to trigger a COEP violation.
+
+       To observe violations within the page, we construct a new ReportingObserver object to listen for reports with the type "coep", passing a callback that will receive and log the reports. This code needs to be loaded before the script that causes the violation:
+
+         const options = {
+           types: ["coep"],
+           buffered: true,
+         };
+
+         const observer = new ReportingObserver((reports, observer) => {
+           reports.forEach((violation) => {
+             console.log(violation);
+             console.log(JSON.stringify(violation));
+           });
+         }, options);
+
+         observer.observe();
+
+       Above, we log each violation report object and a JSON-string version of the object, which might look similar to the object below. Note that the type is "coep".
+
+         {
+           "type": "coep",
+           "url": "https://example.com",
+           "body": {
+             "type": "corp",
+             "blockedURL": "https://another-example.com/some-image.png",
+             "destination": "image",
+             "disposition": "enforce"
+           }
+         }
+
+       The same report could be generated using Cross-Origin-Embedder-Policy-Report-Only, except that the disposition would be reported as "reporting".
+
+       SENDING A REPORT TO A REPORTING ENDPOINT
+
+       Configuring a web page to send a COEP report to a reporting server endpoint is almost the same as the previous example. The only difference is that we need to specify a reporting endpoint where we want the reports to be sent, using the Reporting-Endpoints response header, and then reference these in the report-to parameter when setting the policy.
+
+       You can see this below, where we define the endpoint named coep-endpoint and then reference it in our policy:
+
+         Reporting-Endpoints: coep-endpoint="https://some-example.com/coep"
+         Cross-Origin-Embedder-Policy: require-corp; report-to="coep-endpoint"
+
+       The violation report will then be sent as a JSON object in a POST to the endpoint referenced by coep-endpoint.
+
+       The report object has the same structure as returned from the ReportingObserver callback except for the addition of age and user_agent properties.
+
+         [
+           {
+             "age": 717139,
+             "body": {
+               "blockedURL": "https://another-example.com/some-image.png",
+               "destination": "image",
+               "disposition": "enforce",
+               "type": "corp"
+             },
+             "type": "coep",
+             "url": "https://example.com",
+             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+           }
+         ]
+
+       The same report would be generated if we set Cross-Origin-Embedder-Policy-Report-Only in the same way, except that the disposition would be set to "reporting".
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ReportingObserver
+        * Cross-Origin-Embedder-Policy
+        * Cross-Origin-Embedder-Policy-Report-Only
+        * Reporting-Endpoints
+        * Reporting API
+        * The Reporting API (developer.chrome.com)
+
+Web APIs manual                         from the official documentation

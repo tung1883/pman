@@ -1,0 +1,62 @@
+WEBAPI.BYTELENGTHQUEUINGSTRATEGY-BYTELENGTHQUEUINGSTRATEGY(1) Sandbox manual WEBAPI.BYTELENGTHQUEUINGSTRATEGY-BYTELENGTHQUEUINGSTRATEGY(1)
+
+       NAME
+
+       ByteLengthQueuingStrategy: ByteLengthQueuingStrategy() constructor - The ByteLengthQueuingStrategy()
+
+       BYTELENGTHQUEUINGSTRATEGY: BYTELENGTHQUEUINGSTRATEGY() CONSTRUCTOR
+
+       The ByteLengthQueuingStrategy() constructor creates and returns a ByteLengthQueuingStrategy object instance.
+
+       SYNTAX
+
+         new ByteLengthQueuingStrategy(options)
+
+       PARAMETERS
+
+        * options
+          * : An object with the following property:
+            * highWaterMark
+              * : The total number of bytes that can be contained in the internal queue before backpressure is applied.
+       Unlike CountQueuingStrategy() where highWaterMark specifies a simple count of the number of chunks, with ByteLengthQueuingStrategy(), highWaterMark specifies a number of _bytes_ — specifically, given a stream of chunks, how many bytes worth of those chunks (rather than a count of how many of those chunks) can be contained in the internal queue before backpressure is applied.
+
+       RETURN VALUE
+
+       An instance of the ByteLengthQueuingStrategy object.
+
+       EXCEPTIONS
+
+       None.
+
+       EXAMPLES
+
+         const queuingStrategy = new ByteLengthQueuingStrategy({
+           highWaterMark: 1 * 1024,
+         });
+
+         const readableStream = new ReadableStream(
+           {
+             start(controller) {
+               // …
+             },
+             pull(controller) {
+               // …
+             },
+             cancel(err) {
+               console.log("stream error:", err);
+             },
+           },
+           queuingStrategy,
+         );
+
+         const size = queuingStrategy.size(chunk);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ByteLengthQueuingStrategy interface
+
+Web APIs manual                         from the official documentation

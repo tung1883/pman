@@ -1,0 +1,195 @@
+CSHARP.FUNDAMENTALS-SYSTEM-COMMAND-LINE(1) Sandbox manual CSHARP.FUNDAMENTALS-SYSTEM-COMMAND-LINE(1)
+
+       NAME
+
+       Tutorial: Build a command-line app with System.CommandLine - Learn how to use the System.CommandLine library to build a command-line app with commands, subcommands, options, and arguments in a file-bas
+
+       TUTORIAL: BUILD A COMMAND-LINE APP WITH SYSTEM.COMMANDLINE
+
+       > This article is part of the Fundamentals section, written for developers who know at least one programming language and are learning C#. If you're new to programming, start with Get started. If you need comprehensive library coverage, see the System.CommandLine library documentation.
+       The System.CommandLine library handles command-line parsing, help-text generation, and input validation so you can focus on your app's logic. In this tutorial, you build a task tracker CLI that demonstrates the core concepts: commands, subcommands, options, and arguments.
+
+       In this tutorial, you:
+
+       > * Create a file-based app by using the System.CommandLine package.
+       > * Define options and arguments with typed values.
+       > * Build subcommands and attach options and arguments to them.
+       > * Handle each subcommand with an action.
+       > * Test the app with different command-line inputs.
+
+       PREREQUISITES
+
+        * Install the .NET 10 SDK or later.
+
+       CREATE THE APP
+
+       Start by creating a file-based C# program and adding the System.CommandLine package.
+
+        1. Create a file named TaskCli.cs with the following content:
+
+            #!/usr/bin/env dotnet
+
+       The #! (shebang) line lets you run the file directly on Unix systems. On Windows, run the file with dotnet run TaskCli.cs.
+
+        1. Add the System.CommandLine package directive and the required using statements:
+       > Version 2.0.0 is the latest version at the time of writing. Check the package's NuGet page for the latest version to ensure you have the latest security fixes.
+
+       UNDERSTAND THE COMMAND STRUCTURE
+
+       Before writing any parsing code, consider what the CLI looks like from the user's perspective. The task tracker supports four operations:
+
+         dotnet TaskCli.cs -- add "Write documentation" --priority High --due 2026-04-01
+         dotnet TaskCli.cs -- list --all
+         dotnet TaskCli.cs -- complete 3
+         dotnet TaskCli.cs -- remove 3
+         dotnet TaskCli.cs -- --verbose list
+
+       > The -- after TaskCli.cs in the preceding examples tells dotnet run that all remaining arguments are passed to your app rather than interpreted by the dotnet CLI itself.
+       Each line uses several command-line concepts:
+
+        * Subcommands are verbs that tell the app what to do. The task tracker has four: add, list, complete, and remove. Each subcommand can define its own parameters.
+        * Arguments are positional values that follow a subcommand. In add "Write documentation", the string "Write documentation" is an argument specifying the task description. In complete 3, the number 3 is an argument specifying the task ID.
+        * Options are named values prefixed with --. In add --priority High --due 2026-04-01, both --priority and --due are options with their own values. In list --all, the --all option is a Boolean flag that doesn't need a value.
+        * Global options apply to every subcommand. The --verbose option is defined on the root command with Recursive = true, so it works with any subcommand. In --verbose list, the verbose flag appears before the subcommand, but list --verbose works equally well.
+       In the sections that follow, you build these pieces from the bottom up. First, you define the individual options (like --priority and --all) and arguments (like the task description and ID). Next, you create the four subcommands and attach the relevant options and arguments to each one. Then you wire up an action for each subcommand. The action is the code that runs when the user invokes that command. Finally, you assemble the root command, parse the input, and invoke the matched action.
+
+       For a deeper look at command-line syntax concepts, see Command-line syntax overview.
+
+       DEFINE OPTIONS AND ARGUMENTS
+
+       Options represent named values that users specify with a -- prefix. Arguments represent positional values. Both are strongly typed. System.CommandLine parses the input string into the type you specify.
+
+       The System.CommandLine library uses generic types to enforce type safety. When you write Option, the int between the angle brackets is a type argument. It tells the library what type of value the option holds. The class itself declares a type parameter T (as in Option1), and you supply the concrete type when you create an instance. The library parses the user's input string and converts it to that type automatically. If the user provides --delay abc for an Option, System.CommandLine reports a parse error instead of passing bad data to your code. You'll see this pattern with Option, Option, Option, and Argument1 in the steps that follow. For more information on generics, see Generics.
+
+        1. Define the options. Each Option specifies the value type, the name, and a description. The --priority option uses an enum type, and System.CommandLine automatically validates the input against valid enum values:
+       The Recursive = true setting on --verbose makes the option available on every subcommand. The DefaultValueFactory on --priority provides a default value so users can omit the option.
+
+        1. Define the arguments. Each Argument specifies the value type and a name:
+
+       BUILD COMMANDS AND SUBCOMMANDS
+
+       A Command represents an action that the user can invoke. Add the relevant options and arguments to each command so System.CommandLine knows which parameters belong where.
+
+        1. Create the four subcommands. Each command gets its own combination of options and arguments:
+        1. Assemble the root command. The RootCommand is the entry point for the CLI. Add the global --verbose option and all subcommands:
+       The autogenerated help text shows the root command description when the user runs TaskCli --help.
+
+       HANDLE COMMANDS WITH ACTIONS
+
+       Each subcommand needs an action. An action is a delegate that runs when the user invokes that command. A delegate is a type that represents a reference to a method. Here, you pass a lambda expression (an inline anonymous function defined with =>) as the delegate. Call SetAction to assign each action. The delegate receives a ParseResult that provides access to parsed values through GetValue.
+
+        1. Set the action for the add command. This action introduces string interpolation ($"..." strings that embed expressions in braces), the conditional operator (?:), and a type test pattern (due is DateOnly dueDate) that checks whether a nullable value has a value and assigns it to a new variable in one step:
+        1. Set the action for the list command. LINQ (Language Integrated Query) gives you standard query operators for in-memory collections. In this action, Where* filters the tasks to only the items that match a condition, and ToList* materializes the filtered sequence into a list. The action then uses a foreach loop to iterate over the results, and the conditional operator to pick a status symbol:
+       For more detail, see LINQ.
+
+        1. Set the action for the complete command. This action uses LINQ's FirstOrDefault* to find:
+          * A matching task.
+          * An is null pattern to check whether the task exists.
+          * A with expression to create a new record instance by copying the existing values first, and then applying the properties you set in the with initializer (here, IsComplete = true). Records are immutable by default, so this copy-and-update pattern is how you produce a modified value.
+       Because the action can fail (for example, the task ID doesn't exist), the action returns an integer error code that becomes the app's exit code:
+
+        1. Set the action for the remove command. This action follows the same look-up-and-validate pattern as complete. Use FirstOrDefault to find the task and is null to handle the missing case:
+        1. Parse the command line and invoke the matched action:
+       rootCommand.Parse(args) parses the input into a ParseResult, and .Invoke() runs the action for the matched command. The return value is an exit code (0 for success).
+
+       ADD SUPPORTING TYPES AND DATA HELPERS
+
+       The app needs a few supporting pieces: local functions, an enum, a record, and a serialization context. The following sections introduce each concept, explain why you'd choose it, and show the code. The app uses System.Text.Json to store tasks as JSON (JavaScript Object Notation). File-based apps require type declarations to appear after all top-level statements and local functions.
+
+        1. Add the local functions that load and save tasks. A local function is a method declared inside another function, including inside other local functions. Local functions keep helper logic close to the code that calls it, which improves readability because a reader doesn't have to jump to a separate class or file to understand the flow. Here, LoadTasks and SaveTasks encapsulate the file I/O that multiple command actions share, so the app writes the load/save logic once and reuses it:
+        1. Add the Priority enum and TaskItem record at the end of the file:
+       An enum is a value type that defines a fixed set of named constants backed by an integral type. You could represent priority levels with plain integers (0, 1, 2), but an enum is a better choice for several reasons: the compiler restricts assignments to the defined names, so a typo like Hihg causes a compile-time error instead of a silent bug; the names Low, Medium, and High make code more readable; and System.CommandLine automatically validates user input against the enum members, so you get free input checking.
+
+       A record is a type that the compiler equips with value-based equality and nondestructive mutation. A record is the right fit for TaskItem because task data is plain state with no complex behavior—you compare tasks by their values, not by reference identity. The compiler generates Equals, GetHashCode, ToString, and with expression support from the constructor parameters, so you get correct equality checks, easy debugging output, and immutable updates without writing boilerplate. Because records are immutable by default, you use a with expression to produce a modified copy (as the complete action does) rather than mutating the original, which prevents accidental side effects when different actions read and write the same list.
+
+        1. Add the JSON serialization context for AOT-compatible serialization:
+       This class uses two attributes (metadata annotations placed in square brackets above a declaration). The [[JsonSourceGenerationOptions(WriteIndented = true)]](../../../standard/serialization/system-text-json/source-generation.md) attribute tells the source generator to emit indented JSON for readability. The [[JsonSerializable(typeof(List))]](../../../standard/serialization/system-text-json/source-generation.md) attribute tells the generator which type to create serialization code for. Together, these attributes enable source-generated serialization, which avoids run-time reflection and supports ahead-of-time (AOT) compilation.
+
+       TEST THE APPLICATION
+
+       Run the app with different inputs to exercise each subcommand.
+
+        1. View the autogenerated help:
+
+            dotnet run TaskCli.cs -- --help
+
+            Description:
+              A simple task tracker CLI
+
+            Usage:
+              TaskCli [command] [options]
+
+            Options:
+              --verbose       Show detailed output
+              -?, -h, --help  Show help and usage information
+              --version       Show version information
+
+            Commands:
+              add <description>  Add a new task
+              list               List all tasks
+              complete <id>      Mark a task as complete
+              remove <id>        Remove a task
+
+        1. Add tasks with different options:
+
+            dotnet run TaskCli.cs -- add "Write documentation" --priority High --due 2026-04-01
+            dotnet run TaskCli.cs -- add "Review pull request"
+            dotnet run TaskCli.cs -- add "Fix build errors"
+
+            Added task 1: Write documentation
+            Added task 2: Review pull request
+            Added task 3: Fix build errors
+
+        1. List tasks and use --verbose to show extra detail:
+
+            dotnet run TaskCli.cs -- --verbose list
+
+              [ ] 1: Write documentation
+                   Priority: High
+                   Due: 4/1/2026
+              [ ] 2: Review pull request
+                   Priority: Medium
+              [ ] 3: Fix build errors
+                   Priority: Medium
+
+        1. Complete a task, then verify the list filters completed tasks by default:
+
+            dotnet run TaskCli.cs -- complete 2
+            dotnet run TaskCli.cs -- list
+
+            Completed task 2: Review pull request
+              [ ] 1: Write documentation
+              [ ] 3: Fix build errors
+
+        1. Use --all to include completed tasks:
+
+            dotnet run TaskCli.cs -- list --all
+
+              [ ] 1: Write documentation
+              [✓] 2: Review pull request
+              [ ] 3: Fix build errors
+
+        1. Remove a task:
+
+            dotnet run TaskCli.cs -- remove 3
+
+            Removed task 3: Fix build errors
+
+       CLEAN UP RESOURCES
+
+       The task tracker stores data in a JSON file under your local application data folder. Delete the taskcli-sample folder to remove the sample data:
+
+        * Windows: Delete %LOCALAPPDATA%\taskcli-sample.
+        * macOS: Delete ~/Library/Application Support/taskcli-sample.
+        * Linux: Delete ~/.local/share/taskcli-sample.
+
+       RELATED CONTENT
+
+        * System.CommandLine overview
+        * Tutorial: Get started with System.CommandLine
+        * Command-line syntax overview
+        * System.CommandLine design guidance
+        * Tutorial: Build file-based apps
+        * How to display command-line arguments
+
+C# manual                               from the official documentation

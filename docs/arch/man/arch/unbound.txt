@@ -1,0 +1,505 @@
+ARCH.UNBOUND(1)                  Sandbox manual                  ARCH.UNBOUND(1)
+
+       Unbound is a validating, recursive, and caching DNS resolver. According to Wikipedia:
+
+       Unbound has supplanted the Berkeley Internet Name Domain (BIND) as the default, base-system name server in several open source projects, where it is perceived as smaller, more modern, and more secure for most applications.
+
+       INSTALLATION
+
+       Install the unbound package.
+
+       Additionally, the expat package is required for #DNSSEC validation.
+
+       CONFIGURATION
+
+       A default configuration is already included at /etc/unbound/unbound.conf. The following sections highlight different settings for the configuration file. See unbound.conf(5) for other settings and more details.
+
+       Unless otherwise specified, any options listed in this section are to be placed under the server section in the configuration like so:
+
+         /etc/unbound/unbound.conf
+
+         server:
+           ...
+           setting: value
+           ...
+
+       LOCAL DNS SERVER
+
+       If you want to use unbound as your local DNS server, set your nameserver to the loopback addresses ::1 and 127.0.0.1 in /etc/resolv.conf:
+
+         /etc/resolv.conf
+
+         nameserver ::1
+         nameserver 127.0.0.1
+         options edns0 trust-ad
+
+       Make sure to protect /etc/resolv.conf from modification as described in Domain name resolution#Overwriting of /etc/resolv.conf.
+
+       Tip A simple way to do this is to install openresolv and configure /etc/resolvconf.conf:
+
+         /etc/resolvconf.conf
+
+         name_servers="::1 127.0.0.1"
+         resolv_conf_options="edns0 trust-ad"
+
+       Then run resolvconf -u to generate /etc/resolv.conf.
+
+       See Domain name resolution#Lookup utilities on how to test your settings.
+
+       Check specifically that the server being used is ::1 or 127.0.0.1 after making permanent changes to resolv.conf.
+
+       You can now setup unbound such that it is #Forwarding queries, perhaps all queries, to the DNS servers of your choice.
+
+       ROOT HINTS
+
+       For recursively querying a host that is not cached as an address, the resolver needs to start at the top of the server tree and query the root servers, to know where to go for the top level domain for the address being queried. Unbound comes with default builtin hints. Therefore, if the package is updated regularly, no manual intervention is required. Otherwise, it is good practice to use a root-hints file since the builtin hints may become outdated.
+
+       First point unbound to the root.hints file:
+
+         root-hints: root.hints
+
+       Then, put a root hints file into the unbound configuration directory. The simplest way to do this is to run the command:
+
+         # curl --output /etc/unbound/root.hints https://www.internic.net/domain/named.cache
+
+       When actually using this file, and not the builtin hints, it is a good idea to update root.hints every six months or so in order to make sure the list of root servers is up to date. This can be done manually or by using a systemd timer. See #Roothints systemd timer for an example.
+
+       DNSSEC VALIDATION
+
+       To use DNSSEC validation, the following setting for the server trust anchor should be under server::
+
+         /etc/unbound/unbound.conf
+
+         	trust-anchor-file: "/etc/unbound/trusted-key.key"
+
+       This setting is already enabled in the default configuration file.
+
+       /etc/unbound/trusted-key.key is copied from /etc/trusted-key.key, which is provided by the dnssec-anchors dependency, whose PKGBUILD generates the file with unbound-anchor(8).
+
+       DNSSEC validation will only be done if the DNS server being queried supports it. If general #Forwarding queries have been set to DNS servers that do not support DNSSEC, their answers, whatever they are, should be considered insecure since no DNSSEC validation could be performed.
+
+       Note Including DNSSEC checking significantly increases DNS lookup times for initial lookups before the address is cached.
+
+       TESTING VALIDATION
+
+       To test if DNSSEC is working, after starting unbound.service, do:
+
+         $ unbound-host -vDr test.dnscheck.tools
+
+       The response should be the IP address with the word (secure) next to it.
+
+         $ unbound-host -vDr badsig.test.dnscheck.tools
+
+       Here the response should include (BOGUS (security failure)).
+
+       Note If you use a separate DNS forwarder that does not do DNSSEC, remove -r from the options to get the correct response. Otherwise all rcodes respond as SERVFAIL.
+
+       Additionally you can use drill to test the resolver as follows:
+
+         $ drill badsig.test.dnscheck.tools
+         $ drill test.dnscheck.tools
+
+       The first command should give an rcode of SERVFAIL. The second should give an rcode of NOERROR.
+
+       FORWARDING QUERIES
+
+       If you only want to forward queries to an external DNS server, skip ahead to #Forward all remaining requests.
+
+       ALLOW LOCAL NETWORK TO USE DNS
+
+       USING OPENRESOLV
+
+       If your network manager supports openresolv, you can configure it to provide local DNS servers and search domains to Unbound:
+
+         /etc/resolvconf.conf
+
+         ...
+         private_interfaces="*"
+
+         # Write out unbound configuration file
+         unbound_conf=/etc/unbound/resolvconf.conf
+
+       Run resolvconf -u to generate the file.
+
+       Configure Unbound to read the openresolv's generated file and allow replies with private IP address ranges[1]:
+
+         /etc/unbound/unbound.conf
+
+         include: "/etc/unbound/resolvconf.conf"
+         ...
+         server:
+         ...
+         	private-domain: "intranet"
+         	private-domain: "internal"
+         	private-domain: "private"
+         	private-domain: "corp"
+         	private-domain: "home"
+         	private-domain: "lan"
+
+         	unblock-lan-zones: yes
+         	insecure-lan-zones: yes
+         ...
+
+       Additionally you may want to disable DNSSEC validation for private DNS namespaces (see RFC 6762 Appendix G):
+
+         /etc/unbound/unbound.conf
+
+         ...
+         server:
+         ...
+         	domain-insecure: "intranet"
+         	domain-insecure: "internal"
+         	domain-insecure: "private"
+         	domain-insecure: "corp"
+         	domain-insecure: "home"
+         	domain-insecure: "lan"
+         ...
+
+       EXCLUDE LOCAL SUBNETS FROM ANSWERS
+
+       Will be useful to exclude local networks from DNS answers because it would protect against DNS rebinding attacks. By default this feature is not active but you can add any subnet you want in configuration file:
+
+         private-address: local_subnet/subnet_mask
+
+       You can add all private and link-local subnets by this strings:
+
+         private-address:  10.0.0.0/8
+         private-address:  172.16.0.0/12
+         private-address:  192.168.0.0/16
+         private-address:  169.254.0.0/16
+         private-address:  fd00::/8
+         private-address:  fe80::/10
+
+       Note Blocking subnet 127.0.0.0/8 would affect some application as spam or advertising blocklists. Adding ::ffff:0:0/96 stops IPv4-mapped IPv6 addresses from bypassing the filter.
+
+       Note that Unbound may have adresses from excluded subnets in answers if they belong to domains from private-domain or specified by local-data, so you need to define private-domain how described at #Using openresolv to able query local domains adresses.
+
+       INCLUDE LOCAL DNS SERVER
+
+       To include a local DNS server for both forward and reverse local addresses a set of lines similar to these below is necessary with a forward and reverse lookup (choose the IP address of the server providing DNS for the local network accordingly by changing 10.0.0.1 in the lines below):
+
+         local-zone: "10.in-addr.arpa." transparent
+
+       This line above is important to get the reverse lookup to work correctly.
+
+         forward-zone:
+         name: "mynetwork.com."
+         forward-addr: 10.0.0.1
+
+         forward-zone:
+         name: "10.in-addr.arpa."
+         forward-addr: 10.0.0.1
+
+       Note There is a difference between forward zones and stub zones - stub zones will only work when connected to an authoritative DNS server directly. This would work for lookups from a BIND DNS server if it is providing authoritative DNS - but if you are referring queries to an unbound server in which internal lookups are forwarded on to another DNS server, then defining the referral as a stub zone in the machine here will not work. In that case it is necessary to define a forward zone as above, since forward zones can have daisy chain lookups onward to other DNS servers. i.e. forward zones can refer queries to recursive DNS servers. This distinction is important as you do not get any error messages indicating what the problem is if you use a stub zone inappropriately.
+
+       You can set up the localhost forward and reverse lookups with the following lines:
+
+         local-zone: "localhost." static
+         local-data: "localhost. 10800 IN NS localhost."
+         local-data: "localhost. 10800 IN SOA localhost. nobody.invalid. 1 3600 1200 604800 10800"
+         local-data: "localhost. 10800 IN A 127.0.0.1"
+         local-zone: "127.in-addr.arpa." static
+         local-data: "127.in-addr.arpa. 10800 IN NS localhost."
+         local-data: "127.in-addr.arpa. 10800 IN SOA localhost. nobody.invalid. 2 3600 1200 604800 10800"
+         local-data: "1.0.0.127.in-addr.arpa. 10800 IN PTR localhost."
+
+       FORWARD ALL REMAINING REQUESTS
+
+       USING OPENRESOLV
+
+       If your network manager supports openresolv, you can configure it to provide upstream DNS servers to Unbound.
+
+         /etc/resolvconf.conf
+
+         ...
+         # Write out unbound configuration file
+         unbound_conf=/etc/unbound/resolvconf.conf
+
+       Run resolvconf -u to generate the file.
+
+       Finally configure Unbound to read the openresolv's generated file[2]:
+
+         include: "/etc/unbound/resolvconf.conf"
+
+       MANUALLY SPECIFYING DNS SERVERS
+
+       To use specific servers for default forward zones that are outside of the local machine and outside of the local network add a forward zone with the name . to the configuration file. In this example, all requests are forwarded to Google's DNS servers:
+
+         forward-zone:
+           name: "."
+           forward-addr: 8.8.8.8
+           forward-addr: 8.8.4.4
+
+       Note
+
+        * This example uses Google Public DNS. Replace it with a DNS resolver you trust. See Domain name resolution#Third-party DNS services.
+        * It is highly advised to use an encrypted protocol when connecting to third-party DNS services. See #Forwarding using DNS over TLS.
+
+       FORWARDING USING DNS OVER TLS
+
+       To use DNS over TLS, you will need to enable the tls-system-cert option, allow unbound to forward TLS requests and also specify any number of servers that allow DNS over TLS.
+
+       For each server you will need to specify the connection port using @ and its domain name with #. The domain name is required for TLS authentication and also allows setting stub-zones and using the unbound-control forward control command with domain names. There should not be any spaces in the forward-addr specification.
+
+         /etc/unbound/unbound.conf
+
+         ...
+         server:
+         ...
+         	tls-system-cert: yes
+         ...
+         forward-zone:
+                 name: "."
+                 forward-tls-upstream: yes
+                 forward-addr: 1.1.1.1@853#cloudflare-dns.com
+
+       Note This example uses Cloudflare's public DNS resolver. Replace it with a DNS resolver you trust. See Domain name resolution#Third-party DNS services.
+
+       ACCESS CONTROL
+
+       You can specify the interfaces to answer queries from by IP address. The default, is to listen on localhost.
+
+       To listen on all interfaces, use the following:
+
+         interface: 0.0.0.0
+         interface: ::0
+
+       Warning Unless you specifically want to run an open DNS resolver, do not configure the resolver to listen on public (internet-facing) IP addresses or all IP addresses (0.0.0.0 and ::).
+
+       To control which systems can access the server by IP address, use the access-control option:
+
+         access-control: subnet action
+
+       For example:
+
+         access-control: 192.168.1.0/24 allow
+
+       action can be one of deny (drop message), refuse (polite error reply), allow (recursive ok), or allow_snoop (recursive and nonrecursive ok). By default everything is refused except for localhost.
+
+       USING CACHEDB BACKEND
+
+       Install valkey and ensure that the configuration limits maximum memory usage with least recently used (LRU) eviction policy:
+
+         /etc/valkey/valkey.conf
+
+         ...
+         maxmemory 64M
+         maxmemory-policy allkeys-lru
+         ...
+
+       On unbound side, enable cachedb backend, then configure it to use Valkey:
+
+         /etc/unbound/unbound.conf
+
+         server:
+                 ...
+                 module-config: "validator cachedb iterator"
+                 ...
+
+         cachedb:
+                 backend: "redis"
+                 redis-server-host: 127.0.0.1
+                 redis-server-port: 6379
+                 redis-logical-db: 0
+                 redis-expire-records: yes
+
+       Note redis-expire-records tells unbound to set expiry (not DNS TTL) on keys stored in valkey so that valkey can automatically evict expired keys.
+
+       USAGE
+
+       STARTING UNBOUND
+
+       Start/enable the unbound.service systemd service.
+
+       REMOTELY CONTROL UNBOUND
+
+       unbound ships with the unbound-control utility which enables us to remotely administer the unbound server. It is similar to the pdnsd-ctl command of pdnsd.
+
+       SETTING UP UNBOUND-CONTROL
+
+       Before you can start using it, the following steps need to be performed:
+
+       1) Firstly, you need to run the following command
+
+         # unbound-control-setup
+
+       which will generate a self-signed certificate and private key for the server, as well as the client. These files will be created in the /etc/unbound directory.
+
+       2) After that, edit /etc/unbound/unbound.conf and put the following contents in that. The control-enable: yes option is necessary, the rest can be adjusted as required.
+
+         remote-control:
+             # Enable remote control with unbound-control(8) here.
+             # set up the keys and certificates with unbound-control-setup.
+             control-enable: yes
+
+             # what interfaces are listened to for remote control.
+             # give 0.0.0.0 and ::0 to listen to all interfaces.
+             control-interface: 127.0.0.1
+
+             # port number for remote control operations.
+             control-port: 8953
+
+             # unbound server key file.
+             server-key-file: "/etc/unbound/unbound_server.key"
+
+             # unbound server certificate file.
+             server-cert-file: "/etc/unbound/unbound_server.pem"
+
+             # unbound-control key file.
+             control-key-file: "/etc/unbound/unbound_control.key"
+
+             # unbound-control certificate file.
+             control-cert-file: "/etc/unbound/unbound_control.pem"
+
+       USING UNBOUND-CONTROL
+
+       Some of the commands that can be used with unbound-control are:
+
+        * print statistics without resetting them:
+
+         # unbound-control stats_noreset
+
+        * dump cache to stdout:
+
+         # unbound-control dump_cache
+
+        * flush cache and reload configuration:
+
+         # unbound-control reload
+
+       Please refer to unbound-control(8) for a detailed look at the operations it supports.
+
+       TIPS AND TRICKS
+
+       DOMAIN BLACKLISTING
+
+       To blacklist a domain, use local-zone: "domainname" always_refuse.
+
+       Save the blacklist as a separate file (e.g. /etc/unbound/blacklist.conf) for ease of management and include it from /etc/unbound/unbound.conf. For example:
+
+         /etc/unbound/blacklist.conf
+
+         local-zone: "blacklisted.example" always_refuse
+         local-zone: "anotherblacklisted.example" always_refuse
+
+         /etc/unbound/unbound.conf
+
+         server:
+         ...
+           include: /etc/unbound/blacklist.conf
+
+       Tip
+
+        * In order to return some OK statuses on those hosts, you can change the 127.0.0.1 redirection to a server you control and have that server respond with empty 204 replies, see this page
+        * To convert a hosts file from another source to the unbound format do:
+
+         $ grep '^0\.0\.0\.0' hostsfile | awk '{print "local-zone: \""$2"\" always_refuse"}' > /etc/unbound/blacklist.conf
+
+        * A list of potential sources for the blacklist can be found in OpenWrt's adblock package's README.
+
+       ADDING AN AUTHORITATIVE DNS SERVER
+
+       For users who wish to run both a validating, recursive, caching DNS server as well as an authoritative DNS server on a single machine then it may be useful to refer to the wiki page NSD which gives an example of a configuration for such a system. Having one server for authoritative DNS queries and a separate DNS server for the validating, recursive, caching DNS functions gives increased security over a single DNS server providing all of these functions. Many users have used Bind as a single DNS server, and some help on migration from Bind to the combination of running NSD and Bind is provided in the NSD wiki page.
+
+       WAN FACING DNS
+
+       It is also possible to change the configuration files and interfaces on which the server is listening so that DNS queries from machines outside of the local network can access specific machines within the LAN. This is useful for web and mail servers which are accessible from anywhere, and the same techniques can be employed as has been achieved using bind for many years, in combination with suitable port forwarding on firewall machines to forward incoming requests to the right machine.
+
+       ROOTHINTS SYSTEMD TIMER
+
+       Here is an example systemd service and timer that update root.hints monthly using the method in #Root hints:
+
+         /etc/systemd/system/roothints.service
+
+         [Unit]
+         Description=Update root hints for unbound
+         After=network.target
+
+         [Service]
+         ExecStart=/usr/bin/curl -o /etc/unbound/root.hints https://www.internic.net/domain/named.cache
+
+         /etc/systemd/system/roothints.timer
+
+         [Unit]
+         Description=Run root.hints monthly
+
+         [Timer]
+         OnCalendar=monthly
+         Persistent=true
+
+         [Install]
+         WantedBy=timers.target
+
+       Start/enable the roothints.timer systemd timer.
+
+       KEEPING DNS CACHE ALWAYS UP TO DATE
+
+       unbound supports prefetching where cached DNS entries are automatically updated before they expire to keep the cache always up to date. To quote the unbound.conf(5) man page, turning it on gives about 10 percent more traffic and load on the machine, but popular items do not expire from the cache. This is particularly useful on mobile links with high RTT.
+
+       To enable prefetching, add this under the server section:
+
+         prefetch: yes
+
+       SERVING EXPIRED RECORDS
+
+       In March 2020, RFC 8767 was published that specifies when and how a resolver can serve stale data from its cache. If the data is unable to be authoritatively refreshed when the TTL expires, the record MAY be used as though it is unexpired. Since version 1.6.0, Unbound has the ability to answer with expired records.
+
+       To enable serving expired records, add this under the server section:
+
+         serve-expired: yes
+         serve-expired-ttl: 172800  # between 86400 (1 day) and 259200 (3 days)
+         serve-expired-client-timeout: 1800  # RFC 8767 recommended value
+
+       TROUBLESHOOTING
+
+       ISSUES CONCERNING NUM-THREADS
+
+       unbound.conf(5) § outgoing~2 mentions:
+
+              outgoing-range: <number>
+                      Number of ports to open. This number of file  descriptors  can  be  opened  per thread.
+
+       and some sources suggest that the num-threads parameter should be set to the number of cpu cores. The sample unbound.conf.example file merely has:
+
+                # number of threads to create. 1 disables threading.
+                # num-threads: 1
+
+       However it is not possible to arbitrarily increase num-threads above 1 without causing unbound to start with warnings in the logs about exceeding the number of file descriptors. In reality for most users running on small networks or on a single machine it should be unnecessary to seek performance enhancement by increasing num-threads above 1. If you do wish to do so then refer to official documentation and the following rule of thumb should work:
+
+       Set num-threads equal to the number of CPU cores on the system. E.g. for 4 CPUs with 2 cores each, use 8.
+
+       Set the outgoing-range to as large a value as possible, see the sections in the referred web page above on how to overcome the limit of 1024 in total. This services more clients at a time. With 1 core, try 950. With 2 cores, try 450. With 4 cores try 200. The num-queries-per-thread is best set at half the number of the outgoing-range.
+
+       Because of the limit on outgoing-range thus also limits num-queries-per-thread, it is better to compile with libevent, so that there is no 1024 limit on outgoing-range. If you need to compile this way for a heavy duty DNS server then you will need to compile the programme from source instead of using the unbound package.
+
+       FIRST LOOKUP FAILS AFTER START
+
+       Without a storage backend configured, unbound will start with a completely empty cache on every boot and every service (re)start. With an empty cache the first request will fire of a relatively large amount of queries to upstream/remote DNS servers. That number of requests will quickly hit an unbound quotum. The default unbound 1.22.0 configuration limits the number of upstream queries to 128. Even a future release with a default of 200 will not solve this issue completely.
+
+       The result is that your first DNS lookup will fail, and the second lookup succeeds. With error logging enabled, you will see a message like:
+
+         error: SERVFAIL <1.1.1.1.in-addr.arpa. PTR IN>: all servers for this domain failed, at zone 1.1.1.in-addr.arpa. no server to query no addresses for nameservers}}
+
+       In debug mode the log will show something like:
+
+         debug: request 1.1.1.1.in-addr.arpa. has exceeded the maximum global quota on number of upstream queries 131}}
+
+       Change your unbound.conf and restart unbound, to increase the default quotum to a more relaxed value according to other users experiencing this issue, for example:
+
+         max-global-quota: 300
+
+       TIMEOUT ON (RECURSIVE) LOOKUP
+
+       Even with a 1 Gbit/s FTTH connection, the default unbound configuration might lead to timeouts on recursive lookups. In debug mode, log will show:
+
+         debug: drop reply, it is older than discard-timeout
+
+       In case you want to wait a little longer for an answer then 1.9 seconds, the default time-out, change your unbound.conf:
+
+         discard-timeout: 3800  # in milliseconds
+
+       SEE ALSO
+
+        * Block hosts that contain advertisements
+
+ArchWiki manual                         bundled documentation

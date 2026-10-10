@@ -1,0 +1,45 @@
+SHELLCHECK.SC1064(1)             Sandbox manual             SHELLCHECK.SC1064(1)
+
+       NAME
+
+       Expected a { to open the function definition. - foo() {
+
+       EXPECTED A TO OPEN THE FUNCTION DEFINITION
+
+       EXPECTED A TO OPEN THE FUNCTION DEFINITION
+
+       PROBLEMATIC CODE
+
+         foo() {
+           echo "hello world"
+         }
+         foo()
+
+       CORRECT CODE
+
+         foo() {
+           echo "hello world"
+         }
+         foo
+
+       RATIONALE
+
+       ShellCheck found what appears to be the start of a function definition, but without a function body.
+
+       One common cause is that you are trying to call a function by appending parentheses, e.g. foo() like in C. Bash does not use or allow parentheses after a function name to call it. The function foo should be called using just foo like in the example.
+
+       If you are declaring a function, make sure it looks like the correct code above, and that it does not try to declare any parameters (parameters are instead accessed with $1 and up).
+
+       If you are trying to do something else, look up the syntax for what you are trying to do.
+
+       EXCEPTIONS
+
+       POSIX allows the body of a function to be any compound command, e.g. foo() for i; do :; done. Since this usage is rare, ShellCheck intentionally requires the body to be { ..; } (or ( ..; )):
+
+         foo() {
+           for i; do :; done
+         }
+
+       This additional structure requirement helps improve error messages and suggestions by not parsing down a path that less advanced users wouldn't expect.
+
+ShellCheck manual                       from the official documentation

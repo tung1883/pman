@@ -1,0 +1,61 @@
+WEBAPI.SOURCEBUFFER-UPDATEEND-EVENT(1) Sandbox manual WEBAPI.SOURCEBUFFER-UPDATEEND-EVENT(1)
+
+       NAME
+
+       SourceBuffer: updateend event - windowanddedicated
+
+       SOURCEBUFFER: UPDATEEND EVENT
+
+       window_and_dedicated
+
+       The updateend event of the SourceBuffer interface signals the (not necessarily successful) completion of an appendBuffer() or remove() operation. The updating attribute transitions from true to false. This event is fired after the update, error, or abort events.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("updateend", (event) => { })
+
+         onupdateend = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       HANDLING THE UPDATEEND EVENT AFTER APPENDING DATA
+
+       This example demonstrates how to handle the updateend event. Note that we handle each completion event separately, and only use updateend for finalizing the stream.
+
+         const sourceBuffer = source.addSourceBuffer(mimeCodec);
+         sourceBuffer.addEventListener("abort", () => {
+           downloadStatus.textContent = "Canceled";
+         });
+         sourceBuffer.addEventListener("error", () => {
+           downloadStatus.textContent = "Error occurred during decoding";
+         });
+         sourceBuffer.addEventListener("update", () => {
+           downloadStatus.textContent = "Done";
+         });
+         sourceBuffer.addEventListener("updateend", () => {
+           source.endOfStream();
+         });
+         downloadStatus.textContent = "Downloading...";
+         fetch(assetURL)
+           .then((response) => response.arrayBuffer())
+           .then((data) => {
+             downloadStatus.textContent = "Decoding...";
+             sourceBuffer.appendBuffer(data);
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * SourceBuffer.appendBuffer()
+        * SourceBuffer.remove()
+
+Web APIs manual                         from the official documentation

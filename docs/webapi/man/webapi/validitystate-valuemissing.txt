@@ -1,0 +1,67 @@
+WEBAPI.VALIDITYSTATE-VALUEMISSING(1) Sandbox manual WEBAPI.VALIDITYSTATE-VALUEMISSING(1)
+
+       NAME
+
+       ValidityState: valueMissing property - The read-only valueMissing property of the ValidityState interface indicates if a required control, such as an <input>, <select>, or <textar
+
+       VALIDITYSTATE: VALUEMISSING PROPERTY
+
+       The read-only valueMissing property of the ValidityState interface indicates if a required control, such as an , , or , has an empty value.
+
+       If the required attribute is set, and no is selected or a or user-editable is empty, the valueMissing property will be true. The property is only true if the field is required and has no value; if the field is not required, or if the field is required and has a value, the value is false.
+
+       VALUE
+
+       A boolean that is true if the ValidityState is not set and the required attribute is.
+
+       MISSING REQUIRED INPUT VALUE
+
+       The following example checks the validity of a numeric input element. Constraints have been added using the min attribute which sets a minimum value of 18 for the input, and the required attribute which disallows empty values. If the user enters any value that's not a number greater than 17, the element fails constraint validation, and the styles matching :invalid are applied.
+
+         input:invalid {
+           outline: red solid 3px;
+         }
+
+         body {
+           margin: 0.5rem;
+         }
+         pre {
+           padding: 1rem;
+           height: 2rem;
+           background-color: lightgrey;
+           outline: 1px solid grey;
+         }
+
+         <pre id="log">Validation logged here...</pre>
+         <input type="number" id="age" min="18" required />
+
+         const userInput = document.getElementById("age");
+         const logElement = document.getElementById("log");
+
+         function log(text) {
+           logElement.innerText = text;
+         }
+
+         userInput.addEventListener("input", () => {
+           userInput.reportValidity();
+           if (userInput.validity.valid) {
+             log("Input OK…");
+           } else if (userInput.validity.valueMissing) {
+             log("Required field cannot be empty.");
+           } else {
+             log(`Bad input detected: ${userInput.validationMessage}`);
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ValidityState badInput, valid properties.
+        * Constraint validation
+        * Forms: Data form validation
+        * Regular Expressions
+
+Web APIs manual                         from the official documentation

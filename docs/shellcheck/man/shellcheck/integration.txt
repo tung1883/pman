@@ -1,0 +1,179 @@
+SHELLCHECK.INTEGRATION(1)        Sandbox manual        SHELLCHECK.INTEGRATION(1)
+
+       NAME
+
+       Integrating with ShellCheck - Are you working on an editor linting plugin, a continuous testing tool, a pre-commit hook or similar, and want to use ShellCheck as a part o
+
+       INTEGRATING WITH SHELLCHECK
+
+       Are you working on an editor linting plugin, a continuous testing tool, a pre-commit hook or similar, and want to use ShellCheck as a part of it?
+
+       The easiest way is to just invoke shellcheck, either on a file or on stdin, and process the JSON, XML or GCC-style format it outputs.
+
+       Here is an integration checklist. Each point is described further below:
+
+        1. Pick a machine-parsable output format:
+            * JSON
+            * XML
+            * GCC-style diagnostics
+            * Unified diff
+        2. Decide whether you want to manually specify a shell dialect
+        3. Decide whether you want to follow sourced files that are not specified as input
+        4. Examine shellcheck's exit code
+        5. Allow configuration or pass-through of the environment variable SHELLCHECK_OPTS
+        6. Consider linking to the wiki for more information about individual errors
+
+       MACHINE-PARSABLE OUTPUT
+
+       ShellCheck currently has three machine-parseable output formats
+
+       JSON OUTPUT
+
+       ShellCheck can output a simple JSON format consisting of an object with a list of comments (formatted for clarity):
+
+         $ shellcheck -f json1 myscript myotherscript
+         {
+           "comments": [
+             {
+               "file": "myotherscript",
+               "line": 2,
+               "endLine": 2,
+               "column": 1,
+               "endColumn": 2,
+               "level": "error",
+               "code": 1035,
+               "message": "You need a space after the [ and before the ].",
+               "fix": null
+             },
+             {
+               "file": "myscript",
+               "line": 2,
+               "endLine": 2,
+               "column": 6,
+               "endColumn": 8,
+               "level": "warning",
+               "code": 2039,
+               "message": "In POSIX sh, echo flags are undefined.",
+               "fix": null
+             },
+             {
+               "file": "myscript",
+               "line": 2,
+               "endLine": 2,
+               "column": 9,
+               "endColumn": 11,
+               "level": "info",
+               "code": 2086,
+               "message": "Double quote to prevent globbing and word splitting.",
+               "fix": {
+                 "replacements": [
+                   {
+                     "line": 2,
+                     "endLine": 2,
+                     "precedence": 7,
+                     "insertionPoint": "afterEnd",
+                     "column": 9,
+                     "replacement": "\"",
+                     "endColumn": 9
+                   },
+                   {
+                     "line": 2,
+                     "endLine": 2,
+                     "precedence": 7,
+                     "insertionPoint": "beforeStart",
+                     "column": 11,
+                     "replacement": "\"",
+                     "endColumn": 11
+                   }
+                 ]
+               }
+             }
+           ]
+         }
+
+       In the json1 format, line and column start at 1, and tabs count as 1.
+
+       The legacy format json consists of just the comments array, with a tab stop of 8.
+
+       XML OUTPUT
+
+       ShellCheck can output a CheckStyle compatible XML format:
+
+         $ shellcheck -f checkstyle myscript myotherscript
+         <?xml version='1.0' encoding='UTF-8'?>
+         <checkstyle version='4.3'>
+         <file name='myscript'>
+         <error line='2' column='6' severity='warning' message='In POSIX sh&#44; echo flags are undefined.' source='ShellCheck.SC2039' />
+         <error line='2' column='9' severity='info' message='Double quote to prevent globbing and word splitting.' source='ShellCheck.SC2086' />
+         </file>
+         <file name='myotherscript'>
+         <error line='2' column='2' severity='error' message='You need a space after the &#91; and before the &#93;.' source='ShellCheck.SC1035' />
+         </file>
+         </checkstyle>
+
+       line and column start at 1, and assume a tab size of 8.
+
+       GCC-COMPATIBLE ERROR MESSAGES
+
+       If your tool already contains a parser for GCC-style error messages, you can have ShellCheck output that:
+
+         $ shellcheck -f gcc myscript myotherscript
+         myscript:2:6: warning: In POSIX sh, echo flags are undefined. [SC2039]
+         myscript:2:9: note: Double quote to prevent globbing and word splitting. [SC2086]
+         myotherscript:2:2: error: You need a space after the [ and before the ]. [SC1035]
+
+       line and column start at 1, and assume a tab size of 1 (like gcc itself).
+
+       UNIFIED DIFF
+
+       While ShellCheck's fix suggestions can be found in the json1 format, it's not well-documented or easy to deal with. With -f diff, you can instead get standard unified diff output:
+
+         $ shellcheck -f diff file
+         --- a/file
+         +++ b/file
+         @@ -1,2 +1,2 @@
+          #!/bin/sh
+         -echo $1
+         +echo "$1"
+
+       SPECIFYING A SHELL DIALECT
+
+       If unspecified, ShellCheck will read the shebang, e.g. #!/bin/sh, to determine whether to treat the script as a sh script, or a dash / bash / ksh script. If no shebang is specified, an /undefined/ default will be used.
+
+       Leaving this to ShellCheck is usually the simplest, easiest and best option.
+
+       However, if your tool deals with a lot of files that for any reason have no shebangs, or if it lets the user explicitly set which shell the scripts are intended for, you can specify the dialect with -s, e.g. -s dash or -s bash.
+
+       FOLLOWING INCLUSIONS
+
+       Shell-scripts can include arbitrary files by way of the source and . built-ins. ShellCheck will by default not follow such include statements (unless specified on the command-line), in case a hostile script tries to source /dev/zero to DoS the system, or source ~/.ssh/id_rsa to try to crash with an interesting message.
+
+         $ shellcheck foo
+         In foo line 2:
+         source bar
+         ^-- SC1091: Not following: bar was not specified as input (see shellcheck -x).
+
+       This is useful for remote services like shellcheck.net which accepts arbitrary input from untrusted users, but mostly pointless for e.g. a local editor plugin.
+
+       Pass -x to shellcheck if you'd like it to trust the script and follow all includes. To only follow certain includes, add them as file arguments.
+
+       EXIT CODES
+
+       ShellCheck returns useful exit codes:
+
+        * 0: All files successfully scanned with no issues.
+        * 1: All files successfully scanned with some issues.
+        * 2: Some files could not be processed (e.g. file not found, is a directory, etc).
+        * Other: Bad syntax or options, no point in trying again
+
+       ENVIRONMENT VARIABLES
+
+       ShellCheck will prepend to its command-line any spare-separated arguments found in the environment variable SHELLCHECK_OPTS (if defined). Please allow this variable to be passed through from the environment or configured by the user, as it will allow setting additional options both now and in the future.
+
+       LINKING TO THE WIKI
+
+       ShellCheck's warnings usually fit on a single line and can therefore be terse.
+
+       To provide users with more information, you can construct a wiki link given the error code: https://www.shellcheck.net/wiki/SC2086 for SC2086 about unquoted variables. This currently redirects straight to the GitHub wiki.
+
+ShellCheck manual                       from the official documentation

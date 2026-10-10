@@ -1,0 +1,29 @@
+APACHE.MOD_PROXY_HTTP2(1)        Sandbox manual        APACHE.MOD_PROXY_HTTP2(1)
+
+       BASIC EXAMPLES
+
+       The examples below demonstrate how to configure HTTP/2 for backend connections for a reverse proxy.
+
+       HTTP/2 (TLS)
+
+         ProxyPass "/app" "h2://app.example.com"
+         ProxyPassReverse "/app" "https://app.example.com"
+
+       HTTP/2 (CLEARTEXT)
+
+         ProxyPass "/app" "h2c://app.example.com"
+         ProxyPassReverse "/app" "http://app.example.com"
+
+       The schemes to configure above in ProxyPassReverse for reverse proxying h2 (or h2c) protocols are the usual https (resp. http) as expected/used by the user agent.
+
+       REQUEST NOTES
+
+       mod_proxy_http creates the following request notes for logging using the %{VARNAME}n format in LogFormat or ErrorLogFormat:
+
+         proxy-source-port
+       The local port used for the connection to the backend server.
+
+         proxy-status
+       The HTTP/2 status received from the backend server.
+
+Apache HTTP Server manual               bundled documentation

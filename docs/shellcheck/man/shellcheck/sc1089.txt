@@ -1,0 +1,44 @@
+SHELLCHECK.SC1089(1)             Sandbox manual             SHELLCHECK.SC1089(1)
+
+       NAME
+
+       Parsing stopped here. Is this keyword correctly matched up? - if true
+
+       PARSING STOPPED HERE. IS THIS KEYWORD CORRECTLY MATCHED UP
+
+       PARSING STOPPED HERE. IS THIS KEYWORD CORRECTLY MATCHED UP
+
+       PROBLEMATIC CODE
+
+         if true
+         then
+           echo hello
+         fi
+         fi
+
+       CORRECT CODE
+
+         if true
+         then
+           echo hello
+         fi
+
+       RATIONALE
+
+       This error is typically seen when there are too many fi, done or esacs, or when there's a do or then without a corresponding while, for or if. This is often due to deleting a loop or conditional statement but not its terminator.
+
+       In some cases, it can even be caused by bad quoting:
+
+         var="foo
+         if [[ $var = "bar ]
+         then
+           echo true
+         fi
+
+       In this case, the if ends up inside the double quotes, leaving the then dangling.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

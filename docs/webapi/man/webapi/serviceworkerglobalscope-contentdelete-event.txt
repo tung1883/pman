@@ -1,0 +1,60 @@
+WEBAPI.SERVICEWORKERGLOBALSCOPE-CONTENTDELETE-EVENT(1) Sandbox manual WEBAPI.SERVICEWORKERGLOBALSCOPE-CONTENTDELETE-EVENT(1)
+
+       NAME
+
+       ServiceWorkerGlobalScope: contentdelete event - service
+
+       SERVICEWORKERGLOBALSCOPE: CONTENTDELETE EVENT
+
+       service
+
+       The contentdelete event of the ServiceWorkerGlobalScope interface is fired when an item is removed from the indexed content via the user agent.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("contentdelete", (event) => { })
+
+         oncontentdelete = (event) => { }
+
+       EVENT TYPE
+
+       A ContentIndexEvent. Inherits from Event.
+
+       ContentIndexEvent
+
+       EXAMPLES
+
+       The following example uses a contentdelete event handler to remove cached content related to the deleted index item.
+
+         self.addEventListener("contentdelete", (event) => {
+           const deletion = caches
+             .open("cache-name")
+             .then((cache) =>
+               Promise.all([
+                 cache.delete(`/icon/${event.id}`),
+                 cache.delete(`/content/${event.id}`),
+               ]),
+             );
+           event.waitUntil(deletion);
+         });
+
+       You can also set up the event handler using the oncontentdelete property:
+
+         self.oncontentdelete = (event) => {
+           // …
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Content index API
+        * An introductory article on the Content Index API
+
+Web APIs manual                         from the official documentation

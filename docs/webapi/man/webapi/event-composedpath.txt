@@ -1,0 +1,83 @@
+WEBAPI.EVENT-COMPOSEDPATH(1)     Sandbox manual     WEBAPI.EVENT-COMPOSEDPATH(1)
+
+       NAME
+
+       Event: composedPath() method - The composedPath() method of the Event
+
+       EVENT: COMPOSEDPATH() METHOD
+
+       The composedPath() method of the Event interface returns the event's path which is an array of the objects on which listeners will be invoked. This does not include nodes in shadow trees if the shadow root was created with its ShadowRoot.mode closed.
+
+       SYNTAX
+
+         composedPath()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       An array of EventTarget objects representing the objects on which an event listener will be invoked.
+
+       EXAMPLES
+
+       In the following example, which you can try out at https://mdn.github.io/web-components-examples/composed-composed-path/, we define two trivial custom elements, and , both of which take the contents of their text attribute and insert them into the element's shadow DOM as the text content of a element. The only difference between the two is that their shadow roots are attached with their modes set to open and closed respectively.
+
+         customElements.define(
+           "open-shadow",
+           class extends HTMLElement {
+             constructor() {
+               super();
+
+               const pElem = document.createElement("p");
+               pElem.textContent = this.getAttribute("text");
+
+               const shadowRoot = this.attachShadow({ mode: "open" });
+               shadowRoot.appendChild(pElem);
+             }
+           },
+         );
+
+         customElements.define(
+           "closed-shadow",
+           class extends HTMLElement {
+             constructor() {
+               super();
+
+               const pElem = document.createElement("p");
+               pElem.textContent = this.getAttribute("text");
+
+               const shadowRoot = this.attachShadow({ mode: "closed" });
+               shadowRoot.appendChild(pElem);
+             }
+           },
+         );
+
+       We then insert one of each element into our page:
+
+         <open-shadow text="I have an open shadow root"></open-shadow>
+         <closed-shadow text="I have a closed shadow root"></closed-shadow>
+
+       Then include a click event listener on the element:
+
+         document.querySelector("html").addEventListener("click", (e) => {
+           console.log(e.composed);
+           console.log(e.composedPath());
+         });
+
+       When you click on the element and then the element, you'll notice two things. First, the composed property returns true because the click event is always able to propagate across shadow boundaries. Second, you'll notice a difference in the value of composedPath for the two elements. The element's composed path is this:
+
+         Array [ p, ShadowRoot, open-shadow, body, html, HTMLDocument https://mdn.github.io/web-components-examples/composed-composed-path/, Window ]
+
+       Whereas the element's composed path is a follows:
+
+         Array [ closed-shadow, body, html, HTMLDocument https://mdn.github.io/web-components-examples/composed-composed-path/, Window ]
+
+       In the second case, the event listeners only propagate as far as the element itself, but not to the nodes inside the shadow boundary.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

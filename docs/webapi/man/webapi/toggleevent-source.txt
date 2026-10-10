@@ -1,0 +1,94 @@
+WEBAPI.TOGGLEEVENT-SOURCE(1)     Sandbox manual     WEBAPI.TOGGLEEVENT-SOURCE(1)
+
+       NAME
+
+       ToggleEvent: source property - The source read-only property of the ToggleEvent interface is an Element object instance representing the HTML popover control element that 
+
+       TOGGLEEVENT: SOURCE PROPERTY
+
+       The source read-only property of the ToggleEvent interface is an Element object instance representing the HTML popover control element that initiated the toggle.
+
+       VALUE
+
+       An Element object instance, or null if the popover was not activated by a control element.
+
+       DESCRIPTION
+
+       A element can be set as a popover control by specifying the id of the popover element in its commandfor or popovertarget attribute (if the button is specified using , only the popovertarget attribute works).
+
+       When the toggle event fires on the popover, the ToggleEvent event object's source property will then contain a reference to the popover control button that initiated the toggle. This is useful for running different code in response to the toggle event depending on which popover control initiated it (see an example).
+
+       Before the source property existed, you had to manually reimplement the command attribute functionality in JavaScript to provide a similar identifier and then monitor it to identify which button invoked the popover. In addition, there was a danger of such JavaScript tasks blocking the showing or hiding of the popover. The toggle event is asynchronous, and therefore avoids this problem.
+
+       If the popover element is not activated by a control button — for example, if it's controlled using a JavaScript method such as HTMLElement.togglePopover() — the source property is null.
+
+       EXAMPLES
+
+       BASIC SOURCE USAGE
+
+       This demo shows how to use the source property to perform different actions based on the control button that closes the popover element.
+
+       HTML
+
+       Our markup contains a , a , and a element. The is designated as an auto popover, and the button is designated as a control for showing the popover using the commandfor and command attributes. The popover contains a heading asking the user if they would like a cookie, and two buttons labeled Yes and No allowing them to select an answer. Each of these buttons is designated as a control for hiding the popover.
+
+         <button commandfor="popover" command="show-popover">
+           Select cookie preference
+         </button>
+         <p id="output"></p>
+         <div id="popover" popover="auto">
+           <h3>Would you like a cookie?</h3>
+           <button id="yes" commandfor="popover" command="hide-popover">Yes</button>
+           <button id="no" commandfor="popover" command="hide-popover">No</button>
+         </div>
+
+         html {
+           font-family: sans-serif;
+         }
+
+         [popover] {
+           border: 1px solid grey;
+           padding: 10px 20px;
+           border-radius: 5px;
+         }
+
+         [popover] h3 {
+           margin: 0 0 10px;
+         }
+
+       JAVASCRIPT
+
+       In our script, we start off by grabbing references to the "yes" and "no" buttons, the popover, and the output .
+
+         const yesBtn = document.getElementById("yes");
+         const noBtn = document.getElementById("no");
+         const popover = document.getElementById("popover");
+         const output = document.getElementById("output");
+
+       We've added feature detection for the HTML command attribute and the source property. If either is not supported in the browser, we print a message in the element. If both are supported, we add a toggle event listener to the popover element. When the event fires, the code checks if the "yes" or "no" button was used to toggle (hide) the popover element; an appropriate message is printed to the output in each case.
+
+         if (yesBtn.command === undefined) {
+           output.textContent = "Popover control command attribute not supported.";
+         } else {
+           popover.addEventListener("toggle", (event) => {
+             if (event.source === undefined) {
+               output.textContent = "ToggleEvent.source not supported.";
+             } else if (event.source === yesBtn) {
+               output.textContent = "Cookie set!";
+             } else if (event.source === noBtn) {
+               output.textContent = "No cookie set.";
+             }
+           });
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Popover API
+
+Web APIs manual                         from the official documentation

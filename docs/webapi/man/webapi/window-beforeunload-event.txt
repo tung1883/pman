@@ -1,0 +1,104 @@
+WEBAPI.WINDOW-BEFOREUNLOAD-EVENT(1) Sandbox manual WEBAPI.WINDOW-BEFOREUNLOAD-EVENT(1)
+
+       NAME
+
+       Window: beforeunload event - The beforeunload event is fired when the current window, contained document, and associated resources are about to be unloaded. The document
+
+       WINDOW: BEFOREUNLOAD EVENT
+
+       The beforeunload event is fired when the current window, contained document, and associated resources are about to be unloaded. The document is still visible and the event is still cancelable at this point.
+
+       The main use case for this event is to trigger a browser-generated confirmation dialog that asks users to confirm if they _really_ want to leave the page when they try to close or reload it, or navigate somewhere else. This is intended to help prevent loss of unsaved data.
+
+       The dialog can be triggered in the following ways:
+
+        * Calling the event object's preventDefault() method.
+        * Setting the event object's returnValue property to a non-empty string value or any other truthy value.
+        * Returning any truthy value from the event handler function, e.g., return "string". Note that this only works when the function is attached via the onbeforeunload property, not the addEventListener() method. This behavior is consistent across modern versions of Firefox, Safari, and Chrome.
+       The last two mechanisms are legacy features; best practice is to trigger the dialog by invoking preventDefault() on the event object, while also setting returnValue to support legacy cases.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("beforeunload", (event) => { })
+
+         onbeforeunload = (event) => { }
+
+       EVENT TYPE
+
+       A BeforeUnloadEvent. Inherits from Event.
+
+       USAGE NOTES
+
+       To trigger the dialog being shown when the user closes or navigates the tab, a beforeunload event handler function should call preventDefault() on the event object. You should note that modern implementations:
+
+        * Require sticky activation for the dialog to be displayed. In other words, the browser will only show the dialog box if the frame or any embedded frame receives a user gesture or user interaction. If the user has never interacted with the page, then there is no user data to save, so no legitimate use case for the dialog.
+        * Only show a generic browser-specified string in the displayed dialog. This cannot be controlled by the webpage code.
+       The beforeunload event suffers from some problems:
+
+        * It is not reliably fired, especially on mobile platforms. For example, the beforeunload event is not fired at all in the following scenario:
+          1. A mobile user visits your page.
+          2. The user then switches to a different app.
+          3. Later, the user closes the browser from the app manager.
+       > It is recommended to use the visibilitychange event as a more reliable signal for automatic app state saving that gets around problems like the above. See Don't lose user and app state, use Page Visibility for more details.
+        * In Firefox, beforeunload is not compatible with the back/forward cache (bfcache): that is, Firefox will not place pages in the bfcache if they have beforeunload listeners, and this is bad for performance.
+       It is therefore recommended that developers listen for beforeunload only when users have unsaved changes so that the dialog mentioned above can be used to warn them about impending data loss, and remove the listener again when it is not needed. Listening for beforeunload sparingly can minimize the effect on performance.
+
+       EVENT HANDLER ALIASES
+
+       In addition to the Window interface, the event handler property onbeforeunload is also available on the following targets:
+
+        * HTMLBodyElement
+        * HTMLFrameSetElement
+        * SVGSVGElement
+
+       EXAMPLES
+
+       In the following example we have an HTML text to represent some data that could be changed and require saving:
+
+         <form>
+           <input type="text" name="name" id="name" />
+         </form>
+
+       Our JavaScript attaches an input event listener to the element that listens for changes in the inputted value. When the value is updated to a non-empty value, a beforeunload event listener is attached to the Window object.
+
+       If the value becomes an empty string again (i.e., the value is deleted), the beforeunload event listener is removed again — as mentioned above in the Usage notes, the listener should be removed when there is no unsaved data to warn about.
+
+       The beforeunload event handler function invokes event.preventDefault() to trigger the warning dialog when the user closes or navigates the tab. We have also included event.returnValue = true in the handler function so that any browsers that don't support the event.preventDefault() mechanism will still run the demo correctly.
+
+         const beforeUnloadHandler = (event) => {
+           // Recommended
+           event.preventDefault();
+
+           // Included for legacy support, e.g. Chrome/Edge < 119
+           event.returnValue = true;
+         };
+
+         const nameInput = document.querySelector("#name");
+
+         nameInput.addEventListener("input", (event) => {
+           if (event.target.value !== "") {
+             window.addEventListener("beforeunload", beforeUnloadHandler);
+           } else {
+             window.removeEventListener("beforeunload", beforeUnloadHandler);
+           }
+         });
+
+       When the value is non-empty, if you try to close, navigate, or reload the page the browser displays the warning dialog. Try it out:
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * BeforeUnloadEvent interface
+        * Related events:
+          * DOMContentLoaded
+          * readystatechange
+          * load
+          * unload
+        * Page Lifecycle API provides more useful guidance on handling page lifecycle behavior in your web apps.
+
+Web APIs manual                         from the official documentation

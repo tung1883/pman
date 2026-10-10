@@ -1,0 +1,35 @@
+WEBAPI.SVGANIMATEDSTRING-BASEVAL(1) Sandbox manual WEBAPI.SVGANIMATEDSTRING-BASEVAL(1)
+
+       NAME
+
+       SVGAnimatedString: baseVal property - > [!WARNING]
+
+       SVGANIMATEDSTRING: BASEVAL PROPERTY
+
+       > The baseVal property can be used to set the non-animated value of a reflected attribute.
+       > In the case of SVGScriptElement.href.baseVal this property represents the URL of an external script loaded into the SVG script element.
+       > APIs like this are known as injection sinks, and are potentially a vector for cross-site scripting (XSS) attacks.
+       > You can mitigate this risk by having a Content Security Policy (CSP) that restricts the locations from which scripts can be loaded, and by always assigning TrustedScriptURL objects instead of strings, and enforcing trusted types.
+       > See Security considerations in SVGScriptElement.href for more information.
+       The baseVal property of the SVGAnimatedString interface gets or sets the base value of the given attribute.
+
+       This is the value of the reflected attribute before any animations are applied.
+
+       VALUE
+
+       Getting the property returns a string that represents the non-animated value of the reflected attribute, if it has been set. If the reflected attribute is not specified but has an alternative deprecated version that has been set, then its value will be returned instead. If neither reflected attribute is set, then the property will return an initial value for the reflected attribute if one exists, and otherwise the empty string ("").
+
+       The property must be set to a TrustedScriptURL if the reflected attribute's element is an SVGScriptElement and Trusted Types are enforced by a CSP. For all other cases, the value can be a string (or an object that can be resolved to a string). The property sets the value of the reflected attribute if it is defined, but will set the alternative deprecated version of the reflected attribute if it is defined and the reflected attribute is not.
+
+       Note that TrustedScriptURL or any other trusted type can be set for baseVal on any element, because the trusted types resolve to strings. However TrustedScriptURL _must_ be used for SVGScriptElement.href.baseVal when trusted types are enforced.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the reflected attribute's element is SVGScriptElement, and the property is set to a string when Trusted Types are enforced by a CSP, and no default policy is defined.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

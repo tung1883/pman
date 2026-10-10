@@ -1,0 +1,58 @@
+APACHE.MOD_PROXY_EXPRESS(1)      Sandbox manual      APACHE.MOD_PROXY_EXPRESS(1)
+
+       PROXYEXPRESSDBMFILE DIRECTIVE
+
+         Description: | Pathname to DBM file.
+         Syntax: | ProxyExpressDBMFile pathname
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_proxy_express
+       The ProxyExpressDBMFile directive points to the location of the Express map DBM file. This file serves to map the incoming server name, obtained from the Host: header, to a backend URL.
+
+       NOTE
+
+       The file is constructed from a plain text file format using the httxt2dbm utility.
+
+       PROXYEXPRESS MAP FILE
+
+       ##  ##express-map.txt:  ##    www1.example.com http://192.168.211.2:8080  www2.example.com http://192.168.211.12:8088  www3.example.com http://192.168.212.10
+
+       CREATE DBM FILE
+
+       httxt2dbm -i express-map.txt -o emap
+
+       CONFIGURATION
+
+         ProxyExpressEnable on
+         ProxyExpressDBMFile emap
+
+       PROXYEXPRESSDBMTYPE DIRECTIVE
+
+         Description: | DBM type of file.
+         Syntax: | ProxyExpressDBMType type
+         Default: | ProxyExpressDBMType default
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_proxy_express
+       The ProxyExpressDBMType directive controls the DBM type expected by the module. The default is the default DBM type created with  httxt2dbm.
+
+       Possible values are (not all may be available at run time):
+
+         Value | Description
+         db | Berkeley DB files
+         gdbm | GDBM files
+         ndbm | NDBM files
+         sdbm | SDBM files (always available)
+         default | default DBM type
+
+       PROXYEXPRESSENABLE DIRECTIVE
+
+         Description: | Enable the module functionality.
+         Syntax: | ProxyExpressEnable on|off
+         Default: | ProxyExpressEnable off
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_proxy_express
+       The ProxyExpressEnable directive controls whether the module will be active.
+
+Apache HTTP Server manual               bundled documentation

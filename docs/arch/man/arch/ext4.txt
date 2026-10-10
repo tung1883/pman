@@ -1,0 +1,346 @@
+ARCH.EXT4(1)                     Sandbox manual                     ARCH.EXT4(1)
+
+       From Ext4 - Linux Kernel Newbies:
+
+       Ext4 is the evolution of the most used Linux filesystem, Ext3. In many ways, Ext4 is a deeper improvement over Ext3 than Ext3 was over Ext2. Ext3 was mostly about adding journaling to Ext2, but Ext4 modifies important data structures of the filesystem such as the ones destined to store the file data. The result is a filesystem with an improved design, better performance, reliability, and features.
+
+       CREATE A NEW EXT4 FILESYSTEM
+
+       Install e2fsprogs.
+
+       To format a partition do:
+
+         # mkfs.ext4 /dev/partition
+
+       See mke2fs(8) for more options.
+
+       Tip To view/configure default mke2fs options, edit /etc/mke2fs.conf.
+
+       BYTES-PER-INODE RATIO
+
+       From mke2fs(8):
+
+       mke2fs creates an inode for every bytes-per-inode bytes of space on the disk. The larger the bytes-per-inode ratio, the fewer inodes will be created.
+
+       Creating a new file, directory, symlink etc. requires at least one free inode. If the inode count is too low, no file can be created on the filesystem even though there is still space left on it.
+
+       Because it is not possible to change either the bytes-per-inode ratio or the inode count after the filesystem is created, mkfs.ext4 uses by default a rather low ratio of one inode every 16384 bytes (16 KiB) to avoid this situation.
+
+       However, for partitions with size in the hundreds or thousands of GB and average file size in the megabyte range, this usually results in a much too large inode number because the number of files created never reaches the number of inodes.
+
+       This results in a waste of disk space, because all those unused inodes each take up 256 bytes on the filesystem (this is also set in /etc/mke2fs.conf but should not be changed). 256 * several millions = quite a few gigabytes wasted in unused inodes.
+
+       This situation can be evaluated by comparing the Use% and IUse% figures provided by df and df -i:
+
+         $ df -h /home
+
+         Filesystem              Size    Used   Avail  Use%   Mounted on
+         /dev/mapper/lvm-home    115G    56G    59G    49%    /home
+
+         $ df -hi /home
+
+         Filesystem              Inodes  IUsed  IFree  IUse%  Mounted on
+         /dev/mapper/lvm-home    1.8M    1.1K   1.8M   1%     /home
+
+       To specify a different bytes-per-inode ratio, use the -T usage-type option which hints at the expected usage of the filesystem using types defined in /etc/mke2fs.conf. Among those types are the bigger largefile and largefile4 which offer more relevant ratios of one inode every 1 MiB and 4 MiB respectively. It can be used as such:
+
+         # mkfs.ext4 -T largefile /dev/device
+
+       The bytes-per-inode ratio can also be set directly via the -i option: e.g. use -i 2097152 for a 2 MiB ratio and -i 6291456 for a 6 MiB ratio.
+
+       Tip Conversely, if setting up a partition dedicated to host millions of small files like emails or newsgroup items, use smaller usage-type values such as news (one inode for every 4096 bytes) or small (same plus smaller inode and block sizes).
+
+       Warning If making heavy use of symbolic links, make sure to keep the inode count high enough with a low bytes-per-inode ratio, because while not taking more space every new symbolic link consumes one new inode and therefore the filesystem may run out of them quickly.
+
+       RESERVED BLOCKS
+
+       By default, 5% of the filesystem blocks will be reserved for the super-user, to avoid fragmentation and "allow root-owned daemons to continue to function correctly after non-privileged processes are prevented from writing to the filesystem" (from mke2fs(8)).
+
+       For modern high-capacity disks, this is higher than necessary if the partition is used as a long-term archive or not crucial to system operations (like /home). See this email for the opinion of ext4 developer Ted Ts'o on reserved blocks and this superuser answer for general background on this topic.
+
+       It is generally safe to reduce the percentage of reserved blocks to free up disk space when the partition is either:
+
+        * Very large (for example > 50G)
+        * Used as long-term archive, i.e., where files will not be deleted and created very often
+       The -m option of ext4-related utilities allows to specify the percentage of reserved blocks.
+
+       To totally prevent reserving blocks upon filesystem creation, use:
+
+         # mkfs.ext4 -m 0 /dev/device
+
+       To change it to 1% afterwards, use:
+
+         # tune2fs -m 1 /dev/device
+
+       To set the number of reserved block space to an absolute size in gigabytes, use -r:
+
+         # tune2fs -r $((ngigs * 1024**3 / blocksize)) /dev/device
+
+       blocksize is the block size of the filesystem in bytes. This is almost always 4096; check to be sure:
+
+         # tune2fs -l /dev/device | grep 'Block size:'
+
+         Block size:               4096
+
+       The $(()) syntax is for math expansion. This syntax works in bash and zsh, but it will not work in fish. For fish, this is the syntax:
+
+         # tune2fs -r (math 'ngigs * 1024^3 / blocksize') /dev/device
+
+       These commands can be applied to currently-mounted filesystems and changes will take effect immediately. Use findmnt(8) to find the device name:
+
+         # tune2fs -m 1 "$(findmnt -no SOURCE /the/mount/point)"
+
+       To query the current number of reserved blocks:
+
+         # tune2fs -l /dev/mapper/proxima-root | grep 'Reserved block count:'
+
+         Reserved block count:     2975334
+
+       This is the number of blocks, so this has to be multiplied by the filesystem's block size to get the number of bytes or gigabytes: 2975334 * 4096 / 1024**3 = 11.34 GiB.
+
+       MIGRATING FROM EXT2/EXT3 TO EXT4
+
+       MOUNTING EXT2/EXT3 PARTITIONS AS EXT4 WITHOUT CONVERTING
+
+       RATIONALE
+
+       A compromise between fully converting to ext4 and simply remaining with ext2/ext3 is to mount the partitions as ext4.
+
+       Pros:
+
+        * Compatibility (the filesystem can continue to be mounted as ext3) – This allows users to still read the filesystem from other operating systems without ext4 support (e.g. Windows with ext2/ext3 drivers)
+        * Improved performance (though not as much as a fully-converted ext4 partition).[1] [2]
+       Cons:
+
+        * Fewer features of ext4 are used (only those that do not change the disk format such as multiblock allocation and delayed allocation)
+       Note Except for the relative novelty of ext4 (which can be seen as a risk), there is no major drawback to this technique.
+
+       PROCEDURE
+
+        * Edit /etc/fstab and change the 'type' from ext2/ext3 to ext4 for any partitions to mount as ext4.
+        * Re-mount the affected partitions.
+
+       CONVERTING EXT2/EXT3 PARTITIONS TO EXT4
+
+       RATIONALE
+
+       To experience the benefits of ext4, an irreversible conversion process must be completed.
+
+       Pros:
+
+        * Improved performance and new features.[3] [4]
+       Cons:
+
+        * Partitions that contain mostly static files, such as a /boot partition, may not benefit from the new features. Also, adding a journal (which is implied by moving a ext2 partition to ext3/4) always incurs performance overhead.
+        * Irreversible (ext4 partitions cannot be 'downgraded' to ext2/ext3. It is, however, backwards compatible until extent and other unique options are enabled)
+
+       PROCEDURE
+
+       These instructions were adapted from Kernel documentation and a BBS thread.
+
+       Warning
+
+        * If converting the system's root filesystem, ensure that the 'fallback' initramfs is available at reboot. Alternatively, add ext4 according to Mkinitcpio#MODULES and regenerate the initramfs before starting.
+        * If converting a separate /boot partition, ensure the boot loader supports booting from ext4.
+       In the following steps /dev/sdxX denotes the path to the partition to be converted, such as /dev/sda1.
+
+        * Back up all data on any ext3 partitions that are to be converted to ext4. A useful package, especially for root partitions, is clonezilla.
+        * Edit /etc/fstab and change the 'type' from ext3 to ext4 for any partitions that are to be converted to ext4.
+        * Boot the live medium (if necessary). The conversion process with e2fsprogs must be done when the drive is not mounted. If converting a root partition, the simplest way to achieve this is to boot from some other live medium.
+        * Ensure the partition is not mounted
+        * If converting an ext2 partition, the first conversion step is to add a journal by running tune2fs -j /dev/sdxX as root; making it a ext3 partition.
+        * Run tune2fs -O extent,uninit_bg,dir_index /dev/sdxX as root. This command converts the ext3 filesystem to ext4 (irreversibly).
+        * Run fsck -f /dev/sdxX as root.
+          * This step is necessary, otherwise the filesystem will be unreadable. This fsck run is needed to return the filesystem to a consistent state. It will find checksum errors in the group descriptors - this is expected. The -f option asks fsck to force checking even if the file system seems clean. The -p option may be used on top to "automatically repair" (otherwise, the user will be asked for input for each error).
+        * Recommended: mount the partition and run e4defrag -c -v /dev/sdxX as root.
+          * Even though the filesystem is now converted to ext4, all files that have been written before the conversion do not yet take advantage of the extent option of ext4, which will improve large file performance and reduce fragmentation and filesystem check time. In order to fully take advantage of ext4, all files would have to be rewritten on disk. Use e4defrag to take care of this problem.
+        * Reboot
+
+       IMPROVING PERFORMANCE
+
+       DISABLING ACCESS TIME UPDATE
+
+       The ext4 file system records information about when a file was last accessed and there is a cost associated with recording it. See fstab#atime options for the noatime and related options.
+
+       INCREASING COMMIT INTERVAL
+
+       The sync interval for data and metadata can be increased by providing a higher time delay to the commit option.
+
+       The default 5 sec means that if the power is lost, one will lose as much as the latest 5 seconds of work. It forces a full sync of all data/journal to physical media every 5 seconds. The filesystem will not be damaged though, thanks to the journaling. The following fstab illustrates the use of commit:
+
+         /etc/fstab
+
+         /dev/sda5    /    ext4    defaults,commit=60    0    1
+
+       TURNING BARRIERS OFF
+
+       Warning Disabling barriers for disks without battery-backed cache is not recommended and can lead to severe file system corruption and data loss.
+
+       Ext4 enables write barriers by default. It ensures that file system metadata is correctly written and ordered on disk, even when write caches lose power. This goes with a performance cost especially for applications that use fsync heavily or create and delete many small files. For disks that have a write cache that is battery-backed in one way or another, disabling barriers may safely improve performance.
+
+       To turn barriers off, add the option barrier=0 to the desired filesystem. For example:
+
+         /etc/fstab
+
+         /dev/sda5    /    ext4    defaults,barrier=0    0    1
+
+       DISABLING JOURNALING
+
+       Warning Using a filesystem without journaling can result in data loss in case of sudden dismount like power failure or kernel lockup.
+
+       Disabling the journal with ext4 can be done with the following command on an unmounted disk:
+
+         # tune2fs -O "^has_journal" /dev/sdXn
+
+       USE THE JOURNAL TO OPTIMIZE PERFORMANCE
+
+       The Fast commits for ext4 article introduction summarizes succinctly why and how the mount options data=journal or data=writeback speed up overall ext4 performance, compared to the default data=ordered operation mode. In addition, the journaling itself can be sped up by adding the journal_async_commit mount option.
+
+       Note The journal_async_commit mount option does not work with the default mount option data=ordered, therefore explicitly mount ext4_device with a different mode; see ext4(5) § data=.
+
+       A further option is to to use a newer journal format, see #Enabling fast_commit.
+
+       EXTERNAL JOURNAL DEVICE
+
+       If using the non-default data= options, a dedicated device for the journal may also speed up file operations in some cases. For example, when a relatively slow device is used for the data itself and another (faster but smaller) device for the journal. To set up a separate journal device:
+
+         # mke2fs -O journal_dev /dev/journal_device
+
+       To assign journal_device as the journal of ext4_device, use:
+
+         # tune2fs -J device=/dev/journal_device /dev/ext4_device
+
+       Replace tune2fs with mkfs.ext4 if wanting to make a new filesystem on ext4_device.
+
+       Add the journal_device as a dependency of the ext4_device using the x-systemd.requires mount option in /etc/fstab:
+
+         /etc/fstab
+
+         /dev/ext4_device    /    ext4    defaults,x-systemd.requires=/dev/journal_device    0    1
+
+       This prevents issues if journal_device needs any setup (e.g. it is encrypted).
+
+       Note Both the UUID and the devnum of the journal device are saved to the ext4 filesystem. When loading the journal device, only the devnum is used, causing issues as the devnum changes when disks are rearranged. Linux will refuse to mount the filesystem if the devnum points to the wrong device, but the below workarounds may still be helpful:
+
+       Ignore the saved devnum and force loading of the journal by path using the journal_path mount option:
+
+         /etc/fstab
+
+         /dev/ext4_device    /    ext4    defaults,x-systemd.requires=/dev/journal_device,journal_path=/dev/journal_device    0    1
+
+       e2fsck will look up the journal device using the UUID and fix the saved devnum if it goes out of sync. However, it will consider this as corruption and trigger an unnecessary full filesystem scan [5]. This can be disabled in e2fsck's config file:
+
+         /etc/e2fsck.conf
+
+         [problems]
+         # PR_0_EXTERNAL_JOURNAL_HINT: Superblock hint for external superblock should be xxxx
+         0x000033 = {
+             # Tell e2fsck that if this problem is encountered, it can be fixed but should
+             # not be considered corruption, the filesystem should still be marked clean.
+             not_a_fix = true
+         }
+
+       TIPS AND TRICKS
+
+       USING FILE-BASED ENCRYPTION
+
+       Since Linux 4.1, ext4 natively supports file encryption, see the fscrypt article. Encryption is applied at the directory level, and different directories can use different encryption keys. This is different from both dm-crypt, which is block-device level encryption, and from eCryptfs, which is a stacked cryptographic filesystem.
+
+       ENABLING METADATA CHECKSUMS IN EXISTING FILESYSTEMS
+
+       When a filesystem has been created with e2fsprogs 1.43 (2016) or later, metadata checksums are enabled by default. Existing filesystems may be converted to enable metadata checksum support.
+
+       To read more about metadata checksums, see the ext4 wiki.
+
+       Tip Use dumpe2fs to check the features that are enabled on the filesystem:
+
+         # dumpe2fs -h /dev/path/to/disk
+
+       Note The filesystem must not be mounted.
+
+       First the partition needs to be checked and optimized using e2fsck:
+
+         # e2fsck -Df /dev/path/to/disk
+
+       Convert the filesystem to 64-bit:
+
+         # resize2fs -b /dev/path/to/disk
+
+       Finally enable checksums support:
+
+         # tune2fs -O metadata_csum /dev/path/to/disk
+
+       To verify:
+
+         # dumpe2fs -h /dev/path/to/disk | grep features:
+
+         Filesystem features:      has_journal ext_attr resize_inode dir_index filetype extent 64bit flex_bg sparse_super large_file huge_file dir_nlink extra_isize metadata_csum
+
+       MAINTENANCE WHEN USING LVM
+
+       The e2scrub tool checks metadata of the ext4 filesystem, if it is used in LVM logical volumes. The volume group must have 256MiB unallocated space for this check, because the tool creates a snapshot to check. As noted by the e2scrub(8) manual the tool does not repair errors, but report them and marks the filesystem to require an e2fsck (see e2fsck(8)) run prior to the next mount.
+
+       The check can be automated, for example by enabling the packaged e2scrub_all.timer unit.
+
+       If the minimum 256MiB unallocated space is missing, see LVM#Resizing the logical volume and file system in one go.
+
+       ENABLING FAST_COMMIT
+
+       The ext4 "fast commits" feature introduces a new, lighter-weight journaling method. It is expected to significantly increase the performance of the ext4 filesystem,[6]
+
+       To enable the feature on a new filesystem, include fast_commit in the -O file system options argument.
+
+       To enable the feature on an existing file system, run:
+
+         # tune2fs -O fast_commit /dev/drivepartition
+
+       To query the current configuration:
+
+         # tune2fs -l /dev/drivepartition | grep features
+
+       To disable the feature on an existing file system, run:
+
+         # tune2fs -O '^fast_commit' /dev/drivepartition
+
+       Warning Enabling this feature can cause system corruption in case of a powercut, see this BBS thread.
+
+       ENABLING CASE-INSENSITIVE MODE
+
+       Warning
+
+        * If the casefold feature has been turned on, it can not be reliably turned off again (due to a potential bug in tune2fs). Be aware of the limitations below before enabling it!
+        * GRUB does not currently support ext4's casefold feature; see GRUB bug #56897. Enabling it for file systems GRUB needs to read will render the system unbootable with an unhelpful unknown filesystem error, even if no directory is actually using the feature.
+        * The casefold feature is incompatible with overlayfs, which can prevent container software like Docker or Podman from working on that filesystem. Advanced systemd features like systemd-sysext(8) extension images might also become unavailable.
+       ext4 can be used in case-insensitive mode, which can increase the performance of applications and games running in Wine. This feature does not affect the entire file system, only directories that have the case-insensitive attribute enabled.
+
+       First, enable the feature in the file system:
+
+         # tune2fs -O casefold /dev/path/to/disk
+
+       Enable the case-insensitive attribute in any directory:
+
+         $ chattr +F /mnt/partition/case-insensitive-directory
+
+       Note that the directory must be empty, and moving subdirectories from elsewhere will not cause them to inherit the attribute, so plan ahead accordingly.
+
+       RESIZE FILESYSTEM
+
+       The resize2fs(8) program can resize ext2, ext3, or ext4 file systems. It can be used to enlarge or shrink an unmounted file system located on device. To resize an ext4 filesystem to a specific size:
+
+         # resize2fs /dev/partition size
+
+       If size parameter is not specified, it will default to the size of the partition.
+
+       Make sure to prepare the required partition size beforehand (in case of inflating) with your favorite partitioning tool.
+
+       SEE ALSO
+
+        * Ext4 kernel documentation
+        * Official ext4 wiki (archived)
+        * Ext4 Encryption LWN article
+        * Kernel commits for ext4 encryption [7] [8]
+        * e2fsprogs Changelog
+        * Ext4 Metadata Checksums
+        * Ext4 fast commits
+
+ArchWiki manual                         bundled documentation

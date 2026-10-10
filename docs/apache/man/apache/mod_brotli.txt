@@ -1,0 +1,205 @@
+APACHE.MOD_BROTLI(1)             Sandbox manual             APACHE.MOD_BROTLI(1)
+
+       SAMPLE CONFIGURATIONS
+
+       COMPRESSION AND TLS
+
+       Some web applications are vulnerable to an information disclosure attack when a TLS connection carries compressed data. For more information, review the details of the "BREACH" family of attacks.
+
+       This is a simple configuration that compresses common text-based content types.
+
+       COMPRESS ONLY A FEW TYPES
+
+         AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css text/javascript application/javascript
+
+       ENABLING COMPRESSION
+
+       COMPRESSION AND TLS
+
+       Some web applications are vulnerable to an information disclosure attack when a TLS connection carries compressed data. For more information, review the details of the "BREACH" family of attacks.
+
+       OUTPUT COMPRESSION
+
+       Compression is implemented by the BROTLI_COMPRESS filter. The following directive will enable compression for documents in the container where it is placed:
+
+         SetOutputFilter BROTLI_COMPRESS
+         SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png)$ no-brotli
+
+       If you want to restrict the compression to particular MIME types in general, you may use the AddOutputFilterByType directive. Here is an example of enabling compression only for the html files of the httpd documentation:
+
+         <Directory "/your-server-root/manual">
+             AddOutputFilterByType BROTLI_COMPRESS text/html
+         </Directory>
+
+       NOTE
+
+       The BROTLI_COMPRESS filter is always inserted after RESOURCE filters like PHP or SSI. It never touches internal subrequests.
+
+       NOTE
+
+       There is an environment variable no-brotli, set via SetEnv, which will disable brotli compression for a particular request, even if it is supported by the client.
+
+       DEALING WITH PROXY SERVERS
+
+       The mod_brotli module sends a Vary: Accept-Encoding HTTP response header to alert proxies that a cached response should be sent only to clients that send the appropriate Accept-Encoding request header. This prevents compressed content from being sent to a client that will not understand it.
+
+       If you use some special exclusions dependent on, for example, the User-Agent header, you must manually configure an addition to the Vary header to alert proxies of the additional restrictions. For example, in a typical configuration where the addition of the BROTLI_COMPRESS filter depends on the User-Agent, you should add:
+
+         Header append Vary User-Agent
+
+       If your decision about compression depends on other information than request headers (e.g. HTTP version), you have to set the Vary header to the value *. This prevents compliant proxies from caching entirely.
+
+       EXAMPLE
+
+         Header set Vary *
+
+       SERVING PRE-COMPRESSED CONTENT
+
+       Since mod_brotli re-compresses content each time a request is made, some performance benefit can be derived by pre-compressing the content and telling mod_brotli to serve them without re-compressing them. This may be accomplished using a configuration like the following:
+
+         <IfModule mod_headers.c>
+             # Serve brotli compressed CSS files if they exist
+             # and the client accepts brotli.
+             RewriteEngine On
+             RewriteCond "%{HTTP:Accept-encoding}" "br"
+             RewriteCond "%{LA-U:REQUEST_FILENAME}.br" "-s"
+             RewriteRule "^(.*)\.css"              "$1.css.br" [QSA]
+
+             # Serve brotli compressed JS files if they exist
+             # and the client accepts brotli.
+             RewriteCond "%{HTTP:Accept-encoding}" "br"
+             RewriteCond "%{LA-U:REQUEST_FILENAME}.br" "-s"
+             RewriteRule "^(.*)\.js"               "$1.js.br" [QSA]
+
+             # Serve correct content types, and prevent double compression.
+             RewriteRule "\.css\.br$" "-" [T=text/css,E=no-brotli:1,E=no-gzip:1]
+             RewriteRule "\.js\.br$"  "-" [T=text/javascript,E=no-brotli:1,E=no-gzip:1]
+
+             <FilesMatch "(\.js\.br|\.css\.br)$">
+               # Serve correct encoding type.
+               Header append Content-Encoding br
+
+               # Force proxies to cache brotli &
+               # non-brotli css/js files separately.
+               Header append Vary Accept-Encoding
+             </FilesMatch>
+         </IfModule>
+
+       BROTLIALTERETAG DIRECTIVE
+
+         Description: | How the outgoing ETag header should be modified during compression
+         Syntax: | BrotliAlterETag AddSuffix|NoChange|Remove
+         Default: | BrotliAlterETag AddSuffix
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_brotli
+       The BrotliAlterETag directive specifies how the ETag header should be altered when a response is compressed.
+
+         AddSuffix
+       Append the compression method onto the end of the ETag, causing compressed and uncompressed representations to have unique ETags. In another dynamic compression module, mod_deflate, this has been the default since 2.4.0. This setting prevents serving "HTTP Not Modified" (304) responses to conditional requests for compressed content.
+
+         NoChange
+       Don't change the ETag on a compressed response. In another dynamic compression module, mod_deflate, this has been the default prior to 2.4.0. This setting does not satisfy the HTTP/1.1 property that all representations of the same resource have unique ETags.
+
+         Remove
+       Remove the ETag header from compressed responses. This prevents some conditional requests from being possible, but avoids the shortcomings of the preceding options.
+
+       BROTLICOMPRESSIONMAXINPUTBLOCK DIRECTIVE
+
+         Description: | Maximum input block size
+         Syntax: | BrotliCompressionMaxInputBlock value
+         Default: | (automatic)
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_brotli
+       The BrotliCompressionMaxInputBlock directive specifies the maximum input block size as a power of two, between 16 and 24 (representing blocks of 2^value bytes, i.e., 64 KB to 16 MB). Larger block sizes can improve compression but require more memory. When not set, the block size is automatically selected based on the quality setting.
+
+       EXPLICIT 1 MB INPUT BLOCKS
+
+         # 2^20 = 1 MB blocks
+         BrotliCompressionMaxInputBlock 20
+
+       BROTLICOMPRESSIONQUALITY DIRECTIVE
+
+         Description: | Compression quality
+         Syntax: | BrotliCompressionQuality value
+         Default: | BrotliCompressionQuality 5
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_brotli
+       The BrotliCompressionQuality directive specifies the compression quality (a value between 0 and 11). Higher values result in better but slower compression. The default of 5 is a reasonable balance for dynamic content.
+
+       FAST COMPRESSION FOR DYNAMIC CONTENT
+
+         # Quality 4 is roughly equivalent to gzip level 6
+         BrotliCompressionQuality 4
+
+       MAXIMUM COMPRESSION FOR STATIC ASSETS
+
+         # Best ratio but very slow — only suitable with caching
+         BrotliCompressionQuality 11
+
+       BROTLICOMPRESSIONWINDOW DIRECTIVE
+
+         Description: | Brotli sliding compression window size
+         Syntax: | BrotliCompressionWindow value
+         Default: | BrotliCompressionWindow 18
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_brotli
+       The BrotliCompressionWindow directive specifies the brotli sliding compression window size (a value between 10 and 24, representing a window of 2^value bytes). For example, 18 (the default) gives a 256 KB window, while 24 gives 16 MB. Larger window sizes can improve compression quality, but require more memory per connection.
+
+       MODERATE WINDOW FOR BALANCED MEMORY USE
+
+         # 1 MB window (2^20 bytes)
+         BrotliCompressionWindow 20
+
+       MAXIMUM WINDOW FOR BEST COMPRESSION
+
+         # 16 MB window (2^24 bytes) — requires significant memory per connection
+         BrotliCompressionWindow 24
+
+       BROTLIFILTERNOTE DIRECTIVE
+
+         Description: | Places the compression ratio in a note for logging
+         Syntax: | BrotliFilterNote [type] notename
+         Default: | None
+         Context: | server config, virtual host
+         Status: | Extension
+         Module: | mod_brotli
+       The BrotliFilterNote directive specifies that a note about compression ratios should be attached to the request. The name of the note is the value specified for the directive. You can use that note for statistical purposes by adding the value to your access log.
+
+       EXAMPLE
+
+         BrotliFilterNote ratio
+
+         LogFormat '"%r" %b (%{ratio}n) "%{User-agent}i"' brotli
+         CustomLog "logs/brotli_log" brotli
+
+       If you want to extract more accurate values from your logs, you can use the type argument to specify the type of data left as a note for logging. type can be one of:
+
+         Input
+       Store the byte count of the filter's input stream in the note.
+
+         Output
+       Store the byte count of the filter's output stream in the note.
+
+         Ratio
+       Store the compression ratio (output/input * 100) in the note. This is the default, if the type argument is omitted.
+
+       Thus you may log it this way:
+
+       ACCURATE LOGGING
+
+         BrotliFilterNote Input instream
+         BrotliFilterNote Output outstream
+         BrotliFilterNote Ratio ratio
+
+         LogFormat '"%r" %{outstream}n/%{instream}n (%{ratio}n%%)' brotli
+         CustomLog "logs/brotli_log" brotli
+
+       SEE ALSO
+
+        * mod_log_config
+
+Apache HTTP Server manual               bundled documentation

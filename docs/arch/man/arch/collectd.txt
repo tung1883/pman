@@ -1,0 +1,60 @@
+ARCH.COLLECTD(1)                 Sandbox manual                 ARCH.COLLECTD(1)
+
+       Collectd is a daemon for collecting, storing and exporting system and application performance metrics periodically. It has many built-in plugins from which it can gather metrics.
+
+       It can export to various formats and can send notifications/emails at certain thresholds.
+
+       INSTALLATION
+
+       A collectdAUR package can be installed from the AUR. This package is configured to build with many common plugins.
+
+       CONFIGURATION
+
+       The default configuration can be found at /etc/collectd.conf.
+
+       A plugin can be enabled with LoadPlugin.
+
+       For instance to enable the mysql plugin just uncomment:
+
+         #LoadPlugin mysql
+
+       For more info see collect.conf(5).
+
+       Warning LoadPlugin lines in the default config starting with ## are for plugins which are not built. They can not be enabled.
+
+       CREATING GRAPHS
+
+       Collectd has no built-in frontend. It does support many output formats and many front-ends are built specifically with collectd in mind.
+
+       See this list of front-ends.
+
+       Collectd's collected data can be found in /var/lib/collectd/<hostname>.
+
+       CONTRIB SCRIPTS
+
+       Collectd also has a contrib folder in its repository. This contains various contributed scripts. Many of these are meant for use with cgi.
+
+       For instance install and run collect2html.pl to generate an html webpage with a graph for each collected metric.
+
+       RRDTOOL
+
+       The default output format of collectd is rrd. This data can be graphed using rrdtool.
+
+       To graph the last hour of memory usage:
+
+         rrdtool graph output.png \
+                         --start end-1h \
+                         --end now \
+                         --title "Memory Usage - Last Hour" \
+                         --width 600 \
+                         --height 200 \
+                         DEF:avg=/var/lib/collectd/localhost/memory/memory-used.rrd:value:AVERAGE \
+                         LINE1:avg#FF0000:"Memory Used"
+
+       SEE ALSO
+
+        * Official homepage
+        * Official documentation
+        * Official Github Wiki
+
+ArchWiki manual                         bundled documentation

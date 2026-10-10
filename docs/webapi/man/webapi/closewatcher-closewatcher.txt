@@ -1,0 +1,46 @@
+WEBAPI.CLOSEWATCHER-CLOSEWATCHER(1) Sandbox manual WEBAPI.CLOSEWATCHER-CLOSEWATCHER(1)
+
+       NAME
+
+       CloseWatcher: CloseWatcher() constructor - The CloseWatcher() constructor creates a new CloseWatcher object.
+
+       CLOSEWATCHER: CLOSEWATCHER() CONSTRUCTOR
+
+       The CloseWatcher() constructor creates a new CloseWatcher object.
+
+       You can create CloseWatcher instances without user activation, and this can be useful to implement cases like session inactivity timeout dialogs. However, if you create more than one CloseWatcher without user activation, then the newly-created one will be grouped together with the last one, so a single close request will close them both. This means that it is important to call destroy(), close(), and requestClose() properly.
+
+       SYNTAX
+
+         new CloseWatcher()
+         new CloseWatcher(options)
+
+       PARAMETERS
+
+        * options (optional)
+          * : An object that has the following properties:
+            * signal
+              * : An AbortSignal. If this is provided, then the watcher can be destroyed (as if by calling CloseWatcher.destroy()) by calling AbortController.abort() on the corresponding AbortController.
+
+       RETURN VALUE
+
+       A new CloseWatcher object.
+
+       EXAMPLES
+
+       CREATING NEW CLOSEWATCHER INSTANCES
+
+       Create a new CloseWatcher.
+
+         const watcher = new CloseWatcher();
+
+       Create a new CloseWatcher with an AbortSignal that controls destroying the watcher.
+
+         const controller = new AbortController();
+         const signalWatcher = new CloseWatcher({ signal: controller.signal });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

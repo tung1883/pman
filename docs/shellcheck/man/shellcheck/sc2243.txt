@@ -1,0 +1,58 @@
+SHELLCHECK.SC2243(1)             Sandbox manual             SHELLCHECK.SC2243(1)
+
+       NAME
+
+       Prefer explicit -n to check for output (or run command without [/[[ to check for success) - This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for mor
+
+       PREFER EXPLICIT -N TO CHECK FOR OUTPUT (OR RUN COMMAND WITHOUT / TO CH
+
+       PREFER EXPLICIT -N TO CHECK FOR OUTPUT (OR RUN COMMAND WITHOUT / TO CH
+
+       OPTIONAL - AVOID-NULLARY-CONDITIONS
+
+       This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for more details. In short, you have to enable it with the long name instead of the "SC" code like you would with a normal rule:
+
+       SHELLCHECKRC
+
+         enable=avoid-nullary-conditions # SC2243
+
+       PROBLEMATIC CODE
+
+         if [ "$(mycommand --myflags)" ]
+         then
+           echo "True"
+         fi
+
+       CORRECT CODE
+
+         # Check that the command outputs something on stdout
+         if [ -n "$(mycommand --myflags)" ]
+         then
+           echo "The command had output on stdout"
+         fi
+
+         # Check instead that the command succeeded (exit code = 0)
+         if mycommand --myflags
+         then
+           echo "The command reported success"
+         fi
+
+       (if the command instead outputs "0" or "false", see [[SC2244]] for integer and "boolean" comparisons)
+
+       RATIONALE
+
+       [ "$(mycommand)" ] is equivalent to [ -n "$(mycommand)" ] and checks whether the command's output on stdout was non-empty.
+
+       Users more familiar with other languages are often surprised to learn that it is nothing like e.g. if (myfunction()), since it does not care about what the command/function returns.
+
+       Using an explicit -n helps clarify that this is purely a string operation. And of course, if the intention was to check whether the command ran successfully, now would be a good time to fix it as in the alternate example.
+
+       EXCEPTIONS
+
+       If you are familiar with the semantics of [, you can [[ignore]] this suggestion with no ill effects.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

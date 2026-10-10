@@ -1,0 +1,69 @@
+WEBAPI.CSSTRANSFORMVALUE-TOMATRIX(1) Sandbox manual WEBAPI.CSSTRANSFORMVALUE-TOMATRIX(1)
+
+       NAME
+
+       CSSTransformValue: toMatrix() method - The toMatrix() method of the CSSTransformValue interface returns a DOMMatrix object.
+
+       CSSTRANSFORMVALUE: TOMATRIX() METHOD
+
+       The toMatrix() method of the CSSTransformValue interface returns a DOMMatrix object.
+
+       The returned matrix is the product of the matrices of each CSSTransformComponent in the CSSTransformValue, computed by calling CSSTransformComponent.toMatrix() on each component in turn and multiplying the results together, in order.
+
+       SYNTAX
+
+         toMatrix()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A DOMMatrix object.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Raised if any lengths involved in generating the matrix are not compatible units with px (such as relative lengths or percentages).
+
+       EXAMPLES
+
+       CONVERTING A TRANSFORM TO A MATRIX
+
+         const transform = new CSSTransformValue([
+           new CSSTranslate(CSS.px(10), CSS.px(20)),
+           new CSSScale(2, 3),
+         ]);
+
+         const matrix = transform.toMatrix();
+         console.log(matrix.a, matrix.d); // 2 3
+         console.log(matrix.e, matrix.f); // 10 20
+
+       HANDLING INCOMPATIBLE UNITS
+
+       toMatrix() throws if a component's length can't be resolved to pixels, such as a percentage:
+
+         const transform = new CSSTransformValue([
+           new CSSTranslate(CSS.percent(50), CSS.px(20)),
+         ]);
+
+         try {
+           transform.toMatrix();
+         } catch (e) {
+           console.log(e); // TypeError
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * CSSTransformValue()
+        * CSSTransformComponent.toMatrix()
+        * CSSTransformValue.is2D
+        * Using the CSS Typed OM
+        * CSS Typed Object Model API
+
+Web APIs manual                         from the official documentation

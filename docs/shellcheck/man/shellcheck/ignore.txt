@@ -1,0 +1,78 @@
+SHELLCHECK.IGNORE(1)             Sandbox manual             SHELLCHECK.IGNORE(1)
+
+       NAME
+
+       Ignoring errors - To ignore a ShellCheck error, you can do one of three things:
+
+       IGNORING ERRORS
+
+       IGNORING ERRORS
+
+       To ignore a ShellCheck error, you can do one of three things:
+
+       IGNORING ONE SPECIFIC INSTANCE IN A FILE
+
+       Use a [[directive]] to disable a certain instance:
+
+         hexToAscii() {
+           # shellcheck disable=SC2059
+           printf "\x$1"
+         }
+
+       You can pass multiple errors to [[directive]]:
+
+         hash=$(echo ${hash})    # trim spaces
+
+        * NB: As noted in bug report 3448 directives only apply to the first of a concatenated series, e.g., in command1; command2; command3, only command1 is affected by a # shellcheck disable=SC#### directive.
+
+       IGNORING ERRORS IN ONE SPECIFIC RUN
+
+       Use a -e flag to disable a specific error when running shellcheck:
+
+         $ shellcheck -e SC2059 myscript
+
+       IGNORING ONE OR MORE TYPES OF ERRORS FOREVER
+
+       As of v0.7.0 you can create a file .shellcheckrc in your home directory (or your project's base directory), and add disable directives to it:
+
+         # ~/.shellcheckrc
+         disable=SC2059,SC2034 # Disable individual error codes
+         disable=SC1090-SC1100 # Disable a range of error codes
+
+       In earlier versions, you can set the environment variable SHELLCHECK_OPTS in your .bashrc, /etc/profile or equivalent:
+
+         export SHELLCHECK_OPTS="-e SC2059 -e SC2034 -e SC1090"
+
+       IGNORING ONE OR MORE TYPES OF ERROR WITH SHELLCHECK IN DOCKER
+
+       Pass it to Docker directly:
+
+         docker run -e SHELLCHECK_OPTS="-e SC2059 -e SC2034 -e SC1090" -v "$PWD:/mnt" koalaman/shellcheck myscript
+
+       Optionally you can set the SHELLCHECK_OPTS variable in shell:
+
+         export SHELLCHECK_OPTS="-e SC2059 -e SC2034 -e SC1090"
+
+       and then pass it to Docker:
+
+         docker run -e SHELLCHECK_OPTS -v "$PWD:/mnt" koalaman/shellcheck myscript
+
+       IGNORING ALL INSTANCES IN A FILE (0.4.4+)
+
+       Add a [[directive]] at the top of the file:
+
+         #!/bin/sh
+         # shellcheck disable=SC2059
+
+       Note that the [[directive]] must be on the first line after the shebang with versions before 0.4.6. As of 0.4.6 comments and whitespace are allowed before file-wide directives.
+
+       IGNORING ALL ERRORS IN A FILE (0.8+)
+
+       Add a [[directive]] at the top of the file:
+
+         #!/bin/sh
+         # shellcheck disable=all
+
+       Note that the [[directive]] must be on the first non-commented/non-whitespace line after the shebang with versions after 0.4.6.
+
+ShellCheck manual                       from the official documentation

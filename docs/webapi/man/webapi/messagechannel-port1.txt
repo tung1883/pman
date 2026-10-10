@@ -1,0 +1,44 @@
+WEBAPI.MESSAGECHANNEL-PORT1(1)   Sandbox manual   WEBAPI.MESSAGECHANNEL-PORT1(1)
+
+       NAME
+
+       MessageChannel: port1 property - The port1 read-only property of the
+
+       MESSAGECHANNEL: PORT1 PROPERTY
+
+       The port1 read-only property of the MessageChannel interface returns the first port of the message channel — the port attached to the context that originated the channel.
+
+       VALUE
+
+       A MessagePort object, the first port of the channel, that is the port attached to the context that originated the channel.
+
+       EXAMPLES
+
+       In the following code block, you can see a new channel being created using the MessageChannel() constructor. When the has loaded, we pass port2 to the using MessagePort.postMessage along with a message. The handleMessage handler then responds to a message being sent back from the (using onmessage), putting it into a paragraph. The handleMessage method is associated to the port1 to listen when the message arrives.
+
+         const channel = new MessageChannel();
+         const para = document.querySelector("p");
+
+         const ifr = document.querySelector("iframe");
+         const otherWindow = ifr.contentWindow;
+
+         ifr.addEventListener("load", iframeLoaded);
+
+         function iframeLoaded() {
+           otherWindow.postMessage("Hello from the main page!", "*", [channel.port2]);
+         }
+
+         channel.port1.onmessage = handleMessage;
+         function handleMessage(e) {
+           para.innerHTML = e.data;
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using channel messaging
+
+Web APIs manual                         from the official documentation

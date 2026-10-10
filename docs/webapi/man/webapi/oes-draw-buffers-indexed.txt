@@ -1,0 +1,88 @@
+WEBAPI.OES-DRAW-BUFFERS-INDEXED(1) Sandbox manual WEBAPI.OES-DRAW-BUFFERS-INDEXED(1)
+
+       NAME
+
+       OES_draw_buffers_indexed - The OESdrawbuffersindexed extension is part of the WebGL API and enables the use of different blend options when writing to multiple color b
+
+       OES_DRAW_BUFFERS_INDEXED
+
+       The OES_draw_buffers_indexed extension is part of the WebGL API and enables the use of different blend options when writing to multiple color buffers simultaneously.
+
+       WebGL extensions are available using the WebGLRenderingContext.getExtension() method. For more information, see also Using Extensions in the WebGL tutorial.
+
+       > This extension is only available to WebGL2 contexts.
+
+       INSTANCE METHODS
+
+        * OES_draw_buffers_indexed.blendEquationiOES()
+          * : Sets both the RGB and alpha blend equations for a particular draw buffer.
+        * OES_draw_buffers_indexed.blendEquationSeparateiOES()
+          * : Sets the RGB and alpha blend equations separately for a particular draw buffer.
+        * OES_draw_buffers_indexed.blendFunciOES()
+          * : Defines which function is used when blending pixels for a particular draw buffer.
+        * OES_draw_buffers_indexed.blendFuncSeparateiOES()
+          * : Defines which function is used when blending pixels for RGB and alpha components separately for a particular draw buffer.
+        * OES_draw_buffers_indexed.colorMaskiOES()
+          * : Sets which color components to enable or to disable when drawing or rendering for a particular draw buffer.
+        * OES_draw_buffers_indexed.disableiOES()
+          * : Disables blending for a particular draw buffer.
+        * OES_draw_buffers_indexed.enableiOES()
+          * : Enables blending for a particular draw buffer.
+
+       EXAMPLES
+
+       USING THE OES_DRAW_BUFFERS_INDEXED EXTENSION
+
+       Enable the extension with a call to WebGLRenderingContext.getExtension().
+
+         const ext = gl.getExtension("OES_draw_buffers_indexed");
+
+       You can now enable blending, set blending equation, blending function, and color mask for a particular draw buffer.
+
+         // For gl.DRAW_BUFFER0
+         ext.enableiOES(gl.BLEND, 0);
+         ext.blendEquationiOES(0, gl.FUNC_ADD);
+         ext.blendFunciOES(0, gl.ONE, gl.ONE);
+         ext.colorMaskiOES(0, 1, 0, 0, 0);
+
+         // For gl.DRAW_BUFFER1
+         ext.enableiOES(gl.BLEND, 1);
+         ext.blendEquationSeparateiOES(1, gl.FUNC_ADD, gl.FUNC_SUBTRACT);
+         ext.blendFuncSeparateiOES(
+           1,
+           gl.SRC_ALPHA,
+           gl.ONE_MINUS_SRC_ALPHA,
+           gl.ZERO,
+           gl.ZERO,
+         );
+         ext.colorMaskiOES(1, 0, 1, 0, 0);
+
+       To retrieve settings for a particular draw buffer, use WebGL2RenderingContext.getIndexedParameter().
+
+         // For gl.DRAW_BUFFER0
+         gl.getIndexedParameter(gl.BLEND_EQUATION_RGB, 0);
+         gl.getIndexedParameter(gl.BLEND_EQUATION_ALPHA, 0);
+         gl.getIndexedParameter(gl.BLEND_SRC_RGB, 0);
+         gl.getIndexedParameter(gl.BLEND_SRC_ALPHA, 0);
+         gl.getIndexedParameter(gl.BLEND_DST_RGB, 0);
+         gl.getIndexedParameter(gl.BLEND_DST_ALPHA, 0);
+         gl.getIndexedParameter(gl.COLOR_WRITEMASK, 0);
+
+         // For gl.DRAW_BUFFER1
+         gl.getIndexedParameter(gl.BLEND_EQUATION_RGB, 1);
+         gl.getIndexedParameter(gl.BLEND_EQUATION_ALPHA, 1);
+         gl.getIndexedParameter(gl.BLEND_SRC_RGB, 1);
+         gl.getIndexedParameter(gl.BLEND_SRC_ALPHA, 1);
+         gl.getIndexedParameter(gl.BLEND_DST_RGB, 1);
+         gl.getIndexedParameter(gl.BLEND_DST_ALPHA, 1);
+         gl.getIndexedParameter(gl.COLOR_WRITEMASK, 1);
+
+       You can use WebGLRenderingContext.getParameter() to see how many draw buffers are available.
+
+         const maxDrawBuffers = gl.getParameter(gl.MAX_DRAW_BUFFERS);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,38 @@
+SHELLCHECK.SC2006(1)             Sandbox manual             SHELLCHECK.SC2006(1)
+
+       NAME
+
+       Use $(...) notation instead of legacy backticked  ... . - echo "You are running on uname"
+
+       USE (...) NOTATION INSTEAD OF LEGACY BACKTICKED
+
+       PROBLEMATIC CODE
+
+         echo "You are running on `uname`"
+
+       CORRECT CODE
+
+         echo "You are running on $(uname)"
+
+       RATIONALE
+
+       Backtick command substitution ... is legacy syntax with several issues.
+
+        1. It has a series of undefined behaviors related to quoting in POSIX.
+        1. It imposes a custom escaping mode with surprising results.
+        1. It's exceptionally hard to nest.
+       $(...) command substitution has none of these problems, and is therefore strongly encouraged.
+
+       Note: The $(...) syntax was introduced in the 1989 Korn Shell (ksh). Finally, in 2011, Solaris 11 was the last operating system to switch from the Bourne Shell to the Korn Shell. After 2011, all typical shells have supported the POSIX $(...) notation.
+
+       EXCEPTIONS
+
+        * Some very old, legacy sh implementations, may not support $(...) and might require the use of backtick command substitution. See [\[mc-devel\] \[PATCH\] Prefer $() to backticks in sh script](https://lists.midnight-commander.org/pipermail/mc-devel/2024-November/011241.html) and follow-ups.
+
+       RELATED RESOURCES
+
+        * BashFaq: Why is $(...) preferred over ... (backticks)?
+        * StackOverflow: What is the difference between $(command) and command in shell programming?
+        * shfmt will automatically convert the legacy syntax
+
+ShellCheck manual                       from the official documentation

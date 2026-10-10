@@ -1,0 +1,129 @@
+WEBAPI.WINDOW-LOAD-EVENT(1)      Sandbox manual      WEBAPI.WINDOW-LOAD-EVENT(1)
+
+       NAME
+
+       Window: load event - The load event is fired when the whole page has loaded, including all dependent resources such as stylesheets, scripts (including async, def
+
+       WINDOW: LOAD EVENT
+
+       The load event is fired when the whole page has loaded, including all dependent resources such as stylesheets, scripts (including async, deferred, and module scripts), iframes, and images, except those that are loaded lazily. This is in contrast to DOMContentLoaded, which is fired as soon as the page DOM has been loaded, without waiting for resources to finish loading.
+
+       This event is not cancelable and does not bubble.
+
+       > _All events named load will not propagate to Window_, even with bubbles initialized to true. To catch load events on the window, that load event must be dispatched directly to the window.
+       > The load event that is dispatched when the main document has loaded _is_ dispatched on the window, but has two mutated properties: target is document, and path is undefined. These two properties are mutated due to legacy conformance.
+       To avoid running a script before the DOM it manipulates has been fully constructed, you can place the script at the end of the document body, immediately before the closing tag, without wrapping it in an event listener. You should usually only use the load event to wait for external resources, such as images or deferred scripts, to load.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("load", (event) => { })
+
+         onload = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       Log a message when the page is fully loaded:
+
+         window.addEventListener("load", (event) => {
+           console.log("page is fully loaded");
+         });
+
+       The same, but using the onload event handler property:
+
+         window.onload = (event) => {
+           console.log("page is fully loaded");
+         };
+
+       LIVE EXAMPLE
+
+       HTML
+
+         <div class="controls">
+           <button id="reload" type="button">Reload</button>
+         </div>
+
+         <div class="event-log">
+           <label for="eventLog">Event log:</label>
+           <textarea
+             readonly
+             class="event-log-contents"
+             rows="8"
+             cols="30"
+             id="eventLog"></textarea>
+         </div>
+
+         body {
+           display: grid;
+           grid-template-areas: "control log";
+         }
+
+         .controls {
+           grid-area: control;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+         }
+
+         .event-log {
+           grid-area: log;
+         }
+
+         .event-log-contents {
+           resize: none;
+         }
+
+         label,
+         button {
+           display: block;
+         }
+
+         #reload {
+           height: 2rem;
+         }
+
+       JAVASCRIPT
+
+         const log = document.querySelector(".event-log-contents");
+         const reload = document.querySelector("#reload");
+
+         reload.addEventListener("click", () => {
+           log.textContent = "";
+           setTimeout(() => {
+             window.location.reload(true);
+           }, 200);
+         });
+
+         window.addEventListener("load", (event) => {
+           log.textContent += "load\n";
+         });
+
+         document.addEventListener("readystatechange", (event) => {
+           log.textContent += `readystate: ${document.readyState}\n`;
+         });
+
+         document.addEventListener("DOMContentLoaded", (event) => {
+           log.textContent += `DOMContentLoaded\n`;
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Document readyState API
+        * Related events:
+          * DOMContentLoaded
+          * readystatechange
+          * beforeunload
+          * unload
+
+Web APIs manual                         from the official documentation

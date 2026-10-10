@@ -1,0 +1,42 @@
+SHELLCHECK.SC2239(1)             Sandbox manual             SHELLCHECK.SC2239(1)
+
+       NAME
+
+       Ensure the shebang uses the absolute path to the interpreter. - echo "Hello World"
+
+       ENSURE THE SHEBANG USES THE ABSOLUTE PATH TO THE INTERPRETER
+
+       ENSURE THE SHEBANG USES THE ABSOLUTE PATH TO THE INTERPRETER
+
+       PROBLEMATIC CODE
+
+         #!bin/sh
+         echo "Hello World"
+
+       CORRECT CODE
+
+         #!/bin/sh
+         echo "Hello World"
+
+       RATIONALE
+
+       The script's interpreter, as specified in the shebang, does not start with a /.
+
+       The interpreter should always be specified by absolute path to ensure that the script can be executed from any directory. When it's not, it's generally a typo like in the problematic example.
+
+       If you don't know where the interpreter is and you hoped to use #! bash, this is not an option. Use /usr/bin/env instead:
+
+         #!/usr/bin/env bash
+         echo "Hello World"
+
+       While not required by POSIX, env can essentially always be found in /usr/bin and will search the PATH for the specified executable.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,78 @@
+WEBAPI.PAINTWORKLETGLOBALSCOPE-REGISTERPAINT(1) Sandbox manual WEBAPI.PAINTWORKLETGLOBALSCOPE-REGISTERPAINT(1)
+
+       NAME
+
+       PaintWorkletGlobalScope: registerPaint() method - The registerPaint() method of the
+
+       PAINTWORKLETGLOBALSCOPE: REGISTERPAINT() METHOD
+
+       The registerPaint() method of the PaintWorkletGlobalScope interface registers a class to programmatically generate an image where a CSS property expects a file.
+
+       SYNTAX
+
+         registerPaint(name, classRef)
+
+       PARAMETERS
+
+        * name
+          * : The name of the worklet class to register.
+        * classRef
+          * : A reference to the class that implements the worklet.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown when one of the arguments is invalid or missing.
+        * InvalidModificationError DOMException
+          * : Thrown when the a worklet already exists with the specified name.
+
+       EXAMPLES
+
+       The following shows registering an example worklet module. This should be in a separate js file. Note that registerPaint() is called without a reference to PaintWorkletGlobalScope. The file itself is loaded through CSS.paintWorklet.addModule() (documented here on the parent class of PaintWorklet, at Worklet.addModule().
+
+         /* checkboardWorklet.js */
+
+         class CheckerboardPainter {
+           paint(ctx, geom, properties) {
+             // Use `ctx` as if it was a normal canvas
+             const colors = ["red", "green", "blue"];
+             const size = 32;
+             for (let y = 0; y < geom.height / size; y++) {
+               for (let x = 0; x < geom.width / size; x++) {
+                 const color = colors[(x + y) % colors.length];
+                 ctx.beginPath();
+                 ctx.fillStyle = color;
+                 ctx.rect(x * size, y * size, size, size);
+                 ctx.fill();
+               }
+             }
+           }
+         }
+
+         // Register our class under a specific name
+         registerPaint("checkerboard", CheckerboardPainter);
+
+       The first step in using a paintworklet is defining the paint worklet using the registerPaint() function, as done above. To use it, you register it with the CSS.paintWorklet.addModule() method:
+
+         CSS.paintWorklet.addModule("checkboardWorklet.js");
+
+       You can then use the paint() CSS function in your CSS anywhere an <image> value is valid.
+
+         li {
+           background-image: paint(checkerboard);
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * CSS Painting API
+        * Houdini APIs
+
+Web APIs manual                         from the official documentation

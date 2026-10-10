@@ -1,0 +1,47 @@
+WEBAPI.EXTENDABLEMESSAGEEVENT-PORTS(1) Sandbox manual WEBAPI.EXTENDABLEMESSAGEEVENT-PORTS(1)
+
+       NAME
+
+       ExtendableMessageEvent: ports property - service
+
+       EXTENDABLEMESSAGEEVENT: PORTS PROPERTY
+
+       service
+
+       The ports read-only property of the ExtendableMessageEvent interface returns the array containing the MessagePort objects representing the ports of the associated message channel (the channel the message is being sent through.)
+
+       VALUE
+
+       An array of MessagePort objects.
+
+       EXAMPLES
+
+       When the following code is used inside a service worker to respond to a push messages by sending the data received via PushMessageData to the main context via a channel message, the event object of onmessage will be an ExtendableMessageEvent.
+
+         let port;
+
+         self.addEventListener("push", (e) => {
+           const obj = e.data.json();
+
+           if (obj.action === "subscribe" || obj.action === "unsubscribe") {
+             port.postMessage(obj);
+           } else if (obj.action === "init" || obj.action === "chatMsg") {
+             port.postMessage(obj);
+           }
+         });
+
+         self.onmessage = (e) => {
+           port = e.ports[0];
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Service workers basic code example
+        * Channel Messaging
+
+Web APIs manual                         from the official documentation

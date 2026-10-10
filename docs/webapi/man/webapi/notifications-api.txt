@@ -1,0 +1,88 @@
+WEBAPI.NOTIFICATIONS-API(1)      Sandbox manual      WEBAPI.NOTIFICATIONS-API(1)
+
+       NAME
+
+       Notifications API - The Notifications API allows web pages to control the display of system notifications to the end user.
+
+       NOTIFICATIONS API
+
+       The Notifications API allows web pages to control the display of system notifications to the end user.
+
+       CONCEPTS AND USAGE
+
+       A web notification is a message box used to inform users when events occur on web apps. Web notifications are rendered by the operating system's native notification system, making them display identically to notifications from any other app on the platform. Because the underlying OS renders web notifications, they are outside the top-level browsing context viewport, and can be shown even when the user has switched tabs or moved to a different app.
+
+       PERSISTENT AND NON-PERSISTENT NOTIFICATIONS
+
+       The Notifications API supports two types of notifications:
+
+        * Non-persistent notifications are created in a browsing context, such as a web page or tab.
+       Their lifetime is tied to the lifetime of the page — if the page is closed, the notification can no longer be interacted with.
+
+       They are created using the Notification() constructor and fire events such as click directly on the Notification instance.
+
+        * Persistent notifications are created from a service worker, and can remain interactive beyond the lifetime of an individual page.
+       They are created by calling ServiceWorkerRegistration.showNotification() from inside a service worker and fire notificationclick and notificationclose events on the ServiceWorkerGlobalScope.
+
+       > If your code needs to run on mobile devices then you must use persistent notifications!
+       > The Notification() constructor will throw a TypeError on most mobile browsers.
+
+       NOTIFICATIONS REQUIRE USER PERMISSION
+
+       In order to use notifications, the user needs to grant the current origin permission to display system notifications. This is generally done when the app or site initializes, using the Notification.requestPermission() method. This method should only be called when handling a user gesture, such as when handling a mouse click. For example:
+
+         btn.addEventListener("click", () => {
+           let promise = Notification.requestPermission();
+           // wait for permission
+         });
+
+       This will spawn a request dialog, along the following lines:
+
+       
+
+       From here the user can choose to allow notifications from this origin, or block them. Once a choice has been made, the setting will generally persist for the current session.
+
+       NOTIFICATION DISPLAY AND HANDLING
+
+       Notifications are created using the Notification() constructor. This must be passed a title argument, and can optionally be passed a parameter to specify options such as text direction, body text, icon to display, notification sound to play, and more.
+
+       For example, the following code shows how you might create a notification that sets the navigate option, specifying a URL that will be opened if the notification is accepted (you can also define click handlers to process notification actions).
+
+         if (Notification.permission === "granted") {
+           const notification = new Notification("New message from Alice", {
+             body: "Hey, are you free for lunch?",
+             navigate: "/messages/alice",
+           });
+         }
+
+       For more usage examples see Using the Notifications API.
+
+       INTERFACES
+
+        * Notification
+          * : Defines a notification object.
+       When activated, a non-persistent notification fires a click event, unless a navigate URL is set, in which case the user agent navigates to that URL instead.
+
+        * NotificationEvent
+          * : Represents a notification event dispatched on the ServiceWorkerGlobalScope of a ServiceWorker.
+
+       EXTENSIONS TO OTHER INTERFACES
+
+        * notificationclick event
+          * : Occurs when a user clicks on a displayed persistent notification, unless a navigate URL is set.
+        * notificationclose event
+          * : Occurs when a user closes a displayed notification.
+        * ServiceWorkerRegistration.getNotifications()
+          * : Returns a list of the notifications in the order that they were created from the current origin via the current service worker registration.
+        * ServiceWorkerRegistration.showNotification()
+          * : Displays the notification with the requested title.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Notifications API
+
+Web APIs manual                         from the official documentation

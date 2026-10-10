@@ -1,0 +1,63 @@
+WEBAPI.FILESYSTEMOBSERVER-FILESYSTEMOBSERVER(1) Sandbox manual WEBAPI.FILESYSTEMOBSERVER-FILESYSTEMOBSERVER(1)
+
+       NAME
+
+       FileSystemObserver: FileSystemObserver() constructor - The FileSystemObserver() constructor creates a new FileSystemObserver object instance.
+
+       FILESYSTEMOBSERVER: FILESYSTEMOBSERVER() CONSTRUCTOR
+
+       {{non-standard_header}}
+
+       The FileSystemObserver() constructor creates a new FileSystemObserver object instance.
+
+       SYNTAX
+
+         new FileSystemObserver(callback)
+
+       PARAMETERS
+
+        * callback
+          * : A user-defined callback function that will be called when the observer has observed a change in the file system entry it has been asked to observe (via FileSystemObserver.observe()). The callback function will be passed the following two parameters:
+            * records
+              * : An array of FileSystemChangeRecord objects that contain details of all the observed changes.
+            * observer
+              * : A reference to the current FileSystemObserver object, which is made available in case, for example, you want to stop observations after the current records have been received using the FileSystemObserver.disconnect() method.
+
+       RETURN VALUE
+
+       A new FileSystemObserver object.
+
+       EXAMPLES
+
+       > For a complete working example, check out File System Observer Demo (source code).
+
+       INITIALIZING A FILESYSTEMOBSERVER
+
+       Before you can start observing file or directory changes, you need to initialize a FileSystemObserver to handle the observations:
+
+         const observer = new FileSystemObserver(callback);
+
+       The callback function body can be specified to return and process file change observations in any way you want:
+
+         const callback = (records, observer) => {
+           for (const record of records) {
+             console.log("Change detected:", record);
+             const reportContent = `Change observed to ${record.changedHandle.kind} ${record.changedHandle.name}. Type: ${record.type}.`;
+             sendReport(reportContent); // Some kind of user-defined reporting function
+           }
+
+           observer.disconnect();
+         };
+
+       SPECIFICATIONS
+
+       Not currently part of a specification. See https://github.com/whatwg/fs/pull/165 for the relevant specification PR.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File System API
+        * The File System Observer API origin trial on developer.chrome.com (2024)
+
+Web APIs manual                         from the official documentation

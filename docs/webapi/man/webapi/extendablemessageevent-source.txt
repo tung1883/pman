@@ -1,0 +1,48 @@
+WEBAPI.EXTENDABLEMESSAGEEVENT-SOURCE(1) Sandbox manual WEBAPI.EXTENDABLEMESSAGEEVENT-SOURCE(1)
+
+       NAME
+
+       ExtendableMessageEvent: source property - service
+
+       EXTENDABLEMESSAGEEVENT: SOURCE PROPERTY
+
+       service
+
+       The source read-only property of the ExtendableMessageEvent interface returns a reference to the Client object from which the message was sent.
+
+       VALUE
+
+       A Client, ServiceWorker or MessagePort object.
+
+       EXAMPLES
+
+       When the following code is used inside a service worker to respond to a push messages by sending the data received via PushMessageData to the main context via a channel message, the event object of onmessage will be an ExtendableMessageEvent.
+
+         let port;
+
+         self.addEventListener("push", (e) => {
+           const obj = e.data.json();
+
+           if (obj.action === "subscribe" || obj.action === "unsubscribe") {
+             port.postMessage(obj);
+           } else if (obj.action === "init" || obj.action === "chatMsg") {
+             port.postMessage(obj);
+           }
+         });
+
+         self.onmessage = (e) => {
+           console.log(e.source);
+           port = e.ports[0];
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Service workers basic code example
+        * Channel Messaging
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,177 @@
+WEBAPI.PERFORMANCE-MEASURE(1)    Sandbox manual    WEBAPI.PERFORMANCE-MEASURE(1)
+
+       NAME
+
+       Performance: measure() method - The measure() method creates a named PerformanceMeasure object representing a time measurement between two marks in the browser's performanc
+
+       PERFORMANCE: MEASURE() METHOD
+
+       The measure() method creates a named PerformanceMeasure object representing a time measurement between two marks in the browser's performance timeline.
+
+       When measuring between two marks, there is a _start mark_ and _end mark_, respectively. The named timestamp is referred to as a _measure_.
+
+       SYNTAX
+
+         measure(measureName)
+         measure(measureName, startMark)
+         measure(measureName, startMark, endMark)
+         measure(measureName, measureOptions)
+         measure(measureName, measureOptions, endMark)
+
+       If only measureName is specified, the start timestamp is set to zero, and the end timestamp (which is used to calculate the duration) is the value that would be returned by Performance.now().
+
+       You can use strings to identify PerformanceMark objects as start and end marks.
+
+       To only provide an endMark, you need to provide an empty measureOptions object: performance.measure("myMeasure", {}, "myEndMarker").
+
+       PARAMETERS
+
+        * measureName
+          * : A string representing the name of the measure.
+        * measureOptions (optional)
+          * : An object that may contain measure options.
+            * detail (optional)
+              * : Arbitrary metadata to be included in the measure. Defaults to null. Must be structured-cloneable.
+                * devtools
+                  * : Some browsers have use a structured devtools object within the detail object as part of an Extensibility API that surfaces these in custom tracks in performance traces. See the Chrome's Extensibility API documentation for more information.
+                    * dataType (experimental)
+                      * : String with a value of track-entry (for defining a new track) or marker (for defining an entry in a track).
+                    * color (optional) (experimental)
+                      * : Defaults to "primary". Must be one of "primary", "primary-light", "primary-dark", "secondary", "secondary-light", "secondary-dark", "tertiary", "tertiary-light", "tertiary-dark", "error".
+                    * track (optional) (experimental)
+                      * : String of the name of the custom track (required for track-entry)
+                    * trackGroup (optional) (experimental)
+                      * : String of the name of the grouping within a custom track (required for track-entry)
+                    * properties (optional) (experimental)
+                      * : Array of key-value pairs. Values can be any JSON-compatible type.
+                    * tooltipText (optional) (experimental)
+                      * : Short description for tooltip.
+            * start (optional)
+              * : Timestamp (DOMHighResTimeStamp) to be used as the start time, or string that names a PerformanceMark to use for the start time.
+       If this is a string naming a PerformanceMark, then it is defined in the same way as startMark.
+
+            * duration (optional)
+              * : Duration (in milliseconds) between the start and end mark times. If omitted, this defaults to performance.now(); the time that has elapsed since the context was created. If provided, you must also specify either start or end but not both.
+            * end (optional)
+              * : Timestamp (DOMHighResTimeStamp) to be used as the end time, or string that names a PerformanceMark to use for the end time.
+       If this is a string naming a PerformanceMark, then it is defined in the same way as endMark.
+
+        * startMark (optional)
+          * : A string naming a PerformanceMark in the performance timeline. The PerformanceEntry.startTime property of this mark will be used for calculating the measure.
+        * endMark (optional)
+          * : A string naming a PerformanceMark in the performance timeline. The PerformanceEntry.startTime property of this mark will be used for calculating the measure.
+       If you want to pass this argument, you must also pass either startMark or an empty measureOptions object.
+
+       RETURN VALUE
+
+       The PerformanceMeasure entry that was created.
+
+       The returned _measure_ will have the following property values:
+
+        * entryType - set to "measure".
+        * name - set to the name argument.
+        * startTime - set to:
+          * a timestamp, if specified in measureOptions.start.
+          * the timestamp of a start mark, if specified in measureOptions.start or startMark
+          * a timestamp calculated from the measureOptions.end and measureOptions.duration (if measureOptions.start was not specified)
+          * 0, if it isn't specified and can't be determined from other values.
+        * duration - set to a DOMHighResTimeStamp that is the duration of the measure calculated by subtracting the startTime from the end timestamp.
+       The end timestamp is one of:
+
+          * a timestamp, if specified in measureOptions.end.
+          * the timestamp of an end mark, if one is specified in measureOptions.end or endMark
+          * a timestamp calculated from the measureOptions.start and measureOptions.duration (if measureOptions.end was not specified)
+          * the value returned by Performance.now(), if no end mark is specified or can be determined from other values.
+        * detail - set to the value passed in measureOptions.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : This can be thrown in any case where the start, end or duration might be ambiguous:
+            * Both endMark and measureOptions are specified.
+            * measureOptions is specified with duration but without specifying either start or end.
+            * measureOptions is specified with all of start, end, and duration.
+        * SyntaxError DOMException
+          * : The named mark does not exist.
+            * An end mark is specified using either endMark or measureOptions.end, but there is no PerformanceMark in the performance buffer with the matching name.
+            * An end mark is specified using either endMark or measureOptions.end, but it cannot be converted to match that of a read-only attribute in the PerformanceTiming interface.
+            * A start mark is specified using either startMark or measureOptions.start, but there is no PerformanceMark in the performance buffer with the matching name.
+            * A start mark is specified using either startMark or measureOptions.start, but it cannot be converted to match that of a read-only attribute in the PerformanceTiming interface.
+        * DataCloneError DOMException
+          * : The measureOptions.detail value is non-null and cannot be serialized using the HTML "StructuredSerialize" algorithm.
+        * RangeError
+          * : The measureOptions.detail value is non-null and memory cannot be allocated during serialization using the HTML "StructuredSerialize" algorithm.
+
+       EXAMPLES
+
+       MEASURING DURATION BETWEEN NAMED MARKERS
+
+       Given two of your own markers "login-started" and "login-finished", you can create a measurement called "login-duration" as shown in the following example. The returned PerformanceMeasure object will then provide a duration property to tell you the elapsed time between the two markers.
+
+         const loginMeasure = performance.measure(
+           "login-duration",
+           "login-started",
+           "login-finished",
+         );
+         console.log(loginMeasure.duration);
+
+       MEASURING DURATION WITH CUSTOM START AND END TIMES
+
+       To do more advanced measurements, you can pass a measureOptions parameter. For example, you can use the event.timeStamp property from a click event as the start time.
+
+         performance.measure("login-click", {
+           start: myClickEvent.timeStamp,
+           end: myMarker.startTime,
+         });
+
+       PROVIDING ADDITIONAL MEASUREMENT DETAILS
+
+       You can use the details property to provide additional information of any type. Maybe you want to record which HTML element was clicked, for example.
+
+         performance.measure("login-click", {
+           detail: { htmlElement: myElement.id },
+           start: myClickEvent.timeStamp,
+           end: myMarker.startTime,
+         });
+
+       DEVTOOLS EXTENSIBILITY API
+
+       For browsers that support the Extensibility API you can use the detail parameter to provide more details in a devtools object that will be used to display this in performance profiles:
+
+         const imageProcessingTimeStart = performance.now();
+
+         // ... later in your code
+
+         performance.measure("Image Processing Complete", {
+           start: imageProcessingTimeStart,
+           end: performance.now(),
+           detail: {
+             // This data appears in the "Summary"
+             extraInfo: {
+               imageId: "xyz-123",
+               source: "cache",
+               checkUrl: "https://example.com/check/xyz-123",
+             },
+             // The devtools object controls the track visualization
+             devtools: {
+               dataType: "track-entry",
+               track: "Image Processing Tasks",
+               trackGroup: "My Tracks",
+               color: "tertiary-dark",
+               properties: [
+                 ["Filter Type", "Gaussian Blur"],
+                 // Values can be objects, arrays, or other types
+                 ["Resize Dimensions", { w: 500, h: 300 }],
+                 // String values that are URLs get linkified
+                 ["Image URL", "https://example.com/img.png"],
+               ],
+               tooltipText: "Image processed successfully",
+             },
+           },
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

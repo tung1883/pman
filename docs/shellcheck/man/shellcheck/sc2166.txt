@@ -1,0 +1,39 @@
+SHELLCHECK.SC2166(1)             Sandbox manual             SHELLCHECK.SC2166(1)
+
+       NAME
+
+       Prefer [ p ] && [ q ] as [ p -a q ] is not well-defined. - And likewise, prefer [ p ] || [ q ] over [ p -o q ].
+
+       PREFER P && Q AS P -A Q IS NOT WELL-DEFINED
+
+       PREFER P && Q AS P -A Q IS NOT WELL-DEFINED
+
+       And likewise, prefer [ p ] || [ q ] over [ p -o q ].
+
+       PROBLEMATIC CODE
+
+         [ "$1" = "test" -a -z "$2" ]
+
+       CORRECT CODE
+
+         [ "$1" = "test" ] && [ -z "$2" ]
+
+       RATIONALE
+
+       -a and -o to mean AND and OR in a [ .. ] test expression is not well defined, and can cause incorrect results when arguments start with dashes or contain !. From POSIX:
+
+       > The -a and -o binary primaries and the '(' and ')' operators have been removed. (Many expressions using them were ambiguously defined by the grammar depending on the specific expressions being evaluated.) Scripts using these expressions should be converted to the forms given below. Even though many implementations will continue to support these forms, scripts should be extremely careful when dealing with user-supplied input that could be confused with these and other primaries and operators. Unless the application developer knows all the cases that produce input to the script, invocations like:
+       > test "$1" -a "$2"
+       > should be written as:
+       > test "$1" && test "$2"
+       Using multiple [ .. ] expressions with shell AND/OR operators && and || is well defined and therefore preferred (but note that they have equal precedence, while -a/-o is unspecified but usually implemented as -a having higher precedence).
+
+       EXCEPTIONS
+
+       If the shell variant being used is ksh derived (such as the bash shell) it will have the shell builtin command [[ ... ]]. This has the operators &&, ||, (, ), ! which safely avoid the ambiguity by noting which arguments were quoted and requiring the operators to be unquoted (except by the [[ ... ]] construct itself).
+
+       SEE ALSO
+
+        * Problems With the test Builtin: What Does -a Mean?
+
+ShellCheck manual                       from the official documentation

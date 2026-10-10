@@ -1,0 +1,464 @@
+ROCKY.ADMIN_GUIDE-05-VI(1)       Sandbox manual       ROCKY.ADMIN_GUIDE-05-VI(1)
+
+       NAME
+
+       VI Text Editor - In this chapter you will learn how to work with the VIsual editor.
+
+       VI TEXT EDITOR
+
+       In this chapter you will learn how to work with the VIsual editor.
+
+       **
+
+       Objectives: In this chapter, future Linux administrators will learn how to:
+
+       :heavy_check_mark: Use the main commands of the VI editor; :heavy_check_mark: Modify a text with the VI editor.
+
+       :checkered_flag: user commands, linux
+
+       Knowledge: :star: Complexity: :star: :star:
+
+       Reading time: 20 minutes
+
+       **
+
+       Visual (VI) is a popular text editor under Linux despite its limited ergonomics. It is indeed an editor entirely in text mode: each action is done with a key on the keyboard or dedicated commands.
+
+       Very powerful, it is above all very practical since it is on the whole minimal for basic applications. It is therefore accessible in case of system failure. Its universality (it is present on all Linux distributions and under Unix) makes it a crucial tool for the administrator.
+
+       Its functionalities are:
+
+        * Insert, delete, and modify text;
+        * Copy words, lines, or blocks of text;
+        * Search and replace characters.
+
+       VI COMMAND
+
+       The vi command opens the VI text editor.
+
+         vi [-c command] [file]
+
+       Example:
+
+         vi /home/rockstar/file
+
+         Option  |  Information
+         -c command  |  Execute VI by specifying a command at the opening
+       If the file exists at the location mentioned by the path, VI reads it and puts it in commands mode.
+
+       If the file does not exist, VI opens a blank file, displaying an empty page on the screen. When the file is saved, it will take the name specified with the command.
+
+       If the command vi is executed without specifying a file name, VI opens a blank file and displays an empty page on the screen. When the file is saved, VI will ask for a file name.
+
+       The vim editor takes the interface and functions of VI with many improvements.
+
+         vim [-c command] [file]
+
+       Among these improvements, the user has syntax highlighting, which is useful for editing shell scripts or configuration files.
+
+       During a session, VI uses a buffer file to record all the user's changes.
+
+       > Note:
+       The original file is not modified as long as the user has not saved his work.
+
+       At startup, VI is in commands mode.
+
+       > Tip:
+       A line of text is ended by pressing ++enter++ but if the screen is not wide enough, VI makes automatic line breaks, wrap configuration by default. These line breaks may not be desired, this is the nowrap configuration.
+
+       To exit VI from the Commands mode, press ++colon++, then type:
+
+        * q to exit without saving (quit);
+        * w to save your work (write);
+        * wq (write quit) or x (eXit) to save and exit.
+       In command mode, Click the ++z++ key of uppercase status twice in a row to save and exit.
+
+       You must add ! to the previous commands to force the exit without confirmation.
+
+       > Warning:
+       There is no periodic backup, so you must remember to save your work regularly.
+
+       OPERATING MODE
+
+       In VI, there are 3 working modes:
+
+        * The command mode;
+        * The insertion mode;
+        * The ex mode.
+       The philosophy of VI is to alternate between the command mode and the insertion mode.
+
+       The third mode, ex, is a footer command mode from an old text editor.
+
+       THE COMMAND MODE
+
+       This is the default mode when VI starts up. To access it from any of the other modes, simply press the ++escape++ key.
+
+       At this time, all keyboard typing is interpreted as commands and the corresponding actions are executed. These are essentially commands for editing text (copy, paste, undo, ...).
+
+       The commands are not displayed on the screen.
+
+       THE INSERT MODE
+
+       This is the text modification mode. To access it from the command mode, you have to press special keys that will perform an action in addition to changing the mode.
+
+       The text is not entered directly into the file but into a buffer zone in the memory. The changes are only effective when the file is saved.
+
+       THE EX MODE
+
+       This is the file modification mode. To access it, you must first switch to command mode, then enter the ex command frequently starting with the character :.
+
+       The command is validated by pressing the ++enter++ key.
+
+       MOVING THE CURSOR
+
+       In command mode, there are several ways to move the cursor.
+
+       The mouse is not active in a text environment but is in a graphic environment, it is possible to move it character by character, but shortcuts exist to go faster.
+
+       VI remains in command mode after moving the cursor.
+
+       The cursor is placed under the desired character.
+
+       FROM A CHARACTER
+
+        * Move one or n characters to the left:
+       ++arrow-left++, ++"n"++ ++arrow-left++, ++"h"++ or ++"n"++ ++"h"++
+
+        * Move one or n characters to the right:
+       ++arrow-right++, ++"n"++ ++arrow-right++, ++"l"++ or ++"n"++ ++"l"++
+
+        * Move one or n characters up:
+       ++arrow-up++, ++"n"++ ++arrow-up++, ++"k"++ or ++"n"++ ++"k"++
+
+        * Move one or n characters down:
+       ++arrow-down++, ++"n"++ ++arrow-down++, ++"j"++ or ++"n"++ ++"j"++
+
+        * Move to the end of the line:
+       ++"$"++ or ++end++
+
+        * Move to the beginning of the line:
+       ++0++ or ++home++
+
+       FROM THE FIRST CHARACTER OF A WORD
+
+       Words are made up of letters or numbers. Punctuation characters and apostrophes separate words.
+
+       If the cursor is in the middle of a word ++"w"++ moves to the next word, ++"b"++ moves to the beginning of the word.
+
+       If the line is finished, VI goes automatically to the next line.
+
+        * Move one or n words to the right:
+       ++"w"++ or ++"n"++ ++"w"++
+
+        * Move one or n words to the left:
+       ++"b"++ or ++"n"++ ++"b"++
+
+       FROM ANY LOCATION ON A LINE
+
+        * Move to last line of text:
+       ++g++
+
+        * Move to line n:
+       ++"n"++ ++g++
+
+        * Move to the first line of the screen:
+       ++h++
+
+        * Move to the middle line of the screen:
+       ++m++
+
+        * Move to the last line of the screen:
+       ++l++
+
+        * Move to the first line of the file content
+       ++"g"++ ++"g"++
+
+       INSERTING TEXT
+
+       There are several ways to insert text in command mode.
+
+       VI switches to insert mode after entering one of these keys.
+
+       > Note:
+       VI switches to insertion mode. So you will have to press the ++escape++ key to return to command mode.
+
+       IN RELATION TO A CHARACTER
+
+        * Inserting text before a character:
+       ++"i"++ (insert)
+
+        * Inserting text after a character:
+       ++"a"++ (append)
+
+       IN RELATION TO A LINE
+
+        * Inserting text at the beginning of a line:
+       ++i++
+
+        * Inserting text at the end of a line:
+       ++a++
+
+       IN RELATION TO THE TEXT
+
+        * Inserting text before a line:
+       ++o++
+
+        * Inserting text after a line:
+       ++"o"++
+
+       CHARACTERS, WORDS AND LINES
+
+       VI allows text editing by managing:
+
+        * characters,
+        * words,
+        * lines.
+       In each case it is possible to :
+
+        * delete,
+        * replace,
+        * copy,
+        * cut,
+        * paste.
+       These operations are done in command mode.
+
+       CHARACTERS
+
+        * Delete one or n characters:
+       ++"x"++ or ++"n"++ ++"x"++
+
+        * Replace a character with another:
+       ++"r"+"character"++
+
+        * Replace more than one character with others:
+       ++r+"characters"+escape++
+
+       > Note:
+       The ++r++ command switches to replace mode, which is a kind of insert mode.
+
+       WORDS
+
+        * Delete (cut) one or n words:
+       ++"d"+"w"++ or ++"n"+"d"+"w"++
+
+        * Copy one or n words:
+       ++"y"+"w"++ or ++"n"+"y"+"w"++
+
+        * Paste a word once or n times after the cursor:
+       ++"p"++ or ++"n"+"p"++
+
+        * Paste a word once or n times before the cursor:
+       ++p++ or ++"n"+p++
+
+        * Replace one word:
+       ++"c"+"w"+"word"+escape++
+
+       > Tip:
+       It is necessary to position the cursor under the first character of the word to cut (or copy) otherwise VI will cut (or copy) only the part of the word between the cursor and the end. To delete a word is to cut it. If it is not pasted afterwards, the buffer is emptied and the word is deleted.
+
+       LINES
+
+        * Delete (cut) one or n lines:
+       ++"d"+"d"++ or ++"n"+"d"+"d"++
+
+        * Copy one or n lines:
+       ++"y"+"y"++ or ++"n"+"y"+"y"++
+
+        * Paste what has been copied or deleted once or n times after the current line:
+       ++"p"++ or ++"n"+"p"++
+
+        * Paste what has been copied or deleted once or n times before the current line:
+       ++p++ or ++"n"+p++
+
+        * Delete (cut) from the beginning of the line to the cursor:
+       ++"d"+0++
+
+        * Delete (cut) from the cursor to the end of the line:
+       ++"d"+"$"++
+
+        * Copy from the beginning of the line to the cursor:
+       ++"y"+0++
+
+        * Copy from the cursor to the end of the line:
+       ++"y"+"$"++
+
+        * Delete (cut) the contents from the cursor line to the last line of the file:
+       ++"d"+g++
+
+        * Delete (cut) the contents from the cursor line to the last line of the screen:
+       ++"d"+l++
+
+        * Copy the content from the cursor line to the end of the file:
+       ++"y"+g++
+
+        * Copy the content from the cursor line to the end of the screen
+       ++"y"+l++
+
+       CANCEL AN ACTION
+
+        * Undo the last action:
+       ++"u"++
+
+        * Undo the actions on the current line:
+       ++u++
+
+       CANCEL CANCELLATION
+
+        * Cancel a cancellation
+       ++control+r++
+
+       EX COMMANDS
+
+       The Ex mode allows you to act on the file (saving, layout, options, ...). It is also in Ex mode where search and replace commands are entered. The commands are displayed at the bottom of the page and must be validated with the ++enter++ key.
+
+       To switch to Ex mode, from command mode, type ++colon++.
+
+       FILE LINE NUMBERS
+
+        * Show/hide numbering:
+       :set nu or the longer :set number
+
+       :set nonu or the longer :set nonumber
+
+       SEARCH FOR A STRING
+
+        * Search for a string from the cursor:
+       /string
+
+        * Search for a string before the cursor:
+       ?string
+
+        * Find the next matching string:
+       ++"n"++
+
+        * Find the previous matching string:
+       ++n++
+
+       There are regular expressions to facilitate the search in VI.
+
+        * [] : Searches for a range of characters or a single character whose possible values are specified.
+       Example:
+
+       /[Ww]ord : search word or Word
+
+       /[1-9]word : search 1word, 2word … xword where x is a number
+
+        * ^ : Search for lines that begin with characters.
+       Example:
+
+       /^Word
+
+        * $ : Search for lines that end with characters.
+       Example:
+
+       /Word$
+
+        * . : Search for any single character except newline characters.
+       Example:
+
+       /W.rd : search Word, Ward …
+
+        * * : The number of times the previous character matches, 0 times, or any number of times.
+       Example:
+
+       /W*d
+
+       Note: If you want to ignore case (temporary) when matching strings, Please type the :set ic.
+
+       REPLACE A STRING
+
+       From the 1st to the last line of the text, replace the searched string by the specified string:
+
+       :1,$ s/search/replace
+
+       Note: You can also use :0,$s/search/replace to specify starting at the absolute beginning of the file.
+
+       From line n to line m, replace the searched string with the specified string:
+
+       :n,m s/search/replace
+
+       By default, only the first occurrence found of each line is replaced. To force the replacement of each occurrence, you have to add /g at the end of the command:
+
+       :n,m s/search/replace/g
+
+       Browse an entire file to replace the searched string with the specified string:
+
+       :% s/search/replace
+
+       DELETES THE SPECIFIED ROW
+
+        * Delete a blank line
+       :g/^$/d
+
+        * Delete lines with line numbers n to m
+       :n,md
+
+        * Delete the line on which the string is located
+       :g/string/d
+
+        * Delete a line that does not contain a string
+       :g!/string/d
+
+        * Delete all lines that begin with #
+       :g/^#/d
+
+       The g here stands for global.
+
+       FILE OPERATIONS
+
+        * Save the file:
+       :w
+
+        * Save under another name:
+       :w file
+
+        * Save from line n to line m in another file:
+       :n,m w file
+
+        * Reload the last record of the file:
+       e!
+
+        * Paste the content of another file after the cursor:
+       :r file
+
+        * Quit editing a file without saving:
+       :q
+
+        * Quit editing a file that has been modified during the session but not saved:
+       :q!
+
+        * Exit the file and save:
+       :wq or :x
+
+       OTHER FUNCTIONS
+
+       Executing VI by specifying the options to be loaded for the session is possible. To do this, you must use the -c option:
+
+         vi -c "set nu" /home/rockstar/file
+
+       It is also possible to enter the Ex commands in a file named .exrc in the user's login directory. The commands will be read and applied at each VI or VIM startup.
+
+       VIMTUTOR COMMAND
+
+       There is a tutorial for learning how to use VI. It is accessible with the command vimtutor.
+
+         vimtutor
+
+       VISUALIZATION MODE
+
+       This mode is a sub-item of the command mode. You can complete it by typing ++"v"++ or ++v++; the former's operation content is at the character level, and the latter's operation content is at the line level.
+
+       > Info:
+       You can use the arrow keys to mark the character or line content you want to operate on.
+
+       CHARACTER LEVEL
+
+        * Delete (cut) - Type the ++"v"++ key to mark the character content you want to delete, and then type ++"x"++ to delete it
+        * Copy - Type the ++"v"++ key to mark the character content to copy, and then type the ++"y"++ key to copy it
+
+       LINE LEVEL
+
+        * Delete (cut) - Type the ++v++ key to mark the line to be deleted, and then type ++"x"++ to delete it
+        * Copy - Type the ++v++ key to mark the line to copy, and then type the ++"y"++ key to copy it
+
+Rocky Linux manual                      from the official documentation

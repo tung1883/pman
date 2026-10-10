@@ -1,0 +1,17 @@
+APACHE.MOD_LBMETHOD_BYTRAFFIC(1) Sandbox manual APACHE.MOD_LBMETHOD_BYTRAFFIC(1)
+
+       WEIGHTED TRAFFIC COUNTING ALGORITHM
+
+       Enabled via lbmethod=bytraffic, the idea behind this scheduler is very similar to the Request Counting method, with the following changes:
+
+       lbfactor is how much traffic, in bytes, we want this worker to handle. This is also a normalized value representing their "share" of the amount of work to be done, but instead of simply counting the number of requests, we take into account the amount of traffic this worker has either seen or produced.
+
+       If a balancer is configured as follows:
+
+         worker | a | b | c
+         lbfactor | 1 | 2 | 1
+       Then we mean that we want b to process twice the amount of bytes than a or c should. It does not necessarily mean that b would handle twice as many requests, but it would process twice the I/O. Thus, the size of the request and response are applied to the weighting and selection algorithm.
+
+       Note: input and output bytes are weighted the same.
+
+Apache HTTP Server manual               bundled documentation

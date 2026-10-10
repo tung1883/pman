@@ -1,0 +1,66 @@
+WEBAPI.WINDOW-CROSSORIGINISOLATED(1) Sandbox manual WEBAPI.WINDOW-CROSSORIGINISOLATED(1)
+
+       NAME
+
+       Window: crossOriginIsolated property - The crossOriginIsolated read-only property of the Window interface returns a boolean value that indicates whether the document is cross-orig
+
+       WINDOW: CROSSORIGINISOLATED PROPERTY
+
+       The crossOriginIsolated read-only property of the Window interface returns a boolean value that indicates whether the document is cross-origin isolated.
+
+       A cross-origin isolated document only shares its browsing context group with same-origin documents in popups and navigations, and resources (both same-origin and cross-origin) that the document has opted into using via CORS (and COEP for ). The relationship between a cross-origin opener of the document or any cross-origin popups that it opens are severed. The document may also be hosted in a separate OS process alongside other documents with which it can communicate by operating on shared memory. This mitigates the risk of side-channel attacks and cross-origin attacks referred to as XS-Leaks.
+
+       Cross-origin isolated documents operate with fewer restrictions when using the following APIs:
+
+        * SharedArrayBuffer can be created and sent via a Window.postMessage() or a MessagePort.postMessage() call.
+        * Performance.now() offers better precision.
+        * Performance.measureUserAgentSpecificMemory() can be called.
+       A document will be cross-origin isolated if it is returned with an HTTP response that includes the headers:
+
+        * Cross-Origin-Opener-Policy header with the directive same-origin.
+        * Cross-Origin-Embedder-Policy header with the directive require-corp or credentialless.
+       Access to the APIs must also be allowed by the Permissions-Policy cross-origin-isolated. Otherwise crossOriginIsolated property will return false, and the document will not be able to use the APIs listed above with reduced restrictions.
+
+       VALUE
+
+       A boolean value.
+
+       EXAMPLES
+
+       CROSS-ORIGIN ISOLATING A DOCUMENT
+
+       To cross-origin isolate a document:
+
+        * Set the Cross-Origin-Opener-Policy HTTP header to same-origin:
+
+           Cross-Origin-Opener-Policy: same-origin
+
+        * Set the Cross-Origin-Embedder-Policy HTTP header to require-corp or credentialless:
+
+           Cross-Origin-Embedder-Policy: require-corp
+           Cross-Origin-Embedder-Policy: credentialless
+
+        * The cross-origin-isolated directive of the Permissions-Policy header must not block access to the feature.
+       Note that the default allowlist of the directive is self, so the permission will be granted by default to cross-origin isolated documents.
+
+       CHECKING IF THE DOCUMENT IS CROSS-ORIGIN ISOLATED
+
+         const myWorker = new Worker("worker.js");
+
+         if (window.crossOriginIsolated) {
+           const buffer = new SharedArrayBuffer(16);
+           myWorker.postMessage(buffer);
+         } else {
+           const buffer = new ArrayBuffer(16);
+           myWorker.postMessage(buffer);
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WorkerGlobalScope.crossOriginIsolated
+
+Web APIs manual                         from the official documentation

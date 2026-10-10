@@ -1,0 +1,63 @@
+WEBAPI.DOCUMENT-ANCHORS(1)       Sandbox manual       WEBAPI.DOCUMENT-ANCHORS(1)
+
+       NAME
+
+       Document: anchors property - The anchors read-only property of the
+
+       DOCUMENT: ANCHORS PROPERTY
+
+       The anchors read-only property of the Document interface returns a list of all of the anchors in the document.
+
+       VALUE
+
+       An HTMLCollection.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+         if (document.anchors.length >= 5) {
+           console.log("found too many anchors");
+         }
+
+       CREATING A TABLE OF CONTENTS
+
+       The following is an example that auto populates a Table of Contents with every anchor on the page:
+
+         <h1>Title</h1>
+         <h2><a name="contents">Contents</a></h2>
+         <ul id="toc"></ul>
+
+         <h2><a name="plants">Plants</a></h2>
+         <ol>
+           <li>Apples</li>
+           <li>Oranges</li>
+           <li>Pears</li>
+         </ol>
+
+         <h2><a name="veggies">Veggies</a></h2>
+         <ol>
+           <li>Carrots</li>
+           <li>Celery</li>
+           <li>Beats</li>
+         </ol>
+
+         const toc = document.getElementById("toc");
+         for (const anchor of document.anchors) {
+           const li = document.createElement("li");
+           const newAnchor = document.createElement("a");
+           newAnchor.href = `#${anchor.name}`;
+           newAnchor.textContent = anchor.text;
+           li.appendChild(newAnchor);
+           toc.appendChild(li);
+         }
+
+       NOTES
+
+       For reasons of backwards compatibility, the returned set of anchors only contains those anchors created with the name attribute, not those created with the id attribute.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

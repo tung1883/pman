@@ -1,0 +1,110 @@
+WEBAPI.ELEMENT-FOCUS-EVENT(1)    Sandbox manual    WEBAPI.ELEMENT-FOCUS-EVENT(1)
+
+       NAME
+
+       Element: focus event - The focus event fires when an element has received focus. The event does not bubble, but the related focusin event that follows does bubble.
+
+       ELEMENT: FOCUS EVENT
+
+       The focus event fires when an element has received focus. The event does not bubble, but the related focusin event that follows does bubble.
+
+       The opposite of focus is the blur event, which fires when the element has _lost_ focus.
+
+       The focus event is not cancelable.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("focus", (event) => { })
+
+         onfocus = (event) => { }
+
+       EVENT TYPE
+
+       A FocusEvent. Inherits from UIEvent and Event.
+
+       FocusEvent
+
+       EXAMPLES
+
+       SIMPLE EXAMPLE
+
+       HTML
+
+         <form id="form">
+           <label>
+             Some text:
+             <input type="text" placeholder="text input" />
+           </label>
+           <label>
+             Password:
+             <input type="password" placeholder="password" />
+           </label>
+         </form>
+
+       JAVASCRIPT
+
+         const password = document.querySelector('input[type="password"]');
+
+         password.addEventListener("focus", (event) => {
+           event.target.style.background = "pink";
+         });
+
+         password.addEventListener("blur", (event) => {
+           event.target.style.background = "";
+         });
+
+       RESULT
+
+       EVENT DELEGATION
+
+       There are two ways of implementing event delegation for this event: by using the focusin event, or by setting the useCapture parameter of addEventListener() to true.
+
+       HTML
+
+         <form id="form">
+           <label>
+             Some text:
+             <input type="text" placeholder="text input" />
+           </label>
+           <label>
+             Password:
+             <input type="password" placeholder="password" />
+           </label>
+         </form>
+
+       JAVASCRIPT
+
+         const form = document.getElementById("form");
+
+         form.addEventListener(
+           "focus",
+           (event) => {
+             event.target.style.background = "pink";
+           },
+           true,
+         );
+
+         form.addEventListener(
+           "blur",
+           (event) => {
+             event.target.style.background = "";
+           },
+           true,
+         );
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The HTMLElement.focus() method
+        * Related events: blur, focusin, focusout
+        * This event on Window targets: focus event
+        * Focusing: focus/blur
+
+Web APIs manual                         from the official documentation

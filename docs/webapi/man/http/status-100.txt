@@ -1,0 +1,44 @@
+HTTP.STATUS-100(1)               Sandbox manual               HTTP.STATUS-100(1)
+
+       NAME
+
+       100 Continue - The HTTP 100 Continue informational response status code indicates that the initial part of a request has been received and has not yet been
+
+       100 CONTINUE
+
+       The HTTP 100 Continue informational response status code indicates that the initial part of a request has been received and has not yet been rejected by the server. The client should continue with a request or discard the 100 response if the request is already finished.
+
+       When a request has an Expect: 100-continue header, the 100 Continue response indicates that the server is ready or capable of receiving the request content. Waiting for a 100 Continue response can be helpful if a client anticipates that an error is likely, for example, when sending state-changing operations without previously verified authentication credentials.
+
+       STATUS
+
+         100 Continue
+
+       EXAMPLES
+
+       PUT REQUEST WITH 100 CONTINUE
+
+       The following PUT request sends information to a server about a file upload. The client is indicating that it will proceed with the content if it receives a 100 response to avoid sending data over the network that could result in an error like 405, 401, or 403. At first, the client sends headers only, including an Expect: 100-continue header:
+
+         PUT /videos HTTP/1.1
+         Host: uploads.example.com
+         Content-Type: video/h264
+         Content-Length: 123456789
+         Expect: 100-continue
+
+       The server indicates that the request can proceed:
+
+         HTTP/1.1 100 Continue
+
+       The client completes the request by sending the actual data:
+
+         [Video data as content for PUT request]
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * Expect
+       -
+
+HTTP manual                             from the official documentation

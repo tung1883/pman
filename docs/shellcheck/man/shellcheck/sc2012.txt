@@ -1,0 +1,100 @@
+SHELLCHECK.SC2012(1)             Sandbox manual             SHELLCHECK.SC2012(1)
+
+       NAME
+
+       Use find instead of ls to better handle non-alphanumeric filenames. - ls -l | grep " $USER " | grep '\.txt$'
+
+       USE FIND INSTEAD OF LS TO BETTER HANDLE NON-ALPHANUMERIC FILENAMES
+
+       USE FIND INSTEAD OF LS TO BETTER HANDLE NON-ALPHANUMERIC FILENAMES
+
+       PROBLEMATIC CODE
+
+         ls -l | grep " $USER " | grep '\.txt$'
+
+         NUMGZ="$(ls -l *.gz | wc -l)"
+
+       CORRECT CODE
+
+         find ./*.txt -user "$USER"  # Using the names of the files
+
+         gz_files=(*.gz)
+         numgz=${#gz_files[@]} # Sometimes, you just need a count
+
+       RATIONALE
+
+       ls is only intended for human consumption: it has a loose, non-standard format and may "clean up" filenames to make output easier to read.
+
+       Here's an example:
+
+         $ ls -l
+         total 0
+         -rw-r----- 1 me me 0 Feb  5 20:11 foo?bar
+         -rw-r----- 1 me me 0 Feb  5  2011 foo?bar
+         -rw-r----- 1 me me 0 Feb  5 20:11 foo?bar
+
+       It shows three seemingly identical filenames, and did you spot the time format change? How it formats and what it redacts can differ between locale settings, ls version, and whether output is a tty.
+
+       TIPS FOR REPLACING LS WITH FIND
+
+       JUST THE FILENAMES, MA'AM
+
+       (Note that -maxdepth is not POSIX, but can be simulated by having the expression call -prune on all directories it finds, e.g. find ./* -prune -print)
+
+       ls can usually be replaced by find if it's just the filenames, or a count of them, that you're after. Note that if you are using ls to get at the contents of a directory, a straight substitution of find may not yield the same results as ls. Here is an example:
+
+         $ ls -c1 .snapshot
+         rnapdev1-svm_4_05am_6every4hours.2019-04-01_1605
+         rnapdev1-svm_4_05am_6every4hours.2019-04-01_2005
+         rnapdev1-svm_4_05am_6every4hours.2019-04-02_0005
+         rnapdev1-svm_4_05am_6every4hours.2019-04-02_0405
+         rnapdev1-svm_4_05am_6every4hours.2019-04-02_0805
+         rnapdev1-svm_4_05am_6every4hours.2019-04-02_1205
+         snapmirror.1501b4aa-3f82-11e8-9c31-00a098cef13d_2147868328.2019-04-01_190000
+
+       versus
+
+         $ find .snapshot -maxdepth 1
+         .snapshot
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_0005
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_0405
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_0805
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-01_1605
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-01_2005
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_1205
+         .snapshot/snapmirror.1501b4aa-3f82-11e8-9c31-00a098cef13d_2147868328.2019-04-01_190000
+
+       You can see two differences here. The first is that the find output has the full paths to the found files, relative to the current working directory from which find was run whereas ls only has the filenames. You may have to adjust your code to not add the directory to the filenames as you process them when moving from ls to find, or (with GNU find) use -printf '%P\n' to print just the filename.
+
+       The second difference in the two outputs is that the find command includes the searched directory as an entry. This can be eliminated by also using -mindepth 1 to skip printing the root path, or using a negative name option for the searched directory:
+
+         $ find .snapshot -maxdepth 1 ! -name .snapshot
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_0005
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_0405
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_0805
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-01_1605
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-01_2005
+         .snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_1205
+         .snapshot/snapmirror.1501b4aa-3f82-11e8-9c31-00a098cef13d_2147868328.2019-04-01_190000
+
+       Note: If the directory argument to find is a fully expressed path (/home/somedir/.snapshot), then you should use basename on the -name filter:
+
+         $ theDir="$HOME/.snapshot"
+         $ find "$theDir" -maxdepth 1 ! -name "$(basename $theDir)"
+         /home/matt/.snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_0005
+         /home/matt/.snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_0405
+         /home/matt/.snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_0805
+         /home/matt/.snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-01_1605
+         /home/matt/.snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-01_2005
+         /home/matt/.snapshot/rnapdev1-svm_4_05am_6every4hours.2019-04-02_1205
+         /home/matt/.snapshot/snapmirror.1501b4aa-3f82-11e8-9c31-00a098cef13d_2147868328.2019-04-01_190000
+
+       ALL THE OTHER INFO
+
+       If trying to parse out any other fields, first see whether stat (GNU, OS X, FreeBSD) or find -printf (GNU) can give you the data you want directly. When trying to determine file size, try: wc -c. This is more portable as wc is a mandatory unix command, unlike stat and find -printf. It may be slower as unoptimized wc -c may read the entire file rather than just checking its properties. On some systems, wc -c adds whitespace to the file size which can be trimmed by double expansion: $(( $(wc -c < "filename") ))
+
+       EXCEPTIONS
+
+       If the information is intended for the user and not for processing (ls -l ~/dir | nl; echo "Ok to delete these files?") you can ignore this error with a [[directive]].
+
+ShellCheck manual                       from the official documentation

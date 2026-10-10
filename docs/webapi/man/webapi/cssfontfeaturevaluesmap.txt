@@ -1,0 +1,122 @@
+WEBAPI.CSSFONTFEATUREVALUESMAP(1) Sandbox manual WEBAPI.CSSFONTFEATUREVALUESMAP(1)
+
+       NAME
+
+       CSSFontFeatureValuesMap - The CSSFontFeatureValuesMap interface of the CSS Object Model (CSSOM) represents an iterable and read-only set of the CSSFontFeatureValuesRu
+
+       CSSFONTFEATUREVALUESMAP
+
+       The CSSFontFeatureValuesMap interface of the CSS Object Model (CSSOM) represents an iterable and read-only set of the CSSFontFeatureValuesRule properties, such as swash, annotation, ornaments, etc.
+
+       A CSSFontFeatureValuesMap instance is a read-only Map-like object, in which each key is the user-defined name used to reference a font feature, and the corresponding value is the index for the font feature within the font.
+
+       INSTANCE PROPERTIES
+
+        * CSSFontFeatureValuesMap.size (experimental)
+          * : Returns a positive integer containing the size of the CSSFontFeatureValuesMap object.
+
+       INSTANCE METHODS
+
+        * CSSFontFeatureValuesMap.clear() (experimental)
+          * : Removes all declarations in the CSSFontFeatureValuesMap.
+        * CSSFontFeatureValuesMap.delete() (experimental)
+          * : Removes the CSS declaration with the given property in the CSSFontFeatureValuesMap.
+        * CSSFontFeatureValuesMap.entries() (experimental)
+          * : Returns a new map iterator object that contains the [key, value] pairs for each declaration in this CSSFontFeatureValuesMap in insertion order.
+        * CSSFontFeatureValuesMap.forEach() (experimental)
+          * : Executes a provided function once per each key/value pair in this CSSFontFeatureValuesMap in insertion order.
+        * CSSFontFeatureValuesMap.get() (experimental)
+          * : Returns value corresponding to the key in this CSSFontFeatureValuesMap, or undefined if there is none.
+        * CSSFontFeatureValuesMap.has() (experimental)
+          * : Returns a boolean indicating whether an entry with the specified key exists in this CSSFontFeatureValuesMap or not.
+        * CSSFontFeatureValuesMap.keys() (experimental)
+          * : Returns a new map iterator object that contains the key for each declaration in this CSSFontFeatureValuesMap in insertion order.
+        * CSSFontFeatureValuesMap.set() (experimental)
+          * : Adds a new entry with a specified key and value to this CSSFontFeatureValuesMap, or updates an existing entry if the key already exists.
+        * CSSFontFeatureValuesMap.values() (experimental)
+          * : Returns a new map iterator object that contains the value for each declaration in this CSSFontFeatureValuesMap in insertion order.
+        * CSSFontFeatureValuesMap.[Symbol.iterator](/en-US/docs/Web/API/CSSFontFeatureValuesMap/Symbol.iterator)
+          * : Returns the iterator object itself. This allows iterator objects to also be iterable.
+
+       EXAMPLES
+
+       LOGGING USER-DEFINED NAMES
+
+       This example shows how you can log the user-defined names (and their mapped index) stored in a CSSFontFeatureValuesMap (for particular CSSFontFeatureValuesRule properties).
+
+       CSS
+
+       First we declare a @font-feature-values for the _Font One_ font family. This includes the declaration of the names "nice-style" and "odd-style" that can be used to represent the styleset alternate glyphs for _Font One_ and specify the index values for those alternates. It also includes the declaration of the name "swishy" that can be used to represent the swash alternate glyphs for _Font One_ and specify the index for that alternate.
+
+       The "nice-style" alternate glyphs are then applied for any .nice-look class, using font-variant-alternates property and passing the name to the styleset() function. The same is done for the name "swishy" for the swash alternate glyphs, which is then passed to the swash() function. The "odd-style" glyphs are not used (they are just added to demonstrate that multiple values may be defined in the map.)
+
+         /* At-rule for "nice-style", "odd-style", and "swishy" in Font One */
+         @font-feature-values Font One {
+           @styleset {
+             nice-style: 12; /* name used to represent the alternate set of glyphs at index 12 */
+             odd-style: 10; /* name used to represent the alternate set of glyphs at index 10 */
+           }
+           @swash {
+             swishy: 1; /* name used to represent the alternate set of glyphs at index 1 */
+           }
+         }
+
+         /* Apply the at-rules to the appropriate selectors */
+         .nice-look {
+           font-variant-alternates: styleset(nice-style);
+         }
+         .swoosh {
+           font-variant-alternates: swash(swishy);
+         }
+
+         <pre id="log"></pre>
+
+         #log {
+           height: 100px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+       JAVASCRIPT
+
+       The code below finds the corresponding CSSFontFeatureValuesRule for the CSS @font-feature-values at-rule added above. It then iterates the values of the styleset and swash properties, which are represented by CSSFontFeatureValuesMap instances, using the forEach() method. On each step it logs the user-defined names and index values.
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+         const rules = document.querySelector("#css-output").sheet.cssRules;
+         const fontOne = rules[0]; // A CSSFontFeatureValuesRule
+         if (fontOne.styleset) {
+           // styleset property is supported
+           log(
+             "The user has defined the following name(s)/index(s) for CSSFontFeatureValuesRule.styleset:",
+           );
+           fontOne.styleset.forEach((value, key) => log(` ${key} : ${value}`));
+         } else {
+           log("Browser does not support CSSFontFeatureValuesMap.styleset property.");
+         }
+
+         if (fontOne.swash) {
+           log(
+             "The user has defined the following name(s)/index(s) for CSSFontFeatureValuesRule.swash:",
+           );
+           fontOne.swash.forEach((value, key) => log(` ${key} : ${value}`));
+         } else {
+           log("Browser does not support CSSFontFeatureValuesMap.swash property.");
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * @font-feature-values
+
+Web APIs manual                         from the official documentation

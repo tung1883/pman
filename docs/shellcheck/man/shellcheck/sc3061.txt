@@ -1,0 +1,35 @@
+SHELLCHECK.SC3061(1)             Sandbox manual             SHELLCHECK.SC3061(1)
+
+       NAME
+
+       In POSIX sh, read without a variable is undefined. - while read -r;
+
+       IN POSIX SH, READ WITHOUT A VARIABLE IS UNDEFINED
+
+       IN POSIX SH, READ WITHOUT A VARIABLE IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         while read -r;
+         do
+             echo "line: ${REPLY}"
+         done < foolist
+
+       CORRECT CODE
+
+       Add a variable to read and use it later on:
+
+         while read -r foo;
+         do
+             echo "line: ${foo}"
+         done < foolist
+
+       RATIONALE
+
+       This behavior is not allowed in POSIX.
+
+       EXCEPTIONS
+
+       None. This warning is not emitted in ksh or bash where read can be used without an argument.
+
+ShellCheck manual                       from the official documentation

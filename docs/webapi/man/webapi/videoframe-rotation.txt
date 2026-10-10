@@ -1,0 +1,41 @@
+WEBAPI.VIDEOFRAME-ROTATION(1)    Sandbox manual    WEBAPI.VIDEOFRAME-ROTATION(1)
+
+       NAME
+
+       VideoFrame: rotation property - windowanddedicated
+
+       VIDEOFRAME: ROTATION PROPERTY
+
+       window_and_dedicated
+
+       The rotation property of the VideoFrame interface returns the rotation of the video frame.
+
+       VALUE
+
+       An integer representing the rotation (0, 90, 180, or 270) in degrees clockwise. Defaults to 0. Arbitrary numbers (including negatives) are rounded to the next quarter turn.
+
+       EXAMPLES
+
+       DETECTING WHEN A CAMERA VIDEO IS ROTATED
+
+       Given a stream of video frames from a camera, obtained using a MediaStreamTrackProcessor, you can check the rotation property on the VideoFrame objects to see whether or not the frames are rotated.
+
+         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+         const track = stream.getTracks()[0];
+
+         const trackProcessor = new MediaStreamTrackProcessor(track);
+
+         const reader = trackProcessor.readable.getReader();
+         while (true) {
+           const result = await reader.read();
+           if (result.done) break;
+           const frameFromCamera = result.value;
+           // Returns 0, 90, 180, or 270 indicating the frame's rotation
+           console.log(frameFromCamera.rotation);
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

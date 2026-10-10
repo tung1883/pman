@@ -1,0 +1,67 @@
+SHELLCHECK.SC3040(1)             Sandbox manual             SHELLCHECK.SC3040(1)
+
+       NAME
+
+       In POSIX sh, set option [name] is undefined. - The value [name] is something other than allexport, errexit, ignoreeof, monitor, noclobber, noexec, noglob, nolog, notify , nounset, verbose
+
+       IN POSIX SH, SET OPTION NAME IS UNDEFINED
+
+       IN POSIX SH, SET OPTION NAME IS UNDEFINED
+
+       The value [name] is something other than allexport, errexit, ignoreeof, monitor, noclobber, noexec, noglob, nolog, notify , nounset, verbose, vi, or xtrace.
+
+       RATIONALE
+
+       In a script declared to run with sh or dash, ShellCheck found set -o used with an option that is not defined by POSIX. The option may not be supported by these shells.
+
+       EXCEPTIONS
+
+       If the script has already inspected the current shell and determined the option is available, you can [[ignore]] this message.
+
+       PIPEFAIL
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         set -o pipefail
+         if cmd1 | cmd2 | cmd3
+         then
+           echo "Success"
+         fi
+
+       CORRECT CODE
+
+         fail="$(mktemp)"
+         if { cmd1 || echo > "$fail"; } |
+            { cmd2 || echo > "$fail"; } |
+              cmd3 && [ ! -s "$fail" ]
+         then
+           echo "Success"
+         fi
+         rm "$fail"
+
+       Each stage in the pipeline such as cmd1 can be rewritten as { cmd1 || echo > file; } which will behave as before but now also write the exit code into file if the command fails.
+
+       If the file has been written to when the pipeline is done, it means one of the commands failed. This is demonstrated in the correct example.
+
+       This can obviously be extended with e.g. echo "cmd1=$?" >> file if the particular exit codes for particular commands are desired.
+
+       If pipefail or other options are used only as a sanity check, another option is to try the setting in a subshell and only apply it in the main shell if successful. This will set the flag on platforms where sh is linked to ash, busybox, or bash, but do nothing if sh is dash.
+
+         # Set pipefail if it works in a subshell, disregard if unsupported
+         # shellcheck disable=SC3040
+         (set -o pipefail 2> /dev/null) && set -o pipefail
+
+       Alternatively, switch to a shell that supports pipefail, such as Bash.
+
+       VERSIONS
+
+       POSIX.1-2024 introduced pipefail. This rule was last applicable to pipefail in POSIX.1-2017.
+
+       dash version 5.13 included pipefail along with other POSIX.1-2024 features.
+
+       RELATED RESOURCES
+
+        * POSIX.1-2017 - Shell Command Language - set
+
+ShellCheck manual                       from the official documentation

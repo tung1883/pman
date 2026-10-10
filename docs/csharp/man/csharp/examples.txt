@@ -1,0 +1,704 @@
+CSHARP.EXAMPLES(1)               Sandbox manual               CSHARP.EXAMPLES(1)
+
+       NAME
+
+       Example XML documentation comments - See documentation examples on many different C# language elements. Learn which tags to use in different situations and for different languag
+
+       EXAMPLE XML DOCUMENTATION COMMENTS
+
+       This article contains three examples for adding XML documentation comments to most C# language elements. The first example shows how you document a class with different members. The second example shows how you can reuse explanations for a hierarchy of classes or interfaces. The third example shows tags to use for generic classes and members. The second and third examples use concepts that the first example covers.
+
+       DOCUMENT A CLASS, STRUCT, OR INTERFACE
+
+       The following example shows common language elements, and the tags you'll likely use to describe these elements. The documentation comments describe the use of the tags, rather than the class itself.
+
+         ﻿using System;
+
+         //-----------------------------------------------------------------------------
+         namespace XmlTags
+         {
+             /// <summary>
+             /// Every class and member should have a one sentence
+             /// summary describing its purpose.
+             /// </summary>
+             /// <remarks>
+             /// You can expand on that one sentence summary to
+             /// provide more information for readers. In this case,
+             /// the <c>ExampleClass</c> provides different C#
+             /// elements to show how you would add documentation
+             ///comments for most elements in a typical class.
+             /// <para>
+             /// The remarks can add multiple paragraphs, so you can
+             /// write detailed information for developers that use
+             /// your work. You should add everything needed for
+             /// readers to be successful. This class contains
+             /// examples for the following:
+             /// </para>
+             /// <list type="table">
+             /// <item>
+             /// <term>Summary</term>
+             /// <description>
+             /// This should provide a one sentence summary of the class or member.
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>Remarks</term>
+             /// <description>
+             /// This is typically a more detailed description of the class or member
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>para</term>
+             /// <description>
+             /// The para tag separates a section into multiple paragraphs
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>list</term>
+             /// <description>
+             /// Provides a list of terms or elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>returns, param</term>
+             /// <description>
+             /// Used to describe parameters and return values
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>value</term>
+             /// <description>Used to describe properties</description>
+             /// </item>
+             /// <item>
+             /// <term>exception</term>
+             /// <description>
+             /// Used to describe exceptions that may be thrown
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>c, cref, see, seealso</term>
+             /// <description>
+             /// These provide code style and links to other
+             /// documentation elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>example, code</term>
+             /// <description>
+             /// These are used for code examples
+             /// </description>
+             /// </item>
+             /// </list>
+             /// <para>
+             /// The list above uses the "table" style. You could
+
+       Adding documentation can clutter your source code with large sets of comments intended for users of your library. Use the tag to separate your XML comments from your source. Your source code references an XML file by using the tag:
+
+         ﻿using System;
+
+         //-----------------------------------------------------------------------------
+         namespace XmlTags
+         {
+             /// <summary>
+             /// Every class and member should have a one sentence
+             /// summary describing its purpose.
+             /// </summary>
+             /// <remarks>
+             /// You can expand on that one sentence summary to
+             /// provide more information for readers. In this case,
+             /// the <c>ExampleClass</c> provides different C#
+             /// elements to show how you would add documentation
+             ///comments for most elements in a typical class.
+             /// <para>
+             /// The remarks can add multiple paragraphs, so you can
+             /// write detailed information for developers that use
+             /// your work. You should add everything needed for
+             /// readers to be successful. This class contains
+             /// examples for the following:
+             /// </para>
+             /// <list type="table">
+             /// <item>
+             /// <term>Summary</term>
+             /// <description>
+             /// This should provide a one sentence summary of the class or member.
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>Remarks</term>
+             /// <description>
+             /// This is typically a more detailed description of the class or member
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>para</term>
+             /// <description>
+             /// The para tag separates a section into multiple paragraphs
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>list</term>
+             /// <description>
+             /// Provides a list of terms or elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>returns, param</term>
+             /// <description>
+             /// Used to describe parameters and return values
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>value</term>
+             /// <description>Used to describe properties</description>
+             /// </item>
+             /// <item>
+             /// <term>exception</term>
+             /// <description>
+             /// Used to describe exceptions that may be thrown
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>c, cref, see, seealso</term>
+             /// <description>
+             /// These provide code style and links to other
+             /// documentation elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>example, code</term>
+             /// <description>
+             /// These are used for code examples
+             /// </description>
+             /// </item>
+             /// </list>
+             /// <para>
+             /// The list above uses the "table" style. You could
+
+       The second file, xml_include_tag.xml, contains the documentation comments.
+
+         <MyDocs>
+             <MyMembers name="test">
+                 <summary>
+                 The summary for this type.
+                 </summary>
+             </MyMembers>
+             <MyMembers name="test2">
+                 <summary>
+                 The summary for this other type.
+                 </summary>
+             </MyMembers>
+         </MyDocs>
+
+       DOCUMENT A HIERARCHY OF CLASSES AND INTERFACES
+
+       The element means a type or member inherits documentation comments from a base class or interface. You can also use the element with the cref attribute to inherit comments from a member of the same type. The following example shows ways to use this tag. When you add the inheritdoc attribute to a type, member comments are inherited. You can prevent the use of inherited comments by writing comments on the members in the derived type. The compiler chooses those comments over the inherited comments.
+
+         ﻿using System;
+
+         //-----------------------------------------------------------------------------
+         namespace XmlTags
+         {
+             /// <summary>
+             /// Every class and member should have a one sentence
+             /// summary describing its purpose.
+             /// </summary>
+             /// <remarks>
+             /// You can expand on that one sentence summary to
+             /// provide more information for readers. In this case,
+             /// the <c>ExampleClass</c> provides different C#
+             /// elements to show how you would add documentation
+             ///comments for most elements in a typical class.
+             /// <para>
+             /// The remarks can add multiple paragraphs, so you can
+             /// write detailed information for developers that use
+             /// your work. You should add everything needed for
+             /// readers to be successful. This class contains
+             /// examples for the following:
+             /// </para>
+             /// <list type="table">
+             /// <item>
+             /// <term>Summary</term>
+             /// <description>
+             /// This should provide a one sentence summary of the class or member.
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>Remarks</term>
+             /// <description>
+             /// This is typically a more detailed description of the class or member
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>para</term>
+             /// <description>
+             /// The para tag separates a section into multiple paragraphs
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>list</term>
+             /// <description>
+             /// Provides a list of terms or elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>returns, param</term>
+             /// <description>
+             /// Used to describe parameters and return values
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>value</term>
+             /// <description>Used to describe properties</description>
+             /// </item>
+             /// <item>
+             /// <term>exception</term>
+             /// <description>
+             /// Used to describe exceptions that may be thrown
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>c, cref, see, seealso</term>
+             /// <description>
+             /// These provide code style and links to other
+             /// documentation elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>example, code</term>
+             /// <description>
+             /// These are used for code examples
+             /// </description>
+             /// </item>
+             /// </list>
+             /// <para>
+             /// The list above uses the "table" style. You could
+
+       GENERIC TYPES
+
+       Use the tag to describe type parameters on generic types and methods. The value for the cref attribute requires new syntax to reference a generic method or class:
+
+         ﻿using System;
+
+         //-----------------------------------------------------------------------------
+         namespace XmlTags
+         {
+             /// <summary>
+             /// Every class and member should have a one sentence
+             /// summary describing its purpose.
+             /// </summary>
+             /// <remarks>
+             /// You can expand on that one sentence summary to
+             /// provide more information for readers. In this case,
+             /// the <c>ExampleClass</c> provides different C#
+             /// elements to show how you would add documentation
+             ///comments for most elements in a typical class.
+             /// <para>
+             /// The remarks can add multiple paragraphs, so you can
+             /// write detailed information for developers that use
+             /// your work. You should add everything needed for
+             /// readers to be successful. This class contains
+             /// examples for the following:
+             /// </para>
+             /// <list type="table">
+             /// <item>
+             /// <term>Summary</term>
+             /// <description>
+             /// This should provide a one sentence summary of the class or member.
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>Remarks</term>
+             /// <description>
+             /// This is typically a more detailed description of the class or member
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>para</term>
+             /// <description>
+             /// The para tag separates a section into multiple paragraphs
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>list</term>
+             /// <description>
+             /// Provides a list of terms or elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>returns, param</term>
+             /// <description>
+             /// Used to describe parameters and return values
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>value</term>
+             /// <description>Used to describe properties</description>
+             /// </item>
+             /// <item>
+             /// <term>exception</term>
+             /// <description>
+             /// Used to describe exceptions that may be thrown
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>c, cref, see, seealso</term>
+             /// <description>
+             /// These provide code style and links to other
+             /// documentation elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>example, code</term>
+             /// <description>
+             /// These are used for code examples
+             /// </description>
+             /// </item>
+             /// </list>
+             /// <para>
+             /// The list above uses the "table" style. You could
+
+       EXTENSION MEMBERS
+
+       Add XML comments for , , and, if necessary, to describe the receiver parameter on extension members:
+
+         ﻿using System;
+
+         //-----------------------------------------------------------------------------
+         namespace XmlTags
+         {
+             /// <summary>
+             /// Every class and member should have a one sentence
+             /// summary describing its purpose.
+             /// </summary>
+             /// <remarks>
+             /// You can expand on that one sentence summary to
+             /// provide more information for readers. In this case,
+             /// the <c>ExampleClass</c> provides different C#
+             /// elements to show how you would add documentation
+             ///comments for most elements in a typical class.
+             /// <para>
+             /// The remarks can add multiple paragraphs, so you can
+             /// write detailed information for developers that use
+             /// your work. You should add everything needed for
+             /// readers to be successful. This class contains
+             /// examples for the following:
+             /// </para>
+             /// <list type="table">
+             /// <item>
+             /// <term>Summary</term>
+             /// <description>
+             /// This should provide a one sentence summary of the class or member.
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>Remarks</term>
+             /// <description>
+             /// This is typically a more detailed description of the class or member
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>para</term>
+             /// <description>
+             /// The para tag separates a section into multiple paragraphs
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>list</term>
+             /// <description>
+             /// Provides a list of terms or elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>returns, param</term>
+             /// <description>
+             /// Used to describe parameters and return values
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>value</term>
+             /// <description>Used to describe properties</description>
+             /// </item>
+             /// <item>
+             /// <term>exception</term>
+             /// <description>
+             /// Used to describe exceptions that may be thrown
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>c, cref, see, seealso</term>
+             /// <description>
+             /// These provide code style and links to other
+             /// documentation elements
+             /// </description>
+             /// </item>
+             /// <item>
+             /// <term>example, code</term>
+             /// <description>
+             /// These are used for code examples
+             /// </description>
+             /// </item>
+             /// </list>
+             /// <para>
+             /// The list above uses the "table" style. You could
+
+       The C# compiler copies the XML nodes from the extension block to all members declared in that block.
+
+       For an extension indexer, cref syntax can reference the indexer and its accessors through the extension block that declares it, and it can reference the implementation methods on the containing class. The following examples show how to reference the this[int] indexer and its generated get_Item accessor from the preceding example:
+
+         /// <seealso cref="Extensions.extension{TSequence}(System.Collections.Generic.IEnumerable{TSequence}).this[int]"/>
+         /// <seealso cref="Extensions.extension{TSequence}(System.Collections.Generic.IEnumerable{TSequence}).get_Item(int)"/>
+
+       MATH CLASS EXAMPLE
+
+       The following code shows a realistic example of adding doc comments to a math library.
+
+         ﻿namespace TaggedLibrary
+         {
+             /*
+                 The main Math class
+                 Contains all methods for performing basic math functions
+             */
+             /// <summary>
+             /// The main <c>Math</c> class.
+             /// Contains all methods for performing basic math functions.
+             /// <list type="bullet">
+             /// <item>
+             /// <term>Add</term>
+             /// <description>Addition Operation</description>
+             /// </item>
+             /// <item>
+             /// <term>Subtract</term>
+             /// <description>Subtraction Operation</description>
+             /// </item>
+             /// <item>
+             /// <term>Multiply</term>
+             /// <description>Multiplication Operation</description>
+             /// </item>
+             /// <item>
+             /// <term>Divide</term>
+             /// <description>Division Operation</description>
+             /// </item>
+             /// </list>
+             /// </summary>
+             /// <remarks>
+             /// <para>
+             /// This class can add, subtract, multiply and divide.
+             /// </para>
+             /// <para>
+             /// These operations can be performed on both
+             /// integers and doubles.
+             /// </para>
+             /// </remarks>
+             public class Math
+             {
+                 // Adds two integers and returns the result
+                 /// <summary>
+                 /// Adds two integers <paramref name="a"/> and <paramref name="b"/>
+                 ///  and returns the result.
+                 /// </summary>
+                 /// <returns>
+                 /// The sum of two integers.
+                 /// </returns>
+                 /// <example>
+                 /// <code>
+                 /// int c = Math.Add(4, 5);
+                 /// if (c > 10)
+                 /// {
+                 ///     Console.WriteLine(c);
+                 /// }
+                 /// </code>
+                 /// </example>
+                 /// <exception cref="System.OverflowException">
+                 /// Thrown when one parameter is <see cref="Int32.MaxValue"/> and the other
+                 /// is greater than 0.
+                 /// </exception>
+                 /// See <see cref="Math.Add(double, double)"/> to add doubles.
+                 /// <seealso cref="Math.Subtract(int, int)"/>
+                 /// <seealso cref="Math.Multiply(int, int)"/>
+                 /// <seealso cref="Math.Divide(int, int)"/>
+                 /// <param name="a">An integer.</param>
+                 /// <param name="b">An integer.</param>
+                 public static int Add(int a, int b)
+                 {
+                     // If any parameter is equal to the max value of an integer
+                     // and the other is greater than zero
+                     if ((a == int.MaxValue && b > 0) ||
+                         (b == int.MaxValue && a > 0))
+                     {
+                         throw new System.OverflowException();
+                     }
+                     return a + b;
+                 }
+
+                 // Adds two doubles and returns the result
+                 /// <summary>
+
+       You might find that the code is obscured by all the comments. The final example shows how you adapt this library to use the include tag. You move all the documentation to an XML file:
+
+         <docs>
+           <members name="math">
+            <Math>
+             <summary>
+               The main <c>Math</c> class.
+               Contains all methods for performing basic math functions.
+               </summary>
+               <remarks>
+               <para>This class can add, subtract, multiply and divide.</para>
+               <para>These operations can be performed on both integers and doubles.</para>
+               </remarks>
+             </Math>
+             <AddInt>
+               <summary>
+               Adds two integers <paramref name="a"/> and <paramref name="b"/>
+               and returns the result.
+               </summary>
+               <returns>
+               The sum of two integers.
+               </returns>
+               <example>
+               <code>
+               int c = Math.Add(4, 5);
+               if (c > 10)
+               {
+                 Console.WriteLine(c);
+               }
+               </code>
+               </example>
+               <exception cref="System.OverflowException">Thrown when one
+               parameter is max
+               and the other is greater than 0.</exception>
+               See <see cref="Math.Add(double, double)"/> to add doubles.
+               <seealso cref="Math.Subtract(int, int)"/>
+               <seealso cref="Math.Multiply(int, int)"/>
+               <seealso cref="Math.Divide(int, int)"/>
+               <param name="a">An integer.</param>
+               <param name="b">An integer.</param>
+             </AddInt>
+             <AddDouble>
+               <summary>
+               Adds two doubles <paramref name="a"/> and <paramref name="b"/>
+               and returns the result.
+               </summary>
+               <returns>
+               The sum of two doubles.
+               </returns>
+               <example>
+               <code>
+               double c = Math.Add(4.5, 5.4);
+               if (c > 10)
+               {
+                 Console.WriteLine(c);
+               }
+               </code>
+               </example>
+               <exception cref="System.OverflowException">Thrown when one parameter is max
+               and the other is greater than 0.</exception>
+               See <see cref="Math.Add(int, int)"/> to add integers.
+               <seealso cref="Math.Subtract(double, double)"/>
+               <seealso cref="Math.Multiply(double, double)"/>
+               <seealso cref="Math.Divide(double, double)"/>
+               <param name="a">A double precision number.</param>
+               <param name="b">A double precision number.</param>
+             </AddDouble>
+             <SubtractInt>
+               <summary>
+               Subtracts <paramref name="b"/> from <paramref name="a"/> and
+               returns the result.
+               </summary>
+               <returns>
+               The difference between two integers.
+               </returns>
+               <example>
+               <code>
+               int c = Math.Subtract(4, 5);
+               if (c > 1)
+               {
+                 Console.WriteLine(c);
+               }
+
+       In the preceding XML, each member's documentation comments appear directly inside a tag named after what they do. You can choose your own strategy. The code uses the tag to reference the appropriate element in the XML file:
+
+         ﻿namespace IncludeTag
+         {
+
+             /*
+                 The main Math class
+                 Contains all methods for performing basic math functions
+             */
+             /// <include file='include.xml' path='docs/members[@name="math"]/Math/*'/>
+             public class Math
+             {
+                 // Adds two integers and returns the result
+                 /// <include file='include.xml' path='docs/members[@name="math"]/AddInt/*'/>
+                 public static int Add(int a, int b)
+                 {
+                     // If any parameter is equal to the max value of an integer
+                     // and the other is greater than zero
+                     if ((a == int.MaxValue && b > 0) || (b == int.MaxValue && a > 0))
+                         throw new System.OverflowException();
+
+                     return a + b;
+                 }
+
+                 // Adds two doubles and returns the result
+                 /// <include file='include.xml' path='docs/members[@name="math"]/AddDouble/*'/>
+                 public static double Add(double a, double b)
+                 {
+                     // If any parameter is equal to the max value of an integer
+                     // and the other is greater than zero
+                     if ((a == double.MaxValue && b > 0) || (b == double.MaxValue && a > 0))
+                         throw new System.OverflowException();
+
+                     return a + b;
+                 }
+
+                 // Subtracts an integer from another and returns the result
+                 /// <include file='include.xml' path='docs/members[@name="math"]/SubtractInt/*'/>
+                 public static int Subtract(int a, int b)
+                 {
+                     return a - b;
+                 }
+
+                 // Subtracts a double from another and returns the result
+                 /// <include file='include.xml' path='docs/members[@name="math"]/SubtractDouble/*'/>
+                 public static double Subtract(double a, double b)
+                 {
+                     return a - b;
+                 }
+
+                 // Multiplies two integers and returns the result
+                 /// <include file='include.xml' path='docs/members[@name="math"]/MultiplyInt/*'/>
+                 public static int Multiply(int a, int b)
+                 {
+                     return a * b;
+                 }
+
+                 // Multiplies two doubles and returns the result
+                 /// <include file='include.xml' path='docs/members[@name="math"]/MultiplyDouble/*'/>
+                 public static double Multiply(double a, double b)
+                 {
+                     return a * b;
+                 }
+
+                 // Divides an integer by another and returns the result
+                 /// <include file='include.xml' path='docs/members[@name="math"]/DivideInt/*'/>
+                 public static int Divide(int a, int b)
+                 {
+                     return a / b;
+                 }
+
+                 // Divides a double by another and returns the result
+                 /// <include file='include.xml' path='docs/members[@name="math"]/DivideDouble/*'/>
+                 public static double Divide(double a, double b)
+                 {
+                     return a / b;
+                 }
+             }
+         }
+
+        * The file attribute is the name of the XML file containing the documentation.
+        * The path attribute is an XPath query to the tag name present in the specified file.
+        * The name attribute is the name specifier in the tag that precedes the comments.
+        * The id attribute, which you can use in place of name, is the ID for the tag that precedes the comments.
+
+C# manual                               from the official documentation

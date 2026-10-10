@@ -1,0 +1,41 @@
+SHELLCHECK.SC2081(1)             Sandbox manual             SHELLCHECK.SC2081(1)
+
+       NAME
+
+       [ .. ] can't match globs. Use [[ .. ]] or grep. - if [ $var == [^0-9] ]
+
+       CAN'T MATCH GLOBS. USE .. OR GREP
+
+       CAN'T MATCH GLOBS. USE .. OR GREP
+
+       PROBLEMATIC CODE
+
+         if [ $var == *[^0-9]* ]
+         then
+           echo "$var is not numeric"
+         fi
+
+       CORRECT CODE
+
+         if [[ $var == *[^0-9]* ]]
+         then
+           echo "$var is not numeric"
+         fi
+
+       RATIONALE
+
+       [ .. ] aka test can not match against globs.
+
+       In bash/ksh, you can instead use [[ .. ]] which supports this behavior.
+
+       In sh, you can rewrite to use grep.
+
+         if echo $var | grep -q '^[0-9]*$'; then
+           echo "$var is numeric"
+         fi
+
+       EXCEPTIONS
+
+       None. If you are not trying to match a glob, quote the argument (e.g. [ $var == '*' ] to match literal asterisk.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,46 @@
+SHELLCHECK.SC2307(1)             Sandbox manual             SHELLCHECK.SC2307(1)
+
+       NAME
+
+       'expr' expects 3+ arguments but sees 1. Make sure each operator/operand is a separate argument, and escape <>&|. - expr 1 | 2
+
+       'EXPR' EXPECTS 3+ ARGUMENTS BUT SEES 1. MAKE SURE EACH OPERATOR/OPERAN
+
+       'EXPR' EXPECTS 3+ ARGUMENTS BUT SEES 1. MAKE SURE EACH OPERATOR/OPERAN
+
+       PROBLEMATIC CODE
+
+         expr 1 | 2
+         # > not escaped
+         expr "$foo" >= "$bar"
+
+         # Missing spaces around +
+         expr 1+2
+         # Unexpected quoting around an expression
+         expr "1 + 2"
+
+       CORRECT CODE
+
+         expr 16 \| 7
+         expr "$foo" \>= "$bar"
+         expr 1 + 2
+
+       RATIONALE
+
+       ShellCheck found an expr command with 1 or 2 arguments. expr normally expects 3 or more.
+
+       Generally, this happens for one of two reasons:
+
+        * You are using an operator like |, &, >, >=, <, <=, which needs to be escaped to avoid the shell interpreting it as a pipe, backgrounded command, or redirection.
+        * You don't have spaces around operators and operands (or have bad quotes) which causes them not to be separate arguments.
+       Make sure each operator or operand to expr is a separate argument, and that anything containing shell metacharacters is escaped. The correct code shows examples of each.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

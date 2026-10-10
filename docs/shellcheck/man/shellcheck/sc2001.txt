@@ -1,0 +1,53 @@
+SHELLCHECK.SC2001(1)             Sandbox manual             SHELLCHECK.SC2001(1)
+
+       NAME
+
+       See if you can use ${variable//search/replace} instead. - string="bwol" ; echo "$string" | sed -e "s/wo/ow/"
+
+       SEE IF YOU CAN USE VARIABLE//SEARCH/REPLACE INSTEAD
+
+       SEE IF YOU CAN USE VARIABLE//SEARCH/REPLACE INSTEAD
+
+       PROBLEMATIC CODE
+
+         string="bwol" ; echo "$string" | sed -e "s/wo/ow/"
+
+       CORRECT CODE
+
+         string="bwol" ; echo "${string//wo/ow}"
+
+       *
+
+       Here is a demonstration of the different search/replace available in Bash:
+
+         var="foo foo"
+         echo "$var" | sed 's/^foo/bar/g'
+         echo ${var/#foo/bar}
+
+         $var  |  sed expression  |  bash equivalent  |  result
+         foo foo  |  s/foo/bar/  |  ${var/foo/bar}  |  bar foo
+         foo foo  |  s/foo/bar/g  |  ${var//foo/bar}  |  bar bar
+         foo foo  |  s/^foo/bar/  |  ${var/#foo/bar}  |  bar foo
+         -foo foo  |  s/^foo/bar/  |  ${var/#foo/bar}  |  -foo foo
+         -foo foo  |  s/foo$/bar/  |  ${var/%foo/bar}  |  -foo bar
+         -foo foo-  |  s/foo$/bar/  |  ${var/%foo/bar}  |  -foo foo-
+
+       RATIONALE
+
+       Let's assume somewhere earlier in your code, you have put data into a variable (Ex: $string). Now you want to search and replace inside the contents of $string and echo the contents out. You could pass this to sed as done in the example above, but for simple substitutions, a parameter expansion can do it with less overhead.
+
+       EXCEPTIONS
+
+       Occasionally a more complex sed substitution is required. For example, getting the last character of a string.
+
+         string="bwol" ; echo "$string" | sed -e "s/^.*\(.\)$/\1/"
+
+       This is a bit simple for the example, and there are alternative ways of doing this in the shell, but this SC2001 flags on several of my crazy complex sed commands beyond this example's scope. Utilizing some of the more complex capabilities of sed is required occasionally, and it is safe to ignore SC2001.
+
+       RELATED RESOURCES
+
+        * Bash Manual: Shell Parameter Expansion
+        * Wooledge BashGuide: Parameter Expansion.
+        * Bash Hacker Wiki: Parameter Expansion
+
+ShellCheck manual                       from the official documentation

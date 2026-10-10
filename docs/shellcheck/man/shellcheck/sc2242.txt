@@ -1,0 +1,40 @@
+SHELLCHECK.SC2242(1)             Sandbox manual             SHELLCHECK.SC2242(1)
+
+       NAME
+
+       Can only exit with status 0-255. Other data should be written to stdout/stderr. - exit "Bad filename"
+
+       CAN ONLY EXIT WITH STATUS 0-255. OTHER DATA SHOULD BE WRITTEN TO STDOU
+
+       CAN ONLY EXIT WITH STATUS 0-255. OTHER DATA SHOULD BE WRITTEN TO STDOU
+
+       PROBLEMATIC CODE
+
+         exit "Bad filename"
+
+       CORRECT CODE
+
+         echo "Bad filename" >&2
+         exit 1
+
+       RATIONALE
+
+       exit can only be used to signal success or failure (0 = success, 1-255 = failure). It can not be used to return string data, and it can not be used to print error messages.
+
+       String data should be written stdout, before an exit 0 to exit with success.
+
+       Errors should instead be written to stderr, with an exit 1 (or higher) to exit with failure:
+
+         if [ ! -f "$1" ]
+         then
+            echo "$1 is not a regular file" >&2
+            exit 1
+         fi
+
+       Note in particular that exit -1 is equivalent to exit 255, but that exit 1 is the more canonical way of expressing the first possible error code.
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

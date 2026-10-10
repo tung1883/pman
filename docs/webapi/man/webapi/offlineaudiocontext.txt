@@ -1,0 +1,113 @@
+WEBAPI.OFFLINEAUDIOCONTEXT(1)    Sandbox manual    WEBAPI.OFFLINEAUDIOCONTEXT(1)
+
+       NAME
+
+       OfflineAudioContext - The OfflineAudioContext interface is an AudioContext interface representing an audio-processing graph built from linked together AudioNodes.
+
+       OFFLINEAUDIOCONTEXT
+
+       The OfflineAudioContext interface is an AudioContext interface representing an audio-processing graph built from linked together AudioNodes. In contrast with a standard AudioContext, an OfflineAudioContext doesn't render the audio to the device hardware; instead, it generates it, as fast as it can, and outputs the result to an AudioBuffer.
+
+       CONSTRUCTOR
+
+        * OfflineAudioContext()
+          * : Creates a new OfflineAudioContext instance.
+
+       INSTANCE PROPERTIES
+
+       _Also inherits properties from its parent interface, BaseAudioContext._
+
+        * OfflineAudioContext.length (read-only)
+          * : An integer representing the size of the buffer in sample-frames.
+
+       INSTANCE METHODS
+
+       _Also inherits methods from its parent interface, BaseAudioContext._
+
+        * OfflineAudioContext.suspend()
+          * : Schedules a suspension of the time progression in the audio context at the specified time and returns a promise.
+        * OfflineAudioContext.startRendering()
+          * : Starts rendering the audio, taking into account the current connections and the current scheduled changes. This page covers both the event-based version and the promise-based version.
+
+       DEPRECATED METHODS
+
+        * OfflineAudioContext.resume()
+          * : Resumes the progression of time in an audio context that has previously been suspended.
+       > The resume() method is still available — it is now defined on the BaseAudioContext interface (see AudioContext.resume) and thus can be accessed by both the AudioContext and OfflineAudioContext interfaces.
+
+       EVENTS
+
+       Listen to these events using addEventListener() or by assigning an event listener to the oneventname property of this interface:
+
+        * complete
+          * : Fired when the rendering of an offline audio context is complete.
+
+       EXAMPLES
+
+       PLAYING AUDIO WITH AN OFFLINE AUDIO CONTEXT
+
+       In this example, we declare both an AudioContext and an OfflineAudioContext object. We use the AudioContext to load an audio track fetch(), then the OfflineAudioContext to render the audio into an AudioBufferSourceNode and play the track through. After the offline audio graph is set up, we render it to an AudioBuffer using OfflineAudioContext.startRendering().
+
+       When the startRendering() promise resolves, rendering has completed and the output AudioBuffer is returned out of the promise.
+
+       At this point we create another audio context, create an AudioBufferSourceNode inside it, and set its buffer to be equal to the promise AudioBuffer. This is then played as part of a simple standard audio graph.
+
+       > You can run the full example live, or view the source.
+
+         // Define both online and offline audio contexts
+         let audioCtx; // Must be initialized after a user interaction
+         const offlineCtx = new OfflineAudioContext(2, 44100 * 40, 44100);
+
+         // Define constants for dom nodes
+         const play = document.querySelector("#play");
+
+         function getData() {
+           // Fetch an audio track, decode it and stick it in a buffer.
+           // Then we put the buffer into the source and can play it.
+           fetch("viper.ogg")
+             .then((response) => response.arrayBuffer())
+             .then((downloadedBuffer) => audioCtx.decodeAudioData(downloadedBuffer))
+             .then((decodedBuffer) => {
+               console.log("File downloaded successfully.");
+               const source = new AudioBufferSourceNode(offlineCtx, {
+                 buffer: decodedBuffer,
+               });
+               source.connect(offlineCtx.destination);
+               return source.start();
+             })
+             .then(() => offlineCtx.startRendering())
+             .then((renderedBuffer) => {
+               console.log("Rendering completed successfully.");
+               play.disabled = false;
+               const song = new AudioBufferSourceNode(audioCtx, {
+                 buffer: renderedBuffer,
+               });
+               song.connect(audioCtx.destination);
+
+               // Start the song
+               song.start();
+             })
+             .catch((err) => {
+               console.error(`Error encountered: ${err}`);
+             });
+         }
+
+         // Activate the play button
+         play.onclick = () => {
+           play.disabled = true;
+           // We can initialize the context as the user clicked.
+           audioCtx = new AudioContext();
+
+           // Fetch the data and start the song
+           getData();
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

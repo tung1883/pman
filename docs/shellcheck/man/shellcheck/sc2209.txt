@@ -1,0 +1,42 @@
+SHELLCHECK.SC2209(1)             Sandbox manual             SHELLCHECK.SC2209(1)
+
+       NAME
+
+       Use var=$(command) to assign output (or quote to assign string). - user=whoami         # Want to run whoami and assign output
+
+       USE VAR (COMMAND) TO ASSIGN OUTPUT (OR QUOTE TO ASSIGN STRING)
+
+       USE VAR (COMMAND) TO ASSIGN OUTPUT (OR QUOTE TO ASSIGN STRING)
+
+       PROBLEMATIC CODE
+
+         user=whoami         # Want to run whoami and assign output
+
+         PAGER=cat git log   # Want to assign the string "cat"
+
+       CORRECT CODE
+
+         user=$(whoami)
+
+         PAGER="cat" git log
+
+       RATIONALE
+
+       Putting var= in front of a command will not assign its output. Use var=$(my command here) to execute the command and capture its output.
+
+       If you do want to assign a literal string, use quotes to make this clear to shellcheck and humans alike.
+
+       EXCEPTIONS
+
+       None.
+
+       Quoting a single command (as in PAGER="cat" above) doesn't change how the script works. It's purely to show shellcheck (and humans) that a literal assignment of a command name is intentional.
+
+       This warning triggers generally when a variable is assigned an unquoted command name (from a list of hard coded names). See related warning [[SC2037]] which detects the same kind of error through the patterns var=value -flag and var=value glob.
+
+       RELATED RESOURCES
+
+        * BashFaq: How can I store the return value and/or output of a command in a variable?
+        * StackOverflow: How to set a variable to the output from a command in Bash
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,35 @@
+SHELLCHECK.SC3034(1)             Sandbox manual             SHELLCHECK.SC3034(1)
+
+       NAME
+
+       In POSIX sh, $(<file) is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, ( FILE) IS UNDEFINED
+
+       IN POSIX SH, ( FILE) IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         content=$(<file)
+
+       CORRECT CODE
+
+         content=$(cat file)
+
+       RATIONALE
+
+       In bash and ksh, $(< file) will expand to the full contents of the file.
+
+       However, in dash and POSIX sh, it will instead expand to nothing. This is because it's not recognized as special, and simply results in the command output of < file, a no-op command that opens the file and exits without reading it.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

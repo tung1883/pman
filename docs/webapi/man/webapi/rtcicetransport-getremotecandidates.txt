@@ -1,0 +1,43 @@
+WEBAPI.RTCICETRANSPORT-GETREMOTECANDIDATES(1) Sandbox manual WEBAPI.RTCICETRANSPORT-GETREMOTECANDIDATES(1)
+
+       NAME
+
+       RTCIceTransport: getRemoteCandidates() method - The getRemoteCandidates() method of the RTCIceTransport interface returns an array that contains one RTCIceCandidate for each of the candida
+
+       RTCICETRANSPORT: GETREMOTECANDIDATES() METHOD
+
+       The getRemoteCandidates() method of the RTCIceTransport interface returns an array that contains one RTCIceCandidate for each of the candidates that have been received from the remote peer so far during the current ICE gathering session.
+
+       Each time your signaling code calls RTCPeerConnection.addIceCandidate() to add a received candidate to the ICE session, the ICE agent places it in the list returned by this function.
+
+       SYNTAX
+
+         getRemoteCandidates()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       An array containing one RTCIceCandidate object for each candidate that has been received so far from the remote peer during the current ICE candidate gathering session.
+
+       It's important to keep in mind that there's no way to correlate these remote candidates with compatible local candidates. To find the best match found so far, call RTCIceTransport.getSelectedCandidatePair().
+
+       EXAMPLE
+
+       This simple example gets the remote candidate list from the RTCIceTransport for the first RTCRtpSender on the RTCPeerConnection, then outputs to the console all of the candidates in the list.
+
+         const remoteCandidates = pc
+           .getSenders()[0]
+           .transport.transport.getRemoteCandidates();
+
+         remoteCandidates.forEach((candidate, index) => {
+           console.log(`Candidate ${index}: ${candidate.candidate}`);
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

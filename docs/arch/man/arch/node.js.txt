@@ -1,0 +1,164 @@
+ARCH.NODE.JS(1)                  Sandbox manual                  ARCH.NODE.JS(1)
+
+       Node.js is a JavaScript runtime environment combined with useful libraries. Node.js uses Google V8 engine to execute code outside of the web browser. Due to its event-driven, non-blocking I/O model, it is suitable for real-time web applications.
+
+       INSTALLATION
+
+       Install the nodejs package. There are long-term support (LTS) releases, too:
+
+        * nodejs-lts-krypton—version 24.x
+        * nodejs-lts-jod—version 22.x
+        * nodejs-lts-iron—version 20.x
+
+       NODE VERSION MANAGER
+
+       It is not uncommon to need or desire to work in different versions of Node.js. A preferred method among Node.js users is to use Node Version Manager (nvm), which allows for cheap and easy alternative installs. You can set nvm up by adding this to your Command-line shell#Configuration files:
+
+         . /usr/share/nvm/init-nvm.sh
+
+       Usage is well documented on the project's GitHub but is as simple as:
+
+         $ nvm install 8.0
+         Downloading and installing node v8.0.0...
+         [..]
+
+         $ nvm use 8.0
+         Now using node v8.0.0 (npm v5.0.0)
+
+       Tip If you decide to use nvm, previously it was suggested to use nodejs-fake package from AUR, which is now deleted. Suggested way is to use --assume-installed nodejs=<version>, as per the manual pacman(8) § TRANSACTION OPTIONS (APPLY TO -S, -R AND -U).
+
+       If you want to run nvm use automatically every time there is a .nvmrc file on the directory, add this recipe in shell initialization files.
+
+       NODE PACKAGED MODULES
+
+       npm is the official package manager for Node.js. It can be installed with the npm package.
+
+       MANAGING PACKAGES WITH NPM
+
+       INSTALLING PACKAGES
+
+       Any package can be installed using:
+
+         $ npm install packageName
+
+       This command installs the package in the current directory under node_modules and executables under node_modules/.bin.
+
+       For a system-wide installation global switch -g can be used:
+
+         # npm -g install packageName
+
+       By default this command installs the package under /usr/lib/node_modules/npm and requires root privileges to do so. (If using a secure umask like umask 0077, you will need to set up a permissive sudo umask for the package to be usable.)
+
+       ALLOW USER-WIDE INSTALLATIONS
+
+       To allow global package installations for the current user, set the npm_config_prefix environment variable. This is used by both npm and yarn.
+
+         ~/.profile
+
+         PATH="$HOME/.local/bin:$PATH"
+         export npm_config_prefix="$HOME/.local"
+
+       Re-login or source to update changes.
+
+       Note bin and lib directories will be automatically created in your prefix directory once you install a package globally.
+
+       You can also specify the --prefix parameter for npm install. However, this is not recommended, since you will need to add it every time you install a global package.
+
+         $ npm -g install packageName --prefix ~/.local
+
+       Another option is to set prefix field in $HOME/.npmrc. This achieves the same effect as using npm_config_prefix="$HOME/.local" in one's .profile:
+
+         $ npm set prefix="$HOME/.local"
+
+       Note The last method is specific to npm only.
+
+       UPDATING PACKAGES
+
+       Updating packages is as simple as
+
+         $ npm update packageName
+
+       For the case of globally installed packages (-g)
+
+         # npm update -g packageName
+
+       Note Remember that globally installed packages require administrator privileges unless prefix is set to a user-writable directory
+
+       UPDATING ALL PACKAGES
+
+       However, sometimes you may just wish to update all packages, either locally or globally. Leaving off the packageName npm will attempt to update all packages
+
+         $ npm update
+
+       or add the -g flag to update globally installed packages
+
+         # npm update -g
+
+       REMOVING PACKAGES
+
+       To remove a package installed with the -g switch simply use:
+
+         # npm -g uninstall packageName
+
+       Note Remember that globally installed packages require administrator privileges
+
+       to remove a local package drop the switch and run:
+
+         $ npm uninstall packageName
+
+       LISTING PACKAGES
+
+       To show a tree view of the installed globally packages use:
+
+         $ npm -g list
+
+       This tree is often quite deep. To only display the top level packages use:
+
+         $ npm -g list --depth=0
+
+       To display obsolete packages that may need to be updated:
+
+         $ npm -g outdated
+
+       MANAGING PACKAGES WITH PACMAN
+
+       Some Node.js packages can be found in Arch User Repository (AUR) with the name nodejs-package_name.
+
+       See the Node.js package guidelines for best practices in packaging Node.js packages for AUR.
+
+       TROUBLESHOOTING
+
+       NPM HELP DOES NOT DISPLAY DOCUMENTATION
+
+       Using npm help topic may not display the documentation for topic. Instead, use man npm-topic. For example:
+
+         $ npm help install
+         Top hits for "install"
+         ...
+         $ man npm-install
+         ... shows the documentation for the npm install subcommand
+
+       This is a bug with Arch's npm package.
+
+       NODE-GYP ERRORS
+
+       In case of errors like gyp WARN EACCES user "root" does not have permission to access the ... dir, --unsafe-perm option might help:
+
+         # npm install --unsafe-perm -g node-inspector
+
+       CANNOT FIND MODULE ... ERRORS
+
+       Since npm 5.x.x. package-lock.json file is generated along with the package.json file. Conflictions may arise when the two files refer to different package versions. A temporary method to solving this problem has been:
+
+         $ rm package-lock.json
+         $ npm install
+
+       However, fixes were made after npm 5.1.0 or above. For further information, see: missing dependencies
+
+       SEE ALSO
+
+        * Node.js documentation
+        * npm documentation
+        * IRC channel #node.js on Libera Chat
+
+ArchWiki manual                         bundled documentation

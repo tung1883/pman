@@ -1,0 +1,238 @@
+ARCH.CHROOT(1)                   Sandbox manual                   ARCH.CHROOT(1)
+
+       A chroot is an operation that changes the apparent root directory for the current running process and their children. A program that is run in such a modified environment cannot access files and commands outside the specified directory tree. This modified environment is called a chroot jail.
+
+       REASONING
+
+       Changing root is commonly done for performing system maintenance on systems where booting and/or logging in is no longer possible. Common examples are:
+
+        * Reinstalling the boot loader.
+        * Rebuilding the initramfs image.
+        * Upgrading or downgrading packages.
+        * Resetting a forgotten password.
+        * Building packages in a clean chroot.
+       See also Wikipedia:Chroot#Limitations.
+
+       REQUIREMENTS
+
+       In order to use chroot, you need another Linux installation or installation media (of any distribution), with:
+
+        * Root privilege (see #Without root privileges for alternatives).
+        * The same instruction set architecture as the system being chrooted into. The architecture of the current environment can be discovered with: uname -m (e.g. i686 or x86_64). It is also possible to use QEMU to execute code that does not have a matching native architecture.
+        * Kernel modules loaded that are needed in the chroot environment.
+        * Swap enabled if needed:
+
+         # swapon /dev/sdxY
+
+        * Internet connection established if needed.
+
+       PREPARE NEW ROOT LOCATION
+
+       The chroot target should be a directory which contains a file system hierarchy.
+
+       In the installation guide, this directory would be /mnt. For an existing installation, you need to mount existing partitions into /mnt yourself:
+
+       Run lsblk and note the partition layout of your installation. It will be usually something like /dev/sdXY or if you have an NVMe drive /dev/nvme0nXpY.
+
+       Mount the file system:
+
+         # mount /dev/sdXY /mnt
+
+       If you have an EFI system partition and need to make changes in it (e.g. updating the vmlinuz or initramfs images):
+
+         # mount /dev/sdXZ /mnt/esp
+
+       If you have any discrete partitions, mount them too.
+
+       In the following examples, /path/to/new/root is the directory where the new root resides (e.g. /mnt).
+
+       USAGE
+
+       Note
+
+        * Some systemd tools such as hostnamectl(1), localectl(1) and timedatectl(1) cannot be used inside a chroot(1), as they require an active dbus connection. [1]
+        * The file system that will serve as the new root (/) of your chroot must be accessible (i.e., decrypted, mounted).
+       There are two main options for using chroot, described below.
+
+       USING ARCH-CHROOT
+
+       The bash script arch-chroot(8) is part of the arch-install-scripts package. arch-chroot wraps the chroot command while ensuring that important functionality is available, e.g. mounting /dev, /proc and other API filesystems, or exposing /etc/resolv.conf to the chroot.
+
+       ENTER A CHROOT
+
+       Run arch-chroot with the new root directory as first argument:
+
+         # arch-chroot -S /path/to/new/root
+
+       You can now do most of the operations available from your existing installation. Some tasks which needs D-Bus will not work as noted in #Usage.
+
+       EXIT A CHROOT
+
+       To exit the chroot, use:
+
+         # exit
+
+       RUN A SINGLE COMMAND AND EXIT
+
+       To run a command from the chroot and exit again, append the command to the end of the line:
+
+         # arch-chroot -S /path/to/new/root mycommand
+
+       For example, to run mkinitcpio -p linux for a chroot located at /mnt/arch, do:
+
+         # arch-chroot -S /mnt/arch mkinitcpio -p linux
+
+       RUNNING ON BTRFS
+
+       On a Btrfs root file system with subvolumes, you have to make sure that all subvolumes are properly mounted as specified in fstab before entering chroot.
+
+       An example with the Btrfs default setup from archinstall:
+
+         # mount -o subvol=@ /dev/sdXY /mnt
+         # mount -o subvol=@home /dev/sdXY /mnt/home
+         # mount -o subvol=@pkg /dev/sdXY /mnt/var/cache/pacman/pkg
+         # mount -o subvol=@log /dev/sdXY /mnt/var/log
+         # mount -o subvol=@snapshots /dev/sdXY /mnt/.snapshots
+         # mount /dev/sdXZ /mnt/boot
+         # arch-chroot -S /mnt
+
+       Tip You may also want to specify other mount options, such as for compression.
+
+       USING CHROOT
+
+       If you run chroot directly, below steps are needed before actual chroot.
+
+       First, mount the temporary API filesystems:
+
+         # cd /path/to/new/root
+         # mount -t proc /proc proc/
+         # mount -t sysfs /sys sys/
+         # mount --rbind /dev dev/
+
+       Warning When using --rbind, some subdirectories of dev/ and sys/ will not be unmountable. Attempting to unmount with umount -l in this situation will break your session, requiring a reboot. If possible, use -o bind instead.
+
+       And optionally:
+
+         # mount --rbind /run run/
+
+       If you are running a UEFI system, you will also need access to EFI variables. Otherwise, when installing GRUB, you will receive a message similar to: UEFI variables not supported on this machine:
+
+         # mount --rbind /sys/firmware/efi/efivars sys/firmware/efi/efivars/
+
+       Next, in order to use an internet connection in the chroot environment, copy over the DNS details:
+
+         # cp /etc/resolv.conf etc/resolv.conf
+
+       Finally, to change root into /path/to/new/root using a bash shell:
+
+         # chroot /path/to/new/root /bin/bash
+
+       Note If you see the error:
+
+        * chroot: cannot run command '/usr/bin/bash': Exec format error, it is likely that the architectures of the host environment and chroot environment do not match.
+        * chroot: '/usr/bin/bash': permission denied, remount with the execute permission: mount -o remount,exec /path/to/new/root.
+          * if checking this did not help, then make sure the base components of the new environment are intact (if it is an Arch root, try paccheck --root=/path/to/new/root --files --file-properties --md5sum glibc filesystem, from pacutils)
+       After chrooting, it may be necessary to load the local Bash configuration:
+
+         # source /etc/profile
+         # source ~/.bashrc
+
+       Tip Optionally, create a unique prompt to be able to differentiate your chroot environment:
+
+         # export PS1="(chroot) $PS1"
+
+       When finished with the chroot, you can exit it via:
+
+         # exit
+
+       Then unmount the temporary file systems:
+
+         # cd /
+         # umount --recursive /path/to/new/root
+
+       Note If there is an error mentioning something like umount: /path: device is busy, this usually means that either: a program (even a shell) was left running in the chroot or that a sub-mount still exists. Quit the program and use findmnt -R /path/to/new/root to find and then umount sub-mounts. It may be tricky to umount some things and one can hopefully have umount --force work. As a last resort, use umount --lazy which just releases them. In either case to be safe, reboot as soon as possible if these are unresolved to avoid possible future conflicts.
+
+       RUN GRAPHICAL APPLICATIONS FROM CHROOT
+
+       If you have an X server running on your system, you can start graphical applications from the chroot environment.
+
+       To allow the chroot environment to connect to an X server, open a virtual terminal inside the X server (i.e. inside the desktop of the user that is currently logged in), then run the xhost command, which gives permission to anyone to connect to the user's X server (see also Xhost):
+
+         $ xhost +local:
+
+       Then, to direct the applications to the X server from chroot, set the DISPLAY environment variable inside the chroot to match the DISPLAY variable of the user that owns the X server. So for example, run:
+
+         $ echo $DISPLAY
+
+       as the user that owns the X server to see the value of DISPLAY. If the value is ":0" (for example), then run the following in the chroot environment:
+
+         # export DISPLAY=:0
+
+       WITHOUT ROOT PRIVILEGES
+
+       Chroot requires root privileges, which may not be desirable or possible for the user to obtain in certain situations. There are, however, various ways to simulate chroot-like behavior using alternative implementations.
+
+       PROOT
+
+       PRoot may be used to change the apparent root directory and use mount --bind without root privileges. This is useful for confining applications to a single directory or running programs built for a different CPU architecture, but it has limitations due to the fact that all files are owned by the user on the host system. PRoot provides a --root-id argument that can be used as a workaround for some of these limitations in a similar (albeit more limited) manner to fakeroot.
+
+       FAKECHROOT
+
+       fakechroot is a library shim which intercepts the chroot call and fakes the results. It can be used in conjunction with fakeroot to simulate a chroot as a regular user.
+
+         $ fakechroot fakeroot chroot ~/my-chroot bash
+
+       UNSHARE
+
+       unshare(1), part of util-linux, can be used to create a new kernel namespace. This works with the usual chroot command. For example:
+
+         $ unshare --map-root-user chroot ~/namespace /bin/sh
+
+       SETPRIV
+
+       setpriv(1), part of util-linux, can be used to sandbox applications. The following example applies it to the non-graphical lynx web browser.
+
+       Three different techniques are used:
+
+        * A simple path is created to allow the browser to store temporary (cache, cookies) files and made available via an environment variable.
+        * The --no-new-privs option is passed to the setpriv utility to let the kernel enforce the execution privileges to the application - and all its subprocesses.
+        * The --landlock-access fs and landlock-rule path-beneath options further limit what the application may reach in the filesystem structure with its needed access rights.
+       First, we create a temporary path with mkdir ~/Downloads/.lynx_temp. Next, we assign the variables and execute the browser via setpriv:
+
+         TMPDIR=$HOME/Downloads/.lynx_tmp LYNX_TEMP_SPACE=$HOME/Downloads/.lynx_tmp \
+         setpriv --no-new-privs  --landlock-access fs \
+              --landlock-rule path-beneath:read-file,execute:/usr \
+              --landlock-rule path-beneath:read-file:/etc/lynx.cfg \
+              --landlock-rule path-beneath:read-file:/etc/lynx.lss \
+              --landlock-rule path-beneath:read-file:/etc/resolv.conf \
+              --landlock-rule path-beneath:read-file:/etc/hosts  \
+              --landlock-rule path-beneath:read-file:/etc/nsswitch.conf \
+              --landlock-rule path-beneath:read-file:/etc/passwd \
+              --landlock-rule path-beneath:read-file:/etc/ca-certificates/extracted \
+              --landlock-rule path-beneath:read-file,write-file,make-reg,make-dir:$HOME/Downloads \
+            lynx file://localhost/etc/passwd
+
+       As a test of the functionality, execute the above command in a terminal, enter the Lynx shortcut g and then the URL file://localhost/etc/fstab.
+
+       TIPS AND TRICKS
+
+       CHROOT DETECTION
+
+       systemd-detect-virt --chroot detect whether invoked in a chroot environment. See systemd-detect-virt(1) for detection of other virtualized environments. For a broader discussion, and usage of traditional tools, see how-do-i-tell-im-running-in-a-chroot.
+
+       TROUBLESHOOTING
+
+       ARCH-CHROOT: /PATH/TO/NEW/ROOT IS NOT A MOUNTPOINT. THIS MAY HAVE UNDE
+
+       Upon executing arch-chroot -S /path/to/new/root, a warning is issued:
+
+         ==> WARNING: /path/to/new/root is not a mountpoint. This may have undesirable side effects.
+
+       See arch-chroot(8) for an explanation and an example of using bind mounting to make the chroot directory a mountpoint.
+
+       SEE ALSO
+
+        * Basic Chroot
+        * Gentoo:Chroot
+
+ArchWiki manual                         bundled documentation

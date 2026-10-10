@@ -1,0 +1,295 @@
+ARCH.SANE(1)                     Sandbox manual                     ARCH.SANE(1)
+
+       SANE (Scanner Access Now Easy) provides a library and a command-line tool to use scanners under GNU/Linux.
+
+       INSTALLATION
+
+       Install the sane package. Most front-ends and drivers pull this as a dependency anyway, so it is often unnecessary to explicitly install it.
+
+       SCANNER DRIVERS
+
+       Many modern scanners support "driverless" scanning.[1] You can look for your device's compatibility on sane-airscan GitHub or Apple AirPrint devices.
+
+       Install the sane-airscan package if the scanner is known to work in "driverless" mode. If your scanner is using USB, also install ipp-usb and reboot.
+
+       Otherwise, check SANE - Supported Devices and SANE/Scanner-specific problems to see if your scanner will work with a different driver.
+
+       Most scanners should work out of the box. If yours does not, see SANE/Scanner-specific problems for installation instructions.
+
+       Note Some drivers, including sane-airscan, use multicast to search for network scanners. See iptables#Allowing multicast traffic to correctly configure your firewall.
+
+       FRONTENDS
+
+       Many frontends exist for SANE, a non-exhaustive list of which can be found on the SANE project website.
+
+        * GNOME Document Scanner — Simplified GUI that is intended to be easier to use and better integrated into the GNOME desktop than XSane. Part of gnome.
+       https://apps.gnome.org/SimpleScan/ || simple-scan
+
+        * NAPS2 — Fully-featured, open-source document scanner with built in OCR functionality.
+       https://www.naps2.com/ || naps2AUR
+
+        * Scantailor — A scanning application that works with projects and allows live editing during the scanning process.
+       https://github.com/ScanTailor-Advanced/scantailor-advanced || scantailor-advanced
+
+        * Skanlite — Simple image scanning application that does nothing more than scan and save images, based on the KSane backend. Part of kde-graphics.
+       https://apps.kde.org/skanlite/ || skanlite
+
+        * Skanpage — A simple scanning application designed for multi-page scanning and saving of documents and images. Part of kde-utilities.
+       https://apps.kde.org/skanpage/ || skanpage
+
+        * XSane — Full-featured GTK-based frontend, looking a bit old but providing extended functionalities.
+       http://www.xsane.org/ || xsaneAUR
+
+        * Xsane-gimp — A GIMP plugin to scan from GIMP using xsane.
+       https://gitlab.com/sane-project/frontend/xsane || xsane-gimpAUR
+
+       Some OCR software can scan images using SANE: gImageReader, gscan2pdf, Linux-Intelligent-Ocr-Solution, OCRFeeder, Paperwork.
+
+       Note
+
+        * Scanning directly to PDF using XSane in 16bit color depth mode is known to produces corrupted files and a note in pacman output warns so. 8bit mode is known to work.
+        * Using a frontend does not mean you do not have to apply some tricks. This is especially true with devices configured via mDNS. For example, skanlite needs to have additional info specified on the command line in order to detect a network scanner properly as it cannot handle mDNS. Here is an example with an HP Officejet Pro L7590: skanlite --device "hpaio:/net/Officejet_Pro_L7500?ip=192.168.0.17".
+
+       VERIFICATION
+
+       Now you can try to see if sane recognizes your scanner.
+
+         $ scanimage -L
+
+       If that fails, run the command again as root to check for permission problems. If that fails as well, check that your scanner is plugged into the computer. You also might have to unplug/plug your scanner for /usr/lib/udev/rules.d/65-sane.rules to recognize your scanner.
+
+       Now you can see if it actually works
+
+         $ scanimage --format=png --output-file test.png --progress
+
+       If the scanning fails with the message scanimage: sane_start: Invalid argument you may need to specify the device.
+
+         $ scanimage -L
+
+         device `v4l:/dev/video0' is a Noname Video WebCam virtual device
+         device `pixma:04A91749_247936' is a CANON Canon PIXMA MG5200 multi-function peripheral
+
+       Then you would need to run
+
+         $ scanimage --device "pixma:04A91749_247936" --format=tiff --output-file test.tiff --progress
+
+       Sane provides many special backend options for numerous scanner types. To see what these are for your device:
+
+         $ scanimage -A
+
+       FIRMWARE
+
+       Note This section is only needed if you need to upload firmware to your scanner.
+
+       Firmwares usually have the .bin extension.
+
+       Firstly you need to put the firmware someplace safe, it is recommended to put it in a subdirectory of /usr/share/sane/.
+
+       Then you need to tell sane where the firmware is:
+
+        * Find the name of the backend for your scanner from the sane supported devices list.
+        * Open the file /etc/sane.d/backend-name.conf.
+        * Make sure the firmware entry is uncommented and let the file-path point to where you put the firmware file for your scanner. Be sure that members of the group scanner can access the /etc/sane.d/backend-name.conf file.
+       If the backend of your scanner is not part of the sane package (such as hpaio.conf which is part of hplip), you need to uncomment the relevant entry in /etc/sane.d/dll.d or in /etc/sane.d/dll.conf.
+
+       SHARING YOUR SCANNER OVER A NETWORK
+
+       You can share your scanner with other hosts on your network who use sane, xsane or xsane-enabled GIMP. To set up the server, first indicate which hosts on your network are allowed access.
+
+       Change the /etc/sane.d/saned.conf file to your liking, for example:
+
+         # required
+         localhost
+         # allow local subnet
+         192.168.0.0/24
+
+       Second, install, start and enable avahi-daemon on your server (if it is not already active) so your scanner can be found by multicast. Or, if your scanner is supported by Airscan installing the sane-airscan package is an alternative.
+
+       If you use iptables, insert the nf_conntrack_sane module to let the firewall track saned connections.
+
+       Conntrack helper seems to be disabled by default.[2] You can activate it with
+
+         # echo 1 > /proc/sys/net/netfilter/nf_conntrack_helper
+
+       To configure this permanently, set the nf_conntrack_helper=1 option for the nf_conntrack module, see Kernel module#Using modprobe.d.
+
+       Now start/enable saned.socket. Your scanner is now available over the network. For more information, see saned(8).
+
+       Note saned intentionally refuses to share scanners that use the net: backend (which includes some USB scanners). There is a crude patch to allow this in FS#54786, but note it may cause problems on some networks. Check output of scanimage -L on the server to see the scanner url.
+
+       ACCESSING YOUR SCANNER FROM A REMOTE WORKSTATION
+
+       Note Some network scanners require a different approach. See SANE/Scanner-specific problems.
+
+       You can access your network-enabled scanner from a remote Arch Linux workstation.
+
+       First, specify the server's host name or IP address in the /etc/sane.d/net.conf file:
+
+         # static IP address
+         192.168.0.1
+         # or host name
+         stratus
+
+       Second, depending on what you configured at the server side, install, start and enable avahi-daemon or install sane-airscan at the remote workstation.
+
+       Now test your workstation's connection:
+
+         $ scanimage -L
+
+       The network scanner should now also show up in some front-ends.
+
+       WINDOWS AND MACOS CLIENTS
+
+       Since the Windows port of SANE seems to be unsupported, outdated and difficult to get, you can try SANEWinDS or SaneTwain (old).
+
+       It is possible to use the Windows or macOS native scan UI with AirSane which could be installed via airsane-gitAUR. To access printers shared that way on Linux, sane-airscan could be used.
+
+       TROUBLESHOOTING
+
+       See also SANE/Scanner-specific problems.
+
+       INVALID ARGUMENT
+
+       If you get an "Invalid argument" error with xsane or another sane front-end, this could be caused by one of the following reasons:
+
+       MISSING FIRMWARE FILE
+
+       No firmware file was provided for the used scanner (see #Firmware for details).
+
+       WRONG FIRMWARE FILE PERMISSIONS
+
+       The permissions for the used firmware file are wrong. Correct them using
+
+         # chown root:scanner /usr/share/sane/SCANNER_MODEL/FIRMWARE_FILE
+         # chmod ug+r /usr/share/sane/SCANNER_MODEL/FIRMWARE_FILE
+
+       MULTIPLE BACKENDS CLAIM SCANNER
+
+       It may happen, that multiple backends support (or pretend to support) your scanner, and sane chooses one that does not do after all (the scanner will not be displayed by scanimage -L then). This has happened with older Epson scanners and the epson2 resp. epson backends. In this case, the solution is to comment out the unwanted backend in /etc/sane.d/dll.conf. In the Epson case, that would be to comment out epson2:
+
+         /etc/sane.d/dll.conf
+
+         #epson2
+         epson
+
+       It may also be possible that the independent iscanAUR epkowa backend interferes with your snapscan backend (epson scanners). You may get this error right after using the scanimage -L command. Starting the scanner app (like xsaneAUR) twice can also solve the problem. Otherwise check your /etc/sane.d/epkowa.conf for wrong configurations or remove the iscanAUR package.
+
+       COMMUNICATION VIA XHCI NOT WORKING (OLDER SCANNER MODELS)
+
+       Some older scanner models do not work when connected via an USB3 port. If you experience this issue, try setting the SANE_USB_WORKAROUND=1 environment variable before starting your frontend.[3][4]
+
+       If that does not work, try one of the following workarounds:
+
+        * Use an USB2 port instead of an USB3 port, if available.
+        * Disable xHCI via BIOS/EFI. eHCI will consequently be used and communication with the scanner will work. On the downside, USB3 speed can not be reached on any port.
+        * On (some) intel chipsets the setpci command can be used to route specific usb ports to either the xHCI or the eHCI controller. See force-a-single-usb-3-0-port-to-work-as-usb-2-0 (scroll down to where it says "setpci") for further information. With this it is possible to toggle single USB ports with a simple shell script.
+        * Connect the scanner over the network instead if it is supported.
+
+       FIREWALL
+
+       When network scanning scanner hangs, then invalid argument error occured.
+
+       saned uses data port range, so you must enable connections to 6566/tcp and data_portrange from /etc/sane.d/saned.conf or use conntrack firewall module for sane to enable data ports as described above.
+
+       SLOW STARTUP
+
+       If you encounter slow startup issue (e.g. xsane or scanimage -L does not return results nearly instantly), one of the drivers you do not use may be the culprit.
+
+       You can resolve this by editing /etc/sane.d/dll.conf and commenting out the scanner drivers you do not use. You can use scanimage -L to determine which drivers you need:
+
+         $ scanimage -L
+
+         device `brother4:net1;dev0' is a Brother DCP-L2550DW
+         device `v4l:/dev/video0' is a Noname Logitech Webcam C925e virtual device
+         device `escl:http://192.168.1.2:80' is a Brother DCP-L2550DW series adf,platen scanner
+
+       The parts between the ` and the : in the output indicate the driver for the device. For example, if only want to use the Brother scanner and not the webcam or the generic scanner driver, you can comment out everything but the brother4 driver in /etc/sane.d/dll.conf.
+
+       Another reason for slow startup issues might be in the driver-specific configuration file at /etc/sane.d/backend-name.conf; as an example, it has been reported that commenting out net autodiscovery in /etc/sane.d/epson2.conf solves these slow startup issues for Epson scanners using USB.
+
+       DEVICE BUSY
+
+       If your USB device is listed with scanimage -L but launching the test scanimage pixma:04A9173E_11DAD1 --format=tiff --output-file test.tiff always return the 'Device busy' error, you might try to add your username to the scanner group usermod -a -G scanner yourusername then blacklist the usblp kernel module by writing blacklist usblp in /etc/modprobe.d/no-usblp.conf (it prevents usblp from loading to support scanning, not needed by xsane and related tools, might also conflict with CUPS). Reboot to finish. [5][dead link 2025-08-16—HTTP 404]
+
+       In addition to this, some Cannon printers return "device busy" if the scan mode is set to "Computer". Setting this to the "Remote Scanner" mode should fix the issue.[6]
+
+       PERMISSION PROBLEM
+
+       With systemd, the scanner and lp groups are deprecated. No need to add your user to those groups. See Users and groups#Pre-systemd groups for detail.
+
+       You can also try to change permissions of usb device but this is not recommended, a better solution is to fix the Udev rules so that your scanner is recognized.
+
+       First check connected usb devices with lsusb:
+
+         Bus 006 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+         Bus 005 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+         Bus 004 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+         Bus 003 Device 003: ID 04d9:1603 Holtek Semiconductor, Inc.
+         Bus 003 Device 002: ID 04fc:0538 Sunplus Technology Co., Ltd
+         Bus 003 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+         Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+         Bus 001 Device 006: ID 03f0:2504 Hewlett-Packard
+         Bus 001 Device 002: ID 046d:0802 Logitech, Inc. Webcam C200
+         Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+       In our example we see the scanner: Bus 001 Device 006: ID 03f0:2504 Hewlett-Packard. Here 03f0 is the vendorID and 2504 is the productID.
+
+       Alternatively, running sane-find-scanner with root permission will also give you the same vendorID and productID.
+
+       Now open /usr/lib/udev/rules.d/65-sane.rules and see if there is a line with the vendorID and productID of your scanner. If there is not any, create the new file /etc/udev/rules.d/65-sane-missing-scanner.rules, with the following contents:
+
+         ATTRS{idVendor}=="vendorID", ATTRS{idProduct}=="productID", MODE="0664", GROUP="lp", ENV{libsane_matched}="yes"
+
+       Save the file, plug out and back in your scanner and the file permissions should be now correct.
+
+       Another tip, is that you can add your device (scanner) in backend file:
+
+       Add usb 0x03f0 0x2504 to /etc/sane.d/hp4200.conf so it looks like this:
+
+         #
+         # Configuration file for the hp4200 backend
+         #
+         #
+         # HP4200
+         #usb 0x03f0 0x0105
+         usb 0x03f0 0x2504
+
+       PARALLEL PORT SCANNERS
+
+       All devices attached to a parallel port are assumed to be printers, and are given a lp group. Either create a udev rule to mark the relevant parallel port as libsane_matched, or add your user to the lp user group. CUPS also uses the lp group for read-only access to configuration files, so there are potential security implications to adding users to the lp group - see CUPS#Connection interfaces for more information.
+
+       AVAHI-DAEMON IS NOT MANDATORY
+
+       Some scanner applications may require you to start the avahi-daemon upon startup. This is actually the cause of SANE. If for some reason you do not want to enable the avahi-daemon service because you use a wired scanner or do not need it because your scanner's driver supports networking already on setup, then comment out the net backend in the SANE configuration:
+
+         /etc/sane.d/dll.conf
+
+         # The next line enables the network backend; comment it out if you do not
+         # need to use a remote SANE scanner over the network -- see sane-net(5)
+         # and saned(8) for details.
+         #net
+
+       Additionally you can try and edit /etc/sane.d/dll.d/airscan and /etc/sane.d/dll.d/hpaio and comment the lines inside.
+
+       Then restart the saned daemon.
+
+       ERROR DURING DEVICE I/O
+
+       If you are getting SANE: Error during device I/O (code=9) while trying to scan using an HP scanner, make sure you have hplip-pluginAUR installed (see CUPS/Printer-specific problems#HP).
+
+       TIPS AND TRICKS
+
+       SCANIMAGE OUTPUT IS NOT SATISFYING
+
+       When scanimage output is not satisfying, one might run
+
+         $ scanimage --all-options
+
+       to request a listing of all available options exposed by the backend. The output may hint the unsatisfying output is due to too low default values, and also state what values can be explicitly set that might improve the result.
+
+       SEE ALSO
+
+        * Wikipedia:WS-Discovery, Microsoft's "driverless" protocol
+        * ICC profiles#Scanner calibration, ICC profiles for color management
+
+ArchWiki manual                         bundled documentation

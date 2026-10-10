@@ -1,0 +1,46 @@
+WEBAPI.WINDOWCLIENT-FOCUSED(1)   Sandbox manual   WEBAPI.WINDOWCLIENT-FOCUSED(1)
+
+       NAME
+
+       WindowClient: focused property - service
+
+       WINDOWCLIENT: FOCUSED PROPERTY
+
+       service
+
+       The focused read-only property of the WindowClient interface is a boolean value that indicates whether the current client has focus.
+
+       VALUE
+
+       A boolean value.
+
+       EXAMPLES
+
+         self.addEventListener("notificationclick", (event) => {
+           console.log("On notification click: ", event.notification.tag);
+           event.notification.close();
+
+           // This looks to see if the current is already open and
+           // focuses if it is
+           event.waitUntil(
+             clients
+               .matchAll({
+                 type: "window",
+               })
+               .then((clientList) => {
+                 for (const client of clientList) {
+                   if (client.url === "/" && "focus" in client) {
+                     if (!client.focused) return client.focus();
+                   }
+                 }
+
+                 if (clients.openWindow) return clients.openWindow("/");
+               }),
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

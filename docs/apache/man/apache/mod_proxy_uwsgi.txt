@@ -1,0 +1,21 @@
+APACHE.MOD_PROXY_UWSGI(1)        Sandbox manual        APACHE.MOD_PROXY_UWSGI(1)
+
+       EXAMPLES
+
+       Remember, in order to make the following examples work, you have to enable mod_proxy and mod_proxy_uwsgi.
+
+       SIMPLE GATEWAY
+
+         ProxyPass "/uwsgi-bin/" "uwsgi://localhost:4000/"
+
+       The balanced gateway needs mod_proxy_balancer and at least one load balancer algorithm module, such as mod_lbmethod_byrequests, in addition to the proxy modules listed above. mod_lbmethod_byrequests is the default, and will be used for this example configuration.
+
+       BALANCED GATEWAY
+
+         ProxyPass "/uwsgi-bin/" "balancer://somecluster/"
+         <Proxy balancer://somecluster>
+             BalancerMember uwsgi://localhost:4000
+             BalancerMember uwsgi://localhost:4001
+         </Proxy>
+
+Apache HTTP Server manual               bundled documentation

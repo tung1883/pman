@@ -1,0 +1,60 @@
+WEBAPI.PROCESSINGINSTRUCTION-TARGET(1) Sandbox manual WEBAPI.PROCESSINGINSTRUCTION-TARGET(1)
+
+       NAME
+
+       ProcessingInstruction: target property - The read-only target property of the ProcessingInstruction interface
+
+       PROCESSINGINSTRUCTION: TARGET PROPERTY
+
+       The read-only target property of the ProcessingInstruction interface represent the application to which the ProcessingInstruction is targeted.
+
+       For example:
+
+         <?xml version="1.0"?>
+
+       is a processing instruction whose target is xml.
+
+       VALUE
+
+       A string containing the name of the application.
+
+       EXAMPLE
+
+       IN AN XML DOCUMENT
+
+         <output></output>
+
+         let parser = new DOMParser();
+         const doc = parser.parseFromString(
+           '<?xml version="1.0"?><test/>',
+           "application/xml",
+         );
+         const pi = doc.createProcessingInstruction(
+           "xml-stylesheet",
+           'href="mycss.css" type="text/css"',
+         );
+         doc.insertBefore(pi, doc.firstChild);
+
+         const output = document.querySelector("output");
+         output.textContent = `This processing instruction's target is: ${doc.firstChild.target}`;
+
+       IN AN HTML DOCUMENT
+
+       The processing instruction line will be considered, and represented, as a Comment object.
+
+         <?xml version="1.0"?>
+         <pre></pre>
+
+         const node = document.querySelector("pre").previousSibling.previousSibling;
+         const result = `Node with the processing instruction: ${node.nodeName}: ${node.nodeValue}\n`;
+         document.querySelector("pre").textContent = result;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The DOM API
+
+Web APIs manual                         from the official documentation

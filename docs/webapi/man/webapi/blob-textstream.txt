@@ -1,0 +1,68 @@
+WEBAPI.BLOB-TEXTSTREAM(1)        Sandbox manual        WEBAPI.BLOB-TEXTSTREAM(1)
+
+       NAME
+
+       Blob: textStream() method - The textStream() method of the Blob interface returns a ReadableStream that can be used to read the contents of the Blob in chunks of UTF-8.
+
+       BLOB: TEXTSTREAM() METHOD
+
+       The textStream() method of the Blob interface returns a ReadableStream that can be used to read the contents of the Blob in chunks of UTF-8.
+
+       This provides an easier mechanism for streaming the content than piping a Blob.stream() byte stream through a TextDecoderStream.
+
+       > The textStream() method differs from FileReader.readAsText() in that it always uses UTF-8 encoding, whereas readAsText() has a parameter that sets the encoding.
+
+       SYNTAX
+
+         textStream()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A ReadableStream.
+
+       EXAMPLES
+
+       READING BLOB CONTENT AS A TEXT STREAM
+
+       This example shows how to read blob content as a text stream.
+
+       We create a sample Blob, obtain a ReadableStream of its content using textStream(), then read the text via a reader created using ReadableStream.getReader().
+
+         const pElem = document.querySelector("p");
+
+         const obj = { hello: "world" };
+         const myBlob = new Blob([JSON.stringify(obj, null, 2)], {
+           type: "application/json",
+         });
+
+         async function streamBlobText(blob) {
+           const textStream = blob.textStream();
+           // instead of
+           // const textStream = blob.stream().pipeThrough(new TextDecoderStream());
+
+           const reader = textStream.getReader();
+
+           while (true) {
+             const { value, done } = await reader.read();
+             if (done) break;
+             pElem.textContent += value;
+           }
+         }
+
+         streamBlobText(myBlob);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ReadableStream
+        * ReadableStream.getReader()
+        * Blob.stream()
+
+Web APIs manual                         from the official documentation

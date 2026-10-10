@@ -1,0 +1,59 @@
+WEBAPI.DOCUMENT-HASPRIVATETOKEN(1) Sandbox manual WEBAPI.DOCUMENT-HASPRIVATETOKEN(1)
+
+       NAME
+
+       Document: hasPrivateToken() method - The hasPrivateToken() method of the Document interface returns a promise that fulfills with a boolean indicating whether the browser has a p
+
+       DOCUMENT: HASPRIVATETOKEN() METHOD
+
+       The hasPrivateToken() method of the Document interface returns a promise that fulfills with a boolean indicating whether the browser has a private state token stored from a particular issuer server.
+
+       SYNTAX
+
+         hasPrivateToken(issuer)
+
+       PARAMETERS
+
+        * issuer
+          * : A string representing the URL of an issuer server.
+
+       RETURN VALUE
+
+       A Promise that resolves with a boolean value indicating whether the browser has a private state token stored from the specified issuer server.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the current Document is not yet active.
+        * NotAllowedError DOMException
+          * : Thrown if:
+            * The current Document is not loaded in a secure context.
+            * The maximum number of issuers per top level origin (two) has been exceeded.
+        * TypeError DOMException
+          * : Thrown if issuer is not a valid URL.
+
+       EXAMPLES
+
+         const hasToken = await Document.hasPrivateToken(`issuer.example`);
+         if (!hasToken) {
+           await fetch(
+             "https://issuer.example/.well-known/private-state-token/issuance",
+             {
+               method: "POST",
+               privateToken: {
+                 version: 1,
+                 operation: "token-request",
+               },
+             },
+           );
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Private State Token API
+
+Web APIs manual                         from the official documentation

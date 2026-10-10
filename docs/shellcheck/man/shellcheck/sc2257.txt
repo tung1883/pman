@@ -1,0 +1,44 @@
+SHELLCHECK.SC2257(1)             Sandbox manual             SHELLCHECK.SC2257(1)
+
+       NAME
+
+       Arithmetic modifications in command redirections may be discarded. Do them separately. - curl "$URL" > "image$((i++)).jpg"
+
+       ARITHMETIC MODIFICATIONS IN COMMAND REDIRECTIONS MAY BE DISCARDED. DO
+
+       ARITHMETIC MODIFICATIONS IN COMMAND REDIRECTIONS MAY BE DISCARDED. DO
+
+       PROBLEMATIC CODE
+
+         curl "$URL" > "image$((i++)).jpg"
+
+       CORRECT CODE
+
+         i=$((i+1))
+         curl "$URL" > "image$i.jpg"
+
+       RATIONALE
+
+       You are using an arithmetic expression that modifies a variable, e.g. $((x+=1)) or $((x++)), in the name of a file to redirect from/to, in a here document, or in a here string.
+
+       The scope of these modifications depends on whether the command itself will fork:
+
+         echo foo > $((var++)).txt  # Updates in BusyBox and Bash
+         cat  foo > $((var++)).txt  # Updates in Busybox, not in Bash
+         gcc  foo > $((var++)).txt  # Does not update in either
+
+         gcc() { /opt/usr/bin/gcc "$@"; }
+         gcc  foo > $((var++)).txt  # Now suddenly updates in both
+
+       Rather than rely on knowing which commands do and don't fork, or are and aren't overridden, simply do the updates in a separate command as in the correct code.
+
+       EXCEPTIONS
+
+       If you know your variable is scoped the way you want it, you can ignore this warning.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+        * https://stackoverflow.com/questions/62783161/arithmetic-expression-in-redirection/62964890#62964890
+
+ShellCheck manual                       from the official documentation

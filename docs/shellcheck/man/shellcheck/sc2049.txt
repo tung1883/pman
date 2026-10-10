@@ -1,0 +1,41 @@
+SHELLCHECK.SC2049(1)             Sandbox manual             SHELLCHECK.SC2049(1)
+
+       NAME
+
+       =~ is for regex, but this looks like a glob. Use = instead. - You are using =~ to match against a regex -- specifically a Extended Regular Expression (ERE) -- but the right-hand side looks more like a g
+
+       IS FOR REGEX, BUT THIS LOOKS LIKE A GLOB. USE INSTEAD
+
+       IS FOR REGEX, BUT THIS LOOKS LIKE A GLOB. USE INSTEAD
+
+       PROBLEMATIC CODE
+
+         [[ $file =~ *.txt ]]
+
+       CORRECT CODE
+
+         [[ $file = *.txt ]]
+
+       RATIONALE
+
+       You are using =~ to match against a regex -- specifically a Extended Regular Expression (ERE) -- but the right-hand side looks more like a glob:
+
+        * It may have a leading , like in .txt
+            * In a glob, this matches strings ending in .txt, like readme.txt but not foo.sh
+            * In an ERE, this matches a literal asterisk, followed by any character, and then txt, such as *itxt but not test.txt
+        * It may be a single letter followed by a , like in s.
+            * In a glob, this matches strings starting with s, such as shell and set.
+            * In an ERE, this matches zero or more ss, such as dog (because it does in fact contain zero or more s's)
+       Please ensure that the pattern is correct as an ERE, or switch to glob matching if that's what you intended.
+
+       This is similar to [[SC2063]], where grep "foo" produces an equivalent warning.
+
+       EXCEPTIONS
+
+       If you are aware of the difference, you can [[ignore]] this message, but this warning is not emitted for the more probable EREs \*.txt, \.txt$, ^s or s+, so it should rarely be necessary.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

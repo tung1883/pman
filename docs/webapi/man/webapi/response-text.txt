@@ -1,0 +1,77 @@
+WEBAPI.RESPONSE-TEXT(1)          Sandbox manual          WEBAPI.RESPONSE-TEXT(1)
+
+       NAME
+
+       Response: text() method - The text() method of the Response interface takes a Response stream and reads it to completion.
+
+       RESPONSE: TEXT() METHOD
+
+       The text() method of the Response interface takes a Response stream and reads it to completion. It returns a promise that resolves with a String. The response is _always_ decoded using UTF-8.
+
+       SYNTAX
+
+         text()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that resolves with a String.
+
+       EXCEPTIONS
+
+        * AbortError DOMException
+          * : The request was aborted.
+        * TypeError
+          * : Thrown for one of the following reasons:
+            * The response body is disturbed or locked.
+            * There was an error decoding the body content (for example, because the Content-Encoding header is incorrect).
+
+       EXAMPLES
+
+       In our fetch text example (run fetch text live), we have an element and three links (stored in the myLinks array.) First, we loop through all of these and give each one an onclick event handler so that the getData() function is run — with the link's data-page identifier passed to it as an argument — when one of the links is clicked.
+
+       When getData() is run, we create a new request using the Request() constructor, then use it to fetch a specific .txt file. When the fetch is successful, we read a string out of the response using text(), then set the innerText of the element equal to the text object.
+
+         const myArticle = document.querySelector("article");
+         const myLinks = document.querySelectorAll("ul a");
+
+         for (const link of myLinks) {
+           link.onclick = (e) => {
+             e.preventDefault();
+             const linkData = e.target.getAttribute("data-page");
+             getData(linkData);
+           };
+         }
+
+         function getData(pageId) {
+           console.log(pageId);
+           const myRequest = new Request(`${pageId}.txt`);
+           fetch(myRequest)
+             .then((response) => {
+               if (!response.ok) {
+                 throw new Error(`HTTP error, status = ${response.status}`);
+               }
+               return response.text();
+             })
+             .then((text) => {
+               myArticle.innerText = text;
+             })
+             .catch((error) => {
+               myArticle.innerText = `Error: ${error.message}`;
+             });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ServiceWorker API
+        * HTTP access control (CORS)
+        * HTTP
+
+Web APIs manual                         from the official documentation

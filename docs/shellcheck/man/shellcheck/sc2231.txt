@@ -1,0 +1,39 @@
+SHELLCHECK.SC2231(1)             Sandbox manual             SHELLCHECK.SC2231(1)
+
+       NAME
+
+       Quote expansions in this for loop glob to prevent word splitting, e.g. "${dir}"/.txt. - for file in ${dir}/.txt
+
+       QUOTE EXPANSIONS IN THIS FOR LOOP GLOB TO PREVENT WORD SPLITTING, E.G
+
+       QUOTE EXPANSIONS IN THIS FOR LOOP GLOB TO PREVENT WORD SPLITTING, E.G
+
+       PROBLEMATIC CODE
+
+         for file in ${dir}/*.txt
+         do
+           echo "Found ${file}"
+         done
+
+       CORRECT CODE
+
+         for file in "${dir}"/*.txt
+         do
+           echo "Found ${file}"
+         done
+
+       RATIONALE
+
+       When iterating over globs containing expansions, you can still quote all expansions in the path to better handle whitespace and special characters.
+
+       Just make sure glob characters are outside quotes. "${dir}/.txt" will not glob expand, but "${dir}"/.txt or "${dir}"/*."${ext}" will.
+
+       EXCEPTIONS
+
+       Exceptions similar to [[SC2086]] apply. If the variable is expected to contain globs, such as if dir="tmp/**" in the example, you can ignore this message.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

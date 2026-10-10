@@ -1,0 +1,137 @@
+DOCKER.ENGINE-MANAGE-RESOURCES-LABELS(1) Sandbox manual DOCKER.ENGINE-MANAGE-RESOURCES-LABELS(1)
+
+       NAME
+
+       Docker object labels - Labels are a mechanism for applying metadata to Docker objects, including:
+
+       DOCKER OBJECT LABELS
+
+       Labels are a mechanism for applying metadata to Docker objects, including:
+
+        * Images
+        * Containers
+        * Local daemons
+        * Volumes
+        * Networks
+        * Swarm nodes
+        * Swarm services
+       You can use labels to organize your images, record licensing information, annotate relationships between containers, volumes, and networks, or in any way that makes sense for your business or application.
+
+       LABEL KEYS AND VALUES
+
+       A label is a key-value pair, stored as a string. You can specify multiple labels for an object, but each key must be unique within an object. If the same key is given multiple values, the most-recently-written value overwrites all previous values.
+
+       KEY FORMAT RECOMMENDATIONS
+
+       A label key is the left-hand side of the key-value pair. Keys are alphanumeric strings which may contain periods (.), underscores (_), slashes (/), and hyphens (-). Most Docker users use images created by other organizations, and the following guidelines help to prevent inadvertent duplication of labels across objects, especially if you plan to use labels as a mechanism for automation.
+
+        * Authors of third-party tools should prefix each label key with the
+       reverse DNS notation of a domain they own, such as com.example.some-label.
+
+        * Don't use a domain in your label key without the domain owner's permission.
+        * The com.docker., io.docker., and org.dockerproject.* namespaces are
+       reserved by Docker for internal use.
+
+        * Label keys should begin and end with a lower-case letter and should only
+       contain lower-case alphanumeric characters, the period character (.), and the hyphen character (-). Consecutive periods or hyphens aren't allowed.
+
+        * The period character (.) separates namespace "fields". Label keys without
+       namespaces are reserved for CLI use, allowing users of the CLI to interactively label Docker objects using shorter typing-friendly strings.
+
+       These guidelines aren't currently enforced and additional guidelines may apply to specific use cases.
+
+       VALUE GUIDELINES
+
+       Label values can contain any data type that can be represented as a string, including (but not limited to) JSON, XML, CSV, or YAML. The only requirement is that the value be serialized to a string first, using a mechanism specific to the type of structure. For instance, to serialize JSON into a string, you might use the JSON.stringify() JavaScript method.
+
+       Since Docker doesn't deserialize the value, you can't treat a JSON or XML document as a nested structure when querying or filtering by label value unless you build this functionality into third-party tooling.
+
+       MANAGE LABELS ON OBJECTS
+
+       Each type of object with support for labels has mechanisms for adding and managing them and using them as they relate to that type of object.
+
+       Labels on images, containers, local daemons, volumes, and networks are static for the lifetime of the object. To change these labels you must recreate the object. Labels on Swarm nodes and services can be updated dynamically.
+
+       IMAGES
+
+       Add labels to images using the LABEL instruction in a Dockerfile:
+
+         LABEL com.example.version="1.0"
+         LABEL com.example.description="Web application"
+
+       You can also set labels at build time with the --label flag, without needing a LABEL instruction in the Dockerfile:
+
+         $ docker build --label "com.example.version=1.0" -t myapp .
+
+       Inspect labels on an image using docker inspect:
+
+         $ docker inspect --format='{{json .Config.Labels}}' myapp
+
+       Filter images by label with docker image ls --filter:
+
+         $ docker image ls --filter "label=com.example.version"
+
+       CONTAINERS
+
+       Override or add labels when starting a container with docker run --label:
+
+         $ docker run --label "com.example.env=prod" myapp
+
+       Inspect labels on a container:
+
+         $ docker inspect --format='{{json .Config.Labels}}' mycontainer
+
+       Filter containers by label with docker container ls --filter:
+
+         $ docker container ls --filter "label=com.example.env=prod"
+
+       LOCAL DOCKER DAEMONS
+
+       Add labels to the Docker daemon by passing --label flags when starting dockerd, or by setting "labels" in the daemon configuration file:
+
+         {
+           "labels": ["com.example.environment=production"]
+         }
+
+       View daemon labels with docker system info.
+
+       VOLUMES
+
+       Add labels when creating a volume:
+
+         $ docker volume create --label "com.example.purpose=database" myvolume
+
+       Inspect volume labels:
+
+         $ docker volume inspect myvolume --format='{{json .Labels}}'
+
+       Filter volumes by label with docker volume ls --filter:
+
+         $ docker volume ls --filter "label=com.example.purpose"
+
+       NETWORKS
+
+       Add labels when creating a network:
+
+         $ docker network create --label "com.example.purpose=frontend" mynetwork
+
+       Inspect network labels:
+
+         $ docker network inspect mynetwork --format='{{json .Labels}}'
+
+       Filter networks by label with docker network ls --filter:
+
+         $ docker network ls --filter "label=com.example.purpose"
+
+       SWARM NODES
+
+        * Adding or updating a Swarm node's labels
+        * Filtering Swarm nodes by label
+
+       SWARM SERVICES
+
+        * Adding labels when creating a Swarm service
+        * Updating a Swarm service's labels
+        * Filtering Swarm services by label
+
+Docker manual                           from the official documentation

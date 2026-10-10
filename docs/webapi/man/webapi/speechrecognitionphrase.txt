@@ -1,0 +1,56 @@
+WEBAPI.SPEECHRECOGNITIONPHRASE(1) Sandbox manual WEBAPI.SPEECHRECOGNITIONPHRASE(1)
+
+       NAME
+
+       SpeechRecognitionPhrase - The SpeechRecognitionPhrase interface of the Web Speech API represents a phrase that can be passed to the speech recognition engine for cont
+
+       SPEECHRECOGNITIONPHRASE
+
+       The SpeechRecognitionPhrase interface of the Web Speech API represents a phrase that can be passed to the speech recognition engine for contextual biasing.
+
+       INSTANCE PROPERTIES
+
+        * SpeechRecognitionPhrase.boost (read-only) (experimental)
+          * : A floating point number representing the amount of boost you want to apply to the corresponding phrase.
+        * SpeechRecognitionPhrase.phrase (read-only) (experimental)
+          * : A string containing the word or phrase you want boosted in the recognition engine's bias.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The following code first creates an array containing the phrases to boost and their boost values. We convert this data into an ObservableArray of SpeechRecognitionPhrase objects by mapping the original array elements to SpeechRecognitionPhrase() constructor calls:
+
+         const phraseData = [
+           { phrase: "azure", boost: 5.0 },
+           { phrase: "khaki", boost: 3.0 },
+           { phrase: "tan", boost: 2.0 },
+         ];
+
+         const phraseObjects = phraseData.map(
+           (p) => new SpeechRecognitionPhrase(p.phrase, p.boost),
+         );
+
+       After creating a SpeechRecognition instance, we add our contextual biasing phrases by setting the phraseObjects array as the value of the SpeechRecognition.phrases property:
+
+         const recognition = new SpeechRecognition();
+         recognition.continuous = false;
+         recognition.lang = "en-US";
+         recognition.interimResults = false;
+         recognition.processLocally = true;
+         recognition.phrases = phraseObjects;
+
+         // …
+
+       This code is excerpted from our on-device speech color changer (run the demo live). See Using the Web Speech API for a full explanation.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Speech API
+        * SpeechRecognition.phrases
+
+Web APIs manual                         from the official documentation

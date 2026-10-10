@@ -1,0 +1,53 @@
+WEBAPI.CACHESTORAGE-HAS(1)       Sandbox manual       WEBAPI.CACHESTORAGE-HAS(1)
+
+       NAME
+
+       CacheStorage: has() method - The has() method of the CacheStorage
+
+       CACHESTORAGE: HAS() METHOD
+
+       The has() method of the CacheStorage interface returns a Promise that resolves to true if a Cache object matches the cacheName.
+
+       You can access CacheStorage through the Window.caches property in windows or through the WorkerGlobalScope.caches property in workers.
+
+       SYNTAX
+
+         has(cacheName)
+
+       PARAMETERS
+
+        * cacheName
+          * : A string representing the name of the Cache object you are looking for in the CacheStorage.
+
+       RETURN VALUE
+
+       A Promise that resolves to true if the cache exists or false if not.
+
+       EXAMPLES
+
+       The following example first checks whether a cache called 'v1' exists. If so, we add a list of assets to it. If not then we run some kind of cache set-up function.
+
+         caches
+           .has("v1")
+           .then((hasCache) => {
+             if (!hasCache) {
+               someCacheSetupFunction();
+             } else {
+               caches.open("v1").then((cache) => cache.addAll(myAssets));
+             }
+           })
+           .catch(() => {
+             // Handle exception here.
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Cache
+        * Window.caches and WorkerGlobalScope.caches
+
+Web APIs manual                         from the official documentation

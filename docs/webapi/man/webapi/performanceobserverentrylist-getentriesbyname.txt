@@ -1,0 +1,62 @@
+WEBAPI.PERFORMANCEOBSERVERENTRYLIST-GETENTRIESBYNAME(1) Sandbox manual WEBAPI.PERFORMANCEOBSERVERENTRYLIST-GETENTRIESBYNAME(1)
+
+       NAME
+
+       PerformanceObserverEntryList: getEntriesByName() method - The getEntriesByName() method of the PerformanceObserverEntryList interface returns a list of explicitly observed PerformanceEntry objects f
+
+       PERFORMANCEOBSERVERENTRYLIST: GETENTRIESBYNAME() METHOD
+
+       The getEntriesByName() method of the PerformanceObserverEntryList interface returns a list of explicitly observed PerformanceEntry objects for a given name and entryType. The list's members are determined by the set of entry types specified in the call to the observe() method. The list is available in the observer's callback function (as the first parameter in the callback).
+
+       SYNTAX
+
+         getEntriesByName(name)
+         getEntriesByName(name, type)
+
+       PARAMETERS
+
+        * name
+          * : A string representing the name of the entry to retrieve.
+        * type (optional)
+          * : A string representing the type of entry to retrieve such as "mark". The valid entry types are listed in PerformanceEntry.entryType.
+
+       RETURN VALUE
+
+       A list of explicitly _observed_ performance entry objects that have the specified name and type. If the type argument is not specified, only the name will be used to determine the entries to return. The items will be in chronological order based on the entries' startTime. If no objects meet the specified criteria, an empty list is returned.
+
+       EXAMPLES
+
+       WORKING WITH GETENTRIES, GETENTRIESBYNAME AND GETENTRIESBYTYPE
+
+       The following example shows the difference between the getEntries(), getEntriesByName(), and getEntriesByType() methods.
+
+         const observer = new PerformanceObserver((list, obs) => {
+           // Log all entries
+           let perfEntries = list.getEntries();
+           perfEntries.forEach((entry) => {
+             console.log(`${entry.name}'s duration: ${entry.duration}`);
+           });
+
+           // Log entries named "debugging" with type "measure"
+           perfEntries = list.getEntriesByName("debugging", "measure");
+           perfEntries.forEach((entry) => {
+             console.log(`${entry.name}'s duration: ${entry.duration}`);
+           });
+
+           // Log entries with type "mark"
+           perfEntries = list.getEntriesByType("mark");
+           perfEntries.forEach((entry) => {
+             console.log(`${entry.name}'s startTime: ${entry.startTime}`);
+           });
+         });
+
+         // Subscribe to various performance event types
+         observer.observe({
+           entryTypes: ["mark", "measure", "navigation", "resource"],
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

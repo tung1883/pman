@@ -1,0 +1,88 @@
+WEBAPI.ELEMENT-PSEUDO(1)         Sandbox manual         WEBAPI.ELEMENT-PSEUDO(1)
+
+       NAME
+
+       Element: pseudo() method - .
+
+       ELEMENT: PSEUDO() METHOD
+
+       .
+
+       The pseudo() method of the Element interface returns a CSSPseudoElement object representing the CSS pseudo-element of the specified type associated with the element.
+
+       Provided its type parameter contains a valid pseudo-element type, pseudo() will always return a CSSPseudoElement instance, even if that pseudo-element hasn't been generated on the calling element.
+
+       SYNTAX
+
+         pseudo(type)
+
+       PARAMETERS
+
+        * type
+          * : A string representing the type of pseudo-element to return a representation of. Valid values are:
+            * ::after
+            * ::before
+            * ::marker
+
+       RETURN VALUE
+
+       A CSSPseudoElement object instance, or null if type is not equal to a valid pseudo-element type.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       In this example, we demonstrate basic usage of the pseudo() method.
+
+       HTML
+
+       We include a element containing text, and an element to log output from JavaScript.
+
+         <p>New York's hottest club is...</p>
+         <output></output>
+
+       CSS
+
+       We give the element's ::after pseudo-element some content and apply some basic styles to both.
+
+         body {
+           width: 80%;
+           margin: 0 auto;
+         }
+
+         p {
+           background-color: violet;
+           padding: 20px;
+         }
+
+         p::after {
+           content: "Crease";
+           background-color: cadetblue;
+           padding: 20px;
+         }
+
+       JAVASCRIPT
+
+       In our script, we grab references to our and elements, and retrieve a CSSPseudoElement representing the element's ::after pseudo-element via the pseudo() method. We then log some details of the pseudo-element to our element. We also include some rudimentary error handling via a try...catch structure, to print an error message in non-supporting browsers.
+
+         const pElem = document.querySelector("p");
+         const output = document.querySelector("output");
+
+         try {
+           const pseudoElem = pElem.pseudo("::after");
+           output.textContent = `${pseudoElem.type} pseudo-element. Parent: <${pseudoElem.parent.tagName.toLowerCase()}>`;
+         } catch (e) {
+           output.textContent = `Your browser doesn't support CSSPseudoElement and/or the pseudo() method: ${e}`;
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * CSSPseudoElement.pseudo()
+
+Web APIs manual                         from the official documentation

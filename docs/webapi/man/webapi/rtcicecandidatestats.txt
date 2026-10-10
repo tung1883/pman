@@ -1,0 +1,79 @@
+WEBAPI.RTCICECANDIDATESTATS(1)   Sandbox manual   WEBAPI.RTCICECANDIDATESTATS(1)
+
+       NAME
+
+       RTCIceCandidateStats - The RTCIceCandidateStats dictionary of the WebRTC API is used to report statistics related to an RTCIceCandidate.
+
+       RTCICECANDIDATESTATS
+
+       The RTCIceCandidateStats dictionary of the WebRTC API is used to report statistics related to an RTCIceCandidate.
+
+       The statistics can be obtained by iterating the RTCStatsReport returned by RTCPeerConnection.getStats() until you find a report with the type of local-candidate.
+
+       INSTANCE PROPERTIES
+
+        * address (optional)
+          * : A string containing the address of the candidate. This value may be an IPv4 address, an IPv6 address, or a fully-qualified domain name. This property was previously named ip and only accepted IP addresses.
+       Corresponds to RTCIceCandidate.address.
+
+        * candidateType
+          * : A string matching one of the values in RTCIceCandidate.type, indicating what kind of candidate the object provides statistics for.
+        * deleted
+          * : A boolean indicating whether or not the candidate has been deleted or released.
+        * foundation (optional) (experimental)
+          * : A string that uniquely identifies the candidate across multiple transports.
+       Corresponds to RTCIceCandidate.foundation.
+
+        * port (optional)
+          * : The network port number used by the candidate.
+       Corresponds to RTCIceCandidate.port.
+
+        * priority (optional)
+          * : The candidate's priority.
+       Corresponds to RTCIceCandidate.priority.
+
+        * protocol (optional)
+          * : A string specifying the protocol (tcp or udp) used to transmit data on the port.
+       Corresponds to RTCIceCandidate.protocol.
+
+        * relayProtocol
+          * : A string specifying the protocol being used by a local ICE candidate to communicate with the TURN server.
+        * transportId
+          * : A string uniquely identifying the transport object that was inspected in order to obtain the RTCTransportStats associated with the candidate corresponding to these statistics.
+        * url (optional)
+          * : A string specifying the URL of the ICE server from which the described candidate was obtained. This property is _only_ available for local candidates.
+        * usernameFragment (optional) (experimental)
+          * : A string containing the ICE username fragment ("ice-ufrag").
+       Corresponds to RTCIceCandidate.usernameFragment.
+
+       COMMON INSTANCE PROPERTIES
+
+       The following properties are common to all WebRTC statistics objects.
+
+       
+
+        * id
+          * : A string that uniquely identifies the object that is being monitored to produce this set of statistics.
+        * timestamp
+          * : A DOMHighResTimeStamp object indicating the time at which the sample was taken for this statistics object.
+        * type
+          * : A string with the value "local-candidate", indicating the type of statistics that the object contains.
+
+       EXAMPLES
+
+       Given a variable myPeerConnection, which is an instance of RTCPeerConnection, the code below uses await to wait for the statistics report, and then iterates it using RTCStatsReport.forEach(). It then filters the dictionaries for just those reports that have the type of local-candidate and logs the result.
+
+         const stats = await myPeerConnection.getStats();
+
+         stats.forEach((report) => {
+           if (report.type === "local-candidate") {
+             // Log the ICE candidate information
+             console.log(report);
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,49 @@
+HTTP.STATUS-508(1)               Sandbox manual               HTTP.STATUS-508(1)
+
+       NAME
+
+       508 Loop Detected - The HTTP 508 Loop Detected server error response status code indicates that the entire operation failed because it encountered an infinite l
+
+       508 LOOP DETECTED
+
+       The HTTP 508 Loop Detected server error response status code indicates that the entire operation failed because it encountered an infinite loop while processing a request with Depth: infinity.
+
+       The status may be given in the context of the Web Distributed Authoring and Versioning (WebDAV). It was introduced as a fallback for cases where WebDAV clients do not support 208 Already Reported responses (when requests do not explicitly include a DAV header).
+
+       STATUS
+
+         508 Loop Detected
+
+       EXAMPLES
+
+       INFINITE LOOP IN WEBDAV SEARCH
+
+         PROPFIND /Coll/ HTTP/1.1
+         Host: example.com
+         Depth: infinity
+         Content-Type: application/xml; charset="utf-8"
+         Content-Length: 125
+
+         <?xml version="1.0" encoding="utf-8" ?>
+         <D:propfind xmlns:D="DAV:">
+           <D:prop> <D:displayname/> </D:prop>
+         </D:propfind>
+
+         HTTP/1.1 508 Loop Detected
+         Content-Type: application/json; charset=utf-8
+         Server: Microsoft-IIS/8.0
+         Date: Wed, 15 May 2013 02:38:57 GMT
+         Content-Length: 72
+
+         {
+           "Message": "Please check the resources for cyclic references and try again."
+         }
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * HTTP response status codes
+        * 208 Already Reported
+
+HTTP manual                             from the official documentation

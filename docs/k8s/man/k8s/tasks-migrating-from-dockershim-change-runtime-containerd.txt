@@ -1,0 +1,111 @@
+K8S.TASKS-MIGRATING-FROM-DOCKERSHIM-CHANGE-RUNTIME-CONTAINERD(1) Sandbox manual K8S.TASKS-MIGRATING-FROM-DOCKERSHIM-CHANGE-RUNTIME-CONTAINERD(1)
+
+       NAME
+
+       Changing the Container Runtime on a Node from Docker Engine to containerd - This task outlines the steps needed to update your container runtime to containerd from Docker. It
+
+       CHANGING THE CONTAINER RUNTIME ON A NODE FROM DOCKER ENGINE TO CONTAIN
+
+       This task outlines the steps needed to update your container runtime to containerd from Docker. It is applicable for cluster operators running Kubernetes 1.23 or earlier. This also covers an example scenario for migrating from dockershim to containerd. Alternative container runtimes can be picked from this page.
+
+       ## PREREQUISITES
+
+       Install containerd. For more information see containerd's installation documentation and for specific prerequisite follow the containerd guide.
+
+       DRAIN THE NODE
+
+         kubectl drain <node-to-drain> --ignore-daemonsets
+
+       Replace with the name of your node you are draining.
+
+       STOP THE DOCKER DAEMON
+
+         systemctl stop kubelet
+         systemctl disable docker.service --now
+
+       INSTALL CONTAINERD
+
+       Follow the guide for detailed steps to install containerd.
+
+        1. Install the containerd.io package from the official Docker repositories.
+       Instructions for setting up the Docker repository for your respective Linux distribution and installing the containerd.io package can be found at Getting started with containerd.
+
+        1. Configure containerd:
+
+            sudo mkdir -p /etc/containerd
+            containerd config default | sudo tee /etc/containerd/config.toml
+
+        1. Restart containerd:
+
+            sudo systemctl restart containerd
+
+       Start a Powershell session, set $Version to the desired version (ex: $Version="1.4.3"), and then run the following commands:
+
+        1. Download containerd:
+
+            curl.exe -L https://github.com/containerd/containerd/releases/download/v$Version/containerd-$Version-windows-amd64.tar.gz -o containerd-windows-amd64.tar.gz
+            tar.exe xvf .\containerd-windows-amd64.tar.gz
+
+        2. Extract and configure:
+
+            Copy-Item -Path ".\bin\" -Destination "$Env:ProgramFiles\containerd" -Recurse -Force
+            cd $Env:ProgramFiles\containerd\
+            .\containerd.exe config default | Out-File config.toml -Encoding ascii
+
+            # Review the configuration. Depending on setup you may want to adjust:
+            # - the sandbox_image (Kubernetes pause image)
+            # - cni bin_dir and conf_dir locations
+            Get-Content config.toml
+
+            # (Optional - but highly recommended) Exclude containerd from Windows Defender Scans
+            Add-MpPreference -ExclusionProcess "$Env:ProgramFiles\containerd\containerd.exe"
+
+        3. Start containerd:
+
+            .\containerd.exe --register-service
+            Start-Service containerd
+
+       CONFIGURE THE KUBELET TO USE CONTAINERD AS ITS CONTAINER RUNTIME
+
+       Edit the file /var/lib/kubelet/kubeadm-flags.env and add the containerd runtime to the flags; --container-runtime-endpoint=unix:///run/containerd/containerd.sock.
+
+       Users using kubeadm should be aware that the kubeadm tool stores the host's CRI socket in the
+
+       /var/lib/kubelet/instance-config.yaml file on each node. You can create this /var/lib/kubelet/instance-config.yaml file on the node.
+
+       The /var/lib/kubelet/instance-config.yaml file allows setting the containerRuntimeEndpoint parameter.
+
+       You can set this parameter's value to the path of your chosen CRI socket (for example unix:///run/containerd/containerd.sock).
+
+       RESTART THE KUBELET
+
+         systemctl start kubelet
+
+       VERIFY THAT THE NODE IS HEALTHY
+
+       Run kubectl get nodes -o wide and containerd appears as the runtime for the node we just changed.
+
+       REMOVE DOCKER ENGINE
+
+       If the node appears healthy, remove Docker.
+
+         sudo dnf remove docker-ce docker-ce-cli
+
+         sudo apt-get purge docker-ce docker-ce-cli
+
+         sudo dnf remove docker-ce docker-ce-cli
+
+         sudo apt-get purge docker-ce docker-ce-cli
+
+       The preceding commands don't remove images, containers, volumes, or customized configuration files on your host. To delete them, follow Docker's instructions to Uninstall Docker Engine.
+
+       > Note:
+       Docker's instructions for uninstalling Docker Engine create a risk of deleting containerd. Be careful when executing commands.
+
+       UNCORDON THE NODE
+
+         kubectl uncordon <node-to-uncordon>
+
+       Replace with the name of your node you previously drained.
+
+Kubernetes manual                       from the official documentation

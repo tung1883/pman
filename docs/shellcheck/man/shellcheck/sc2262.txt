@@ -1,0 +1,82 @@
+SHELLCHECK.SC2262(1)             Sandbox manual             SHELLCHECK.SC2262(1)
+
+       NAME
+
+       This alias can't be defined and used in the same parsing unit. Use a function instead. - function checksum() {
+
+       THIS ALIAS CAN'T BE DEFINED AND USED IN THE SAME PARSING UNIT. USE A F
+
+       THIS ALIAS CAN'T BE DEFINED AND USED IN THE SAME PARSING UNIT. USE A F
+
+       PROBLEMATIC CODE
+
+         function checksum() {
+           type md5 && alias md5sum=md5
+           md5sum "$@"  # This calls `md5sum`, not `md5`
+         }
+
+       CORRECT CODE
+
+         function checksum() {
+           type md5 && md5sum() { md5 "$@"; }
+           md5sum "$@"  # Now this would call `md5` when applicable
+         }
+
+       RATIONALE
+
+       Alias expansion happens at parse time, which means to have an effect, the alias command must be executed not just before the alias is invoked, but before the invocation is parsed.
+
+       A shell will parse commands until it has a complete set of commands followed by a linefeed. This includes compound commands like { brace; groups; } and while loops; do true; done. Here are some examples:
+
+       A SINGLE COMMAND FOLLOWED BY A LINEFEED IS ONE UNIT
+
+       unit 1
+
+       THESE COMMANDS ARE IN THE SAME PARSING UNIT BECAUSE
+
+       THERE IS NO LINE FEED BETWEEN THEM
+
+       unit 2; unit 2;
+
+       THESE COMMANDS ARE IN THE SAME PARSING UNIT BECAUSE
+
+       THEY ARE PART OF THE SAME TOP LEVEL BRACE GROUP
+
+       { unit 3 unit 3 }
+
+       THESE COMMANDS ARE IN THE SAME PARSING UNIT BECAUSE
+
+       THERE IS NO LINEFEED BETWEEN THE GROUPS
+
+       { unit 4 }; { unit 4 }
+
+       Any alias defined in a command in unit 1 would not take effect until unit 2 and beyond. Similarly, an alias defined in unit 2 will only take effect in unit 3 and 4.
+
+       In the problematic example, the alias is defined and used in a function. Since a function definition is a single compound command, it's considered a single parsing unit. The alias would therefore not have an effect (this is true even if the function is invoked twice, because it's only parsed once).
+
+       Does this sound confusing and counter-intuitive? It is. Save yourself the trouble and always use functions instead of aliases.
+
+       EXCEPTIONS
+
+       If the flagged commands are not expected to use the alias, you can ignore this error. ShellCheck may incorrectly flag this if the alias definition and usage were in different branches of an if statement.
+
+       You can [[ignore]] this warning with a directive. All warnings may always be disabled either before the relevant command or before any outer compound commands, but in this case it's especially useful:
+
+       SHELLCHECK DISABLE SC2262 # OPTION A, BEFORE COMPOUND COMMAND
+
+       if true then
+
+       SHELLCHECK DISABLE SC2262 # OPTION B, BEFORE ALIAS COMMAND
+
+       alias foo=bar
+
+       WITH EITHER OPTION A OR B, THIS SC2263 MESSAGE IS AUTO-SUPPRESSED
+
+       foo fi
+
+       RELATED RESOURCES
+
+        * Unix&Linux SE: bash aliases do not expand even with shopt expand_aliases
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

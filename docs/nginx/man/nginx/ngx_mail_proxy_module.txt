@@ -1,0 +1,94 @@
+NGINX.NGX_MAIL_PROXY_MODULE(1)   Sandbox manual   NGINX.NGX_MAIL_PROXY_MODULE(1)
+
+       MODULE NGX_MAIL_PROXY_MODULE
+
+         Directives  proxy_buffer  proxy_pass_error_message  proxy_protocol  proxy_smtp_auth  proxy_timeout  xclient
+
+       DIRECTIVES
+
+       PROXY_BUFFER
+
+         Syntax: | proxy_buffer size;
+
+         proxy_buffer 4k|8k;
+
+       Default:
+
+         Context: | mail, server
+       Sets the size of the buffer used for proxying. By default, the buffer size is equal to one memory page. Depending on a platform, it is either 4K or 8K.
+
+       PROXY_PASS_ERROR_MESSAGE
+
+         Syntax: | proxy_pass_error_message on | off;
+
+         proxy_pass_error_message off;
+
+       Default:
+
+         Context: | mail, server
+       Indicates whether to pass the error message obtained during the authentication on the backend to the client.
+
+       Usually, if the authentication in nginx is a success, the backend cannot return an error. If it nevertheless returns an error, it means some internal error has occurred. In such case the backend message can contain information that should not be shown to the client. However, responding with an error for the correct password is a normal behavior for some POP3 servers. For example, CommuniGatePro informs a user about mailbox overflow or other events by periodically outputting the authentication error. The directive should be enabled in this case.
+
+       PROXY_PROTOCOL
+
+         Syntax: | proxy_protocol on | off | v2;
+
+         proxy_protocol off;
+
+       Default:
+
+         Context: | mail, server
+       This directive appeared in version 1.19.8.
+
+       Enables the PROXY protocol for connections to a backend. The on parameter enables version 1 of the PROXY protocol (text format). The v2 parameter (1.31.4) enables version 2 of the PROXY protocol (binary format).
+
+       PROXY_SMTP_AUTH
+
+         Syntax: | proxy_smtp_auth on | off;
+
+         proxy_smtp_auth off;
+
+       Default:
+
+         Context: | mail, server
+       This directive appeared in version 1.19.4.
+
+       Enables or disables user authentication on the SMTP backend using the AUTH command.
+
+       If XCLIENT is also enabled, then the XCLIENT command will not send the LOGIN parameter.
+
+       PROXY_TIMEOUT
+
+         Syntax: | proxy_timeout timeout;
+
+         proxy_timeout 24h;
+
+       Default:
+
+         Context: | mail, server
+       Sets the timeout between two successive read or write operations on client or proxied server connections. If no data is transmitted within this time, the connection is closed.
+
+       XCLIENT
+
+         Syntax: | xclient on | off;
+
+         xclient on;
+
+       Default:
+
+         Context: | mail, server
+       Enables or disables the passing of the XCLIENT command with client parameters when connecting to the SMTP backend.
+
+       With XCLIENT, the MTA is able to write client information to the log and apply various limitations based on this data.
+
+       If XCLIENT is enabled then nginx passes the following commands when connecting to the backend:
+
+        * EHLO with the server name
+        * XCLIENT
+        * EHLO or HELO, as passed by the client
+       If the name found by the client IP address points to the same address, it is passed in the NAME parameter of the XCLIENT command. If the name could not be found, points to a different address, or resolver is not specified, the [UNAVAILABLE] is passed in the NAME parameter. If an error has occurred in the process of resolving, the [TEMPUNAVAIL] value is used.
+
+       If XCLIENT is disabled then nginx passes the EHLO command with the server name when connecting to the backend if the client has passed EHLO, or HELO with the server name, otherwise.
+
+nginx manual                            bundled documentation

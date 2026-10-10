@@ -1,0 +1,104 @@
+WEBAPI.RTCPEERCONNECTION-CREATEOFFER(1) Sandbox manual WEBAPI.RTCPEERCONNECTION-CREATEOFFER(1)
+
+       NAME
+
+       RTCPeerConnection: createOffer() method - The createOffer() method of the RTCPeerConnection interface initiates the creation of an SDP offer for the purpose of starting a new WebRTC 
+
+       RTCPEERCONNECTION: CREATEOFFER() METHOD
+
+       The createOffer() method of the RTCPeerConnection interface initiates the creation of an SDP offer for the purpose of starting a new WebRTC connection to a remote peer.
+
+       The SDP offer includes information about any MediaStreamTrack objects already attached to the WebRTC session, codec, and options supported by the browser, and any candidates already gathered by the ICE agent, for the purpose of being sent over the signaling channel to a potential peer to request a connection or to update the configuration of an existing connection.
+
+       Add tracks and create data channels before calling createOffer(). The offer describes the connection as it is when createOffer() is called, so any changes made afterwards are not included in the negotiation (the negotiationneeded event is fired if you make changes that requires a new offer).
+
+       You can avoid the renegotiation triggered by creating a data channel after your first createOffer() call by setting alwaysNegotiateDataChannels to true in the RTCPeerConnection() constructor. This specifies that the application negotiates data channels in the SDP offer before creating an RTCDataChannel.
+
+       SYNTAX
+
+         createOffer()
+         createOffer(options)
+
+         createOffer(successCallback, failureCallback) // deprecated
+         createOffer(successCallback, failureCallback, options) // deprecated
+
+       PARAMETERS
+
+        * options (optional)
+          * : An object providing the following options requested for the offer:
+            * iceRestart (optional)
+              * : To restart ICE on an active connection, set this to true.
+       This will cause the returned offer to have different credentials than those already in place. If you then apply the returned offer, ICE will restart. Specify false to keep the same credentials and therefore not restart ICE. The default is false. Instead of using this option, consider calling RTCPeerConnection.restartIce(), which will automatically set this flag the next time createOffer() is called.
+
+            * offerToReceiveAudio (optional) (deprecated)
+              * : Provides additional control over the directionality of audio. For example, it can be used to ensure that audio can be received, regardless if audio is sent or not.
+            * offerToReceiveVideo (optional) (deprecated)
+              * : Provides additional control over the directionality of video. For example, it can be used to ensure that video can be received, regardless if video is sent or not.
+
+       DEPRECATED PARAMETERS
+
+       In older code and documentation, you may see a callback-based version of this function. This has been deprecated and its use is strongly discouraged. You should update any existing code to use the Promise-based version of createOffer() instead. The parameters for the older form of createOffer() are described below, to aid in updating existing code.
+
+        * successCallback (deprecated)
+          * : A callback function which will be passed a single RTCSessionDescription object describing the newly-created offer.
+        * errorCallback (deprecated)
+          * : A callback function which will be passed a single DOMException object explaining why the request to create an offer failed.
+        * options (optional)
+          * : An optional object providing options requested for the offer.
+
+       RETURN VALUE
+
+       A Promise that fulfills with an object containing the same properties as an RTCSessionDescription objects:
+
+        * type
+          * : A string whose value is "offer".
+        * sdp
+          * : A string containing the SDP describing the generated offer, to be delivered to the remote peer.
+
+       EXCEPTIONS
+
+       These exceptions are returned by rejecting the returned promise. Your rejection handler should examine the received exception to determine which occurred.
+
+        * InvalidStateError DOMException
+          * : Returned if the RTCPeerConnection is closed.
+        * NotReadableError DOMException
+          * : Returned if no certificate or set of certificates was provided for securing the connection, and createOffer() was unable to create a new one.
+       Since all WebRTC connections are required to be secured, that results in an error.
+
+        * OperationError DOMException
+          * : Returned if examining the state of the system to determine resource availability in order to generate the offer failed for some reason.
+
+       EXAMPLES
+
+       Here we see a handler for the negotiationneeded event which creates the offer and sends it to the remote system over a signaling channel.
+
+       > Keep in mind that this is part of the signaling process, the transport layer for which is an implementation detail that's entirely up to you.
+       > In this case, a WebSocket connection is used to send a JSON message with a type field with the value "video-offer" to the other peer.
+       > The contents of the object being passed to the sendToServer() function, along with everything else in the promise fulfillment handler, depend entirely on your design.
+
+         myPeerConnection
+           .createOffer()
+           .then((offer) => myPeerConnection.setLocalDescription(offer))
+           .then(() => {
+             sendToServer({
+               name: myUsername,
+               target: targetUsername,
+               type: "video-offer",
+               sdp: myPeerConnection.localDescription,
+             });
+           })
+           .catch((reason) => {
+             // An error occurred, so handle the failure to connect
+           });
+
+       In this code, the offer is created, and once successful, the local end of the RTCPeerConnection is configured to match by passing the offer (which is represented using an object in the same shape as RTCSessionDescription) into setLocalDescription(). Once that's done, the offer is sent to the remote system over the signaling channel; in this case, by using a custom function called sendToServer(). The implementation of the signaling server is independent from the WebRTC specification, so it doesn't matter how the offer is sent as long as both the caller and potential receiver are using the same one.
+
+       Use Promise.catch() to trap and handle errors.
+
+       See Signaling and video calling for the complete example from which this snippet is derived; this will help you to understand how the signaling code here works.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

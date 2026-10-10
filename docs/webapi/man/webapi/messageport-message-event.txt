@@ -1,0 +1,84 @@
+WEBAPI.MESSAGEPORT-MESSAGE-EVENT(1) Sandbox manual WEBAPI.MESSAGEPORT-MESSAGE-EVENT(1)
+
+       NAME
+
+       MessagePort: message event - The message event is fired on a MessagePort object when a message arrives on that channel.
+
+       MESSAGEPORT: MESSAGE EVENT
+
+       The message event is fired on a MessagePort object when a message arrives on that channel.
+
+       This event is not cancellable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("message", (event) => { })
+
+         onmessage = (event) => { }
+
+       EVENT TYPE
+
+       A MessageEvent. Inherits from Event.
+
+       MessageEvent
+
+       EXAMPLES
+
+       Suppose a script creates a MessageChannel and sends one of the ports to a different browsing context, such as another , using code like this:
+
+         const channel = new MessageChannel();
+         const myPort = channel.port1;
+         const targetFrame = window.top.frames[1];
+         const targetOrigin = "https://example.org";
+
+         const messageControl = document.querySelector("#message");
+         const channelMessageButton = document.querySelector("#channel-message");
+
+         channelMessageButton.addEventListener("click", () => {
+           myPort.postMessage(messageControl.value);
+         });
+
+         targetFrame.postMessage("init", targetOrigin, [channel.port2]);
+
+       The target can receive the port and start listening for messages and message errors on it using code like this:
+
+         window.addEventListener("message", (event) => {
+           const myPort = event.ports[0];
+
+           myPort.addEventListener("message", (event) => {
+             received.textContent = event.data;
+           });
+
+           myPort.addEventListener("messageerror", (event) => {
+             console.error(event.data);
+           });
+
+           myPort.start();
+         });
+
+       Note that the listener must call MessagePort.start() before any messages will be delivered to this port. This is only needed when using the addEventListener() method: if the receiver uses onmessage instead, start() is called implicitly:
+
+         window.addEventListener("message", (event) => {
+           const myPort = event.ports[0];
+
+           myPort.onmessage = (event) => {
+             received.textContent = event.data;
+           };
+
+           myPort.onmessageerror = (event) => {
+             console.error(event.data);
+           };
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Related events: messageerror.
+        * Using channel messaging
+
+Web APIs manual                         from the official documentation

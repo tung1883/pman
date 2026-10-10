@@ -1,0 +1,241 @@
+SHELLCHECK.DIRECTIVE(1)          Sandbox manual          SHELLCHECK.DIRECTIVE(1)
+
+       NAME
+
+       shellcheck directives - Shellcheck directives allow you to control how shellcheck works, and can be added:
+
+       SHELLCHECK DIRECTIVES
+
+        * shellcheck directives
+        * Documenting directive use
+        * .shellcheckrc file
+        * Supported directives
+          * disable
+          * enable
+          * external-sources
+          * source
+          * source-path
+          * shell
+        * Supported options
+          * --rcfile
+          * others
+
+       SHELLCHECK DIRECTIVES
+
+       Shellcheck directives allow you to control how shellcheck works, and can be added:
+
+        1. As entries in a .shellcheckrc file in the project's root-, or user's home-, directory:
+
+            # Don't suggest [ -n "$VAR" ] over [ ! -z "$VAR" ]
+            disable=SC2236
+
+            # Suggest ${VAR} in place of $VAR
+            enable=require-variable-braces
+
+        1. and/or as comments inside individual script files:
+
+         	hexToAscii() {
+         		# shellcheck disable=SC2059
+         		printf "\x$1"
+         	}
+
+       Directives that replace or are immediately after the shebang apply to the entire script.\ Otherwise, they are scoped to the command that follows it _(including compound commands like function definitions, loops, and case statements)_.
+
+        * A directive may only be applied to a complete command and can not be used immediately preceding an else block or individual case branch:
+
+         	# Directive VALID here, applies to whole `case`
+         	case $1 in
+         	# Directive INVALID, `-v)` is not a complete command
+         	-v)
+         		# Directive VALID here, applies to whole `if`
+         		if [ "$v" ]
+         		then
+         		# Directive VALID here, applies to `die ..` command
+         		die "Only one -v allowed"
+         		# Directive INVALID here, `else` is not a complete command
+         		else
+         		v=1
+         		fi ;;
+         	esac
+
+        * There is no support for scoping a directive to the first structure of the script.\
+       In these cases, use a dummy command like true or : and then add the directives, such as:
+
+         	# This directive applies to the entire script
+         	# shellcheck disable=2086
+         	true
+
+         	# This directive only applies to this function
+         	# shellcheck disable=2043
+         	f() {
+         		...
+         	}
+
+       DOCUMENTING DIRECTIVE USE
+
+       It is recommended to add a comment to document why a specific directive was used.
+
+        * The comment can be added on the preceding line.\
+       _(This is the recommended style for long comments.)_
+
+         	# this is intentional because of reasons
+         	# that are long and need explaining
+         	# shellcheck disable=SC1234
+         	statement_where_warning_should_be_disabled
+
+        * The comment can also be added at the end of the directive line.\
+       _(This is the recommended style for short comments.)_ s
+
+         	# shellcheck disable=SC1234 # this is intentional
+         	statement_where_warning_should_be_disabled
+
+       SHELLCHECKRC FILE
+
+       Unless the --norc option is used;
+
+        * shellcheck will look for a file named .shellcheckrc or shellcheckrc _(note without the dot)_,\
+       in the script's directory and each parent directory of that.\ If it is not found there, shellcheck will look for it in the user's HOME directory (i.e., ~/.shellcheckrc),\ followed by the XDG config directory.\ (usually ~/.config/shellcheckrc on Unix, or %APPDATA%/shellcheckrc on Windows)
+
+       Only the first-found file will be used.
+
+        * If found, it will read key=value pairs from it and treat them as _file-wide_ directives.\
+       Example .shellcheckrc looks like:
+
+         		# Look for 'source'd files relative to the checked script,
+         		# and also look for absolute paths in /mnt/chroot
+         		source-path=SCRIPTDIR
+         		source-path=/mnt/chroot
+
+         		# Since 0.9.0, values can be quoted with '' or "" to allow spaces
+         		source-path="My Documents/scripts"
+
+         		# Allow opening any 'source'd file, even if not specified as input
+         		external-sources=true
+
+         		# Turn on warnings for unquoted variables with safe values
+         		enable=quote-safe-variables
+
+         		# Turn on warnings for unassigned uppercase variables
+         		enable=check-unassigned-uppercase
+
+         		# Allow [ ! -z foo ] instead of suggesting -n
+         		disable=SC2236
+
+        * ℹ️Note for Snap users:\
+       The Snap sandbox disallows access to hidden files.\ Use shellcheckrc without the dot instead.
+
+        * ℹ️Note for Docker users:\
+       shellcheck will only be able to look for files that are mounted in the container, so ~/.shellcheckrc can not be accessed nor read.
+
+       SUPPORTED DIRECTIVES
+
+        * disable
+        * enable
+        * external-sources
+        * source
+        * source-path
+        * shell
+
+       DISABLE
+
+        * 4-digits _(with or without SC prefixed)_\
+       _Prevents shellcheck from processing one or more warnings:_
+
+         	# shellcheck disable=code[,code...]
+         	statement_where_warning_should_be_disabled
+
+        * A range can also be specified, handy when disabaling multiple warnings/errors for the entire file.
+
+         		#!...
+         		# shellcheck disable=SC1000-SC9999
+         		# shellcheck disable=1000-9999
+
+       ℹ️Silencing parser errors is purely cosmetic; Any parser error found will still stop shellcheck at the point of the error.
+
+       ENABLE
+
+       [optional checks]: https://github.com/koalaman/shellcheck/wiki/Optional
+
+        * keyphrase\
+       (since 0.7.0)\ _Enables one or more [optional checks]._
+
+         	#!...
+         	# shellcheck enable=require-variable-braces
+         	echo "Hello $USER"  # Will suggest to change into ${USER}
+
+        * To see a list of [optional checks] with examples, run:
+
+         		shellcheck --list-optional
+
+       EXTERNAL-SOURCES
+
+        * boolean (true|false|0|1)\
+       (since v0.8.0)\ _Allows or disallows shellcheck to include the files pointed-to by the source or . statements while checking._\ external-sources=false disables this, which is the default.
+
+        * In .shellcheckrc set external-sources=true to enable it globally.\
+       _(Individual script files can disable but not enable this option.)_
+
+       SOURCE
+
+        * single filename (with or without a leading path)\
+       (since v0.4.0)\ _Dictates shellcheck where to find the to-be-sourced file._
+
+         	# shellcheck source=src/examples/config.sh
+         	. "$(locate_config)"
+
+        * see SCRIPTDIR in source-path (since v0.7.0)?
+
+         		# shellcheck source=SCRIPTDIR/examples/config.sh
+         		source "${my_SCRIPTDIR}/config.sh"
+
+         		#!...
+         		# shellcheck source-path=SCRIPTDIR/examples
+         		...
+         		source config.sh
+
+       SOURCE-PATH
+
+        * filepath (absolute or relative)\
+       (since 0.7.0)\ _Informs shellcheck where to search for sourced files_.
+
+         	# The script will now look for src/examples/mylib.sh
+         	# shellcheck source-path=src/examples
+         	. mylib.sh
+
+        * The special value SCRIPTDIR will search in the current script's directory, and it can be used as a relative path like SCRIPTDIR/../lib.\
+       To support the common pattern of "${SOME_VAR_NAME}/mylib.sh", shellcheck strips one leading, dynamic section, before trying to locate the rest.\ That means that shellcheck will look for config.sh and utils.sh in the same directory as the script itself when it is being checked in the below example:
+
+         		#!...
+         		# shellcheck source-path=SCRIPTDIR
+         		here="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+         		. "$here/config.sh"
+         		. "$here/utils.sh"
+
+       SHELL
+
+        * type of shell (sh|bash||...)\
+       (since v0.4.5)\ _Specifies the shell dialect for a script._
+
+       This is similar to a _shebang_/_hashbang/etc_, if you for any reason don't want to add one.
+
+         	# shellcheck shell=sh
+         	echo foo &> bar
+
+       SUPPORTED OPTIONS
+
+       RCFILE
+
+        * filepath\
+       (since v0.10.0)\ _Dictates shellcheck to prefer the specified configuration file, instead of searching for one in the default locations first._
+
+       See .shellcheckrc file for the contents of this file.
+
+       OTHERS
+
+        * For a listing of other options not mentioned here, and actually supported by your version of shellcheck, try one or both of these commands: 😉
+
+         	man shellcheck
+
+         	shellcheck --help
+
+ShellCheck manual                       from the official documentation

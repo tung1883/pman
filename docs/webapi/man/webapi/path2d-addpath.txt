@@ -1,0 +1,78 @@
+WEBAPI.PATH2D-ADDPATH(1)         Sandbox manual         WEBAPI.PATH2D-ADDPATH(1)
+
+       NAME
+
+       Path2D: addPath() method - The Path2D.addPath() method
+
+       PATH2D: ADDPATH() METHOD
+
+       The Path2D.addPath() method of the Canvas 2D API adds one Path2D object to another Path2D object.
+
+       SYNTAX
+
+         addPath(path)
+         addPath(path, transform)
+
+       PARAMETERS
+
+        * path
+          * : A Path2D path to add.
+        * transform (optional)
+          * : A DOMMatrix to be used as the transformation matrix for the path that
+       is added. (Technically an object that possesses the same properties as a DOMMatrix object.)
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       ADDING A PATH TO AN EXISTING PATH
+
+       This example adds one path to another.
+
+       HTML
+
+         <canvas id="canvas"></canvas>
+
+       JAVASCRIPT
+
+       First, we create two separate Path2D objects, each of which contains a rectangle made using the rect() method. We then create a matrix using DOMMatrix(). We then add the second path to the first using addPath(), also applying the matrix to move the second path to the right. Finally, we draw the first path (which now contains both rectangles) using fill().
+
+         const canvas = document.getElementById("canvas");
+         const ctx = canvas.getContext("2d");
+
+         // Create first path and add a rectangle
+         let p1 = new Path2D();
+         p1.rect(0, 0, 100, 150);
+
+         // Create second path and add a rectangle
+         let p2 = new Path2D();
+         p2.rect(0, 0, 100, 75);
+
+         // Create transformation matrix that moves 200 points to the right
+         let m = new DOMMatrix();
+         m.a = 1;
+         m.b = 0;
+         m.c = 0;
+         m.d = 1;
+         m.e = 200;
+         m.f = 0;
+
+         // Add second path to the first path
+         p1.addPath(p2, m);
+
+         // Draw the first path
+         ctx.fill(p1);
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The interface defining this method: Path2D
+
+Web APIs manual                         from the official documentation

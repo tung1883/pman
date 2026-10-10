@@ -1,0 +1,63 @@
+WEBAPI.HTMLVIDEOELEMENT-CANCELVIDEOFRAMECALLBACK(1) Sandbox manual WEBAPI.HTMLVIDEOELEMENT-CANCELVIDEOFRAMECALLBACK(1)
+
+       NAME
+
+       HTMLVideoElement: cancelVideoFrameCallback() method - The cancelVideoFrameCallback() method of the HTMLVideoElement interface cancels a previously-registered video frame callback.
+
+       HTMLVIDEOELEMENT: CANCELVIDEOFRAMECALLBACK() METHOD
+
+       The cancelVideoFrameCallback() method of the HTMLVideoElement interface cancels a previously-registered video frame callback.
+
+       SYNTAX
+
+         cancelVideoFrameCallback(id)
+
+       PARAMETERS
+
+        * id
+          * : A number representing the ID of the video frame callback you want to cancel. This will be the value returned by the corresponding HTMLVideoElement.requestVideoFrameCallback call.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       CANCELING A VIDEO FRAME CALLBACK
+
+       This example shows how to use cancelVideoFrameCallback() to cancel a previously-registered video frame callback.
+
+         let videoCallbackId = null;
+
+         function updateCanvas(now, metadata) {
+           // Do something with the frame
+
+           // …
+
+           // Re-register the callback to run on the next frame
+           // It's important to update the videoCallbackId on each iteration
+           // so you can cancel the callback successfully
+           videoCallbackId = video.requestVideoFrameCallback(updateCanvas);
+         }
+
+         // Initial registration of the callback to run on the first frame
+         videoCallbackId = video.requestVideoFrameCallback(updateCanvas);
+
+         // …
+
+         // Cancel video frame callback using the latest videoCallbackId
+         if (videoCallbackId !== null) {
+           video.cancelVideoFrameCallback(videoCallbackId);
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The element
+        * HTMLVideoElement.requestVideoFrameCallback()
+        * Perform efficient per-video-frame operations on video with requestVideoFrameCallback() on developer.chrome.com (2023)
+
+Web APIs manual                         from the official documentation

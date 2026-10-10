@@ -1,0 +1,89 @@
+K8S.TASKS-ADMINISTER-CLUSTER-CLUSTER-UPGRADE(1) Sandbox manual K8S.TASKS-ADMINISTER-CLUSTER-CLUSTER-UPGRADE(1)
+
+       NAME
+
+       Upgrade A Cluster - This page provides an overview of the steps you should follow to upgrade a
+
+       UPGRADE A CLUSTER
+
+       This page provides an overview of the steps you should follow to upgrade a Kubernetes cluster.
+
+       The Kubernetes project recommends upgrading to the latest patch releases promptly, and to ensure that you are running a supported minor release of Kubernetes. Following this recommendation helps you to stay secure.
+
+       The way that you upgrade a cluster depends on how you initially deployed it and on any subsequent changes.
+
+       At a high level, the steps you perform are:
+
+        * Upgrade the control plane
+        * Upgrade the nodes in your cluster
+        * Upgrade clients such as kubectl
+        * Adjust manifests and other resources based on the API changes that accompany the
+       new Kubernetes version
+
+       ## PREREQUISITES
+
+       You must have an existing cluster. This page is about upgrading from Kubernetes to Kubernetes . If your cluster is not currently running Kubernetes then please check the documentation for the version of Kubernetes that you plan to upgrade to.
+
+       > Note:
+       On Linux nodes, the kubelet defaults to supporting only cgroups v2. For Kubernetes the FailCgroupV1 kubelet configuration option is set to true by default.
+
+       To learn more, refer to the Kubernetes cgroup v1 deprecation documentation.
+
+       UPGRADE APPROACHES
+
+       KUBEADM #UPGRADE-KUBEADM
+
+       If your cluster was deployed using the kubeadm tool, refer to Upgrading kubeadm clusters for detailed information on how to upgrade the cluster.
+
+       Once you have upgraded the cluster, remember to install the latest version of kubectl.
+
+       MANUAL DEPLOYMENTS
+
+       > Note:
+       These steps do not account for third-party extensions such as network and storage plugins.
+
+       You should manually update the control plane following this sequence:
+
+        * etcd (all instances)
+        * kube-apiserver (all control plane hosts)
+        * kube-controller-manager
+        * kube-scheduler
+        * cloud controller manager, if you use one
+       At this point you should install the latest version of kubectl.
+
+       For each node in your cluster, drain that node and then either replace it with a new node that uses the kubelet, or upgrade the kubelet on that node and bring the node back into service.
+
+       > Note:
+       Draining nodes before upgrading kubelet ensures that pods are re-admitted and containers are re-created, which may be necessary to resolve some security issues or other important bugs.
+
+       OTHER DEPLOYMENTS #UPGRADE-OTHER
+
+       Refer to the documentation for your cluster deployment tool to learn the recommended set up steps for maintenance.
+
+       POST-UPGRADE TASKS
+
+       SWITCH YOUR CLUSTER'S STORAGE API VERSION
+
+       The objects that are serialized into etcd for a cluster's internal representation of the Kubernetes resources active in the cluster are written using a particular version of the API.
+
+       When the supported API changes, these objects may need to be rewritten in the newer API. Failure to do this will eventually result in resources that are no longer decodable or usable by the Kubernetes API server.
+
+       For each affected object, fetch it using the latest supported API and then write it back also using the latest supported API.
+
+       UPDATE MANIFESTS
+
+       Upgrading to a new Kubernetes version can provide new APIs.
+
+       You can use kubectl convert command to convert manifests between different API versions. For example:
+
+         kubectl convert -f pod.yaml --output-version v1
+
+       The kubectl tool replaces the contents of pod.yaml with a manifest that sets kind to Pod (unchanged), but with a revised apiVersion.
+
+       DEVICE PLUGINS
+
+       If your cluster is running device plugins and the node needs to be upgraded to a Kubernetes release with a newer device plugin API version, device plugins must be upgraded to support both version before the node is upgraded in order to guarantee that device allocations continue to complete successfully during the upgrade.
+
+       Refer to API compatibility and Kubelet Device Manager API Versions for more details.
+
+Kubernetes manual                       from the official documentation

@@ -1,0 +1,80 @@
+WEBAPI.AUDIOPARAM-EXPONENTIALRAMPTOVALUEATTIME(1) Sandbox manual WEBAPI.AUDIOPARAM-EXPONENTIALRAMPTOVALUEATTIME(1)
+
+       NAME
+
+       AudioParam: exponentialRampToValueAtTime() method - The exponentialRampToValueAtTime() method of the AudioParam Interface schedules a gradual exponential change in the value of the AudioParam.
+
+       AUDIOPARAM: EXPONENTIALRAMPTOVALUEATTIME() METHOD
+
+       The exponentialRampToValueAtTime() method of the AudioParam Interface schedules a gradual exponential change in the value of the AudioParam. The change starts at the time specified for the _previous_ event, follows an exponential ramp to the new value given in the value parameter, and reaches the new value at the time given in the endTime parameter.
+
+       > Exponential ramps are considered more useful when changing
+       > frequencies or playback rates than linear ramps because of the way the human ear
+       > works.
+
+       SYNTAX
+
+         exponentialRampToValueAtTime(value, endTime)
+
+       PARAMETERS
+
+        * value
+          * : A floating point number representing the value the AudioParam will ramp
+       to by the given time.
+
+        * endTime
+          * : A double representing the exact time (in seconds) after the ramping starts that the
+       changing of the value will stop.
+
+       RETURN VALUE
+
+       A reference to this AudioParam object. In some browsers older implementations of this interface return undefined.
+
+       EXAMPLES
+
+       In this example, we have a media source with two control buttons (see the audio-param repo for the source code, or view the example live.) When these buttons are pressed, exponentialRampToValueAtTime() is used to fade the gain value up to 1.0, and down to 0, respectively. This is pretty useful for fade in/fade out effects:
+
+         // create audio context
+         const audioCtx = new AudioContext();
+
+         // set basic variables for example
+         const myAudio = document.querySelector("audio");
+
+         const expRampPlus = document.querySelector(".exp-ramp-plus");
+         const expRampMinus = document.querySelector(".exp-ramp-minus");
+
+         // Create a MediaElementAudioSourceNode
+         // Feed the HTMLMediaElement into it
+         const source = audioCtx.createMediaElementSource(myAudio);
+
+         // Create a gain node and set its gain value to 0.5
+         const gainNode = audioCtx.createGain();
+
+         // connect the AudioBufferSourceNode to the gainNode
+         // and the gainNode to the destination
+         gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+         source.connect(gainNode);
+         gainNode.connect(audioCtx.destination);
+
+         // set buttons to do something onclick
+         expRampPlus.onclick = () => {
+           gainNode.gain.exponentialRampToValueAtTime(1.0, audioCtx.currentTime + 2);
+         };
+
+         expRampMinus.onclick = () => {
+           gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2);
+         };
+
+       > A value of 0.01 was used for the value to ramp down to in the
+       > last function rather than 0, as an _invalid or illegal string_ error is thrown
+       > if 0 is used — the value needs to be positive.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

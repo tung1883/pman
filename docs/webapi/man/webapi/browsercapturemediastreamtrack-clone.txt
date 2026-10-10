@@ -1,0 +1,58 @@
+WEBAPI.BROWSERCAPTUREMEDIASTREAMTRACK-CLONE(1) Sandbox manual WEBAPI.BROWSERCAPTUREMEDIASTREAMTRACK-CLONE(1)
+
+       NAME
+
+       BrowserCaptureMediaStreamTrack: clone() method - The clone() method of the BrowserCaptureMediaStreamTrack interface returns a clone of the original BrowserCaptureMediaStreamTrack.
+
+       BROWSERCAPTUREMEDIASTREAMTRACK: CLONE() METHOD
+
+       The clone() method of the BrowserCaptureMediaStreamTrack interface returns a clone of the original BrowserCaptureMediaStreamTrack.
+
+       This method is functionally identical to MediaStreamTrack.clone(), except that it handles cases where cropping or restriction have been applied to the track. The returned clone is identical to the original BrowserCaptureMediaStreamTrack, but with any cropping or restriction removed.
+
+       > In Chromium, if a track has clones, its cropTo() and restrictTo() methods will reject (see Chrome issue 41482026).
+
+       SYNTAX
+
+         clone()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A BrowserCaptureMediaStreamTrack instance.
+
+       EXAMPLES
+
+         // Options for getDisplayMedia()
+         const displayMediaOptions = {
+           preferCurrentTab: true,
+         };
+
+         // Create crop target from DOM element
+         const demoElem = document.querySelector("#demo");
+         const cropTarget = await CropTarget.fromElement(demoElem);
+
+         // Capture video stream from user's webcam and isolate video track
+         const stream =
+           await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+         const [track] = stream.getVideoTracks();
+
+         // Crop video track
+         await track.cropTo(cropTarget);
+
+         // Create uncropped clone of the track
+         const clonedTrack = track.clone();
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Screen Capture API
+        * Using the Element Capture and Region Capture APIs
+
+Web APIs manual                         from the official documentation

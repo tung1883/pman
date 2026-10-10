@@ -1,0 +1,43 @@
+SHELLCHECK.SC2009(1)             Sandbox manual             SHELLCHECK.SC2009(1)
+
+       NAME
+
+       Consider using pgrep instead of grepping ps output. - ps ax | grep -v grep | grep "$service" > /dev/null
+
+       CONSIDER USING PGREP INSTEAD OF GREPPING PS OUTPUT
+
+       CONSIDER USING PGREP INSTEAD OF GREPPING PS OUTPUT
+
+       PROBLEMATIC CODE
+
+         ps ax | grep -v grep | grep "$service" > /dev/null
+
+       CORRECT CODE
+
+         pgrep -f "$service" > /dev/null
+
+       RATIONALE
+
+       If you are just after a pid from a running program, then pgrep is a much safer alternative. Especially if you are also looking for a pid belonging to a certain user or group. All of the parameters are in one command and it can eliminate multiple greps, cuts, seds, awks, etc.
+
+       If you want a field that's not the pid, consider doing this through ps + pgrep instead of ps + grep:
+
+         for pid in $(pgrep '^python$')
+         do
+           user=$(ps -o user= -p "$pid")
+           echo "The process $pid is run by $user"
+         done
+
+       This is more robust than ps .. | grep python | cut .. because it does not try to match against unrelated fields, such as if the user's name was pythonguru.
+
+       EXCEPTIONS
+
+       pgrep is not POSIX. Please [[ignore]] this warning if you are targeting POSIX userlands.
+
+       You can [[ignore]] this error if you are trying to match against something that pgrep doesn't support:
+
+         # pgrep does not support filtering by 'nice' value
+         # shellcheck disable=SC2009
+         ps -axo nice=,pid= | grep -v '^  0'
+
+ShellCheck manual                       from the official documentation

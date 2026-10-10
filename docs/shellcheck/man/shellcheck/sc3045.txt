@@ -1,0 +1,45 @@
+SHELLCHECK.SC3045(1)             Sandbox manual             SHELLCHECK.SC3045(1)
+
+       NAME
+
+       In POSIX sh, some-command-with-flag is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, SOME-COMMAND-WITH-FLAG IS UNDEFINED
+
+       IN POSIX SH, SOME-COMMAND-WITH-FLAG IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+       ShellCheck has noticed you're using flags for commands that don't necessarily support them. Some examples:
+
+         #!/bin/sh
+         read   -e   # Using libreadline
+         export -f   # Exporting functions
+         ulimit -v   # Setting vspace limits
+         wait   -n   # Waiting for a single process
+
+       CORRECT CODE
+
+       There are generally no simple rewrites. The easiest solution is instead to change the shebang and switch to a shell that does support the features you want, such as bash.
+
+       Alternatively, look up how to do what you want to do in POSIX sh.
+
+       RATIONALE
+
+       External commands (grep, ls, find) invoke a binary on the system and therefore accept the same flags from all shells.
+
+       However, some commands are instead built into the shell and therefore accept different flags depending on which shell is running them.
+
+       You have specified sh or dash in the shebang, but the flags you are using only works when it's executed in e.g. bash. You should either explicitly declare that the script requires bash to run, or you should only use features that work on all shells.
+
+       EXCEPTIONS
+
+       If the code is gated on a check of the current shell, you can [[ignore]] this warning.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

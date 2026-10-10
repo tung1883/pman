@@ -1,0 +1,79 @@
+WEBAPI.RTCPEERCONNECTION-CONNECTIONSTATECHANGE-EVENT(1) Sandbox manual WEBAPI.RTCPEERCONNECTION-CONNECTIONSTATECHANGE-EVENT(1)
+
+       NAME
+
+       RTCPeerConnection: connectionstatechange event - The connectionstatechange event is sent to the onconnectionstatechange event handler on an RTCPeerConnection object after a new track has be
+
+       RTCPEERCONNECTION: CONNECTIONSTATECHANGE EVENT
+
+       The connectionstatechange event is sent to the onconnectionstatechange event handler on an RTCPeerConnection object after a new track has been added to an RTCRtpReceiver which is part of the connection. The new connection state can be found in connectionState, and is one of the string values: new, connecting, connected, disconnected, failed, or closed.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("connectionstatechange", (event) => { })
+
+         onconnectionstatechange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       For an RTCPeerConnection named peerConnection, this example uses addEventListener() to handle changes to the connectivity of the WebRTC session. It calls an app-defined function called setOnlineStatus() to update a status display.
+
+         peerConnection.addEventListener("connectionstatechange", (event) => {
+           switch (peerConnection.connectionState) {
+             case "new":
+             case "connecting":
+               setOnlineStatus("Connecting…");
+               break;
+             case "connected":
+               setOnlineStatus("Online");
+               break;
+             case "disconnected":
+               setOnlineStatus("Disconnecting…");
+               break;
+             case "closed":
+               setOnlineStatus("Offline");
+               break;
+             case "failed":
+               setOnlineStatus("Error");
+               break;
+             default:
+               setOnlineStatus("Unknown");
+               break;
+           }
+         });
+
+       You can also create a handler for the connectionstatechange event using the RTCPeerConnection.onconnectionstatechange property:
+
+         peerConnection.onconnectionstatechange = (ev) => {
+           switch (peerConnection.connectionState) {
+             case "new":
+             case "connecting":
+               setOnlineStatus("Connecting…");
+               break;
+             // …
+             default:
+               setOnlineStatus("Unknown");
+               break;
+           }
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * WebRTC connectivity
+        * Lifetime of a WebRTC session
+        * RTCPeerConnection.connectionState
+
+Web APIs manual                         from the official documentation

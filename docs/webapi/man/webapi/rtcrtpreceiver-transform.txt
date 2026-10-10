@@ -1,0 +1,45 @@
+WEBAPI.RTCRTPRECEIVER-TRANSFORM(1) Sandbox manual WEBAPI.RTCRTPRECEIVER-TRANSFORM(1)
+
+       NAME
+
+       RTCRtpReceiver: transform property - The transform property of the RTCRtpReceiver object is used to insert a transform stream (TransformStream) running in a worker thread into t
+
+       RTCRTPRECEIVER: TRANSFORM PROPERTY
+
+       The transform property of the RTCRtpReceiver object is used to insert a transform stream (TransformStream) running in a worker thread into the receiver pipeline. This allows stream transforms to be applied to encoded video and audio frames as they arrive from the packetizer (before they are played/rendered).
+
+       The transform that is to be added is defined using an RTCRtpScriptTransform and its associated Worker. If the transform is set in the peer connection track event handler, the transform stream will receive the first full incoming frame for the track.
+
+       VALUE
+
+       A RTCRtpScriptTransform, or null if the receiver has no associated transform stream.
+
+       EXAMPLE
+
+       Note that this is part of a larger example in the guide topic Using WebRTC Encoded Transforms.
+
+       ADDING A TRANSFORM FOR INCOMING FRAMES
+
+       This example shows how you add a WebRTC encoded transform to modify an incoming stream. The code assumes that there is an RTCPeerConnection called peerConnection that is already connected to a remote peer.
+
+       To add a transform stream into the pipeline for incoming frames we need to construct an RTCRtpScriptTransform and assign it to the receiver's transform property. We can do this in the track event handler as shown. This event is fired on the peer connection whenever the remote end sends a track. The event.receiver property is an RTCRtpReceiver.
+
+         const worker = new Worker("worker.js");
+         peerConnection.ontrack = (event) => {
+           event.receiver.transform = new RTCRtpScriptTransform(worker, {
+             someOption: "receiverTransform",
+           });
+         };
+
+       Because the transform is constructed immediately after creation of the RTCRtpReceiver, it will receive the first incoming frame. The object passed as the second parameter in the RTCRtpScriptTransform constructor is sent to the worker thread, and can be used by worker code to provide a different transform for the incoming frames than is used for outgoing frames.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using WebRTC Encoded Transforms
+        * RTCRtpSender.transform
+
+Web APIs manual                         from the official documentation

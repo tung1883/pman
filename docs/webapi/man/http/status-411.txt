@@ -1,0 +1,52 @@
+HTTP.STATUS-411(1)               Sandbox manual               HTTP.STATUS-411(1)
+
+       NAME
+
+       411 Length Required - The HTTP 411 Length Required client error response status code indicates that the server refused to accept the request without a defined Con
+
+       411 LENGTH REQUIRED
+
+       The HTTP 411 Length Required client error response status code indicates that the server refused to accept the request without a defined Content-Length header.
+
+       > When sending data in a series of chunks, the Content-Length header is omitted, and at the beginning of each chunk, the length of the current chunk needs to be included in hexadecimal format.
+       > See Transfer-Encoding for more details.
+
+       STATUS
+
+         411 Length Required
+
+       EXAMPLES
+
+       CHUNKED POST REQUEST
+
+       The following request is sent chunked, which is the default method of sending data in some cases, such as when writing to streams:
+
+         POST /translate/de HTTP/1.1
+         Host: api.example.com
+         Content-Type: application/json
+         Transfer-encoding: chunked
+
+         2C
+         {"text": "Hurry up, Ayşe is hungry!"}
+         0
+
+       In this case, the server is expecting a request in one part with a Content-Length header and returns a 411 response:
+
+         HTTP/1.1 411 Length Required
+         Content-Type: application/json
+         Content-Length: 110
+
+         {
+           "message": "Requests must have a content length header.",
+           "documentation": "http://api/example.com/docs/errors",
+         }
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * HTTP response status codes
+        * Content-Length
+        * Transfer-Encoding
+
+HTTP manual                             from the official documentation

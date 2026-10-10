@@ -1,0 +1,85 @@
+WEBAPI.MEDIASTREAMTRACK-UNMUTE-EVENT(1) Sandbox manual WEBAPI.MEDIASTREAMTRACK-UNMUTE-EVENT(1)
+
+       NAME
+
+       MediaStreamTrack: unmute event - The unmute event is sent to a MediaStreamTrack when the track's source is once again able to provide media data after a period of not being 
+
+       MEDIASTREAMTRACK: UNMUTE EVENT
+
+       The unmute event is sent to a MediaStreamTrack when the track's source is once again able to provide media data after a period of not being able to do so.
+
+       This ends the muted state that began with the mute event.
+
+       > The condition that most people think of as "muted" (that is, a user-controllable way to silence a track) is actually managed using the MediaStreamTrack.enabled property, for which there are no events.
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("unmute", (event) => { })
+
+         onunmute = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       In this example, event handlers are established for the mute and unmute events in order to detect when the media is not flowing from the source for the MediaStreamTrack stored in the variable musicTrack.
+
+         musicTrack.addEventListener("mute", (event) => {
+           const widget = document.getElementById("timeline-widget");
+           widget.style.backgroundColor = "#aaaaaa";
+         });
+
+         musicTrack.addEventListener("unmute", (event) => {
+           document.getElementById("timeline-widget").style.backgroundColor = "white";
+         });
+
+       With these event handlers in place, when the track musicTrack enters its muted state, the element with the ID timeline-widget gets its background color changed to #aaaaaa. When the track exits the muted state—detected by the arrival of an unmuted event—the background color is restored to white.
+
+       You can also use the onunmute event handler property to set up a handler for this event; similarly, the onmute event handler is available for setting up a handler for the mute event. The following example shows this:
+
+         musicTrack.onmute = (event) => {
+           document.getElementById("timeline-widget").style.backgroundColor = "#aaaaaa";
+         };
+
+         musicTrack.onunmute = (event) => {
+           document.getElementById("timeline-widget").style.backgroundColor = "white";
+         };
+
+       UNMUTE TRACKS THROUGH RECEIVERS
+
+       The following example shows how to unmute tracks using receivers.
+
+         // Peer 1 (Sender)
+         const transceivers = peer.getTransceivers();
+
+         const audioTrack = transceivers[0];
+         audioTrack.direction = "sendrecv";
+
+         const videoTrack = transceivers[1];
+         videoTrack.direction = "sendrecv";
+
+         // Peer 2 (Receiver)
+         audioTrack.addEventListener("unmute", (event) => {
+           // Do something in UI
+         });
+
+         videoTrack.addEventListener("unmute", (event) => {
+           // Do something in UI
+         });
+
+       transceivers is an array of RTCRtpTransceiver where you can find the audio or video track sent and received. For more information, see the direction article.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The mute event
+
+Web APIs manual                         from the official documentation

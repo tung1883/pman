@@ -1,0 +1,43 @@
+SHELLCHECK.SC1083(1)             Sandbox manual             SHELLCHECK.SC1083(1)
+
+       NAME
+
+       This {/} is literal. Check if ; is missing or quote the expression. - rmf() { rm -f "$@" }
+
+       THIS / IS LITERAL. CHECK IF IS MISSING OR QUOTE THE EXPRESSION
+
+       THIS / IS LITERAL. CHECK IF IS MISSING OR QUOTE THE EXPRESSION
+
+       PROBLEMATIC CODE
+
+         rmf() { rm -f "$@" }
+
+       or
+
+         eval echo \${foo}
+
+       CORRECT CODE
+
+         rmf() { rm -f "$@"; }
+
+       and
+
+         eval "echo \${foo}"
+
+       RATIONALE
+
+       Curly brackets are normally used as syntax in parameter expansion, command grouping and brace expansion.
+
+       However, if they don't appear alone at the start of an expression or as part of a parameter or brace expansion, the shell silently treats them as literals. This frequently indicates a bug, so ShellCheck warns about it.
+
+       In the example function, the } is literal because it's not at the start of an expression. We fix it by adding a ; before it.
+
+       In the example eval, the code works fine. However, we can quiet the warning and follow good practice by adding quotes around the literal data.
+
+       ShellCheck does not warn about {}, since this is frequently used with find and rarely indicates a bug.
+
+       EXCEPTIONS
+
+       This error is harmless when the curly brackets are supposed to be literal, in e.g. awk {'print $1'}. However, it's cleaner and less error prone to simply include them inside the quotes: awk '{print $1}'.
+
+ShellCheck manual                       from the official documentation

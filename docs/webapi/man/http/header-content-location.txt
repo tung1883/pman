@@ -1,0 +1,83 @@
+HTTP.HEADER-CONTENT-LOCATION(1)  Sandbox manual  HTTP.HEADER-CONTENT-LOCATION(1)
+
+       NAME
+
+       Content-Location header - The HTTP Content-Location representation header indicates an alternate location for the returned data.
+
+       CONTENT-LOCATION HEADER
+
+       The HTTP Content-Location representation header indicates an alternate location for the returned data. Its main use is to indicate the URL of a resource transmitted as the result of content negotiation.
+
+       The Content-Location header is different from the Location header. Content-Location indicates the direct URL to access the resource when content negotiation has happened, allowing the client to bypass future content negotiation for this resource. Location, on the other hand, indicates either the target of a 3XX redirection or the URL of a newly created resource in a 201 Created response.
+
+       Header type Representation header Forbidden request header No
+
+       SYNTAX
+
+         Content-Location: <url>
+
+       DIRECTIVES
+
+        * 
+          * : A URL that can be absolute or relative to the request URL.
+
+       EXAMPLES
+
+       REQUESTING DATA FROM A SERVER IN DIFFERENT FORMATS
+
+       Let's say a site's API can return data in JSON, XML, or CSV formats. If the URL for a particular document is at https://example.com/documents/foo, the site could return different URLs for Content-Location depending on the request's Accept header:
+
+         Request header  |  Response header
+         Accept: application/json, text/json  |  Content-Location: /documents/foo.json
+         Accept: application/xml, text/xml  |  Content-Location: /documents/foo.xml
+         Accept: text/plain, text/*  |  Content-Location: /documents/foo.txt
+       These URLs are examples — the site could serve the different filetypes with any URL patterns it wishes, such as a query string parameter: /documents/foo?format=json, /documents/foo?format=xml, and so on.
+
+       Then the client could remember that the JSON version is available at that particular URL, skipping content negotiation the next time it requests that document.
+
+       The server could also consider other content negotiation headers, such as Accept-Language.
+
+       INDICATING THE URL OF A TRANSACTION'S RESULT
+
+       Say you have a for sending money to another user of a site.
+
+         <form action="/send-payment" method="post">
+           <p>
+             <label>
+               Who do you want to send the money to?
+               <input type="text" name="recipient" />
+             </label>
+           </p>
+
+           <p>
+             <label>
+               How much?
+               <input type="number" name="amount" />
+             </label>
+           </p>
+
+           <button type="submit">Send Money</button>
+         </form>
+
+       When the form is submitted, the site generates a receipt for the transaction. The server could use Content-Location to indicate that receipt's URL for future access.
+
+         HTTP/1.1 200 OK
+         Content-Type: text/html; charset=utf-8
+         Content-Location: /my-receipts/38
+
+         <!doctype html>
+         (Lots of HTML…)
+
+         <p>You sent $38.00 to ExampleUser.</p>
+
+         (Lots more HTML…)
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Location
+
+HTTP manual                             from the official documentation

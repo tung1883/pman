@@ -1,0 +1,57 @@
+WEBAPI.DOCUMENTPICTUREINPICTUREEVENT-DOCUMENTPICTUREINPICTUREEVENT(1) Sandbox manual WEBAPI.DOCUMENTPICTUREINPICTUREEVENT-DOCUMENTPICTUREINPICTUREEVENT(1)
+
+       NAME
+
+       DocumentPictureInPictureEvent: DocumentPictureInPictureEvent() constructor - The DocumentPictureInPictureEvent() constructor creates a new
+
+       DOCUMENTPICTUREINPICTUREEVENT: DOCUMENTPICTUREINPICTUREEVENT() CONSTRU
+
+       The DocumentPictureInPictureEvent() constructor creates a new DocumentPictureInPictureEvent object instance.
+
+       SYNTAX
+
+         new DocumentPictureInPictureEvent(type, init)
+
+       PARAMETERS
+
+        * type
+          * : A string representing the type of event. In the case of DocumentPictureInPictureEvent this is always enter.
+        * init
+          * : An object containing the following properties:
+            * window
+              * : A Window instance representing the browsing context inside the DocumentPictureInPicture window the event was fired on.
+
+       EXAMPLES
+
+       A developer would not use this constructor manually. A new DocumentPictureInPictureEvent object is constructed when a handler is invoked as a result of the enter event firing.
+
+         documentPictureInPicture.addEventListener("enter", (event) => {
+           const pipWindow = event.window;
+           console.log("Video player has entered the pip window");
+
+           const pipMuteButton = pipWindow.document.createElement("button");
+           pipMuteButton.textContent = "Mute";
+           pipMuteButton.addEventListener("click", () => {
+             const pipVideo = pipWindow.document.querySelector("#video");
+             if (!pipVideo.muted) {
+               pipVideo.muted = true;
+               pipMuteButton.textContent = "Unmute";
+             } else {
+               pipVideo.muted = false;
+               pipMuteButton.textContent = "Mute";
+             }
+           });
+
+           pipWindow.document.body.append(pipMuteButton);
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Document Picture-in-Picture API
+        * Using the Document Picture-in-Picture API
+
+Web APIs manual                         from the official documentation

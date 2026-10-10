@@ -1,0 +1,502 @@
+APACHE.MOD_MIME(1)               Sandbox manual               APACHE.MOD_MIME(1)
+
+       FILES WITH MULTIPLE EXTENSIONS
+
+       Files can have more than one extension; the order of the extensions is normally irrelevant. For example, if the file welcome.html.fr maps onto content type text/html and language French then the file welcome.fr.html will map onto exactly the same information. If more than one extension is given that maps onto the same type of metadata, then the one to the right will be used, except for languages and content encodings. For example, if .gif maps to the media-type image/gif and .html maps to the media-type text/html, then the file welcome.gif.html will be associated with the media-type text/html.
+
+       Languages and content encodings are treated accumulative, because one can assign more than one language or encoding to a particular resource. For example, the file welcome.html.en.de will be delivered with Content-Language: en, de and Content-Type: text/html.
+
+       Care should be taken when a file with multiple extensions gets associated with both a media-type and a handler. This will usually result in the request being handled by the module associated with the handler. For example, if the .imap extension is mapped to the handler imap-file (from mod_imagemap) and the .html extension is mapped to the media-type text/html, then the file world.imap.html will be associated with both the imap-file handler and text/html media-type. When it is processed, the imap-file handler will be used, and so it will be treated as a mod_imagemap imagemap file.
+
+       If you would prefer only the last dot-separated part of the filename to be mapped to a particular piece of meta-data, then do not use the Add* directives. For example, if you wish to have the file foo.html.asis served by the send-as-is handler provided by mod_asis script, but not the file bar.asis.html, then instead of using AddHandler send-asis .asis, use
+
+       CONFIGURE HANDLER BASED ON FINAL EXTENSION ONLY
+
+         <FilesMatch "[^.]+\.asis$">
+           SetHandler send-asis
+         </FilesMatch>
+
+       FILES WITH NO EXTENSION
+
+       Files with no extension (such as Makefile) cannot be matched by mod_mime's extension-based directives. To set the content type or charset for such files, use a <Files> or <FilesMatch> section instead:
+
+         # For a specific file:
+         <Files "Makefile">
+             ForceType text/plain
+             AddDefaultCharset UTF-8
+         </Files>
+
+         # For all files with no extension:
+         <FilesMatch "^[^.]+$">
+             ForceType text/plain
+             AddDefaultCharset UTF-8
+         </FilesMatch>
+
+       CONTENT ENCODING
+
+       A file of a particular media-type can additionally be encoded a particular way to simplify transmission over the Internet. While this usually will refer to compression, such as gzip, it can also refer to encryption, such a pgp or to an encoding such as UUencoding, which is designed for transmitting a binary file in an ASCII (text) format.
+
+       The HTTP/1.1 RFC (RFC 2616), section 14.11 puts it this way:
+
+       > The Content-Encoding entity-header field is used as a modifier to the media-type. When present, its value indicates what additional content codings have been applied to the entity-body, and thus what decoding mechanisms must be applied in order to obtain the media-type referenced by the Content-Type header field. Content-Encoding is primarily used to allow a document to be compressed without losing the identity of its underlying media type.
+
+       By using more than one file extension (see section above about multiple file extensions), you can indicate that a file is of a particular type, and also has a particular encoding.
+
+       For example, you may have a file which is a Microsoft Word document, which is pkzipped to reduce its size. If the .doc extension is associated with the Microsoft Word file type, and the .zip extension is associated with the pkzip file encoding, then the file Resume.doc.zip would be known to be a pkzip'ed Word document.
+
+       Apache sends a Content-encoding header with the resource, in order to tell the client browser about the encoding method.
+
+         Content-encoding: pkzip
+
+       CHARACTER SETS AND LANGUAGES
+
+       In addition to file type and the file encoding, another important piece of information is what language a particular document is in, and in what character set the file should be displayed. For example, the document might be written in the Vietnamese alphabet, or in Cyrillic, and should be displayed as such. This information, also, is transmitted in HTTP headers.
+
+       The character set, language, encoding and mime type are all used in the process of content negotiation (See mod_negotiation) to determine which document to give to the client, when there are alternative documents in more than one character set, language, encoding or mime type. All filename extensions associations created with AddCharset, AddEncoding, AddLanguage and AddType directives (and extensions listed in the MimeMagicFile) participate in this select process. Filename extensions that are only associated using the AddHandler, AddInputFilter or AddOutputFilter directives may be included or excluded from matching by using the MultiviewsMatch directive.
+
+       CHARSET
+
+       To convey this further information, Apache optionally sends a Content-Language header, to specify the language that the document is in, and can append additional information onto the Content-Type header to indicate the particular character set that should be used to correctly render the information.
+
+       Content-Language: en, fr Content-Type: text/plain; charset=ISO-8859-1
+
+       The language specification is the two-letter abbreviation for the language. The charset is the name of the particular character set which should be used.
+
+       ADDCHARSET DIRECTIVE
+
+         Description: | Maps the given filename extensions to the specified content charset
+         Syntax: | AddCharset charset extension [extension] ...
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The AddCharset directive maps the given filename extensions to the specified content charset (the Internet registered name for a given character encoding). charset is the media type's charset parameter for resources with filenames containing extension. This mapping is added to any already in force, overriding any mappings that already exist for the same extension.
+
+       EXAMPLE
+
+         AddLanguage ja .ja
+         AddCharset EUC-JP .euc
+         AddCharset ISO-2022-JP .jis
+         AddCharset SHIFT_JIS .sjis
+
+       Then the document xxxx.ja.jis will be treated as being a Japanese document whose charset is ISO-2022-JP (as will the document xxxx.jis.ja). The AddCharset directive is useful for both to inform the client about the character encoding of the document so that the document can be interpreted and displayed appropriately, and for content negotiation, where the server returns one from several documents based on the client's charset preference.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot. Filenames may have multiple extensions and the extension argument will be compared against each of them.
+
+       SEE ALSO
+
+        * mod_negotiation
+        * AddDefaultCharset
+
+       ADDENCODING DIRECTIVE
+
+         Description: | Maps the given filename extensions to the specified encoding type
+         Syntax: | AddEncoding encoding extension [extension] ...
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The AddEncoding directive maps the given filename extensions to the specified HTTP content-encoding. encoding is the HTTP content coding to append to the value of the Content-Encoding header field for documents named with the extension. This mapping is added to any already in force, overriding any mappings that already exist for the same extension.
+
+       EXAMPLE
+
+         AddEncoding x-gzip .gz
+         AddEncoding x-compress .Z
+
+       This will cause filenames containing the .gz extension to be marked as encoded using the x-gzip encoding, and filenames containing the .Z extension to be marked as encoded with x-compress.
+
+       Old clients expect x-gzip and x-compress, however the standard dictates that they're equivalent to gzip and compress respectively. Apache does content encoding comparisons by ignoring any leading x-. When responding with an encoding Apache will use whatever form (i.e., x-foo or foo) the client requested. If the client didn't specifically request a particular form Apache will use the form given by the AddEncoding directive. To make this long story short, you should always use x-gzip and x-compress for these two specific encodings. More recent encodings, such as deflate, should be specified without the x-.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot. Filenames may have multiple extensions and the extension argument will be compared against each of them.
+
+       ADDHANDLER DIRECTIVE
+
+         Description: | Maps the filename extensions to the specified handler
+         Syntax: | AddHandler handler-name extension [extension] ...
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       Files having the name extension will be served by the specified handler-name. This mapping is added to any already in force, overriding any mappings that already exist for the same extension. For example, to associate .var files with the type-map handler provided by mod_negotiation, you might use:
+
+         AddHandler type-map .var
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot. Filenames may have multiple extensions and the extension argument will be compared against each of them.
+
+       SEE ALSO
+
+        * SetHandler
+        * FallbackResource
+
+       ADDINPUTFILTER DIRECTIVE
+
+         Description: | Maps filename extensions to the filters that will process client requests
+         Syntax: | AddInputFilter filter[;filter...] extension [extension] ...
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       AddInputFilter maps the filename extension extension to the filters which will process client requests and POST input when they are received by the server. This is in addition to any filters defined elsewhere, including the SetInputFilter directive. This mapping is merged over any already in force, overriding any mappings that already exist for the same extension.
+
+       If more than one filter is specified, they must be separated by semicolons in the order in which they should process the content. The filter is case-insensitive.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot. Filenames may have multiple extensions and the extension argument will be compared against each of them.
+
+       SEE ALSO
+
+        * RemoveInputFilter
+        * SetInputFilter
+
+       ADDLANGUAGE DIRECTIVE
+
+         Description: | Maps the given filename extension to the specified content language
+         Syntax: | AddLanguage language-tag extension [extension] ...
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The AddLanguage directive maps the given filename extension to the specified content language. Files with the filename extension are assigned an HTTP Content-Language value of language-tag corresponding to the language identifiers defined by RFC 3066. This directive overrides any mappings that already exist for the same extension.
+
+       EXAMPLE
+
+         AddEncoding x-compress .Z
+         AddLanguage en .en
+         AddLanguage fr .fr
+
+       Then the document xxxx.en.Z will be treated as being a compressed English document (as will the document xxxx.Z.en). Although the content language is reported to the client, the browser is unlikely to use this information. The AddLanguage directive is more useful for content negotiation, where the server returns one from several documents based on the client's language preference.
+
+       If multiple language assignments are made for the same extension, the last one encountered is the one that is used. That is, for the case of:
+
+         AddLanguage en .en
+         AddLanguage en-gb .en
+         AddLanguage en-us .en
+
+       documents with the extension .en would be treated as being en-us.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot. Filenames may have multiple extensions and the extension argument will be compared against each of them.
+
+       SEE ALSO
+
+        * mod_negotiation
+
+       ADDOUTPUTFILTER DIRECTIVE
+
+         Description: | Maps filename extensions to the filters that will process responses from the server
+         Syntax: | AddOutputFilter filter[;filter...] extension [extension] ...
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The AddOutputFilter directive maps the filename extension extension to the filters which will process responses from the server before they are sent to the client. This is in addition to any filters defined elsewhere, including SetOutputFilter and AddOutputFilterByType directive. This mapping is merged over any already in force, overriding any mappings that already exist for the same extension.
+
+       For example, the following configuration will process all .shtml files for server-side includes and will then compress the output using mod_deflate.
+
+         AddOutputFilter INCLUDES;DEFLATE shtml
+
+       If more than one filter is specified, they must be separated by semicolons in the order in which they should process the content. The filter argument is case-insensitive.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot. Filenames may have multiple extensions and the extension argument will be compared against each of them.
+
+       Note that when defining a set of filters using the AddOutputFilter directive, any definition made will replace any previous definition made by the AddOutputFilter directive.
+
+         # Effective filter "DEFLATE"
+         AddOutputFilter DEFLATE shtml
+         <Location "/foo">
+           # Effective filter "INCLUDES", replacing "DEFLATE"
+           AddOutputFilter INCLUDES shtml
+         </Location>
+         <Location "/bar">
+           # Effective filter "INCLUDES;DEFLATE", replacing "DEFLATE"
+           AddOutputFilter INCLUDES;DEFLATE shtml
+         </Location>
+         <Location "/bar/baz">
+           # Effective filter "BUFFER", replacing "INCLUDES;DEFLATE"
+           AddOutputFilter BUFFER shtml
+         </Location>
+         <Location "/bar/baz/buz">
+           # No effective filter, replacing "BUFFER"
+           RemoveOutputFilter shtml
+         </Location>
+
+       SEE ALSO
+
+        * RemoveOutputFilter
+        * SetOutputFilter
+
+       ADDTYPE DIRECTIVE
+
+         Description: | Maps the given filename extensions onto the specified content type
+         Syntax: | AddType media-type extension [extension] ...
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The AddType directive maps the given filename extensions onto the specified content type. media-type is the media type to use for filenames containing extension. This mapping is added to any already in force, overriding any mappings that already exist for the same extension.
+
+       It is recommended that new media types be added using the AddType directive rather than changing the TypesConfig file.
+
+       EXAMPLE
+
+         AddType image/gif .gif
+
+       Or, to specify multiple file extensions in one directive:
+
+       EXAMPLE
+
+         AddType image/jpeg jpeg jpg jpe
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot. Filenames may have multiple extensions and the extension argument will be compared against each of them.
+
+       A similar effect to mod_negotiation's LanguagePriority can be achieved by qualifying a media-type with qs:
+
+       EXAMPLE
+
+         AddType application/rss+xml;qs=0.8 .xml
+
+       This is useful in situations, e.g. when a client requesting Accept: */* can not actually processes the content returned by the server.
+
+       This directive primarily configures the content types generated for static files served out of the filesystem. For resources other than static files, where the generator of the response typically specifies a Content-Type, this directive has no effect.
+
+       NOTE
+
+       If no handler is explicitly set for a request, the specified content type will also be used as the handler name.
+
+       When explicit directives such as SetHandler or AddHandler do not apply to the current request, the internal handler name normally set by those directives is instead set to the content type specified by this directive.
+
+       This is a historical behavior that may be used by some third-party modules (such as mod_php) for taking responsibility for the matching request.
+
+       Configurations that rely on such "synthetic" types should be avoided. Additionally, configurations that restrict access to SetHandler or AddHandler should restrict access to this directive as well.
+
+       SEE ALSO
+
+        * ForceType
+        * mod_negotiation
+
+       DEFAULTLANGUAGE DIRECTIVE
+
+         Description: | Defines a default language-tag to be sent in the Content-Language header field for all resources in the current context that have not been assigned a language-tag by some other means.
+         Syntax: | DefaultLanguage language-tag
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The DefaultLanguage directive tells Apache that all resources in the directive's scope (e.g., all resources covered by the current <Directory> container) that don't have an explicit language extension (such as .fr or .de as configured by AddLanguage) should be assigned a Content-Language of language-tag. This allows entire directory trees to be marked as containing Dutch content, for instance, without having to rename each file. Note that unlike using extensions to specify languages, DefaultLanguage can only specify a single language.
+
+       If no DefaultLanguage directive is in force and a file does not have any language extensions as configured by AddLanguage, then no Content-Language header field will be generated.
+
+       EXAMPLE
+
+         DefaultLanguage en
+
+       SEE ALSO
+
+        * mod_negotiation
+
+       MODMIMEUSEPATHINFO DIRECTIVE
+
+         Description: | Tells mod_mime to treat path_info components as part of the filename
+         Syntax: | ModMimeUsePathInfo On|Off
+         Default: | ModMimeUsePathInfo Off
+         Context: | directory
+         Status: | Base
+         Module: | mod_mime
+       The ModMimeUsePathInfo directive is used to combine the filename with the path_info URL component to apply mod_mime's directives to the request. The default value is Off - therefore, the path_info component is ignored.
+
+       This directive is recommended when you have a virtual filesystem.
+
+       EXAMPLE
+
+         ModMimeUsePathInfo On
+
+       If you have a request for /index.php/foo.shtml mod_mime will now treat the incoming request as /index.php/foo.shtml and directives like AddOutputFilter INCLUDES .shtml will add the INCLUDES filter to the request. If ModMimeUsePathInfo is not set, the INCLUDES filter will not be added. This will work analogously for virtual paths, such as those defined by <Location>
+
+       SEE ALSO
+
+        * AcceptPathInfo
+
+       MULTIVIEWSMATCH DIRECTIVE
+
+         Description: | The types of files that will be included when searching for a matching file with MultiViews
+         Syntax: | MultiviewsMatch Any|NegotiatedOnly|Filters|Handlers [Handlers|Filters]
+         Default: | MultiviewsMatch NegotiatedOnly
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       MultiviewsMatch permits three different behaviors for mod_negotiation's Multiviews feature. Multiviews allows a request for a file, e.g. index.html, to match any negotiated extensions following the base request, e.g. index.html.en, index.html.fr, or index.html.gz.
+
+       The NegotiatedOnly option provides that every extension following the base name must correlate to a recognized mod_mime extension for content negotiation, e.g. Charset, Content-Type, Language, or Encoding. This is the strictest implementation with the fewest unexpected side effects, and is the default behavior.
+
+       To include extensions associated with Handlers and/or Filters, set the MultiviewsMatch directive to either Handlers, Filters, or both option keywords. If all other factors are equal, the smallest file will be served, e.g. in deciding between index.html.cgi of 500 bytes and index.html.pl of 1000 bytes, the .cgi file would win in this example. Users of .asis files might prefer to use the Handler option, if .asis files are associated with the asis-handler.
+
+       You may finally allow Any extensions to match, even if mod_mime doesn't recognize the extension. This can cause unpredictable results, such as serving .old or .bak files the webmaster never expected to be served.
+
+       For example, the following configuration will allow handlers and filters to participate in Multviews, but will exclude unknown files:
+
+         MultiviewsMatch Handlers Filters
+
+       MultiviewsMatch is not allowed in a <Location> or <LocationMatch> section.
+
+       SEE ALSO
+
+        * Options
+        * mod_negotiation
+
+       REMOVECHARSET DIRECTIVE
+
+         Description: | Removes any character set associations for a set of file extensions
+         Syntax: | RemoveCharset extension [extension] ...
+         Context: | virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The RemoveCharset directive removes any character set associations for files with the given extensions. This allows .htaccess files in subdirectories to undo any associations inherited from parent directories or the server config files.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot.
+
+       EXAMPLE
+
+         RemoveCharset .html .shtml
+
+       REMOVEENCODING DIRECTIVE
+
+         Description: | Removes any content encoding associations for a set of file extensions
+         Syntax: | RemoveEncoding extension [extension] ...
+         Context: | virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The RemoveEncoding directive removes any encoding associations for files with the given extensions. This allows .htaccess files in subdirectories to undo any associations inherited from parent directories or the server config files. An example of its use might be:
+
+       FOO/.HTACCESS
+
+         AddEncoding x-gzip .gz
+         AddType text/plain .asc
+         <Files "*.gz.asc">
+             RemoveEncoding .gz
+         </Files>
+
+       This will cause foo.gz to be marked as being encoded with the gzip method, but foo.gz.asc as an unencoded plaintext file.
+
+       NOTE
+
+       RemoveEncoding directives are processed after any AddEncoding directives, so it is possible they may undo the effects of the latter if both occur within the same directory configuration.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot.
+
+       REMOVEHANDLER DIRECTIVE
+
+         Description: | Removes any handler associations for a set of file extensions
+         Syntax: | RemoveHandler extension [extension] ...
+         Context: | virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The RemoveHandler directive removes any handler associations for files with the given extensions. This allows .htaccess files in subdirectories to undo any associations inherited from parent directories or the server config files. An example of its use might be:
+
+       FOO/.HTACCESS
+
+         AddHandler server-parsed .html
+
+       FOO/BAR/.HTACCESS
+
+         RemoveHandler .html
+
+       This has the effect of returning .html files in the /foo/bar directory to being treated as normal files, rather than as candidates for parsing (see the mod_include module).
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot.
+
+       REMOVEINPUTFILTER DIRECTIVE
+
+         Description: | Removes any input filter associations for a set of file extensions
+         Syntax: | RemoveInputFilter extension [extension] ...
+         Context: | virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The RemoveInputFilter directive removes any input filter associations for files with the given extensions. This allows .htaccess files in subdirectories to undo any associations inherited from parent directories or the server config files.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot.
+
+       SEE ALSO
+
+        * AddInputFilter
+        * SetInputFilter
+
+       REMOVELANGUAGE DIRECTIVE
+
+         Description: | Removes any language associations for a set of file extensions
+         Syntax: | RemoveLanguage extension [extension] ...
+         Context: | virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The RemoveLanguage directive removes any language associations for files with the given extensions. This allows .htaccess files in subdirectories to undo any associations inherited from parent directories or the server config files.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot.
+
+       REMOVEOUTPUTFILTER DIRECTIVE
+
+         Description: | Removes any output filter associations for a set of file extensions
+         Syntax: | RemoveOutputFilter extension [extension] ...
+         Context: | virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The RemoveOutputFilter directive removes any output filter associations for files with the given extensions. This allows .htaccess files in subdirectories to undo any associations inherited from parent directories or the server config files.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot.
+
+       EXAMPLE
+
+         RemoveOutputFilter shtml
+
+       SEE ALSO
+
+        * AddOutputFilter
+
+       REMOVETYPE DIRECTIVE
+
+         Description: | Removes any content type associations for a set of file extensions
+         Syntax: | RemoveType extension [extension] ...
+         Context: | virtual host, directory, .htaccess
+         Override: | FileInfo
+         Status: | Base
+         Module: | mod_mime
+       The RemoveType directive removes any media type associations for files with the given extensions. This allows .htaccess files in subdirectories to undo any associations inherited from parent directories or the server config files. An example of its use might be:
+
+       FOO/.HTACCESS
+
+         RemoveType .cgi
+
+       This will remove any special handling of .cgi files in the /foo/ directory and any beneath it, causing responses containing those files to omit the HTTP Content-Type header field.
+
+       NOTE
+
+       RemoveType directives are processed after any AddType directives, so it is possible they may undo the effects of the latter if both occur within the same directory configuration.
+
+       The extension argument is case-insensitive and can be specified with or without a leading dot.
+
+       TYPESCONFIG DIRECTIVE
+
+         Description: | The location of the mime.types file
+         Syntax: | TypesConfig file-path
+         Default: | TypesConfig conf/mime.types
+         Context: | server config
+         Status: | Base
+         Module: | mod_mime
+       The TypesConfig directive sets the location of the media types configuration file. File-path is relative to the ServerRoot. This file sets the default list of mappings from filename extensions to content types. Most administrators use the mime.types file provided by their OS, which associates common filename extensions with the official list of IANA registered media types maintained at http://www.iana.org/assignments/media-types/index.html as well as a large number of unofficial types. This simplifies the httpd.conf file by providing the majority of media-type definitions, and may be overridden by AddType directives as needed. You should not edit the mime.types file, because it may be replaced when you upgrade your server.
+
+       The file contains lines in the format of the arguments to an AddType directive:
+
+       media-type [extension] ...
+
+       The case of the extension does not matter. Blank lines, and lines beginning with a hash character (#) are ignored. Empty lines are there for completeness (of the mime.types file). Apache httpd can still determine these types with mod_mime_magic.
+
+       Please do not send requests to the Apache HTTP Server Project to add any new entries in the distributed mime.types file unless (1) they are already registered with IANA, and (2) they use widely accepted, non-conflicting filename extensions across platforms. category/x-subtype requests will be automatically rejected, as will any new two-letter extensions as they will likely conflict later with the already crowded language and character set namespace.
+
+       SEE ALSO
+
+        * mod_mime_magic
+
+Apache HTTP Server manual               bundled documentation

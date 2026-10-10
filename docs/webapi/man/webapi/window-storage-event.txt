@@ -1,0 +1,65 @@
+WEBAPI.WINDOW-STORAGE-EVENT(1)   Sandbox manual   WEBAPI.WINDOW-STORAGE-EVENT(1)
+
+       NAME
+
+       Window: storage event - The storage event of the Window interface fires when another document that shares the same storage area (either localStorage or sessionStora
+
+       WINDOW: STORAGE EVENT
+
+       The storage event of the Window interface fires when another document that shares the same storage area (either localStorage or sessionStorage) as the current window updates that storage area. The event is _not_ fired on the window that made the change.
+
+        * For localStorage, the event is fired in all other browsing contexts that are in the same origin as the initiating document. This includes other tabs with the same origin.
+        * For sessionStorage, the event is fired in all other browsing contexts that are in the same origin and the same top-level browsing context as the initiating document. This only includes embedded iframes, if any, in the same tab, and not other tabs.
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("storage", (event) => { })
+
+         onstorage = (event) => { }
+
+       EVENT TYPE
+
+       A StorageEvent. Inherits from Event.
+
+       StorageEvent
+
+       EVENT HANDLER ALIASES
+
+       In addition to the Window interface, the event handler property onstorage is also available on the following targets:
+
+        * HTMLBodyElement
+        * HTMLFrameSetElement
+        * SVGSVGElement
+
+       EXAMPLES
+
+       Log the sampleList item to the console when the storage event fires:
+
+         window.addEventListener("storage", () => {
+           // When local storage changes, dump the list to
+           // the console.
+           console.log(JSON.parse(window.localStorage.getItem("sampleList")));
+         });
+
+       The same action can be achieved using the onstorage event handler property:
+
+         window.onstorage = () => {
+           // When local storage changes, dump the list to
+           // the console.
+           console.log(JSON.parse(window.localStorage.getItem("sampleList")));
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Storage API
+        * Using the Web Storage API
+        * Responding to storage changes with the StorageEvent
+
+Web APIs manual                         from the official documentation

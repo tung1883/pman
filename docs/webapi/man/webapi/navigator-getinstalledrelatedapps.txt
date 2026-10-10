@@ -1,0 +1,92 @@
+WEBAPI.NAVIGATOR-GETINSTALLEDRELATEDAPPS(1) Sandbox manual WEBAPI.NAVIGATOR-GETINSTALLEDRELATEDAPPS(1)
+
+       NAME
+
+       Navigator: getInstalledRelatedApps() method - The getInstalledRelatedApps() method returns a promise that resolves with an array of objects representing any related platform-specific app
+
+       NAVIGATOR: GETINSTALLEDRELATEDAPPS() METHOD
+
+       The getInstalledRelatedApps() method returns a promise that resolves with an array of objects representing any related platform-specific apps or Progressive Web Apps that the user has installed. This could be used for content personalization such as removing "install our app" banners from the web app if the platform-specific app and/or PWA is already installed.
+
+       > This method must be invoked in a top-level secure context, that is, not embedded in an .
+
+       DESCRIPTION
+
+       getInstalledRelatedApps() can be used to check for the installation of Universal Windows Platform (UWP) apps, Android apps, and PWAs that are related to the web app calling this method.
+
+       To associate the invoking web app with a platform-specific app or PWA, two things must be done:
+
+        1. The invoking web app must be specified in the related_applications member of its manifest file.
+        2. The platform-specific app or PWA must have its relationship with the invoking app defined.
+       Defining the relationship is done in a different way depending on the type of app:
+
+        * An Android app does this via the Digital Asset Links system.
+        * A Windows UWP app does this via URI Handlers.
+        * A PWA does this via:
+          * A self-defining entry inside its own related_applications manifest member, specifying the platform and id properties, in the case of a PWA checking in the same scope if it is installed on the underlying platform.
+          * An assetlinks.json file in its /.well-known/ directory in the case of an app outside the scope of the PWA checking whether it is installed on Android.
+       See Is your app installed? getInstalledRelatedApps() will tell you! for more details on how to handle each one of these cases.
+
+       > Most supporting browsers provide their own install UI when an installable PWA is detected, which won't appear if it is already installed — see Making PWAs installable > Installation from the web. This can be suppressed using the beforeinstallprompt event, which could also be combined with getInstalledRelatedApps() to suppress it based on a platform-specific app being available. See Trigger installation from your PWA for further useful information.
+
+       SYNTAX
+
+         getInstalledRelatedApps()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that fulfills with an array of objects representing any installed related apps. Each object can contain the following properties:
+
+        * id (optional)
+          * : A string representing the ID used to represent the application on the specified platform. The exact form of the string will vary by platform.
+        * platform
+          * : A string representing the platform (ecosystem or operating system) the related app is associated with. This can be:
+            * "chrome_web_store": A Google Chrome Web Store app.
+            * "play": A Google Play Store app.
+            * "chromeos_play": A ChromeOS Play app.
+            * "webapp": A Progressive Web App.
+            * "windows": A Windows Store app.
+            * "f-droid": An F-Droid app.
+            * "amazon": An Amazon App Store app.
+        * url (optional)
+          * : A string representing the URL associated with the app. This is usually where you can read information about it and install it.
+        * version (optional)
+          * : A string representing the related app's version.
+       The related app information must have been previously specified in the related_applications member of the invoking web app's manifest file.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : The method was not invoked in a top-level browsing context.
+
+       EXAMPLES
+
+         const relatedApps = await navigator.getInstalledRelatedApps();
+
+         // Dump all the returned related apps into a table in the console
+         console.table(relatedApps);
+
+         // Search for a specific installed platform-specific app
+         const psApp = relatedApps.find((app) => app.id === "com.example.myapp");
+
+         if (psApp && doesVersionSendPushMessages(psApp.version)) {
+           // There's an installed platform-specific app that handles sending push messages
+           // No need to handle this via the web app
+           return;
+         }
+
+       > In this example, doesVersionSendPushMessages() is a theoretical developer-defined function; it is not provided by the browser.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Is your app installed? getInstalledRelatedApps() will tell you!
+
+Web APIs manual                         from the official documentation

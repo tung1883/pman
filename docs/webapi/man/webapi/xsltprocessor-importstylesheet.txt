@@ -1,0 +1,76 @@
+WEBAPI.XSLTPROCESSOR-IMPORTSTYLESHEET(1) Sandbox manual WEBAPI.XSLTPROCESSOR-IMPORTSTYLESHEET(1)
+
+       NAME
+
+       XSLTProcessor: importStylesheet() method - The importStylesheet() method of the XSLTProcessor interface imports an XSLT stylesheet for the processor.
+
+       XSLTPROCESSOR: IMPORTSTYLESHEET() METHOD
+
+       The importStylesheet() method of the XSLTProcessor interface imports an XSLT stylesheet for the processor.
+
+       SYNTAX
+
+         importStylesheet(style)
+
+       PARAMETERS
+
+        * style
+          * : The Node to import. It can be an XML document (that is a Document with doctype whose name of "xml") containing an XSLT stylesheet or a literal result element transform, or an Element representing an or .
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       USING IMPORTSTYLESHEET()
+
+       This example shows how importStylesheet() loads an XSLT stylesheet into an XSLTProcessor for use in transforming XML data.
+
+       HTML
+
+         <div id="result"></div>
+
+       JAVASCRIPT
+
+         const xmlString = `
+         <items>
+           <item>Item 1</item>
+           <item>Item 2</item>
+         </items>
+         `;
+
+         const xsltString = `
+         <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+           <xsl:template match="/">
+             <ul>
+               <xsl:for-each select="items/item">
+                 <li><xsl:value-of select="."/></li>
+               </xsl:for-each>
+             </ul>
+           </xsl:template>
+         </xsl:stylesheet>
+         `;
+
+         const parser = new DOMParser();
+         const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+         const xsltDoc = parser.parseFromString(xsltString, "application/xml");
+
+         const xsltProcessor = new XSLTProcessor();
+
+         // Import the XSLT stylesheet into the XSLTProcessor
+         xsltProcessor.importStylesheet(xsltDoc);
+
+         // Perform the transformation from XML to HTML
+         const resultFragment = xsltProcessor.transformToFragment(xmlDoc, document);
+
+         // Display the transformed result in the page
+         document.getElementById("result").appendChild(resultFragment);
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,219 @@
+NGINX.NGX_HTTP_V2_MODULE(1)      Sandbox manual      NGINX.NGX_HTTP_V2_MODULE(1)
+
+       MODULE NGX_HTTP_V2_MODULE
+
+         Known Issues Example Configuration Directives  http2  http2_body_preread_size  http2_chunk_size  http2_idle_timeout  http2_max_concurrent_pushes  http2_max_concurrent_streams  http2_max_field_size  http2_max_header_size  http2_max_requests  http2_push  http2_push_preload  http2_recv_buffer_size  http2_recv_timeout Embedded Variables
+       The ngx_http_v2_module module (1.9.5) provides support for HTTP/2.
+
+       This module is not built by default, it should be enabled with the --with-http_v2_module configuration parameter.
+
+       KNOWN ISSUES
+
+       Before version 1.9.14, buffering of a client request body could not be disabled regardless of proxy_request_buffering, fastcgi_request_buffering, uwsgi_request_buffering, and scgi_request_buffering directive values.
+
+       Before version 1.19.1, the lingering_close mechanism was not used to control closing HTTP/2 connections.
+
+       EXAMPLE CONFIGURATION
+
+         server {
+             listen 443 ssl;
+
+             http2 on;
+
+             ssl_certificate server.crt;
+             ssl_certificate_key server.key;
+         }
+
+       Note that accepting HTTP/2 connections over TLS requires the “Application-Layer Protocol Negotiation” (ALPN) TLS extension support, which is available since OpenSSL version 1.0.2.
+
+       Also note that if the ssl_prefer_server_ciphers directive is set to the value “on”, the ciphers should be configured to comply with RFC 9113, Appendix A black list and supported by clients.
+
+       DIRECTIVES
+
+       HTTP2
+
+         Syntax: | http2 on | off;
+
+         http2 off;
+
+       Default:
+
+         Context: | http, server
+       This directive appeared in version 1.25.1.
+
+       Enables the HTTP/2 protocol.
+
+       HTTP2_BODY_PREREAD_SIZE
+
+         Syntax: | http2_body_preread_size size;
+
+         http2_body_preread_size 64k;
+
+       Default:
+
+         Context: | http, server
+       This directive appeared in version 1.11.0.
+
+       Sets the size of the buffer per each request in which the request body may be saved before it is started to be processed.
+
+       HTTP2_CHUNK_SIZE
+
+         Syntax: | http2_chunk_size size;
+
+         http2_chunk_size 8k;
+
+       Default:
+
+         Context: | http, server, location
+       Sets the maximum size of chunks into which the response body is sliced. A too low value results in higher overhead. A too high value impairs prioritization due to  HOL blocking.
+
+       HTTP2_IDLE_TIMEOUT
+
+         Syntax: | http2_idle_timeout time;
+
+         http2_idle_timeout 3m;
+
+       Default:
+
+         Context: | http, server
+       > This directive is obsolete since version 1.19.7. The keepalive_timeout directive should be used instead.
+
+       Sets the timeout of inactivity after which the connection is closed.
+
+       HTTP2_MAX_CONCURRENT_PUSHES
+
+         Syntax: | http2_max_concurrent_pushes number;
+
+         http2_max_concurrent_pushes 10;
+
+       Default:
+
+         Context: | http, server
+       This directive appeared in version 1.13.9.
+
+       > This directive is obsolete since version 1.25.1.
+
+       Limits the maximum number of concurrent push requests in a connection.
+
+       HTTP2_MAX_CONCURRENT_STREAMS
+
+         Syntax: | http2_max_concurrent_streams number;
+
+         http2_max_concurrent_streams 128;
+
+       Default:
+
+         Context: | http, server
+       Sets the maximum number of concurrent HTTP/2 streams in a connection.
+
+       HTTP2_MAX_FIELD_SIZE
+
+         Syntax: | http2_max_field_size size;
+
+         http2_max_field_size 4k;
+
+       Default:
+
+         Context: | http, server
+       > This directive is obsolete since version 1.19.7. The large_client_header_buffers directive should be used instead.
+
+       Limits the maximum size of an HPACK-compressed request header field. The limit applies equally to both name and value. Note that if Huffman encoding is applied, the actual size of decompressed name and value strings may be larger. For most requests, the default limit should be enough.
+
+       HTTP2_MAX_HEADER_SIZE
+
+         Syntax: | http2_max_header_size size;
+
+         http2_max_header_size 16k;
+
+       Default:
+
+         Context: | http, server
+       > This directive is obsolete since version 1.19.7. The large_client_header_buffers directive should be used instead.
+
+       Limits the maximum size of the entire request header list after HPACK decompression. For most requests, the default limit should be enough.
+
+       HTTP2_MAX_REQUESTS
+
+         Syntax: | http2_max_requests number;
+
+         http2_max_requests 1000;
+
+       Default:
+
+         Context: | http, server
+       This directive appeared in version 1.11.6.
+
+       > This directive is obsolete since version 1.19.7. The keepalive_requests directive should be used instead.
+
+       Sets the maximum number of requests (including push requests) that can be served through one HTTP/2 connection, after which the next client request will lead to connection closing and the need of establishing a new connection.
+
+       Closing connections periodically is necessary to free per-connection memory allocations. Therefore, using too high maximum number of requests could result in excessive memory usage and not recommended.
+
+       HTTP2_PUSH
+
+         Syntax: | http2_push uri | off;
+
+         http2_push off;
+
+       Default:
+
+         Context: | http, server, location
+       This directive appeared in version 1.13.9.
+
+       > This directive is obsolete since version 1.25.1. The early_hints directive can be used instead.
+
+       Pre-emptively sends (pushes) a request to the specified uri along with the response to the original request. Only relative URIs with absolute path will be processed, for example:
+
+         http2_push /static/css/main.css;
+
+       The uri value can contain variables.
+
+       Several http2_push directives can be specified on the same configuration level. The off parameter cancels the effect of the http2_push directives inherited from the previous configuration level.
+
+       HTTP2_PUSH_PRELOAD
+
+         Syntax: | http2_push_preload on | off;
+
+         http2_push_preload off;
+
+       Default:
+
+         Context: | http, server, location
+       This directive appeared in version 1.13.9.
+
+       > This directive is obsolete since version 1.25.1.
+
+       Enables automatic conversion of preload links specified in the “Link” response header fields into push requests.
+
+       HTTP2_RECV_BUFFER_SIZE
+
+         Syntax: | http2_recv_buffer_size size;
+
+         http2_recv_buffer_size 256k;
+
+       Default:
+
+         Context: | http
+       Sets the size of the per worker input buffer.
+
+       HTTP2_RECV_TIMEOUT
+
+         Syntax: | http2_recv_timeout time;
+
+         http2_recv_timeout 30s;
+
+       Default:
+
+         Context: | http, server
+       > This directive is obsolete since version 1.19.7. The client_header_timeout directive should be used instead.
+
+       Sets the timeout for expecting more data from the client, after which the connection is closed.
+
+       EMBEDDED VARIABLES
+
+       The ngx_http_v2_module module supports the following embedded variables:
+
+         $http2
+       negotiated protocol identifier: “h2” for HTTP/2 over TLS, “h2c” for HTTP/2 over cleartext TCP, or an empty string otherwise.
+
+nginx manual                            bundled documentation

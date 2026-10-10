@@ -1,0 +1,65 @@
+WEBAPI.NAVIGATIONPRECOMMITCONTROLLER-ADDHANDLER(1) Sandbox manual WEBAPI.NAVIGATIONPRECOMMITCONTROLLER-ADDHANDLER(1)
+
+       NAME
+
+       NavigationPrecommitController: addHandler() method - The addHandler() method of the NavigationPrecommitController interface allows you to dynamically add a handler callback function in precommi
+
+       NAVIGATIONPRECOMMITCONTROLLER: ADDHANDLER() METHOD
+
+       The addHandler() method of the NavigationPrecommitController interface allows you to dynamically add a handler callback function in precommit code, which will then be run after the navigation has committed.
+
+       This is useful when the navigation workflow depends on information that is not know until precommit code has started running. If the precommit and (post-commit) handler are independent, the handler can be specified in the in the options.handler argument passed to NavigateEvent.intercept().
+
+       SYNTAX
+
+         addHandler(handler);
+
+       PARAMETERS
+
+        * handler
+          * : A callback function that defines the post-commit navigation handling behavior should be; it returns a promise.
+       The handler callback is invoked as though it was passed to the NavigateEvent.intercept() method, and will run after the currentEntry property has been updated.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if:
+            * The originating NavigateEvent was not intercepted or has been canceled.
+            * The Document is not fully active.
+        * SecurityError DOMException
+          * : Thrown if the event isTrusted attribute is false.
+
+       EXAMPLES
+
+       For more examples see NavigationPrecommitController.
+
+       BASIC USAGE
+
+       This example shows a precommitHandler implementation that fetches data for a page and uses addHandler() to add different handlers based on the page type (the implementations of the fetchConfig, setupVideoPlayer() and setupArticleView() are not given).
+
+         navigation.addEventListener("navigate", (event) => {
+           event.intercept({
+             async precommitHandler(controller) {
+               const pageData = await fetchConfig();
+               if (pageData.type === "video") {
+                 controller.addHandler(() => setupVideoPlayer());
+               } else {
+                 controller.addHandler(() => setupArticleView());
+               }
+             },
+           });
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+
+Web APIs manual                         from the official documentation

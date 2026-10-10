@@ -1,0 +1,95 @@
+WEBAPI.FILESYSTEMOBSERVER(1)     Sandbox manual     WEBAPI.FILESYSTEMOBSERVER(1)
+
+       NAME
+
+       FileSystemObserver - The FileSystemObserver interface of the File System API provides a mechanism to observe changes to the user-observable file system and the O
+
+       FILESYSTEMOBSERVER
+
+       {{non-standard_header}}
+
+       The FileSystemObserver interface of the File System API provides a mechanism to observe changes to the user-observable file system and the Origin Private File System (OPFS). This means web applications don't have to poll the file system to find changes in the files or folder structure, which can be time-consuming and wasteful.
+
+       CONSTRUCTOR
+
+        * FileSystemObserver() (experimental) {{non-standard_inline}}
+          * : Creates a new FileSystemObserver object instance.
+
+       INSTANCE METHODS
+
+        * disconnect() (experimental) {{non-standard_inline}}
+          * : Stop observing the filesystem.
+        * observe() (experimental) {{non-standard_inline}}
+          * : Start observing changes to a given file or directory.
+
+       EXAMPLES
+
+       > For a complete working example, check out File System Observer Demo (source code).
+
+       INITIALIZE A FILESYSTEMOBSERVER
+
+       Before you can start observing file or directory changes, you need to initialize a FileSystemObserver to handle the observations. This is done using the FileSystemObserver() constructor, which takes a callback function as an argument:
+
+         const observer = new FileSystemObserver(callback);
+
+       The callback function body can be specified to return and process file change observations in any way you want:
+
+         const callback = (records, observer) => {
+           for (const record of records) {
+             console.log("Change detected:", record);
+             const reportContent = `Change observed to ${record.changedHandle.kind} ${record.changedHandle.name}. Type: ${record.type}.`;
+             sendReport(reportContent); // Some kind of user-defined reporting function
+           }
+
+           observer.disconnect();
+         };
+
+       OBSERVE A FILE OR DIRECTORY
+
+       Once a FileSystemObserver instance is available, you can start observing changes to a file system entry by calling the FileSystemObserver.observe() method.
+
+       You can observe a file or directory in the user-observable file system or the Origin Private File System (OPFS) by passing a FileSystemFileHandle or FileSystemDirectoryHandle to observe(). Instances of these objects can be returned, for example, when asking the user to select a file or directory using Window.showSaveFilePicker() or Window.showDirectoryPicker():
+
+         // Observe a file
+         async function observeFile() {
+           const fileHandle = await window.showSaveFilePicker();
+
+           await observer.observe(fileHandle);
+         }
+
+         // Observe a directory
+         async function observeDirectory() {
+           const directoryHandle = await window.showDirectoryPicker();
+
+           await observer.observe(directoryHandle);
+         }
+
+       You can also observe changes to the OPFS by passing a FileSystemSyncAccessHandle to observe():
+
+         // Observe an OPFS file system entry
+         async function observeOPFSFile() {
+           const root = await navigator.storage.getDirectory();
+           const draftHandle = await root.getFileHandle("draft.txt", { create: true });
+           const syncHandle = await draftHandle.createSyncAccessHandle();
+
+           await observer.observe(syncHandle);
+         }
+
+       STOP OBSERVING THE FILE SYSTEM
+
+       When you want to stop observing changes to the file system entry, you can call FileSystemObserver.disconnect():
+
+         observer.disconnect();
+
+       SPECIFICATIONS
+
+       Not currently part of a specification. See https://github.com/whatwg/fs/pull/165 for the relevant specification PR.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File System API
+        * The File System Observer API origin trial on developer.chrome.com (2024)
+
+Web APIs manual                         from the official documentation

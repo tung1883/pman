@@ -1,0 +1,75 @@
+WEBAPI.BROWSERCAPTUREMEDIASTREAMTRACK-RESTRICTTO(1) Sandbox manual WEBAPI.BROWSERCAPTUREMEDIASTREAMTRACK-RESTRICTTO(1)
+
+       NAME
+
+       BrowserCaptureMediaStreamTrack: restrictTo() method - The restrictTo() method of the BrowserCaptureMediaStreamTrack interface restricts a self-capture stream to a specific DOM element (and its d
+
+       BROWSERCAPTUREMEDIASTREAMTRACK: RESTRICTTO() METHOD
+
+       The restrictTo() method of the BrowserCaptureMediaStreamTrack interface restricts a self-capture stream to a specific DOM element (and its descendants).
+
+       SYNTAX
+
+         restrictTo(restrictionTarget)
+
+       PARAMETERS
+
+        * restrictionTarget
+          * : A RestrictionTarget instance representing the element the stream should be restricted to, or null/undefined, in which case any previously-set restriction is removed from the track.
+
+       RETURN VALUE
+
+       A Promise that resolves to undefined.
+
+       The promise will reject if:
+
+        * The track kind is not "video", or its readyState is not "live".
+        * The restriction target element no longer exists.
+        * The track being restricted is not a track captured from the user's screen.
+        * restrictionTarget is not a RestrictionTarget instance, null, or undefined.
+        * restrictionTarget was created in a tab other than the one being captured.
+       > In Chromium, if a track has clones, restrictTo() will reject (see Chrome issue 41482026).
+
+       EXAMPLES
+
+       BASIC RESTRICTION EXAMPLE
+
+         // Options for getDisplayMedia()
+         const displayMediaOptions = {
+           preferCurrentTab: true,
+         };
+
+         // Create restriction target from DOM element
+         const demoElem = document.querySelector("#demo");
+         const restrictionTarget = await RestrictionTarget.fromElement(demoElem);
+
+         // Capture video stream from user's webcam and isolate video track
+         const stream =
+           await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+         const [track] = stream.getVideoTracks();
+
+         // Restrict video track
+         await track.restrictTo(restrictionTarget);
+
+         // Broadcast restricted stream in <video> element
+         videoElem.srcObject = stream;
+
+       See Using the Element Capture and Region Capture APIs for in-context example code.
+
+       STOPPING THE RESTRICTION
+
+       You can stop the restriction by making a call to restrictTo() on the same track, passing an argument of null to it:
+
+         // Stop restricting
+         await track.restrictTo(null);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Screen Capture API
+        * Using the Element Capture and Region Capture APIs
+
+Web APIs manual                         from the official documentation

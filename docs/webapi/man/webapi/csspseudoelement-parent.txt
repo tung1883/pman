@@ -1,0 +1,82 @@
+WEBAPI.CSSPSEUDOELEMENT-PARENT(1) Sandbox manual WEBAPI.CSSPSEUDOELEMENT-PARENT(1)
+
+       NAME
+
+       CSSPseudoElement: parent property - The parent read-only property of the CSSPseudoElement interface returns a reference to the immediate originating element of the pseudo-eleme
+
+       CSSPSEUDOELEMENT: PARENT PROPERTY
+
+       The parent read-only property of the CSSPseudoElement interface returns a reference to the immediate originating element of the pseudo-element, which can be an Element, or a CSSPseudoElement in the case of a nested pseudo-element.
+
+       This differs from the CSSPseudoElement.element property, which always returns an Element: A reference to the ultimate originating element of the pseudo-element.
+
+       VALUE
+
+       An Element or a CSSPseudoElement representing the pseudo-element's immediate parent.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       In this example, we demonstrate the difference between the parent and element properties.
+
+       HTML
+
+       We include a element containing text, and an element to log output from JavaScript.
+
+         <p>New York's hottest club is...</p>
+         <output></output>
+
+       CSS
+
+       We give the element's ::after pseudo-element some content and set its display to list-item so it will generate a ::marker. We also apply some basic styles.
+
+         body {
+           width: 80%;
+           margin: 0 auto;
+         }
+
+         p {
+           background-color: violet;
+           padding: 20px;
+         }
+
+         p::after {
+           content: "Crease";
+           background-color: cadetblue;
+           padding: 20px;
+           display: list-item;
+         }
+
+         p::after::marker {
+           content: "🔹";
+         }
+
+       JAVASCRIPT
+
+       In our script, we grab references to our and elements, and retrieve CSSPseudoElement objects via the pseudo() method representing the element's ::after pseudo-element, and the ::after pseudo-element's ::marker pseudo-element. We then log some details of the child pseudo-element to our element. We also include some rudimentary error handling via a try...catch structure, to print an error message in non-supporting browsers.
+
+         const pElem = document.querySelector("p");
+         const output = document.querySelector("output");
+
+         try {
+           const pseudoElem = pElem.pseudo("::after");
+           const pseudoPseudoElem = pseudoElem.pseudo("::marker");
+           output.textContent = `${pseudoPseudoElem.type} pseudo-element. Parent: ${pseudoPseudoElem.parent.type}. Ultimate originating element: <${pseudoPseudoElem.element.tagName.toLowerCase()}>`;
+         } catch (e) {
+           output.textContent = `Your browser doesn't support CSSPseudoElement and/or the pseudo() method: ${e}`;
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * CSSPseudoElement.element
+        * CSSPseudoElement.pseudo()
+        * Element.pseudo()
+
+Web APIs manual                         from the official documentation

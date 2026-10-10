@@ -1,0 +1,84 @@
+WEBAPI.NAVIGATOR-REQUESTMIDIACCESS(1) Sandbox manual WEBAPI.NAVIGATOR-REQUESTMIDIACCESS(1)
+
+       NAME
+
+       Navigator: requestMIDIAccess() method - The requestMIDIAccess() method of the Navigator interface returns a Promise representing a request for access to MIDI devices on a user's sy
+
+       NAVIGATOR: REQUESTMIDIACCESS() METHOD
+
+       The requestMIDIAccess() method of the Navigator interface returns a Promise representing a request for access to MIDI devices on a user's system. This method is part of the Web MIDI API, which provides a means for accessing, enumerating, and manipulating MIDI devices.
+
+       This method may prompt the user for access to MIDI devices available to their system, or it may use a previously established preference to grant or deny access. If permission is granted then the Promise resolves and a MIDIAccess object is returned.
+
+       SYNTAX
+
+         requestMIDIAccess()
+         requestMIDIAccess(MIDIOptions)
+
+       PARAMETERS
+
+        * MIDIOptions (optional)
+          * : An Object representing options to pass into the method. These options are:
+            * sysex
+              * : A Boolean value that, if set to true, allows the ability to send and receive system exclusive (sysex) messages. The default value is false.
+            * software
+              * : A Boolean value that, if set to true, allows the system to utilize any installed software synthesizers. The default value is false.
+
+       RETURN VALUE
+
+       A Promise that resolves with a MIDIAccess object.
+
+       EXCEPTIONS
+
+        * AbortError DOMException
+          * : Thrown if the document or page is closed due to user navigation.
+        * InvalidStateError DOMException
+          * : Thrown if the underlying system raises any errors.
+        * NotSupportedError DOMException
+          * : Thrown if the feature or options are not supported by the system.
+        * NotAllowedError DOMException
+          * : Thrown if the user or system denies the application from creating a MIDIAccess object with the requested options, or if the document is not allowed to use the feature (for example, because of a Permission Policy, or because the user previously denied a permission request).
+
+       SECURITY REQUIREMENTS
+
+       Access to the API is subject to the following constraints:
+
+        * The method must be called in a secure context.
+        * Access may be gated by the midi HTTP Permission Policy.
+        * The user must explicitly grant permission to use the API though a user-agent specific mechanism, or have previously granted permission.
+       Note that if access is denied by a permission policy it cannot be granted by a user permission.
+
+       The permission status can be queried using the Permissions API method navigator.permissions.query(), passing a permission descriptor with the midi permission and (optional) sysex property:
+
+         navigator.permissions.query({ name: "midi", sysex: true }).then((result) => {
+           if (result.state === "granted") {
+             // Access granted.
+           } else if (result.state === "prompt") {
+             // Using API will prompt for permission
+           }
+           // Permission was denied by user prompt or permission policy
+         });
+
+       EXAMPLES
+
+       REQUEST MIDI ACCESS
+
+       In the following example, the Navigator.requestMIDIAccess() method returns the MIDIAccess object, which gives access to information about the input and output MIDI ports.
+
+         navigator.requestMIDIAccess().then((access) => {
+           // Get lists of available MIDI controllers
+           const inputs = access.inputs.values();
+           const outputs = access.outputs.values();
+           // …
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web MIDI API
+        * Introduction to Web MIDI
+
+Web APIs manual                         from the official documentation

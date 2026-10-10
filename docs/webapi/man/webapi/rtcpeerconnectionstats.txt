@@ -1,0 +1,71 @@
+WEBAPI.RTCPEERCONNECTIONSTATS(1) Sandbox manual WEBAPI.RTCPEERCONNECTIONSTATS(1)
+
+       NAME
+
+       RTCPeerConnectionStats - The RTCPeerConnectionStats dictionary of the WebRTC API provides information about the high-level peer connection (RTCPeerConnection).
+
+       RTCPEERCONNECTIONSTATS
+
+       The RTCPeerConnectionStats dictionary of the WebRTC API provides information about the high-level peer connection (RTCPeerConnection).
+
+       In particular, it provides the number of unique data channels that have been opened, and the number of opened channels that have been closed. This allows the current number of open channels to be calculated.
+
+       These statistics can be obtained by iterating the RTCStatsReport returned by RTCPeerConnection.getStats() until you find a report with the type of peer-connection.
+
+       INSTANCE PROPERTIES
+
+        * dataChannelsOpened
+          * : A positive integer value indicating the number of unique RTCDataChannel objects that have entered the open state during their lifetime.
+        * dataChannelsClosed
+          * : A positive integer value indicating the number of unique RTCDataChannel objects that have left the open state during their lifetime (channels that transition to closing or closed without ever being open are not counted in this number).
+       A channel will leave the open state if either end of the connection or the underlying transport is closed.
+
+       COMMON INSTANCE PROPERTIES
+
+       The following properties are common to all WebRTC statistics objects.
+
+       
+
+        * id
+          * : A string that uniquely identifies the object that is being monitored to produce this set of statistics.
+        * timestamp
+          * : A DOMHighResTimeStamp object indicating the time at which the sample was taken for this statistics object.
+        * type
+          * : A string with the value "peer-connection", indicating the type of statistics that the object contains.
+
+       EXAMPLES
+
+       This example shows a function to return the total number of open connections, or null if no statistics are provided. This might be called in a loop, similar to the approach used in RTCPeerConnection.getStats() example
+
+       The function waits for the result of a call to RTCPeerConnection.getStats() and then iterates the returned RTCStatsReport to get just the stats of type "peer-connection". It then returns the total number of open channels, or null, using the data in the report.
+
+         async function numberOpenConnections(peerConnection) {
+           const stats = await peerConnection.getStats();
+           let peerConnectionStats = null;
+
+           for (const report of stats.values()) {
+             if (report.type === "peer-connection") {
+               peerConnectionStats = report;
+               break;
+             }
+           }
+
+           if (
+             peerConnectionStats === null ||
+             typeof peerConnectionStats.dataChannelsOpened === "undefined" ||
+             typeof peerConnectionStats.dataChannelsClosed === "undefined"
+           ) {
+             return null;
+           }
+
+           return (
+             peerConnectionStats.dataChannelsOpened -
+             peerConnectionStats.dataChannelsClosed
+           );
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

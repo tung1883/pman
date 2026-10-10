@@ -1,0 +1,64 @@
+SHELLCHECK.SC2145(1)             Sandbox manual             SHELLCHECK.SC2145(1)
+
+       NAME
+
+       Argument mixes string and array. Use  or separate argument. - printf "Error: %s\n" "Bad parameters: $@"
+
+       ARGUMENT MIXES STRING AND ARRAY. USE OR SEPARATE ARGUMENT
+
+       ARGUMENT MIXES STRING AND ARRAY. USE OR SEPARATE ARGUMENT
+
+       PROBLEMATIC CODE
+
+         printf "Error: %s\n" "Bad parameters: $@"
+
+       CORRECT CODE
+
+         printf "Error: %s\n" "Bad parameters: $*"
+
+       PROBLEMATIC CODE 2
+
+         printf "Error: %s\n" "Bad parameters: ${ARRAY_VAR[@]}"
+
+       CORRECT CODE 2
+
+         printf "Error: %s\n" "Bad parameters: " "${ARRAY_VAR[@]}"
+
+       RATIONALE
+
+       The behavior when concatenating a string and array is rarely intended. The preceding string is prefixed to the first array element, while the succeeding string is appended to the last one. The middle array elements are unaffected.
+
+       E.g., with the parameters foo,bar,baz, "--flag=$@" is equivalent to the three arguments "--flag=foo" "bar" "baz".
+
+       If the intention is to concatenate all the array elements into one argument, use $*. This concatenates based on IFS.
+
+       If the intention is to provide each array element as a separate argument, put the array expansion in its own argument.
+
+       EXCEPTIONS
+
+       The POSIX specified behavior of $@ (and by extension arrays) as part of other strings is often unexpected:
+
+       > if the parameter being expanded was embedded within a word, the first field shall be joined with the beginning part of the original word and the last field shall be joined with the end part of the original word. In all other contexts the results of the expansion are unspecified. If there are no positional parameters, the expansion of '@' shall generate zero fields, even when '@' is within double-quotes; however, if the expansion is embedded within a word which contains one or more other parts that expand to a quoted null string, these null string(s) shall still produce an empty field, except that if the other parts are all within the same double-quotes as the '@', it is unspecified whether the result is zero fields or one empty field.
+       If you're aware of this and intend to take advantage of it, you can ignore this warning. However, you can usually also rewrite it into a less surprising form. For example, here's a wrapper script that uses this behavior to substitute certain commands by defining a function for them:
+
+       #!/bin/sh fixed_fgrep() { grep -F "$@"; } fixed_echo() { printf '%s\n' "$*"; } fixed_seq() { echo "seq is not portable" >&2; return 1; }
+
+       if command -v "fixed_$1" > /dev/null 2>&1 then
+
+       SHELLCHECK DISABLE SC2145 # I KNOW HOW FIXED_ BEHAVES AND IT'S CORRECT
+
+       fixed_"$@" else "$@" fi
+
+       Here's the same script without relying on this behavior:
+
+       #!/bin/sh fixed_fgrep() { grep -F "$@"; } fixed_echo() { printf '%s\n' "$*"; } fixed_seq() { echo "seq is not portable" >&2; return 1; }
+
+       cmd="$1" shift
+
+       if command -v "fixed_$cmd" > /dev/null 2>&1 then
+
+       PERHAPS MORE STRAIGHT FORWARD WITH FEWER SURPRISES
+
+       "fixed_$cmd" "$@" else "$cmd" "$@" fi
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,83 @@
+WEBAPI.HTMLIMAGEELEMENT-DECODE(1) Sandbox manual WEBAPI.HTMLIMAGEELEMENT-DECODE(1)
+
+       NAME
+
+       HTMLImageElement: decode() method - The decode() method of the HTMLImageElement interface returns a Promise that resolves once the image is decoded and is safe to be appended t
+
+       HTMLIMAGEELEMENT: DECODE() METHOD
+
+       The decode() method of the HTMLImageElement interface returns a Promise that resolves once the image is decoded and is safe to be appended to the DOM.
+
+       This can be used to initiate loading of the image prior to attaching it to an element in the DOM (or adding it to the DOM as a new element), so that the image can be rendered immediately upon being added to the DOM. This, in turn, prevents the rendering of the next frame after adding the image to the DOM from causing a delay while the image loads.
+
+       SYNTAX
+
+         decode()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that fulfills with undefined once the image data is ready to be used.
+
+       EXCEPTIONS
+
+        * EncodingError DOMException
+          * : An error occurred while decoding the image. This can happen if:
+            * The request failed
+            * The image request changed after calling decode() (for example, by changing its src)
+            * The image's data is corrupted
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The following example shows how to use the decode() method to control when an image is appended to the DOM.
+
+         const img = new Image();
+         img.src = "nebula.jpg";
+         img
+           .decode()
+           .then(() => {
+             document.body.appendChild(img);
+           })
+           .catch((encodingError) => {
+             // Do something with the error.
+           });
+
+       > Without a Promise-returning method, you would add the image to the DOM in a load event handler, and handle the error in the error event's handler.
+
+       AVOIDING EMPTY IMAGES
+
+       In the below example, you'll likely get an empty image shown on the page as the image is downloaded:
+
+         const img = new Image();
+         img.src = "img/logo.png";
+         document.body.appendChild(img);
+
+       Using decode() will delay inserting the image into the DOM until it is fully downloaded and decoded, thereby avoiding the empty image problem:
+
+         async function getImage() {
+           const img = new Image();
+           img.src = "img/logo.png";
+           await img.decode();
+           document.body.appendChild(img);
+           const p = document.createElement("p");
+           p.textContent = "Image is fully loaded!";
+           document.body.appendChild(p);
+         }
+
+       This is particularly useful if you're dynamically swapping an existing image for a new one, and also prevents unrelated paints outside of this code from being held up while the image is decoding. For example, in an online photo album, you can present a low resolution thumbnail image initially and then replace that image with the full-resolution image by instantiating a new HTMLImageElement, setting its source to the full-resolution image's URL, then using decode() to get a promise which is resolved once the full-resolution image is ready for use. At that time, you can then replace the low-resolution image with the full-resolution one that's now available.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * What does the image decoding attribute actually do? on tunetheweb.com (2023)
+        * The HTMLImageElement.decoding property
+
+Web APIs manual                         from the official documentation

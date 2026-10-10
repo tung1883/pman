@@ -1,0 +1,43 @@
+SHELLCHECK.SC3016(1)             Sandbox manual             SHELLCHECK.SC3016(1)
+
+       NAME
+
+       In POSIX sh, unary -v (in place of [ -n "${var+x}" ]) is undefined. - if [ -v STY ]
+
+       IN POSIX SH, UNARY -V (IN PLACE OF -N VAR+X ) IS UNDEFINED
+
+       IN POSIX SH, UNARY -V (IN PLACE OF -N VAR+X ) IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         if [ -v STY ]
+         then
+           echo "STY is set, you are using screen"
+         fi
+
+       CORRECT CODE
+
+       Either switch to bash or ksh, or use:
+
+         #!/bin/sh
+         if [ -n "${STY+x}" ]
+         then
+           echo "STY is set, you are using screen"
+         fi
+
+       RATIONALE
+
+       Your script uses a shell feature not supported by the shebang. Either rewrite the script to be portable, or change the shebang to explicitly require a shell like Bash.
+
+       In this case, [ -v variable ], which checks if a variable is set, is not specified by POSIX. It can be replaced with the portable [ -n "${variable+x}" ], which uses the "alternative value if set" parameter expansion syntax to accomplish the same thing.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,41 @@
+SHELLCHECK.SC2281(1)             Sandbox manual             SHELLCHECK.SC2281(1)
+
+       NAME
+
+       Don't use $/${} on the left side of assignments. - $greeting="Hello World"
+
+       DON'T USE / ON THE LEFT SIDE OF ASSIGNMENTS
+
+       DON'T USE / ON THE LEFT SIDE OF ASSIGNMENTS
+
+       PROBLEMATIC CODE
+
+         $greeting="Hello World"
+         ${greeting}="Hello World"
+
+       CORRECT CODE
+
+         greeting="Hello World"
+
+       Alternatively, if the goal was to assign to a variable whose name is in another variable (indirection), use declare:
+
+         name=foo
+         declare "$name=hello world"
+         echo "$foo"
+
+       Or if you actually wanted to compare the value, use a test expression:
+
+         if [ "$greeting" = "hello world" ]
+         then
+           echo "Programmer, I presume?"
+         fi
+
+       RATIONALE
+
+       Unlike Perl or PHP, $ is not used on the left-hand side of = when assigning to a variable.
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

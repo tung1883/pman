@@ -1,0 +1,248 @@
+ARCH.MAN-PAGE(1)                 Sandbox manual                 ARCH.MAN-PAGE(1)
+
+       man pages—abbreviation for "manual pages"—are the form of documentation that is available on almost all UNIX-like operating systems, including Arch Linux. The command used to display them is man(1).
+
+       In spite of their scope, manual pages are designed to be self-contained documents, consequently limiting themselves to referring to other manual pages when discussing related subjects. This is in sharp contrast with the hyperlink-aware Info documents—GNU attempt at replacing the traditional manual page format.
+
+       INSTALLATION
+
+       man-db implements man on Arch Linux, and less is the default pager used with man. mandoc can also be used.
+
+       man-pages provides both the Linux and the POSIX.1 man pages [1].
+
+       Some localized man pages are also available:
+
+        * man-pages-cs for Czech
+        * man-pages-da for Danish
+        * man-pages-de for German
+        * man-pages-el for Greek
+        * man-pages-es for Spanish
+        * man-pages-fi for Finnish
+        * man-pages-fr for French
+        * man-pages-hu for Hungarian
+        * man-pages-id for Indonesian
+        * man-pages-it for Italian
+        * man-pages-jaAUR for Japanese
+        * man-pages-mk for Macedonian
+        * man-pages-nl for Dutch
+        * man-pages-pl for Polish
+        * man-pages-pt_br for Brazilian Portuguese
+        * man-pages-ro for Romanian
+        * man-pages-ru for Russian
+        * man-pages-sr for Serbian
+        * man-pages-sv for Swedish
+        * man-pages-trAUR for Turkish
+        * man-pages-uk for Ukrainian
+        * man-pages-vi for Vietnamese
+        * man-pages-zh_cn for Simplified Chinese
+        * man-pages-zh_tw for Traditional Chinese
+       You can also search for all of the available localized man pages on the official repositories and on the AUR.
+
+       ACCESSING MAN PAGES
+
+       To read a man page, simply enter:
+
+         $ man page_name
+
+       Manuals are sorted into several sections. Each section has an intro, such as intro(1), intro(2) and so on. For a full listing see man-pages(7) § Sections of the manual pages.
+
+       Man pages are usually referred to by their name, followed by their section number in parentheses. Often there are multiple man pages of the same name, such as man(1) and man(7). In this case, give man the section number followed by the name of the man page, for example:
+
+         $ man 5 passwd
+
+       to read the man page on /etc/passwd, rather than the passwd utility.
+
+       Or equivalently, the man page followed by the section number, separated by a period:
+
+         $ man passwd.5
+
+       SEARCHING MANUALS
+
+       Man pages can be searched when the exact name of a page is not known using any of the following equivalent commands:
+
+         $ man -k expression
+         $ man --apropos expression
+         $ apropos expression
+
+       expression is interpreted as a regular expression by default.
+
+       To search for keywords in whole page texts, use the -K option instead.
+
+       Note The search feature is provided by a dedicated cache. By default, maintenance of that cache is handled by man-db.service which gets periodically triggered by man-db.timer. If you are getting a "nothing appropriate" message for every search, try manually regenerating the cache by running mandb as root.
+
+       One-line descriptions of man pages can be displayed using the whatis command. For example, for a brief description of the man page sections about ls, type:
+
+         $ whatis ls
+
+         ls (1p)              - list directory contents
+         ls (1)               - list directory contents
+
+       PAGE WIDTH
+
+       The man page width is controlled by the MANWIDTH environment variable.
+
+       If the number of columns in the terminal is too small (e.g. the window width is narrow), the line breaks will be wrong. This can be very disturbing for reading. You can fix this by setting the MANWIDTH on man invocation. With Bash, that would be:
+
+         ~/.bashrc
+
+         man() {
+             local width=$(tput cols)
+             [ $width -gt $MANWIDTH ] && width=$MANWIDTH
+             env MANWIDTH=$width \
+             man "$@"
+         }
+
+       READING LOCAL MAN PAGES
+
+       You can use some applications to view man pages:
+
+        * Emacs — The extensible and self-documenting editor can also be used to read man pages with the built-in M-x man command.
+       https://www.gnu.org/software/emacs/ || emacs
+
+        * GNOME Help — Help viewer for GNOME. Part of gnome. It can show man pages via yelp man:<name> or the undocumented Ctrl+L keybinding from an existing window.
+       https://apps.gnome.org/Yelp/ || yelp
+
+        * KHelpCenter — Application to show KDE Applications' documentation. Part of kde-system. Man pages are in UNIX manual pages or by running khelpcenter man:<name>.
+       https://apps.kde.org/khelpcenter/ || khelpcenter
+
+        * Konqueror — KDE file manager and web browser. It can show man pages via man:<name>.
+       https://konqueror.org/ || konqueror
+
+        * neovim — The editor can be used to read man pages using the built-in :Man name command, or configured as a man pager with export MANPAGER='nvim +Man!'. Supports highlighting and navigation between command-line flags, keywords, and other man pages. Automatically generates an outline using section headers, command-line flags, and keywords as entries (available via gO).
+       https://neovim.io/ || neovim
+
+        * xman — Provides a categorized look at man pages.
+       https://xorg.freedesktop.org/ || xorg-xman
+
+       Using browsers such as lynx and Firefox to view man pages allows users to reap info pages' main benefit of hyperlinked text. Alternatives include the following:
+
+       CONVERSION TO HTML
+
+       MANDOC
+
+       Install the mandoc package. To convert a page, for example free(1):
+
+         $ mandoc -Thtml -Ostyle=style.css /usr/share/man/man1/free.1.gz > free.html
+
+       Now open the file called free.html in your favourite browser.
+
+       MAN2HTML
+
+       First, install man2html from the official repositories.
+
+       Now, convert a man page:
+
+         $ man free | man2html -compress -cgiurl man$section/$title.$section$subsection.html > ~/man/free.html
+
+       Another use for man2html is exporting to raw, printer-friendly text:
+
+         $ man free | man2html -bare > ~/free.txt
+
+       MAN -H
+
+       The man-db implementation also has the ability to do this on its own:
+
+         $ man -H free
+
+       This will read your BROWSER environment variable to determine the browser. You can override this by passing the binary to the -H option.
+
+       ROFFIT
+
+       First install roffitAUR.
+
+       To convert a man page:
+
+         $ gunzip -c /usr/share/man/man1/free.1.gz | roffit > free.html
+
+       CONVERSION TO PDF
+
+       man pages have always been printable: they are written in troff(1), which is fundamentally a typesetting language. Therefore, you can easily convert man pages to any of the formats supported as output devices by groff, which is used by man-db. For a list of output devices, see the -T option in groff(1) (or mandoc(1) if you use the mandoc package).
+
+       This will produce a PDF file:
+
+         $ man -Tpdf manpage > filename
+
+       Caveats: Fonts are generally limited to Times at hardcoded sizes. Some man pages were specifically designed for terminal viewing, and will not look right in PS or PDF form.
+
+       QMAN
+
+       For an alternative interface for reading manual pages, one that supports modern features such as hyperlinks and history, install qmanAUR. You can now use qman in the place of man:
+
+         $ qman ls    # Display the manual page for ls
+         $ qman -k ls # Perform apropos on 'ls'
+
+       Note Qman will not function without a properly configured mandb search cache. Instructions on how to set this up are provided in section #Searching manuals.
+
+       For more information and troubleshooting, see the project's GitHub page.
+
+       ONLINE MAN PAGES
+
+       Warning Some distributions provide patched or outdated manual pages that differ from those provided by Arch Linux.
+
+        * Arch Linux manual pages – Contains man pages from Arch Linux packages. Used for man page links from the wiki. You can also use the !archman bang with search engines like DuckDuckGo or Brave to search through the Arch manual pages directly.
+        * man7.org – The Linux man-pages project. Upstream of the man-pages package.
+        * manned.org – Collection from various Linux distributions, BSD, etc., with multiple package versions.
+        * linux.die.net
+        * man.cx – Man pages extracted from Debian testing.
+        * Debian man pages
+        * Ubuntu man pages
+        * DragonFlyBSD man pages
+        * FreeBSD man pages
+        * NetBSD man pages
+        * OpenBSD man pages
+        * Plan 9 Manual – Volume 1
+        * Inferno Manual – Volume 1
+        * The UNIX and Linux forums man page repository
+       Note that while man-pages provides man pages for POSIX.1-2017 (see [2]), an official online reference also exists:
+
+        * POSIX.1-2024
+        * POSIX.1-2017
+       There is also a comparison table of the online databases.
+
+       Tip The online Arch manual pages can be rendered in the terminal using this command: curl -sL 'https://man.archlinux.org/man/clang.raw' | man -l -
+
+       NOTEWORTHY MAN PAGES
+
+       Here follows a non-exhaustive list of noteworthy pages that might help you understand a lot of things more in-depth. Some of them might serve as a good reference (like the ASCII table).
+
+        * ascii(7)
+        * boot(7)
+        * charsets(7)
+        * chmod(1)
+        * credentials(7)
+        * fstab(5)
+        * file-hierarchy(7)
+        * systemd(1)
+        * locale(1p), locale(5), locale(7)
+        * printf(3)
+        * proc(5)
+        * regex(7)
+        * signal(7)
+        * term(5), term(7)
+        * termcap(5)
+        * terminfo(5)
+        * utf-8(7)
+       More generally, have a look at category 7 (miscellaneous) pages:
+
+         $ man -s 7 -k ".*"
+
+       Arch Linux specific pages:
+
+        * alpm-hooks(5)
+        * libalpm(3)
+        * makepkg(8)
+        * makepkg.conf(5)
+        * makepkg-template(1)
+        * mkinitcpio(8)
+        * pacman(8)
+        * pacman.conf(5)
+        * pacman-conf(8)
+        * pacman-key(8)
+
+       SEE ALSO
+
+        * Gentoo:man page
+        * Write The Fine Manual with pod2man
+        * History of UNIX Manpages
+
+ArchWiki manual                         bundled documentation

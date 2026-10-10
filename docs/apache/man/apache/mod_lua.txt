@@ -1,0 +1,1171 @@
+APACHE.MOD_LUA(1)                Sandbox manual                APACHE.MOD_LUA(1)
+
+       BASIC CONFIGURATION
+
+       The basic module loading directive is
+
+         LoadModule lua_module modules/mod_lua.so
+
+       mod_lua provides a handler named lua-script, which can be used with a SetHandler or AddHandler directive:
+
+         <Files "*.lua">
+             SetHandler lua-script
+         </Files>
+
+       This will cause mod_lua to handle requests for files ending in .lua by invoking that file's handle function.
+
+       For more flexibility, see LuaMapHandler.
+
+       WRITING HANDLERS
+
+       In the Apache HTTP Server API, the handler is a specific kind of hook responsible for generating the response. Examples of modules that include a handler are mod_proxy, mod_cgi, and mod_status.
+
+       mod_lua always looks to invoke a Lua function for the handler, rather than just evaluating a script body CGI style. A handler function looks something like this:
+
+         example.lua
+
+         -- example handler
+
+         require "string"
+
+         --[[
+              This is the default method name for Lua handlers, see the optional
+              function-name in the LuaMapHandler directive to choose a different
+              entry point.
+         --]]
+         function handle(r)
+             r.content_type = "text/plain"
+
+             if r.method == 'GET' then
+                 r:puts("Hello Lua World!\n")
+                 for k, v in pairs( r:parseargs() ) do
+                     r:puts( string.format("%s: %s\n", k, v) )
+                 end
+             elseif r.method == 'POST' then
+                 r:puts("Hello Lua World!\n")
+                 for k, v in pairs( r:parsebody() ) do
+                     r:puts( string.format("%s: %s\n", k, v) )
+                 end
+             elseif r.method == 'PUT' then
+         -- use our own Error contents
+                 r:puts("Unsupported HTTP method " .. r.method)
+                 r.status = 405
+                 return apache2.OK
+             else
+         -- use the ErrorDocument
+                 return 501
+             end
+             return apache2.OK
+         end
+
+       This handler function just prints out the uri or form encoded arguments to a plaintext page.
+
+       This means (and in fact encourages) that you can have multiple handlers (or hooks, or filters) in the same script.
+
+       WRITING AUTHORIZATION PROVIDERS
+
+       mod_authz_core provides a high-level interface to authorization that is much easier to use than using into the relevant hooks directly. The first argument to the Require directive gives the name of the responsible authorization provider. For any Require line, mod_authz_core will call the authorization provider of the given name, passing the rest of the line as parameters. The provider will then check authorization and pass the result as return value.
+
+       The authz provider is normally called before authentication. If it needs to know the authenticated user name (or if the user will be authenticated at all), the provider must return apache2.AUTHZ_DENIED_NO_USER. This will cause authentication to proceed and the authz provider to be called a second time.
+
+       The following authz provider function takes two arguments, one ip address and one user name. It will allow access from the given ip address without authentication, or if the authenticated user matches the second argument:
+
+         authz_provider.lua
+
+         require 'apache2'
+
+         function authz_check_foo(r, ip, user)
+             if r.useragent_ip == ip then
+                 return apache2.AUTHZ_GRANTED
+             elseif r.user == nil then
+                 return apache2.AUTHZ_DENIED_NO_USER
+             elseif r.user == user then
+                 return apache2.AUTHZ_GRANTED
+             else
+                 return apache2.AUTHZ_DENIED
+             end
+         end
+
+       The following configuration registers this function as provider foo and configures it for URL /:
+
+         LuaAuthzProvider foo authz_provider.lua authz_check_foo
+         <Location "/">
+           Require foo 10.1.2.3 john_doe
+         </Location>
+
+       WRITING HOOKS
+
+       Hook functions are how modules (and Lua scripts) participate in the processing of requests. Each type of hook exposed by the server exists for a specific purpose, such as mapping requests to the file system, performing access control, or setting mime types:
+
+         Hook phase | mod_lua directive | Description
+         Quick handler | LuaQuickHandler | This is the first hook that will be called after a request has been mapped to a host or virtual host
+         Pre-Translate name | LuaHookPreTranslateName | This phase translates the requested URI into a filename on the system, before decoding occurs. Modules such as mod_proxy can operate in this phase.
+         Translate name | LuaHookTranslateName | This phase translates the requested URI into a filename on the system. Modules such as mod_alias and mod_rewrite operate in this phase.
+         Map to storage | LuaHookMapToStorage | This phase maps files to their physical, cached or external/proxied storage. It can be used by proxy or caching modules
+         Check Access | LuaHookAccessChecker | This phase checks whether a client has access to a resource. This phase is run before the user is authenticated, so beware.
+         Check User ID | LuaHookCheckUserID | This phase it used to check the negotiated user ID
+         Check Authorization | LuaHookAuthChecker or LuaAuthzProvider | This phase authorizes a user based on the negotiated credentials, such as user ID, client certificate etc.
+         Check Type | LuaHookTypeChecker | This phase checks the requested file and assigns a content type and a handler to it
+         Fixups | LuaHookFixups | This is the final "fix anything" phase before the content handlers are run. Any last-minute changes to the request should be made here.
+         Content handler | fx. .lua files or through LuaMapHandler | This is where the content is handled. Files are read, parsed, some are run, and the result is sent to the client
+         Logging | LuaHookLog | Once a request has been handled, it enters several logging phases, which logs the request in either the error or access log. Mod_lua is able to hook into the start of this and control logging output.
+       Hook functions are passed the request object as their only argument (except for LuaAuthzProvider, which also gets passed the arguments from the Require directive). They can return any value, depending on the hook, but most commonly they'll return OK, DONE, or DECLINED, which you can write in Lua as apache2.OK, apache2.DONE, or apache2.DECLINED, or else an HTTP status code.
+
+         translate_name.lua
+
+         -- example hook that rewrites the URI to a filesystem path.
+
+         require 'apache2'
+
+         function translate_name(r)
+             if r.uri == "/translate-name" then
+                 r.filename = r.document_root .. "/find_me.txt"
+                 return apache2.OK
+             end
+             -- we don't care about this URL, give another module a chance
+             return apache2.DECLINED
+         end
+
+         translate_name2.lua
+
+         --[[ example hook that rewrites one URI to another URI. It returns a
+              apache2.DECLINED to give other URL mappers a chance to work on the
+              substitution, including the core translate_name hook which maps based
+              on the DocumentRoot.
+
+              Note: Use the early/late flags in the directive to make it run before
+                    or after mod_alias.
+         --]]
+
+         require 'apache2'
+
+         function translate_name(r)
+             if r.uri == "/translate-name" then
+                 r.uri = "/find_me.txt"
+                 return apache2.DECLINED
+             end
+             return apache2.DECLINED
+         end
+
+       DATA STRUCTURES
+
+         request_rec
+       The request_rec is mapped in as a userdata. It has a metatable which lets you do useful things with it. For the most part it has the same fields as the request_rec struct, many of which are writable as well as readable. (The table fields' content can be changed, but the fields themselves cannot be set to different tables.)
+
+         Name | Lua type | Writable | Description
+         allowoverrides | string | no | The AllowOverride options applied to the current request.
+         ap_auth_type | string | yes | If an authentication check was made, this is set to the type of authentication (f.x. basic)
+         args | string | yes | The query string arguments extracted from the request (f.x. foo=bar&name=johnsmith)
+         assbackwards | boolean | no | Set to true if this is an HTTP/0.9 style request (e.g. GET /foo (with no headers) )
+         auth_name | string | no | The realm name used for authorization (if applicable).
+         banner | string | no | The server banner, f.x. Apache HTTP Server/2.4.3 openssl/0.9.8c
+         basic_auth_pw | string | no | The basic auth password sent with this request, if any
+         canonical_filename | string | no | The canonical filename of the request
+         content_encoding | string | no | The content encoding of the current request
+         content_type | string | yes | The content type of the current request, as determined in the type_check phase (f.x. image/gif or text/html)
+         context_prefix | string | no
+         context_document_root | string | no
+         document_root | string | no | The document root of the host
+         err_headers_out | table | no | MIME header environment for the response, printed even on errors and persist across internal redirects. A read-only lua table suitable for iteration is available as r:err_headers_out_table().
+         filename | string | yes | The file name that the request maps to, f.x. /www/example.com/foo.txt. This can be changed in the pre-translate-name, translate-name or map-to-storage phases of a request to allow the default handler (or script handlers) to serve a different file than what was requested.
+         handler | string | yes | The name of the handler that should serve this request, f.x. lua-script if it is to be served by mod_lua. This is typically set by the AddHandler or SetHandler directives, but could also be set via mod_lua to allow another handler to serve up a specific request that would otherwise not be served by it.
+         headers_in | table | yes | MIME header environment from the request. This contains headers such as Host, User-Agent, Referer and so on. A read-only lua table suitable for iteration is available as r:headers_in_table().
+         headers_out | table | yes | MIME header environment for the response. A read-only lua table suitable for iteration is available as r:headers_out_table().
+         hostname | string | no | The host name, as set by the Host: header or by a full URI.
+         is_https | boolean | no | Whether or not this request is done via HTTPS
+         is_initial_req | boolean | no | Whether this request is the initial request or a sub-request
+         limit_req_body | number | no | The size limit of the request body for this request, or 0 if no limit.
+         log_id | string | no | The ID to identify request in access and error log.
+         method | string | no | The request method, f.x. GET or POST.
+         notes | table | yes | A list of notes that can be passed on from one module to another. A read-only lua table suitable for iteration is available as r:notes_table().
+         options | string | no | The Options directive applied to the current request.
+         path_info | string | no | The PATH_INFO extracted from this request.
+         port | number | no | The server port used by the request.
+         protocol | string | no | The protocol used, f.x. HTTP/1.1
+         proxyreq | string | yes | Denotes whether this is a proxy request or not. This value is generally set in the post_read_request/pre_translate_name/translate_name phase of a request.
+         range | string | no | The contents of the Range: header.
+         remaining | number | no | The number of bytes remaining to be read from the request body.
+         server_built | string | no | The time the server executable was built.
+         server_name | string | no | The server name for this request.
+         some_auth_required | boolean | no | Whether some authorization is/was required for this request.
+         subprocess_env | table | yes | The environment variables set for this request. A read-only lua table suitable for iteration is available as r:subprocess_env_table().
+         started | number | no | The time the server was (re)started, in seconds since the epoch (Jan 1st, 1970)
+         status | number | yes | The (current) HTTP return code for this request, f.x. 200 or 404.
+         the_request | string | no | The request string as sent by the client, f.x. GET /foo/bar HTTP/1.1.
+         unparsed_uri | string | no | The unparsed URI of the request
+         uri | string | yes | The URI after it has been parsed by httpd
+         user | string | yes | If an authentication check has been made, this is set to the name of the authenticated user.
+         useragent_ip | string | no | The IP of the user agent making the request
+
+       BUILT IN FUNCTIONS
+
+       The request_rec object has (at least) the following methods:
+
+         r:flush()   -- flushes the output buffer.
+                     -- Returns true if the flush was successful, false otherwise.
+
+         while we_have_stuff_to_send do
+             r:puts("Bla bla bla\n") -- print something to client
+             r:flush() -- flush the buffer (send to client)
+             r.usleep(500000) -- fake processing time for 0.5 sec. and repeat
+         end
+
+         r:add_output_filter(filter_name) -- add an output filter:
+
+         r:add_output_filter("fooFilter") -- add the fooFilter to the output stream
+
+         r:sendfile(filename) -- sends an entire file to the client, using sendfile if supported by the current platform:
+
+         if use_sendfile_thing then
+             r:sendfile("/var/www/large_file.img")
+         end
+
+         r:parseargs() -- returns two tables; one standard key/value table for regular GET data,
+                       -- and one for multi-value data (fx. foo=1&foo=2&foo=3):
+
+         local GET, GETMULTI = r:parseargs()
+         r:puts("Your name is: " .. GET['name'] or "Unknown")
+
+         r:parsebody([sizeLimit]) -- parse the request body as a POST and return two lua tables,
+                                  -- just like r:parseargs().
+                                  -- An optional number may be passed to specify the maximum number
+                                  -- of bytes to parse. Default is 8192 bytes:
+
+         local POST, POSTMULTI = r:parsebody(1024*1024)
+         r:puts("Your name is: " .. POST['name'] or "Unknown")
+
+         r:puts("hello", " world", "!") -- print to response body, self explanatory
+
+         r:write("a single string") -- print to response body, self explanatory
+
+         r:escape_html("<html>test</html>") -- Escapes HTML code and returns the escaped result
+
+         r:base64_encode(string) -- Encodes a string using the Base64 encoding standard:
+
+         local encoded = r:base64_encode("This is a test") -- returns VGhpcyBpcyBhIHRlc3Q=
+
+         r:base64_decode(string) -- Decodes a Base64-encoded string:
+
+         local decoded = r:base64_decode("VGhpcyBpcyBhIHRlc3Q=") -- returns 'This is a test'
+
+         r:md5(string) -- Calculates and returns the MD5 digest of a string (binary safe):
+
+         local hash = r:md5("This is a test") -- returns ce114e4501d2f4e2dcea3e17b546f339
+
+         r:sha1(string) -- Calculates and returns the SHA1 digest of a string (binary safe):
+
+         local hash = r:sha1("This is a test") -- returns a54d88e06612d820bc3be72877c74f257b561b19
+
+         r:escape(string) -- URL-Escapes a string:
+
+         local url = "http://foo.bar/1 2 3 & 4 + 5"
+         local escaped = r:escape(url) -- returns 'http%3a%2f%2ffoo.bar%2f1+2+3+%26+4+%2b+5'
+
+         r:unescape(string) -- Unescapes an URL-escaped string:
+
+         local url = "http%3a%2f%2ffoo.bar%2f1+2+3+%26+4+%2b+5"
+         local unescaped = r:unescape(url) -- returns 'http://foo.bar/1 2 3 & 4 + 5'
+
+         r:construct_url(string) -- Constructs an URL from an URI
+
+         local url = r:construct_url(r.uri)
+
+         r.mpm_query(number) -- Queries the server for MPM information using ap_mpm_query:
+
+         local mpm = r.mpm_query(14)
+         if mpm == 1 then
+             r:puts("This server uses the Event MPM")
+         end
+
+         r:expr(string) -- Evaluates an expr string.
+
+         if r:expr("%{HTTP_HOST} =~ /^www/") then
+             r:puts("This host name starts with www")
+         end
+
+         r:scoreboard_process(a) -- Queries the server for information about the process at position a:
+
+         local process = r:scoreboard_process(1)
+         r:puts("Server 1 has PID " .. process.pid)
+
+         r:scoreboard_worker(a, b) -- Queries for information about the worker thread, b, in process a:
+
+         local thread = r:scoreboard_worker(1, 1)
+         r:puts("Server 1's thread 1 has thread ID " .. thread.tid .. " and is in " .. thread.status .. " status")
+
+         r:clock() -- Returns the current time with microsecond precision
+
+         r:requestbody(filename) -- Reads and returns the request body of a request.
+                         -- If 'filename' is specified, it instead saves the
+                         -- contents to that file:
+
+         local input = r:requestbody()
+         r:puts("You sent the following request body to me:\n")
+         r:puts(input)
+
+         r:add_input_filter(filter_name) -- Adds 'filter_name' as an input filter
+
+         r.module_info(module_name) -- Queries the server for information about a module
+
+         local mod = r.module_info("mod_lua.c")
+         if mod then
+             for k, v in pairs(mod.commands) do
+                r:puts( ("%s: %s\n"):format(k,v)) -- print out all directives accepted by this module
+             end
+         end
+
+         r:loaded_modules() -- Returns a list of modules loaded by httpd:
+
+         for k, module in pairs(r:loaded_modules()) do
+             r:puts("I have loaded module " .. module .. "\n")
+         end
+
+         r:runtime_dir_relative(filename) -- Compute the name of a run-time file (e.g., shared memory "file")
+                                  -- relative to the appropriate run-time directory.
+
+         r:server_info() -- Returns a table containing server information, such as
+                         -- the name of the httpd executable file, mpm used etc.
+
+         r:set_document_root(file_path) -- Sets the document root for the request to file_path
+
+         r:set_context_info(prefix, docroot) -- Sets the context prefix and context document root for a request
+
+         r:os_escape_path(file_path) -- Converts an OS path to a URL in an OS dependent way
+
+         r:escape_logitem(string) -- Escapes a string for logging
+
+         r.strcmp_match(string, pattern) -- Checks if 'string' matches 'pattern' using strcmp_match (globs).
+                                 -- fx. whether 'www.example.com' matches '*.example.com':
+
+         local match = r.strcmp_match("foobar.com", "foo*.com")
+         if match then
+             r:puts("foobar.com matches foo*.com")
+         end
+
+         r:set_keepalive() -- Sets the keepalive status for a request. Returns true if possible, false otherwise.
+
+         r:make_etag() -- Constructs and returns the etag for the current request.
+
+         r:send_interim_response(clear) -- Sends an interim (1xx) response to the client.
+                                -- if 'clear' is true, available headers will be sent and cleared.
+
+         r:custom_response(status_code, string) -- Construct and set a custom response for a given status code.
+                                        -- This works much like the ErrorDocument directive:
+
+         r:custom_response(404, "Baleted!")
+
+         r.exists_config_define(string) -- Checks whether a configuration definition exists or not:
+
+         if r.exists_config_define("FOO") then
+             r:puts("httpd was probably run with -DFOO, or it was defined in the configuration")
+         end
+
+         r:state_query(string) -- Queries the server for state information
+
+         r:stat(filename [,wanted]) -- Runs stat() on a file, and returns a table with file information:
+
+         local info = r:stat("/var/www/foo.txt")
+         if info then
+             r:puts("This file exists and was last modified at: " .. info.modified)
+         end
+
+         r:regex(string, pattern [,flags]) -- Runs a regular expression match on a string, returning captures if matched:
+
+         local matches = r:regex("foo bar baz", [[foo (\w+) (\S*)]])
+         if matches then
+             r:puts("The regex matched, and the last word captured ($2) was: " .. matches[2])
+         end
+
+         -- Example ignoring case sensitivity:
+         local matches = r:regex("FOO bar BAz", [[(foo) bar]], 1)
+
+         -- Flags can be a bitwise combination of:
+         -- 0x01: Ignore case
+         -- 0x02: Multiline search
+
+         r.usleep(number_of_microseconds) -- Puts the script to sleep for a given number of microseconds.
+
+         r:dbacquire(dbType[, dbParams]) -- Acquires a connection to a database and returns a database class.
+                                 -- See 'Database connectivity' for details.
+
+         r:ivm_set("key", value) -- Set an Inter-VM variable to hold a specific value.
+                                 -- These values persist even though the VM is gone or not being used,
+                                 -- and so should only be used if MaxConnectionsPerChild is > 0
+                                 -- Values can be numbers, strings and booleans, and are stored on a
+                                 -- per process basis (so they won't do much good with a prefork mpm)
+
+         r:ivm_get("key")        -- Fetches a variable set by ivm_set. Returns the contents of the variable
+                                 -- if it exists or nil if no such variable exists.
+
+         -- An example getter/setter that saves a global variable outside the VM:
+         function handle(r)
+             -- First VM to call this will get no value, and will have to create it
+             local foo = r:ivm_get("cached_data")
+             if not foo then
+                 foo = do_some_calcs() -- fake some return value
+                 r:ivm_set("cached_data", foo) -- set it globally
+             end
+             r:puts("Cached data is: ", foo)
+         end
+
+         r:htpassword(string [,algorithm [,cost]]) -- Creates a password hash from a string.
+                                                   -- algorithm: 0 = APMD5 (default), 1 = SHA, 2 = BCRYPT, 3 = CRYPT.
+                                                   -- cost: only valid with BCRYPT algorithm (default = 5).
+
+         r:mkdir(dir [,mode]) -- Creates a directory and sets mode to optional mode parameter.
+
+         r:mkrdir(dir [,mode]) -- Creates directories recursive and sets mode to optional mode parameter.
+
+         r:rmdir(dir) -- Removes a directory.
+
+         r:touch(file [,mtime]) -- Sets the file modification time to current time or to optional mtime msec value.
+
+         r:get_direntries(dir) -- Returns a table with all directory entries.
+
+         function handle(r)
+           local dir = r.context_document_root
+           for _, f in ipairs(r:get_direntries(dir)) do
+             local info = r:stat(dir .. "/" .. f)
+             if info then
+               local mtime = os.date(fmt, info.mtime / 1000000)
+               local ftype = (info.filetype == 2) and "[dir] " or "[file]"
+               r:puts( ("%s %s %10i %s\n"):format(ftype, mtime, info.size, f) )
+             end
+           end
+         end
+
+         r.date_parse_rfc(string) -- Parses a date/time string and returns seconds since epoche.
+
+         r:getcookie(key) -- Gets a HTTP cookie
+
+         r:setcookie{
+           key = [key],
+           value = [value],
+           expires = [expiry],
+           secure = [boolean],
+           httponly = [boolean],
+           path = [path],
+           domain = [domain]
+         } -- Sets a HTTP cookie, for instance:
+
+         r:setcookie{
+           key = "cookie1",
+           value = "HDHfa9eyffh396rt",
+           expires = os.time() + 86400,
+           secure = true
+         }
+
+         r:wsupgrade() -- Upgrades a connection to WebSockets if possible (and requested):
+         if r:wsupgrade() then -- if we can upgrade:
+             r:wswrite("Welcome to websockets!") -- write something to the client
+             r:wsclose()  -- goodbye!
+         end
+
+         r:wsread() -- Reads a WebSocket frame from a WebSocket upgraded connection (see above):
+
+         local line, isFinal = r:wsread() -- isFinal denotes whether this is the final frame.
+                                          -- If it isn't, then more frames can be read
+         r:wswrite("You wrote: " .. line)
+
+         r:wswrite(line) -- Writes a frame to a WebSocket client:
+         r:wswrite("Hello, world!")
+
+         r:wsclose() -- Closes a WebSocket request and terminates it for httpd:
+
+         if r:wsupgrade() then
+             r:wswrite("Write something: ")
+             local line = r:wsread() or "nothing"
+             r:wswrite("You wrote: " .. line);
+             r:wswrite("Goodbye!")
+             r:wsclose()
+         end
+
+       LOGGING FUNCTIONS
+
+         -- examples of logging messages
+         r:trace1("This is a trace log message") -- trace1 through trace8 can be used
+         r:debug("This is a debug log message")
+         r:info("This is an info log message")
+         r:notice("This is a notice log message")
+         r:warn("This is a warn log message")
+         r:err("This is an err log message")
+         r:alert("This is an alert log message")
+         r:crit("This is a crit log message")
+         r:emerg("This is an emerg log message")
+
+       APACHE2 PACKAGE
+
+       A package named apache2 is available with (at least) the following contents.
+
+         apache2.OK
+       internal constant OK. Handlers should return this if they've handled the request.
+
+         apache2.DECLINED
+       internal constant DECLINED. Handlers should return this if they are not going to handle the request.
+
+         apache2.DONE
+       internal constant DONE.
+
+         apache2.version
+       Apache HTTP server version string
+
+         apache2.HTTP_MOVED_TEMPORARILY
+       HTTP status code
+
+         apache2.PROXYREQ_NONE, apache2.PROXYREQ_PROXY, apache2.PROXYREQ_REVERSE, apache2.PROXYREQ_RESPONSE
+       internal constants used by mod_proxy
+
+         apache2.AUTHZ_DENIED, apache2.AUTHZ_GRANTED, apache2.AUTHZ_NEUTRAL, apache2.AUTHZ_GENERAL_ERROR, apache2.AUTHZ_DENIED_NO_USER
+       internal constants used by mod_authz_core
+
+       (Other HTTP status codes are not yet implemented.)
+
+       MODIFYING CONTENTS WITH LUA FILTERS
+
+       Filter functions implemented via LuaInputFilter or LuaOutputFilter are designed as three-stage non-blocking functions using coroutines to suspend and resume a function as buckets are sent down the filter chain. The core structure of such a function is:
+
+         function filter(r)
+             -- Our first yield is to signal that we are ready to receive buckets.
+             -- Before this yield, we can set up our environment, check for conditions,
+             -- and, if we deem it necessary, decline filtering a request altogether:
+             if something_bad then
+                 return -- This would skip this filter.
+             end
+             -- Regardless of whether we have data to prepend, a yield MUST be called here.
+             -- Note that only output filters can prepend data. Input filters must use the
+             -- final stage to append data to the content.
+             coroutine.yield([optional header to be prepended to the content])
+
+             -- After we have yielded, buckets will be sent to us, one by one, and we can
+             -- do whatever we want with them and then pass on the result.
+             -- Buckets are stored in the global variable 'bucket', so we create a loop
+             -- that checks if 'bucket' is not nil:
+             while bucket ~= nil do
+                 local output = mangle(bucket) -- Do some stuff to the content
+                 coroutine.yield(output) -- Return our new content to the filter chain
+             end
+
+             -- Once the buckets are gone, 'bucket' is set to nil, which will exit the
+             -- loop and land us here. Anything extra we want to append to the content
+             -- can be done by doing a final yield here. Both input and output filters
+             -- can append data to the content in this phase.
+             coroutine.yield([optional footer to be appended to the content])
+         end
+
+       DATABASE CONNECTIVITY
+
+       Mod_lua implements a simple database feature for querying and running commands on the most popular database engines (mySQL, PostgreSQL, FreeTDS, ODBC, SQLite, Oracle) as well as mod_dbd.
+
+       The dbType to use as the first parameter of dbacquire is case sensitive.
+
+       It should be one of mysql, pgsql, freetds, odbc, sqlite2, sqlite3, oracle or mod_dbd.
+
+       The example below shows how to acquire a database handle and return information from a table:
+
+         function handle(r)
+             -- Acquire a database handle
+             local database, err = r:dbacquire("mysql", "server=localhost,user=someuser,pass=somepass,dbname=mydb")
+             if not err then
+                 -- Select some information from it
+                 local results, err = database:select(r, "SELECT `name`, `age` FROM `people` WHERE 1")
+                 if not err then
+                     local rows = results(0) -- fetch all rows synchronously
+                     for k, row in pairs(rows) do
+                         r:puts( string.format("Name: %s, Age: %s<br/>", row[1], row[2]) )
+                     end
+                 else
+                     r:puts("Database query error: " .. err)
+                 end
+                 database:close()
+             else
+                 r:puts("Could not connect to the database: " .. err)
+             end
+         end
+
+       To utilize mod_dbd, specify mod_dbd as the database type, or leave the field blank:
+
+         local database = r:dbacquire("mod_dbd")
+
+       DATABASE OBJECT AND CONTAINED FUNCTIONS
+
+       The database object returned by dbacquire has the following methods:
+
+       Normal select and query from a database:
+
+         -- Run a statement and return the number of rows affected:
+         local affected, errmsg = database:query(r, "DELETE FROM `tbl` WHERE 1")
+
+         -- Run a statement and return a result set that can be used synchronously or async:
+         local result, errmsg = database:select(r, "SELECT * FROM `people` WHERE 1")
+
+       Using prepared statements (recommended):
+
+         -- Create and run a prepared statement:
+         local statement, errmsg = database:prepare(r, "DELETE FROM `tbl` WHERE `age` > %u")
+         if not errmsg then
+             local result, errmsg = statement:query(20) -- run the statement with age > 20
+         end
+
+         -- Fetch a prepared statement from a DBDPrepareSQL directive:
+         local statement, errmsg = database:prepared(r, "someTag")
+         if not errmsg then
+             local result, errmsg = statement:select("John Doe", 123) -- inject the values "John Doe" and 123 into the statement
+         end
+
+       Escaping values, closing databases etc:
+
+         -- Escape a value for use in a statement:
+         local escaped = database:escape(r, [["'|blabla]])
+
+         -- Close a database connection and free up handles:
+         database:close()
+
+         -- Check whether a database connection is up and running:
+         local connected = database:active()
+
+       WORKING WITH RESULT SETS
+
+       The result set returned by db:select or by the prepared statement functions created through db:prepare can be used to fetch rows synchronously or asynchronously, depending on the row number specified:  result(0) fetches all rows in a synchronous manner, returning a table of rows.  result(-1) fetches the next available row in the set, asynchronously.  result(N) fetches row number N, asynchronously:
+
+         -- fetch a result set using a regular query:
+         local result, err = db:select(r, "SELECT * FROM `tbl` WHERE 1")
+
+         local rows = result(0) -- Fetch ALL rows synchronously
+         local row = result(-1) -- Fetch the next available row, asynchronously
+         local row = result(1234) -- Fetch row number 1234, asynchronously
+         local row = result(-1, true) -- Fetch the next available row, using row names as key indexes.
+
+       One can construct a function that returns an iterative function to iterate over all rows in a synchronous or asynchronous way, depending on the async argument:
+
+         function rows(resultset, async)
+             local a = 0
+             local function getnext()
+                 a = a + 1
+                 local row = resultset(-1)
+                 return row and a or nil, row
+             end
+             if not async then
+                 return pairs(resultset(0))
+             else
+                 return getnext, self
+             end
+         end
+
+         local statement, err = db:prepare(r, "SELECT * FROM `tbl` WHERE `age` > %u")
+         if not err then
+              -- fetch rows asynchronously:
+             local result, err = statement:select(20)
+             if not err then
+                 for index, row in rows(result, true) do
+                     ....
+                 end
+             end
+
+              -- fetch rows synchronously:
+             local result, err = statement:select(20)
+             if not err then
+                 for index, row in rows(result, false) do
+                     ....
+                 end
+             end
+         end
+
+       CLOSING A DATABASE CONNECTION
+
+       Database handles should be closed using database:close() when they are no longer needed. If you do not close them manually, they will eventually be garbage collected and closed by mod_lua, but you may end up having too many unused connections to the database if you leave the closing up to mod_lua. Essentially, the following two measures are the same:
+
+         -- Method 1: Manually close a handle
+         local database = r:dbacquire("mod_dbd")
+         database:close() -- All done
+
+         -- Method 2: Letting the garbage collector close it
+         local database = r:dbacquire("mod_dbd")
+         database = nil -- throw away the reference
+         collectgarbage() -- close the handle via GC
+
+       PRECAUTIONS WHEN WORKING WITH DATABASES
+
+       Although the standard query and run functions are freely available, it is recommended that you use prepared statements whenever possible, to both optimize performance (if your db handle lives on for a long time) and to minimize the risk of SQL injection attacks. run and query should only be used when there are no variables inserted into a statement (a static statement). When using dynamic statements, use db:prepare or db:prepared.
+
+       LUAAUTHZPROVIDER DIRECTIVE
+
+         Description: | Plug an authorization provider function into mod_authz_core
+         Syntax: | LuaAuthzProvider provider_name /path/to/lua/script.lua function_name
+         Context: | server config
+         Status: | Extension
+         Module: | mod_lua
+         Compatibility: | 2.4.3 and later
+       After a lua function has been registered as authorization provider, it can be used with the Require directive:
+
+         LuaRoot "/usr/local/apache2/lua"
+         LuaAuthzProvider foo authz.lua authz_check_foo
+         <Location "/">
+           Require foo johndoe
+         </Location>
+
+         require "apache2"
+         function authz_check_foo(r, who)
+             if r.user ~= who then return apache2.AUTHZ_DENIED
+             return apache2.AUTHZ_GRANTED
+         end
+
+       LUACODECACHE DIRECTIVE
+
+         Description: | Configure the compiled code cache.
+         Syntax: | LuaCodeCache stat|forever|never
+         Default: | LuaCodeCache stat
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       Specify the behavior of the in-memory code cache. The default is stat, which stats the top level script (not any included ones) each time that file is needed, and reloads it if the modified time indicates it is newer than the one it has already loaded. The other values cause it to keep the file cached forever (don't stat and replace) or to never cache the file.
+
+       In general stat or forever is good for production, and stat or never for development.
+
+       EXAMPLES
+
+         LuaCodeCache stat
+         LuaCodeCache forever
+         LuaCodeCache never
+
+       LUAHOOKACCESSCHECKER DIRECTIVE
+
+         Description: | Provide a hook for the access_checker phase of request processing
+         Syntax: | LuaHookAccessChecker /path/to/lua/script.lua hook_function_name [early|late]
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+         Compatibility: | The optional third argument is supported in 2.3.15 and later
+       Add your hook to the access_checker phase. An access checker hook function usually returns OK, DECLINED, or HTTP_FORBIDDEN.
+
+       ORDERING
+
+       The optional arguments "early" or "late" control when this script runs relative to other modules.
+
+       LUAHOOKAUTHCHECKER DIRECTIVE
+
+         Description: | Provide a hook for the auth_checker phase of request processing
+         Syntax: | LuaHookAuthChecker /path/to/lua/script.lua hook_function_name [early|late]
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+         Compatibility: | The optional third argument is supported in 2.3.15 and later
+       Invoke a lua function in the auth_checker phase of processing a request. This can be used to implement arbitrary authentication and authorization checking. A very simple example:
+
+         require 'apache2'
+
+         -- fake authcheck hook
+         -- If request has no auth info, set the response header and
+         -- return a 401 to ask the browser for basic auth info.
+         -- If request has auth info, don't actually look at it, just
+         -- pretend we got userid 'foo' and validated it.
+         -- Then check if the userid is 'foo' and accept the request.
+         function authcheck_hook(r)
+
+            -- look for auth info
+            auth = r.headers_in['Authorization']
+            if auth ~= nil then
+              -- fake the user
+              r.user = 'foo'
+            end
+
+            if r.user == nil then
+               r:debug("authcheck: user is nil, returning 401")
+               r.err_headers_out['WWW-Authenticate'] = 'Basic realm="WallyWorld"'
+               return 401
+            elseif r.user == "foo" then
+               r:debug('user foo: OK')
+            else
+               r:debug("authcheck: user='" .. r.user .. "'")
+               r.err_headers_out['WWW-Authenticate'] = 'Basic realm="WallyWorld"'
+               return 401
+            end
+            return apache2.OK
+         end
+
+       ORDERING
+
+       The optional arguments "early" or "late" control when this script runs relative to other modules.
+
+       LUAHOOKCHECKUSERID DIRECTIVE
+
+         Description: | Provide a hook for the check_user_id phase of request processing
+         Syntax: | LuaHookCheckUserID /path/to/lua/script.lua hook_function_name [early|late]
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+         Compatibility: | The optional third argument is supported in 2.3.15 and later
+       ...
+
+       ORDERING
+
+       The optional arguments "early" or "late" control when this script runs relative to other modules.
+
+       LUAHOOKFIXUPS DIRECTIVE
+
+         Description: | Provide a hook for the fixups phase of a request processing
+         Syntax: | LuaHookFixups /path/to/lua/script.lua hook_function_name
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       Just like LuaHookTranslateName, but executed at the fixups phase
+
+       LUAHOOKINSERTFILTER DIRECTIVE
+
+         Description: | Provide a hook for the insert_filter phase of request processing
+         Syntax: | LuaHookInsertFilter /path/to/lua/script.lua hook_function_name
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       Not Yet Implemented
+
+       LUAHOOKLOG DIRECTIVE
+
+         Description: | Provide a hook for the access log phase of a request processing
+         Syntax: | LuaHookLog /path/to/lua/script.lua log_function_name
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       This simple logging hook allows you to run a function when httpd enters the logging phase of a request. With it, you can append data to your own logs, manipulate data before the regular log is written, or prevent a log entry from being created. To prevent the usual logging from happening, simply return apache2.DONE in your logging handler, otherwise return apache2.OK to tell httpd to log as normal.
+
+       Example:
+
+         LuaHookLog "/path/to/script.lua" logger
+
+         -- /path/to/script.lua --
+         function logger(r)
+             -- flip a coin:
+             -- If 1, then we write to our own Lua log and tell httpd not to log
+             -- in the main log.
+             -- If 2, then we just sanitize the output a bit and tell httpd to
+             -- log the sanitized bits.
+
+             if math.random(1,2) == 1 then
+                 -- Log stuff ourselves and don't log in the regular log
+                 local f = io.open("/foo/secret.log", "a")
+                 if f then
+                     f:write("Something secret happened at " .. r.uri .. "\n")
+                     f:close()
+                 end
+                 return apache2.DONE -- Tell httpd not to use the regular logging functions
+             else
+                 r.uri = r.uri:gsub("somesecretstuff", "") -- sanitize the URI
+                 return apache2.OK -- tell httpd to log it.
+             end
+         end
+
+       LUAHOOKMAPTOSTORAGE DIRECTIVE
+
+         Description: | Provide a hook for the map_to_storage phase of request processing
+         Syntax: | LuaHookMapToStorage /path/to/lua/script.lua hook_function_name
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       Like LuaHookTranslateName but executed at the map-to-storage phase of a request. Modules like mod_cache run at this phase, which makes for an interesting example on what to do here:
+
+         LuaHookMapToStorage "/path/to/lua/script.lua" check_cache
+
+         require"apache2"
+         cached_files = {}
+
+         function read_file(filename)
+             local input = io.open(filename, "r")
+             if input then
+                 local data = input:read("*a")
+                 cached_files[filename] = data
+                 file = cached_files[filename]
+                 input:close()
+             end
+             return cached_files[filename]
+         end
+
+         function check_cache(r)
+             if r.filename:match("%.png$") then -- Only match PNG files
+                 local file = cached_files[r.filename] -- Check cache entries
+                 if not file then
+                     file = read_file(r.filename)  -- Read file into cache
+                 end
+                 if file then -- If file exists, write it out
+                     r.status = 200
+                     r:write(file)
+                     r:info(("Sent %s to client from cache"):format(r.filename))
+                     return apache2.DONE -- skip default handler for PNG files
+                 end
+             end
+             return apache2.DECLINED -- If we had nothing to do, let others serve this.
+         end
+
+       LUAHOOKPRETRANSLATE DIRECTIVE
+
+         Description: | Provide a hook for the pre_translate phase of a request processing
+         Syntax: | LuaHookPreTranslate /path/to/lua/script.lua hook_function_name
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       Just like LuaHookTranslateName, but executed at the pre_translate phase, where the URI-path is not percent decoded.
+
+       LUAHOOKTRANSLATENAME DIRECTIVE
+
+         Description: | Provide a hook for the translate name phase of request processing
+         Syntax: | LuaHookTranslateName /path/to/lua/script.lua hook_function_name [early|late]
+         Context: | server config, virtual host
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+         Compatibility: | The optional third argument is supported in 2.3.15 and later
+       Add a hook (at APR_HOOK_MIDDLE) to the translate name phase of request processing. The hook function receives a single argument, the request_rec, and should return a status code, which is either an HTTP error code, or the constants defined in the apache2 module: apache2.OK, apache2.DECLINED, or apache2.DONE.
+
+       For those new to hooks, basically each hook will be invoked until one of them returns apache2.OK. If your hook doesn't want to do the translation it should just return apache2.DECLINED. If the request should stop processing, then return apache2.DONE.
+
+       Example:
+
+         # httpd.conf
+         LuaHookTranslateName "/scripts/conf/hooks.lua" silly_mapper
+
+         -- /scripts/conf/hooks.lua --
+         require "apache2"
+         function silly_mapper(r)
+             if r.uri == "/" then
+                 r.filename = "/var/www/home.lua"
+                 return apache2.OK
+             else
+                 return apache2.DECLINED
+             end
+         end
+
+       CONTEXT
+
+       This directive is not valid in <Directory>, <Files>, or htaccess context.
+
+       ORDERING
+
+       The optional arguments "early" or "late" control when this script runs relative to other modules.
+
+       LUAHOOKTYPECHECKER DIRECTIVE
+
+         Description: | Provide a hook for the type_checker phase of request processing
+         Syntax: | LuaHookTypeChecker /path/to/lua/script.lua hook_function_name
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       This directive provides a hook for the type_checker phase of the request processing. This phase is where requests are assigned a content type and a handler, and thus can be used to modify the type and handler based on input:
+
+         LuaHookTypeChecker "/path/to/lua/script.lua" type_checker
+
+             function type_checker(r)
+                 if r.uri:match("%.to_gif$") then -- match foo.png.to_gif
+                     r.content_type = "image/gif" -- assign it the image/gif type
+                     r.handler = "gifWizard"      -- tell the gifWizard module to handle this
+                     r.filename = r.uri:gsub("%.to_gif$", "") -- fix the filename requested
+                     return apache2.OK
+                 end
+
+                 return apache2.DECLINED
+             end
+
+       LUAINHERIT DIRECTIVE
+
+         Description: | Controls how parent configuration sections are merged into children
+         Syntax: | LuaInherit none|parent-first|parent-last
+         Default: | LuaInherit parent-first
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+         Compatibility: | 2.4.0 and later
+       By default, if LuaHook* directives are used in overlapping Directory or Location configuration sections, the scripts defined in the more specific section are run after those defined in the more generic section (LuaInherit parent-first). You can reverse this order, or make the parent context not apply at all.
+
+       In previous 2.3.x releases, the default was effectively to ignore LuaHook* directives from parent configuration sections.
+
+       LUAINPUTFILTER DIRECTIVE
+
+         Description: | Provide a Lua function for content input filtering
+         Syntax: | LuaInputFilter filter_name /path/to/lua/script.lua function_name
+         Context: | server config
+         Status: | Extension
+         Module: | mod_lua
+         Compatibility: | 2.4.5 and later
+       Provides a means of adding a Lua function as an input filter. As with output filters, input filters work as coroutines, first yielding before buffers are sent, then yielding whenever a bucket needs to be passed down the chain, and finally (optionally) yielding anything that needs to be appended to the input data. The global variable bucket holds the buckets as they are passed onto the Lua script:
+
+         LuaInputFilter myInputFilter "/www/filter.lua" input_filter
+         <Files "*.lua">
+           SetInputFilter myInputFilter
+         </Files>
+
+         --[[
+             Example input filter that converts all POST data to uppercase.
+         ]]--
+         function input_filter(r)
+             print("luaInputFilter called") -- debug print
+             coroutine.yield() -- Yield and wait for buckets
+             while bucket do -- For each bucket, do...
+                 local output = string.upper(bucket) -- Convert all POST data to uppercase
+                 coroutine.yield(output) -- Send converted data down the chain
+             end
+             -- No more buckets available.
+             coroutine.yield("&filterSignature=1234") -- Append signature at the end
+         end
+
+       The input filter supports denying/skipping a filter if it is deemed unwanted:
+
+         function input_filter(r)
+             if not good then
+                 return -- Simply deny filtering, passing on the original content instead
+             end
+             coroutine.yield() -- wait for buckets
+             ... -- insert filter stuff here
+         end
+
+       See "Modifying contents with Lua filters" for more information.
+
+       LUAMAPHANDLER DIRECTIVE
+
+         Description: | Map a path to a lua handler
+         Syntax: | LuaMapHandler uri-pattern /path/to/lua/script.lua [function-name]
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       This directive matches a uri pattern to invoke a specific handler function in a specific file. It uses PCRE regular expressions to match the uri, and supports interpolating match groups into both the file path and the function name. Be careful writing your regular expressions to avoid security issues.
+
+       EXAMPLES
+
+         LuaMapHandler "/(\w+)/(\w+)" "/scripts/$1.lua" "handle_$2"
+
+       This would match uri's such as /photos/show?id=9 to the file /scripts/photos.lua and invoke the handler function handle_show on the lua vm after loading that file.
+
+         LuaMapHandler "/bingo" "/scripts/wombat.lua"
+
+       This would invoke the "handle" function, which is the default if no specific function name is provided.
+
+       LUAOUTPUTFILTER DIRECTIVE
+
+         Description: | Provide a Lua function for content output filtering
+         Syntax: | LuaOutputFilter filter_name /path/to/lua/script.lua function_name
+         Context: | server config
+         Status: | Extension
+         Module: | mod_lua
+         Compatibility: | 2.4.5 and later
+       Provides a means of adding a Lua function as an output filter. As with input filters, output filters work as coroutines, first yielding before buffers are sent, then yielding whenever a bucket needs to be passed down the chain, and finally (optionally) yielding anything that needs to be appended to the input data. The global variable bucket holds the buckets as they are passed onto the Lua script:
+
+         LuaOutputFilter myOutputFilter "/www/filter.lua" output_filter
+         <Files "*.lua">
+           SetOutputFilter myOutputFilter
+         </Files>
+
+         --[[
+             Example output filter that escapes all HTML entities in the output
+         ]]--
+         function output_filter(r)
+             coroutine.yield("(Handled by myOutputFilter)<br/>\n") -- Prepend some data to the output,
+                                                                   -- yield and wait for buckets.
+             while bucket do -- For each bucket, do...
+                 local output = r:escape_html(bucket) -- Escape all output
+                 coroutine.yield(output) -- Send converted data down the chain
+             end
+             -- No more buckets available.
+         end
+
+       As with the input filter, the output filter supports denying/skipping a filter if it is deemed unwanted:
+
+         function output_filter(r)
+             if not r.content_type:match("text/html") then
+                 return -- Simply deny filtering, passing on the original content instead
+             end
+             coroutine.yield() -- wait for buckets
+             ... -- insert filter stuff here
+         end
+
+       LUA FILTERS WITH MOD_FILTER
+
+       When a Lua filter is used as the underlying provider via the FilterProvider directive, filtering will only work when the filter-name is identical to the provider-name.
+
+       See "Modifying contents with Lua filters" for more information.
+
+       LUAPACKAGECPATH DIRECTIVE
+
+         Description: | Add a directory to lua's package.cpath
+         Syntax: | LuaPackageCPath /path/to/include/?.soa
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       Add a path to lua's shared library search path. Follows the same conventions as lua. This just munges the package.cpath in the lua vms.
+
+       LUAPACKAGEPATH DIRECTIVE
+
+         Description: | Add a directory to lua's package.path
+         Syntax: | LuaPackagePath /path/to/include/?.lua
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       Add a path to lua's module search path. Follows the same conventions as lua. This just munges the package.path in the lua vms.
+
+       EXAMPLES
+
+         LuaPackagePath "/scripts/lib/?.lua"
+         LuaPackagePath "/scripts/lib/?/init.lua"
+
+       LUAQUICKHANDLER DIRECTIVE
+
+         Description: | Provide a hook for the quick handler of request processing
+         Syntax: | LuaQuickHandler /path/to/script.lua hook_function_name
+         Context: | server config, virtual host
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       This phase is run immediately after the request has been mapped to a virtual host, and can be used to either do some request processing before the other phases kick in, or to serve a request without the need to translate, map to storage et cetera. As this phase is run before anything else, directives such as <Location> or <Directory> are void in this phase, just as URIs have not been properly parsed yet.
+
+       CONTEXT
+
+       This directive is not valid in <Directory>, <Files>, or htaccess context.
+
+       LUAROOT DIRECTIVE
+
+         Description: | Specify the base path for resolving relative paths for mod_lua directives
+         Syntax: | LuaRoot /path/to/a/directory
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       Specify the base path which will be used to evaluate all relative paths within mod_lua. If not specified they will be resolved relative to the current working directory, which may not always work well for a server.
+
+       LUASCOPE DIRECTIVE
+
+         Description: | One of once, request, conn, thread -- default is once
+         Syntax: | LuaScope once|request|conn|thread|server [min] [max]
+         Default: | LuaScope once
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_lua
+       Specify the life cycle scope of the Lua interpreter which will be used by handlers in this "Directory." The default is "once"
+
+         once:
+       use the interpreter once and throw it away.
+
+         request:
+       use the interpreter to handle anything based on the same file within this request, which is also request scoped.
+
+         conn:
+       Same as request but attached to the connection_rec
+
+         thread:
+       Use the interpreter for the lifetime of the thread handling the request (only available with threaded MPMs).
+
+         server:
+       This one is different than others because the server scope is quite long lived, and multiple threads will have the same server_rec. To accommodate this, server scoped Lua states are stored in an apr resource list. The min and max arguments specify the minimum and maximum number of Lua states to keep in the pool.
+
+       Generally speaking, the thread and server scopes execute roughly 2-3 times faster than the rest, because they don't have to spawn new Lua states on every request (especially with the event MPM, as even keepalive requests will use a new thread for each request). If you are satisfied that your scripts will not have problems reusing a state, then the thread or server scopes should be used for maximum performance. While the thread scope will provide the fastest responses, the server scope will use less memory, as states are pooled, allowing f.x. 1000 threads to share only 100 Lua states, thus using only 10% of the memory required by the thread scope.
+
+Apache HTTP Server manual               bundled documentation

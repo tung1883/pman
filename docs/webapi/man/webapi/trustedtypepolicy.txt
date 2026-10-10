@@ -1,0 +1,48 @@
+WEBAPI.TRUSTEDTYPEPOLICY(1)      Sandbox manual      WEBAPI.TRUSTEDTYPEPOLICY(1)
+
+       NAME
+
+       TrustedTypePolicy - The TrustedTypePolicy interface of the Trusted Types API defines a group of functions which create TrustedType objects.
+
+       TRUSTEDTYPEPOLICY
+
+       The TrustedTypePolicy interface of the Trusted Types API defines a group of functions which create TrustedType objects.
+
+       A TrustedTypePolicy object is created by TrustedTypePolicyFactory.createPolicy() to define a policy for enforcing security rules on input. Therefore, TrustedTypePolicy has no constructor.
+
+       INSTANCE PROPERTIES
+
+        * TrustedTypePolicy.name (read-only)
+          * : A string containing the name of the policy.
+
+       INSTANCE METHODS
+
+        * TrustedTypePolicy.createHTML()
+          * : Creates a TrustedHTML object.
+        * TrustedTypePolicy.createScript()
+          * : Creates a TrustedScript object.
+        * TrustedTypePolicy.createScriptURL()
+          * : Creates a TrustedScriptURL object.
+
+       EXAMPLES
+
+       In the below example we create a policy that will create TrustedHTML objects using TrustedTypePolicyFactory.createPolicy(). We can then use TrustedTypePolicy.createHTML to create a sanitized HTML string to be inserted into the document.
+
+       The sanitized value can then be used with Element.innerHTML to ensure that no new HTML elements can be injected.
+
+         <div id="myDiv"></div>
+
+         const escapeHTMLPolicy = trustedTypes.createPolicy("myEscapePolicy", {
+           createHTML: (string) => string.replace(/</g, "&lt;"),
+         });
+
+         let el = document.getElementById("myDiv");
+         const escaped = escapeHTMLPolicy.createHTML("<img src=x onerror=alert(1)>");
+         console.log(escaped instanceof TrustedHTML); // true
+         el.innerHTML = escaped;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

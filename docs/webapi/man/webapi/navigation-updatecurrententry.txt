@@ -1,0 +1,50 @@
+WEBAPI.NAVIGATION-UPDATECURRENTENTRY(1) Sandbox manual WEBAPI.NAVIGATION-UPDATECURRENTENTRY(1)
+
+       NAME
+
+       Navigation: updateCurrentEntry() method - The updateCurrentEntry() method of the Navigation interface updates the state of the currentEntry; used in cases where the state change will
+
+       NAVIGATION: UPDATECURRENTENTRY() METHOD
+
+       The updateCurrentEntry() method of the Navigation interface updates the state of the currentEntry; used in cases where the state change will be independent of a navigation or reload.
+
+       SYNTAX
+
+         updateCurrentEntry(options)
+
+       PARAMETERS
+
+        * options
+          * : An options object containing the following properties:
+            * state
+              * : Developer-defined information to be stored in the associated NavigationHistoryEntry once the navigation is complete, retrievable via getState(). This can be any data type. You might, for example, wish to store a page visit count for analytics purposes, or store UI state details so the view can be shown exactly as the user last left it. Any data stored in state must be structured-cloneable.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * DataCloneError DOMException
+          * : Thrown if the state parameter had values included in it that are not structured-cloneable.
+        * InvalidStateError DOMException
+          * : Thrown if the Navigation.currentEntry is null, i.e., there is no current history entry. This could occur for example if the current page is about:blank.
+
+       EXAMPLES
+
+       You could use something like the following to update the open/closed state of a element so that the state can be restored when reloading the page or navigating back from somewhere else.
+
+         detailsElem.addEventListener("toggle", () => {
+           navigation.updateCurrentEntry({ state: { detailOpen: detailsElem.open } });
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+
+Web APIs manual                         from the official documentation

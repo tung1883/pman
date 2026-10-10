@@ -1,0 +1,51 @@
+WEBAPI.RTCRTPTRANSCEIVER(1)      Sandbox manual      WEBAPI.RTCRTPTRANSCEIVER(1)
+
+       NAME
+
+       RTCRtpTransceiver - The WebRTC interface RTCRtpTransceiver describes a permanent pairing of an RTCRtpSender and an RTCRtpReceiver, along with some shared state.
+
+       RTCRTPTRANSCEIVER
+
+       The WebRTC interface RTCRtpTransceiver describes a permanent pairing of an RTCRtpSender and an RTCRtpReceiver, along with some shared state.
+
+       Each SDP media section describes one bidirectional SRTP ("Secure Real Time Protocol") stream (excepting the media section for RTCDataChannel, if present). This pairing of send and receive SRTP streams is significant for some applications, so RTCRtpTransceiver is used to represent this pairing, along with other important state from the media section. Each non-disabled SRTP media section is always represented by exactly one transceiver.
+
+       A transceiver is uniquely identified using its mid property, which is the same as the media ID (mid) of its corresponding m-line. An RTCRtpTransceiver is associated with an m-line if its mid is non-null; otherwise it's considered disassociated.
+
+       INSTANCE PROPERTIES
+
+        * currentDirection (read-only)
+          * : A read-only string which indicates the transceiver's current negotiated directionality, or null if the transceiver has never participated in an exchange of offers and answers.
+       To change the transceiver's directionality, set the value of the direction property.
+
+        * direction
+          * : A string which is used to set the transceiver's desired direction.
+        * mid (read-only)
+          * : The media ID of the m-line associated with this transceiver. This association is established, when possible, whenever either a local or remote description is applied. This field is null before a description containing the corresponding m-line is applied, or if a rollback undoes that association.
+        * receiver (read-only)
+          * : The RTCRtpReceiver object that handles receiving and decoding incoming media.
+        * sender (read-only)
+          * : The RTCRtpSender object responsible for encoding and sending data to the remote peer.
+        * stopped (read-only) (deprecated) {{non-standard_inline}}
+          * : Indicates whether or not sending and receiving using the paired RTCRtpSender and RTCRtpReceiver has been permanently disabled, either due to SDP offer/answer, or due to a call to stop().
+
+       INSTANCE METHODS
+
+        * setCodecPreferences()
+          * : Configures the transceiver's preferred list of codecs, overriding user agent settings.
+        * stop()
+          * : Permanently stops the RTCRtpTransceiver.
+       The associated sender stops sending data, and the associated receiver likewise stops receiving and decoding incoming data.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * Introduction to the Real-time Transport Protocol (RTP)
+        * RTCPeerConnection.addTrack() and RTCPeerConnection.addTransceiver() both create transceivers
+        * RTCRtpReceiver and RTCRtpSender
+
+Web APIs manual                         from the official documentation

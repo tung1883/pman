@@ -1,0 +1,77 @@
+WEBAPI.RTCICETRANSPORT-SELECTEDCANDIDATEPAIRCHANGE-EVENT(1) Sandbox manual WEBAPI.RTCICETRANSPORT-SELECTEDCANDIDATEPAIRCHANGE-EVENT(1)
+
+       NAME
+
+       RTCIceTransport: selectedcandidatepairchange event - A selectedcandidatepairchange event is sent to an RTCIceTransport when the ICE agent selects a new pair of candidates that describe the endp
+
+       RTCICETRANSPORT: SELECTEDCANDIDATEPAIRCHANGE EVENT
+
+       A selectedcandidatepairchange event is sent to an RTCIceTransport when the ICE agent selects a new pair of candidates that describe the endpoints of a viable connection.
+
+       The pair of candidates is in turn described by an RTCIceCandidatePair object which contains one RTCIceCandidate representing the local end of the connection, and another representing the remote end of the connection.
+
+       Together, the candidates can be used to establish a connection to be used by the RTCIceTransport, and, by extension, by an RTCPeerConnection.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("selectedcandidatepairchange", (event) => { })
+
+         onselectedcandidatepairchange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       This example creates an event handler for selectedcandidatepairchange that updates a display providing the user information about the progress of the ICE negotiation for an RTCPeerConnection called pc.
+
+         let iceTransport = pc.getSenders()[0].transport.iceTransport;
+         let localProtoElem = document.getElementById("local-protocol");
+         let remoteProtoElem = document.getElementById("remote-protocol");
+
+         iceTransport.addEventListener("selectedcandidatepairchange", (ev) => {
+           let pair = iceTransport.getSelectedCandidatePair();
+           localProtoElem.innerText = pair.local.protocol.toUpperCase();
+           remoteProtoElem.innerText = pair.remote.protocol.toUpperCase();
+         });
+
+       This can also be done by setting the onselectedcandidatepairchange event handler property directly.
+
+         let iceTransport = pc.getSenders()[0].transport.iceTransport;
+         let localProtoElem = document.getElementById("local-protocol");
+         let remoteProtoElem = document.getElementById("remote-protocol");
+
+         iceTransport.onselectedcandidatepairchange = (ev) => {
+           let pair = iceTransport.getSelectedCandidatePair();
+           localProtoElem.innerText = pair.local.protocol.toUpperCase();
+           remoteProtoElem.innerText = pair.remote.protocol.toUpperCase();
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * WebRTC connectivity
+
+       RELATED RTCICETRANSPORT EVENTS
+
+        * statechange
+        * gatheringstatechange
+
+       RELATED RTCPEERCONNECTION EVENTS
+
+        * negotiationneeded
+        * signalingstatechange
+        * iceconnectionstatechange
+        * icegatheringstatechange
+        * connectionstatechange
+
+Web APIs manual                         from the official documentation

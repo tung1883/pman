@@ -1,0 +1,71 @@
+WEBAPI.VISIBILITYSTATEENTRY(1)   Sandbox manual   WEBAPI.VISIBILITYSTATEENTRY(1)
+
+       NAME
+
+       VisibilityStateEntry - The VisibilityStateEntry interface provides timings of page visibility state changes, i.e., when a tab changes from the foreground to the ba
+
+       VISIBILITYSTATEENTRY
+
+       The VisibilityStateEntry interface provides timings of page visibility state changes, i.e., when a tab changes from the foreground to the background or vice versa.
+
+       This can be used to pinpoint visibility changes on the performance timeline, and cross-reference them against other performance entries such as "first-contentful-paint" (see PerformancePaintTiming).
+
+       There are two key visibility state change times that this API reports on:
+
+        * visible: The time when the page becomes visible (i.e., when its tab moves into the foreground).
+        * hidden: The time when the pages become hidden (i.e., when its tab moves into the background).
+       The performance timeline will always have a "visibility-state" entry with a startTime of 0 and a name representing the initial page visibility state.
+
+       > Like other Performance APIs, this API extends PerformanceEntry.
+
+       INSTANCE PROPERTIES
+
+       This interface has no properties but it extends the properties of PerformanceEntry by qualifying and constraining them as follows:
+
+        * PerformanceEntry.entryType (read-only) (experimental)
+          * : Returns "visibility-state".
+        * PerformanceEntry.name (read-only) (experimental)
+          * : Returns either "visible" or "hidden".
+        * PerformanceEntry.startTime (read-only) (experimental)
+          * : Returns the timestamp when the visibility state change occurred.
+        * PerformanceEntry.duration (read-only) (experimental)
+          * : Returns 0.
+
+       INSTANCE METHODS
+
+       This interface has no methods.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The following function could be used to log a table of all "visibility-state" performance entries to the console:
+
+         function getVisibilityStateEntries() {
+           const visibilityStateEntries =
+             performance.getEntriesByType("visibility-state");
+           console.table(visibilityStateEntries);
+         }
+
+       CORRELATING VISIBILITY STATE CHANGES WITH PAINT TIMING
+
+       The below function gets a reference to all "visibility-state" entries and the "first-contentful-paint" entry, then uses Array.some() to test whether any of the "hidden" visibility entries occurred before the first contentful paint:
+
+         function wasHiddenBeforeFirstContentfulPaint() {
+           const fcpEntry = performance.getEntriesByName("first-contentful-paint")[0];
+           const visibilityStateEntries =
+             performance.getEntriesByType("visibility-state");
+           return visibilityStateEntries.some(
+             (e) => e.startTime < fcpEntry.startTime && e.name === "hidden",
+           );
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+       Page Visibility API
+
+Web APIs manual                         from the official documentation

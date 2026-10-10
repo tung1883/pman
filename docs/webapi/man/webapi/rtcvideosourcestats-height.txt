@@ -1,0 +1,40 @@
+WEBAPI.RTCVIDEOSOURCESTATS-HEIGHT(1) Sandbox manual WEBAPI.RTCVIDEOSOURCESTATS-HEIGHT(1)
+
+       NAME
+
+       RTCVideoSourceStats: height property - The height property of the RTCVideoSourceStats dictionary indicates the height, in pixels, of the last frame originating from this source.
+
+       RTCVIDEOSOURCESTATS: HEIGHT PROPERTY
+
+       The height property of the RTCVideoSourceStats dictionary indicates the height, in pixels, of the last frame originating from this source.
+
+       This property is not defined on the stats object until after the first frame has been produced.
+
+       VALUE
+
+       A positive number indicating the height, in pixels.
+
+       EXAMPLES
+
+       This example shows how you might iterate the stats object returned from RTCRtpSender.getStats() to get the video source stats, and then extract the height.
+
+         // where sender is an RTCRtpSender
+         const stats = await sender.getStats();
+         let videoSourceStats = null;
+
+         for (const report of stats.values()) {
+           if (report.type === "media-source" && report.kind === "video") {
+             videoSourceStats = report;
+             break;
+           }
+         }
+
+         // Note, test is conditional in case the stats object
+         // does not include video source stats
+         const height = videoSourceStats?.height;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

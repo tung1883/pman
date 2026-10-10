@@ -1,0 +1,43 @@
+SHELLCHECK.SC3026(1)             Sandbox manual             SHELLCHECK.SC3026(1)
+
+       NAME
+
+       In POSIX sh, ^ in place of ! in glob bracket expressions is undefined. - echo foo-[^0].jpg
+
+       IN POSIX SH, IN PLACE OF IN GLOB BRACKET EXPRESSIONS IS UNDEFINED
+
+       IN POSIX SH, IN PLACE OF IN GLOB BRACKET EXPRESSIONS IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         echo foo-[^0]*.jpg
+
+       CORRECT CODE
+
+         echo foo-[!0]*.jpg
+
+       or if the intention is to match ^ literally then either do not put it immediately after [ or quote it by backslash \
+
+         echo foo-[0^]*.jpg foo-[\^0]*.jpg
+
+       RATIONALE
+
+       [^c] is frequently used in most regular expression variants to mean "any character except c". Ksh and Bash adopted it for globs as well.
+
+       However, strictly speaking, the only range complement syntax guaranteed to be supported across shells is [!c]. POSIX explicitly states that behavior of [^c] is unspecified. Dash used to support [^c] when compiled with fnmatch and glob from glibc, but it was considered as a bug and fixed in version 0.5.12. Busybox has a similar bug 14516.
+
+       In zsh interactive sessions echo foo-[!0]*.jpg may cause zsh: event not found: 0 error due to attempt of history expansion. BASH however suppresses history expansion when ! is first character in square brackets.
+
+       Discrepancy of negation syntax in regular expressions and shell pattern matching appeared in early UNIX versions. Pipeline syntax in shells had not settled yet, some terminals had no | key, so ^ was used there. That is why in some shells exclamation mark ! was chosen instead of circumflex (caret) ^ symbol for negation in globs. For more details related to shell history see "The ^ = | ?" thread in the Unix Heritage Society mailing list or Sven Mascheck. The Traditional Bourne Shell Family. History and Development page.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning. Or just rewrite it to be on the technically correct side.
+
+       RELATED RESOURCES
+
+        * 2.13.1 Patterns Matching a Single Character in the Shell and Utilities (XCU) volume of POSIX.1-2017.
+        * [0001558: require [^...] in addition to [!...] for bracket expression negation](https://www.austingroupbugs.net/view.php?id=1558) POSIX enhancement request was rejected.
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

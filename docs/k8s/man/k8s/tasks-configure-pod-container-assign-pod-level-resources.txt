@@ -1,0 +1,268 @@
+K8S.TASKS-CONFIGURE-POD-CONTAINER-ASSIGN-POD-LEVEL-RESOURCES(1) Sandbox manual K8S.TASKS-CONFIGURE-POD-CONTAINER-ASSIGN-POD-LEVEL-RESOURCES(1)
+
+       NAME
+
+       Assign Pod-level CPU and memory resources - This page shows how to specify CPU and memory resources for a Pod at pod-level in
+
+       ASSIGN POD-LEVEL CPU AND MEMORY RESOURCES
+
+       This page shows how to specify CPU and memory resources for a Pod at pod-level in addition to container-level resource specifications. A Kubernetes node allocates resources to a pod based on the pod's resource requests. These requests can be defined at the pod level or individually for containers within the pod. When both are present, the pod-level requests take precedence.
+
+       Similarly, a pod's resource usage is restricted by limits, which can also be set at the pod-level or individually for containers within the pod. Again, pod-level limits are prioritized when both are present. This allows for flexible resource management, enabling you to control resource allocation at both the pod and container levels.
+
+       In order to specify the resources at pod-level, it is required to enable PodLevelResources feature gate.
+
+       For Pod Level Resources:
+
+        * Priority: When both pod-level and container-level resources are specified,
+       pod-level resources take precedence.
+
+        * QoS: Pod-level resources take precedence in influencing the QoS class of the pod.
+        * OOM Score: The OOM score adjustment calculation considers both pod-level and
+       container-level resources.
+
+        * Compatibility: Pod-level resources are designed to be compatible with existing
+       features.
+
+       ## PREREQUISITES
+
+       The PodLevelResources feature gate must be enabled for your control plane and for all nodes in your cluster.
+
+       LIMITATIONS
+
+       For Kubernetes , pod-level resources have the following limitations:
+
+        * Resource Types: Only CPU, memory and hugepages resources can be specified at pod-level.
+        * Operating System: Pod-level resources are not supported for Windows
+       pods.
+
+        * Resource Managers: The Topology Manager, Memory Manager and CPU Manager
+       support pod-level resources when the PodLevelResourceManagers feature gate is enabled. See Pod-level resource managers for more details. Without this feature gate enabled, they do not align pods and containers based on pod-level resources.
+
+        * In-Place Resize: In-place resize
+       of pod-level resources requires the InPlacePodLevelResourcesVerticalScaling feature gate, which is alpha in Kubernetes . For more details, see Resize Pod CPU and Memory Resources.
+
+       CREATE A NAMESPACE
+
+       Create a namespace so that the resources you create in this exercise are isolated from the rest of your cluster.
+
+         kubectl create namespace pod-resources-example
+
+       CREATE A POD WITH MEMORY REQUESTS AND LIMITS AT POD-LEVEL
+
+       To specify memory requests for a Pod at pod-level, include the resources.requests.memory field in the Pod spec manifest. To specify a memory limit, include resources.limits.memory.
+
+       In this exercise, you create a Pod that has one Container. The Pod has a memory request of 100 MiB and a memory limit of 200 MiB. Here's the configuration file for the Pod:
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: memory-demo
+           namespace: pod-resources-example
+         spec:
+           resources:
+             requests:
+               memory: "100Mi"
+             limits:
+               memory: "200Mi"
+           containers:
+           - name: memory-demo-ctr
+             image: nginx
+             command: ["stress"]
+             args: ["--vm", "1", "--vm-bytes", "150M", "--vm-hang", "1"]
+
+       The args section in the manifest provides arguments for the container when it starts. The "--vm-bytes", "150M" arguments tell the Container to attempt to allocate 150 MiB of memory.
+
+       Create the Pod:
+
+         kubectl apply -f https://k8s.io/examples/pods/resource/pod-level-memory-request-limit.yaml --namespace=pod-resources-example
+
+       Verify that the Pod is running:
+
+         kubectl get pod memory-demo --namespace=pod-resources-example
+
+       View detailed information about the Pod:
+
+         kubectl get pod memory-demo --output=yaml --namespace=pod-resources-example
+
+       The output shows that the Pod has a memory request of 100 MiB and a memory limit of 200 MiB.
+
+         ...
+         spec:
+           containers:
+           ...
+           resources:
+             requests:
+               memory: 100Mi
+             limits:
+               memory: 200Mi
+         ...
+
+       Run kubectl top to fetch the metrics for the pod:
+
+         kubectl top pod memory-demo --namespace=pod-resources-example
+
+       The output shows that the Pod is using about 162,900,000 bytes of memory, which is about 150 MiB. This is greater than the Pod's 100 MiB request, but within the Pod's 200 MiB limit.
+
+         NAME                        CPU(cores)   MEMORY(bytes)
+         memory-demo                 <something>  162856960
+
+       CREATE A POD WITH CPU REQUESTS AND LIMITS AT POD-LEVEL
+
+       To specify a CPU request for a Pod, include the resources.requests.cpu field in the Pod spec manifest. To specify a CPU limit, include resources.limits.cpu.
+
+       In this exercise, you create a Pod that has one container. The Pod has a request of 0.5 CPU and a limit of 1 CPU. Here is the configuration file for the Pod:
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: cpu-demo
+           namespace: pod-resources-example
+         spec:
+           resources:
+             limits:
+               cpu: "1"
+             requests:
+               cpu: "0.5"
+           containers:
+           - name: cpu-demo-ctr
+             image: vish/stress
+             args:
+             - -cpus
+             - "2"
+
+       The args section of the configuration file provides arguments for the container when it starts. The -cpus "2" argument tells the Container to attempt to use 2 CPUs.
+
+       Create the Pod:
+
+         kubectl apply -f https://k8s.io/examples/pods/resource/pod-level-cpu-request-limit.yaml --namespace=pod-resources-example
+
+       Verify that the Pod is running:
+
+         kubectl get pod cpu-demo --namespace=pod-resources-example
+
+       View detailed information about the Pod:
+
+         kubectl get pod cpu-demo --output=yaml --namespace=pod-resources-example
+
+       The output shows that the Pod has a CPU request of 500 milliCPU and a CPU limit of 1 CPU.
+
+         spec:
+           containers:
+           ...
+           resources:
+             limits:
+               cpu: "1"
+             requests:
+               cpu: 500m
+
+       Use kubectl top to fetch the metrics for the Pod:
+
+         kubectl top pod cpu-demo --namespace=pod-resources-example
+
+       This example output shows that the Pod is using 974 milliCPU, which is slightly less than the limit of 1 CPU specified in the Pod configuration.
+
+         NAME                        CPU(cores)   MEMORY(bytes)
+         cpu-demo                    974m         <something>
+
+       Recall that by setting -cpu "2", you configured the Container to attempt to use 2 CPUs, but the Container is only being allowed to use about 1 CPU. The container's CPU use is being throttled, because the container is attempting to use more CPU resources than the Pod CPU limit.
+
+       CREATE A POD WITH RESOURCE REQUESTS AND LIMITS AT BOTH POD-LEVEL AND C
+
+       To assign CPU and memory resources to a Pod, you can specify them at both the pod level and the container level. Include the resources field in the Pod spec to define resources for the entire Pod. Additionally, include the resources field within container's specification in the Pod's manifest to set container-specific resource requirements.
+
+       In this exercise, you'll create a Pod with two containers to explore the interaction of pod-level and container-level resource specifications. The Pod itself will have defined CPU requests and limits, while only one of the containers will have its own explicit resource requests and limits. The other container will inherit the resource constraints from the pod-level settings. Here's the configuration file for the Pod:
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: pod-resources-demo
+           namespace: pod-resources-example
+         spec:
+           resources:
+             limits:
+               cpu: "1"
+               memory: "200Mi"
+             requests:
+               cpu: "1"
+               memory: "100Mi"
+           containers:
+           - name: pod-resources-demo-ctr-1
+             image: nginx
+             resources:
+               limits:
+                 cpu: "0.5"
+                 memory: "100Mi"
+               requests:
+                 cpu: "0.5"
+                 memory: "50Mi"
+           - name: pod-resources-demo-ctr-2
+             image: fedora
+             command:
+             - sleep
+             - inf
+
+       Create the Pod:
+
+         kubectl apply -f https://k8s.io/examples/pods/resource/pod-level-resources.yaml --namespace=pod-resources-example
+
+       Verify that the Pod Container is running:
+
+         kubectl get pod pod-resources-demo --namespace=pod-resources-example
+
+       View detailed information about the Pod:
+
+         kubectl get pod pod-resources-demo --output=yaml --namespace=pod-resources-example
+
+       The output shows that one container in the Pod has a memory request of 50 MiB and a CPU request of 0.5 cores, with a memory limit of 100 MiB and a CPU limit of 0.5 cores. The Pod itself has a memory request of 100 MiB and a CPU request of 1 core, and a memory limit of 200 MiB and a CPU limit of 1 core.
+
+         ...
+           containers:
+           -
+             name: pod-resources-demo-ctr-1
+             resources:
+               limits:
+                 cpu: 500m
+                 memory: 100Mi
+               requests:
+                 cpu: 500m
+                 memory: 50Mi
+         ...
+           -
+             name: pod-resources-demo-ctr-2
+             resources: {}
+         ...
+           resources:
+             limits:
+               cpu: "1"
+               memory: 200Mi
+             requests:
+               cpu: "1"
+               memory: 100Mi
+         ...
+
+       Since pod-level requests and limits are specified, the request guarantees for both containers in the pod will be equal 1 core or CPU and 100Mi of memory. Additionally, both containers together won't be able to use more resources than specified in the pod-level limits, ensuring they cannot exceed a combined total of 200 MiB of memory and 1 core of CPU.
+
+       CLEAN UP
+
+       Delete your namespace:
+
+         kubectl delete namespace pod-resources-example
+
+       ## WHATSNEXT
+
+       FOR APPLICATION DEVELOPERS
+
+        * Assign Memory Resources to Containers and Pods
+        * Assign CPU Resources to Containers and Pods
+
+       FOR CLUSTER ADMINISTRATORS
+
+        * Configure Default Memory Requests and Limits for a Namespace
+        * Configure Default CPU Requests and Limits for a Namespace
+        * Configure Minimum and Maximum Memory Constraints for a Namespace
+        * Configure Minimum and Maximum CPU Constraints for a Namespace
+        * Configure Memory and CPU Quotas for a Namespace
+        * Pod-level resource managers
+
+Kubernetes manual                       from the official documentation

@@ -1,0 +1,72 @@
+WEBAPI.NODE-ISCONNECTED(1)       Sandbox manual       WEBAPI.NODE-ISCONNECTED(1)
+
+       NAME
+
+       Node: isConnected property - The read-only isConnected property of the Node interface returns a boolean indicating whether the node is connected (directly or indirectly)
+
+       NODE: ISCONNECTED PROPERTY
+
+       The read-only isConnected property of the Node interface returns a boolean indicating whether the node is connected (directly or indirectly) to a Document object.
+
+       VALUE
+
+       A boolean value that is true if the node is connected to its relevant context object, and false if not.
+
+       > An Attr node always returns false for isConnected, even when its ownerElement is connected.
+       > This is because, even though an attribute is associated with an element via ownerElement, it is not part of the node tree — it has no parent node, and it is its own root node.
+       > Since isConnected is only true when a node's root is a document, an Attr node is never considered connected.
+
+       EXAMPLES
+
+       STANDARD DOM
+
+       A standard DOM example:
+
+         let test = document.createElement("p");
+         console.log(test.isConnected); // Returns false
+         document.body.appendChild(test);
+         console.log(test.isConnected); // Returns true
+
+       SHADOW DOM
+
+       A shadow DOM example:
+
+         // Create a shadow root
+         const shadow = this.attachShadow({ mode: "open" });
+
+         // Create some CSS to apply to the shadow DOM
+         const style = document.createElement("style");
+         console.log(style.isConnected); // returns false
+
+         style.textContent = `
+         .wrapper {
+           position: relative;
+         }
+
+         .info {
+           font-size: 0.8rem;
+           width: 200px;
+           display: inline-block;
+           border: 1px solid black;
+           padding: 10px;
+           background: white;
+           border-radius: 10px;
+           opacity: 0;
+           transition: 0.6s all;
+           positions: absolute;
+           bottom: 20px;
+           left: 10px;
+           z-index: 3
+         }
+         `;
+
+         // Attach the created style element to the shadow DOM
+
+         shadow.appendChild(style);
+         console.log(style.isConnected); // Returns true
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,106 @@
+SHELLCHECK.SC2044(1)             Sandbox manual             SHELLCHECK.SC2044(1)
+
+       NAME
+
+       For loops over find output are fragile. Use find -exec or a while read loop. - for file in $(find mydir -mtime -7 -name '.mp3')
+
+       FOR LOOPS OVER FIND OUTPUT ARE FRAGILE. USE FIND -EXEC OR A WHILE READ
+
+       FOR LOOPS OVER FIND OUTPUT ARE FRAGILE. USE FIND -EXEC OR A WHILE READ
+
+       PROBLEMATIC CODE
+
+         for file in $(find mydir -mtime -7 -name '*.mp3')
+         do
+           (( count++ ))
+           echo "Playing file no. $count"
+           play "$file"
+         done
+         echo "Played $count files"
+
+       This will fail for filenames containing spaces and similar, such as My File.mp3, and has a series of potential globbing issues depending on other filenames in the directory like (if you have MyFile2.mp3 and MyFile[2014].mp3, the former file will play twice and the latter will not play at all).
+
+       CORRECT CODE
+
+       There are many possible fixes, each with its pros and cons.
+
+       The most general fix (that requires the least amount of thinking to apply) is having find output a \0 separated list of files and consuming them in a while read loop:
+
+         while IFS= read -r -d '' file
+         do
+           (( count++ ))
+           echo "Playing file no. $count"
+           play "$file"
+         done <   <(find mydir -mtime -7 -name '*.mp3' -print0)
+         echo "Played $count files"
+
+       In usage it's very similar to the for loop: it gets its output from a find statement, it executes a shell script body, it allows updating/aggregating variables, and the variables are available when the loop ends.
+
+       It requires Bash, and works with GNU, Busybox, OS X, FreeBSD and OpenBSD find, but not POSIX find.
+
+       IF FIND IS JUST MATCHING GLOBS RECURSIVELY
+
+       If you don't need find logic like -mtime -7 and just use it to match globs recursively (all *.mp3 files under a directory), you can instead use globstar and nullglob instead of find, and still use a for loop:
+
+         shopt -s globstar nullglob
+         for file in mydir/**/*.mp3
+         do
+           (( count++ ))
+           echo "Playing file no. $count"
+           play "$file"
+         done
+         echo "Played $count files"
+
+       This is bash 4 specific.
+
+       FOR POSIX
+
+       If you need POSIX compliance, this is a fair approach:
+
+         find mydir ! -name "$(printf "*\n*")" -name '*.mp3' > tmp
+         while IFS= read -r file
+         do
+           count=$((count + 1))
+           echo "Playing file #$count"
+           play "$file"
+         done < tmp
+         rm tmp
+         echo "Played $count files"
+
+       The only problem is for filenames containing line feeds. A ! -name "$(printf "\n")" has been added to simply skip these files, just in case there are any.
+
+       If you don't need variables to be available after the loop (here, if you don't need to print the final play count at the end), you can skip the tmp file and just pipe from find to while.
+
+       FOR SIMPLE COMMANDS WITH NO AGGREGATION
+
+       If you don't need a shell script loop body or any form of variable like if we only wanted to play the file, we can dramatically simplify while maintaining POSIX compatibility:
+
+         # Simple and POSIX
+         find mydir -name '*.mp3' -exec play {} \;
+
+       This does not allow things like count=$((count + 1)) because -exec does not invoke a shell to interpret that variable assignment, it simply runs an external command. That external command can be a shell, however; see below.
+
+       FOR SHELL COMMANDS WITH NO AGGREGATION
+
+       If we do need a shell script body but no aggregation, you can do the above but invoking sh (this is still POSIX):
+
+         find mydir -name '*.mp3' -exec sh -c '
+             echo "Playing ${1%.mp3}"
+             play "$1"
+           ' sh {} \;
+
+       This would not be possible without sh, because ${1%.mp3} is a shell construct that find can't evaluate by itself. If we had tried to count=$((count + 1)) in this loop, we would have found that the value never changes.
+
+       Note that using + instead of \;, and using an embedded for file in "$@" loop rather than "$1", will not allow aggregating variables. This is because for large lists, find will invoke the command multiple times, each time with some chunk of the input.
+
+       RATIONALE
+
+       for var in $(find ...) loops rely on word splitting and will evaluate globs, which will wreck havoc with filenames containing whitespace or glob characters.
+
+       find -exec for i in glob and find+while do not rely on word splitting, so they avoid this problem.
+
+       EXCEPTIONS
+
+       If you know about and carefully apply IFS=$'\n' and set -f, you could choose to ignore this message.
+
+ShellCheck manual                       from the official documentation

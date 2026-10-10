@@ -1,0 +1,138 @@
+K8S.TASKS-ADMINISTER-CLUSTER-QUOTA-API-OBJECT(1) Sandbox manual K8S.TASKS-ADMINISTER-CLUSTER-QUOTA-API-OBJECT(1)
+
+       NAME
+
+       Configure Quotas for API Objects - This page shows how to configure quotas for API objects, including
+
+       CONFIGURE QUOTAS FOR API OBJECTS
+
+       This page shows how to configure quotas for API objects, including PersistentVolumeClaims and Services. A quota restricts the number of objects, of a particular type, that can be created in a namespace. You specify quotas in a ResourceQuota object.
+
+       ## PREREQUISITES
+
+       CREATE A NAMESPACE
+
+       Create a namespace so that the resources you create in this exercise are isolated from the rest of your cluster.
+
+         kubectl create namespace quota-object-example
+
+       CREATE A RESOURCEQUOTA
+
+       Here is the configuration file for a ResourceQuota object:
+
+         apiVersion: v1
+         kind: ResourceQuota
+         metadata:
+           name: object-quota-demo
+         spec:
+           hard:
+             persistentvolumeclaims: "1"
+             services.loadbalancers: "2"
+             services.nodeports: "0"
+
+       Create the ResourceQuota:
+
+         kubectl apply -f https://k8s.io/examples/admin/resource/quota-objects.yaml --namespace=quota-object-example
+
+       View detailed information about the ResourceQuota:
+
+         kubectl get resourcequota object-quota-demo --namespace=quota-object-example --output=yaml
+
+       The output shows that in the quota-object-example namespace, there can be at most one PersistentVolumeClaim, at most two Services of type LoadBalancer, and no Services of type NodePort.
+
+         status:
+           hard:
+             persistentvolumeclaims: "1"
+             services.loadbalancers: "2"
+             services.nodeports: "0"
+           used:
+             persistentvolumeclaims: "0"
+             services.loadbalancers: "0"
+             services.nodeports: "0"
+
+       CREATE A PERSISTENTVOLUMECLAIM
+
+       Here is the configuration file for a PersistentVolumeClaim object:
+
+         apiVersion: v1
+         kind: PersistentVolumeClaim
+         metadata:
+           name: pvc-quota-demo
+         spec:
+           storageClassName: manual
+           accessModes:
+             - ReadWriteOnce
+           resources:
+             requests:
+               storage: 3Gi
+
+       Create the PersistentVolumeClaim:
+
+         kubectl apply -f https://k8s.io/examples/admin/resource/quota-objects-pvc.yaml --namespace=quota-object-example
+
+       Verify that the PersistentVolumeClaim was created:
+
+         kubectl get persistentvolumeclaims --namespace=quota-object-example
+
+       The output shows that the PersistentVolumeClaim exists and has status Pending:
+
+         NAME             STATUS
+         pvc-quota-demo   Pending
+
+       ATTEMPT TO CREATE A SECOND PERSISTENTVOLUMECLAIM
+
+       Here is the configuration file for a second PersistentVolumeClaim:
+
+         apiVersion: v1
+         kind: PersistentVolumeClaim
+         metadata:
+           name: pvc-quota-demo-2
+         spec:
+           storageClassName: manual
+           accessModes:
+             - ReadWriteOnce
+           resources:
+             requests:
+               storage: 4Gi
+
+       Attempt to create the second PersistentVolumeClaim:
+
+         kubectl apply -f https://k8s.io/examples/admin/resource/quota-objects-pvc-2.yaml --namespace=quota-object-example
+
+       The output shows that the second PersistentVolumeClaim was not created, because it would have exceeded the quota for the namespace.
+
+         persistentvolumeclaims "pvc-quota-demo-2" is forbidden:
+         exceeded quota: object-quota-demo, requested: persistentvolumeclaims=1,
+         used: persistentvolumeclaims=1, limited: persistentvolumeclaims=1
+
+       NOTES
+
+       These are the strings used to identify API resources that can be constrained by quotas:
+
+       StringAPI Object "pods"Pod "services"Service "replicationcontrollers"ReplicationController "resourcequotas"ResourceQuota "secrets"Secret "configmaps"ConfigMap "persistentvolumeclaims"PersistentVolumeClaim "services.nodeports"Service of type NodePort "services.loadbalancers"Service of type LoadBalancer
+
+       CLEAN UP
+
+       Delete your namespace:
+
+         kubectl delete namespace quota-object-example
+
+       ## WHATSNEXT
+
+       FOR CLUSTER ADMINISTRATORS
+
+        * Configure Default Memory Requests and Limits for a Namespace
+        * Configure Default CPU Requests and Limits for a Namespace
+        * Configure Minimum and Maximum Memory Constraints for a Namespace
+        * Configure Minimum and Maximum CPU Constraints for a Namespace
+        * Configure Memory and CPU Quotas for a Namespace
+        * Configure a Pod Quota for a Namespace
+
+       FOR APP DEVELOPERS
+
+        * Assign Memory Resources to Containers and Pods
+        * Assign CPU Resources to Containers and Pods
+        * Assign Pod-level CPU and memory resources
+        * Configure Quality of Service for Pods
+
+Kubernetes manual                       from the official documentation

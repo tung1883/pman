@@ -1,0 +1,38 @@
+SHELLCHECK.SC2199(1)             Sandbox manual             SHELLCHECK.SC2199(1)
+
+       NAME
+
+       Arrays implicitly concatenate in [[ ]]. Use a loop (or explicit  instead of @). - ext=png
+
+       ARRAYS IMPLICITLY CONCATENATE IN . USE A LOOP (OR EXPLICIT INSTEAD OF
+
+       ARRAYS IMPLICITLY CONCATENATE IN . USE A LOOP (OR EXPLICIT INSTEAD OF
+
+       PROBLEMATIC CODE
+
+         ext=png
+         allowedExt=(jpg bmp png)
+         [[ "$ext" = "${allowedExt[@]}" ]] && echo "Extension is valid"
+
+       CORRECT CODE
+
+         ext=png
+         allowedExt=(jpg bmp png)
+         for value in "${allowedExt[@]}"
+         do
+           [[ "$ext" = "$value" ]] && echo "Extension is valid"
+         done
+
+       RATIONALE
+
+       Array expansions in [[ .. ]] will implicitly concatenate into a single string, much like in assignments. The problematic code is equivalent to [ "$ext" = "jpg bmp png" ].
+
+       Instead, use a for loop to iterate over values, and apply your condition to each.
+
+       Alternatively, if you do want to concatenate all the values in the array into a single string for your test, use "$" or "${array[]}" to make this explicit.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

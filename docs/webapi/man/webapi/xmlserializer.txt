@@ -1,0 +1,65 @@
+WEBAPI.XMLSERIALIZER(1)          Sandbox manual          WEBAPI.XMLSERIALIZER(1)
+
+       NAME
+
+       XMLSerializer - The XMLSerializer interface provides the serializeToString() method to construct an XML string representing a DOM tree.
+
+       XMLSERIALIZER
+
+       The XMLSerializer interface provides the serializeToString() method to construct an XML string representing a DOM tree.
+
+       > The resulting XML string is not guaranteed to be well-formed XML.
+
+       CONSTRUCTOR
+
+        * XMLSerializer()
+          * : Creates a new XMLSerializer object.
+
+       INSTANCE METHODS
+
+        * serializeToString()
+          * : Returns the serialized subtree of a string.
+
+       EXAMPLES
+
+       SERIALIZING XML INTO A STRING
+
+       This example just serializes an entire document into a string containing XML.
+
+         const s = new XMLSerializer();
+         const str = s.serializeToString(document);
+         saveXML(str);
+
+       This involves creating a new XMLSerializer object, then passing the Document to be serialized into serializeToString(), which returns the XML equivalent of the document. saveXML() represents a function that would then save the serialized string.
+
+       INSERTING NODES INTO A DOM BASED ON XML
+
+       This example uses the Element.insertAdjacentHTML() method to insert a new DOM Node into the body of the Document, based on XML created by serializing an Element object.
+
+       > In the real world, you should usually instead call importNode() method to import the new node into the DOM, then call one of the following methods to add the node to the DOM tree:
+       > - The Element.append()/Element.prepend() and Document.append()/Document.prepend() methods.
+       > - The Element.replaceWith method (to replace an existing node with the new one)
+       > - The Element.insertAdjacentElement() method.
+       Because insertAdjacentHTML() accepts a string and not a Node as its second parameter, XMLSerializer is used to first convert the node into a string.
+
+         const inp = document.createElement("input");
+         const XMLS = new XMLSerializer();
+         const inpSerialized = XMLS.serializeToString(inp); // First convert DOM node into a string
+
+         // Insert the newly created node into the document's body
+         document.body.insertAdjacentHTML("afterbegin", inpSerialized);
+
+       The code creates a new element by calling Document.createElement(), then serializes it into XML using serializeToString().
+
+       Once that's done, insertAdjacentHTML() is used to insert the element into the DOM.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Parsing and serializing XML
+        * DOMParser
+
+Web APIs manual                         from the official documentation

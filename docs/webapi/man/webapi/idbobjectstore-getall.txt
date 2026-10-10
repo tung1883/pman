@@ -1,0 +1,96 @@
+WEBAPI.IDBOBJECTSTORE-GETALL(1)  Sandbox manual  WEBAPI.IDBOBJECTSTORE-GETALL(1)
+
+       NAME
+
+       IDBObjectStore: getAll() method - The getAll() method of the
+
+       IDBOBJECTSTORE: GETALL() METHOD
+
+       The getAll() method of the IDBObjectStore interface returns an IDBRequest object containing all objects in the object store matching the specified parameter or all objects in the store if no parameters are given.
+
+       If a value is successfully found, then a structured clone of it is created and set as the result of the request object.
+
+       This method produces the same result for:
+
+        * a record that doesn't exist in the database
+        * a record that has an undefined value
+       To tell these situations apart, you either call
+
+        1. the openCursor() method with the same
+       key. That method provides a cursor if the record exists, and no cursor if it does not.
+
+        2. the count() method with the same key, which
+       will return 1 if the row exists and 0 if it doesn't.
+
+       SYNTAX
+
+         getAll()
+         getAll(query)
+         getAll(query, count)
+         getAll(options)
+
+       PARAMETERS
+
+       The getAll() method can take separate parameters or a single options object containing the parameters as properties.
+
+       The parameters can include:
+
+        * query (optional)
+          * : A key or IDBKeyRange to be queried. If this value is not specified, this will
+       default to a key range that selects all the records in this object store.
+
+        * count (optional)
+          * : Specifies the number of values to return if more than one is found. If it is lower
+       than 0 or greater than 2^32 - 1 a TypeError exception will be thrown.
+
+       If an object parameter is specified, its properties can include:
+
+        * query (optional)
+          * : See the earlier query definition.
+        * count (optional)
+          * : See the earlier count definition.
+        * direction (optional)
+          * : An enumerated value specifying the direction in which the objects are traversed. Possible values are:
+            * next
+              * : The objects are traversed from the beginning, in increasing key order. This is the default value.
+            * nextunique
+              * : The objects are traversed from the beginning, in increasing key order. This will yield the same objects as next, because duplicate keys are not allowed in IDBObjectStores.
+            * prev
+              * : The objects are traversed from the end, in decreasing key order.
+            * prevunique
+              * : The objects are traversed from the end, in decreasing key order. This will yield the same objects as prev, because duplicate keys are not allowed in IDBObjectStores.
+
+       RETURN VALUE
+
+       An IDBRequest object on which subsequent events related to this operation are fired.
+
+       If the operation is successful, the value of the request's result property is an Array of the values of all records matching the given query, up to the value of count, if count was supplied.
+
+       EXCEPTIONS
+
+       This method may raise a DOMException of one of the following types:
+
+        * TransactionInactiveError DOMException
+          * : Thrown if this IDBObjectStore's transaction is inactive.
+        * DataError DOMException
+          * : Thrown if key or key range provided contains an invalid key or is null.
+        * InvalidStateError DOMException
+          * : Thrown if the IDBObjectStore has been deleted or removed.
+        * TypeError DOMException
+          * : Thrown if the count parameter is not between 0 and 2^32 - 1, inclusive.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using IndexedDB
+        * Starting transactions: IDBDatabase
+        * Using transactions: IDBTransaction
+        * Setting a range of keys: IDBKeyRange
+        * Retrieving and making changes to your data: IDBObjectStore
+        * Using cursors: IDBCursor
+        * Reference example: To-do Notifications (View the example live).
+
+Web APIs manual                         from the official documentation

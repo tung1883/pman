@@ -1,0 +1,63 @@
+WEBAPI.FILESYSTEMDIRECTORYHANDLE-RESOLVE(1) Sandbox manual WEBAPI.FILESYSTEMDIRECTORYHANDLE-RESOLVE(1)
+
+       NAME
+
+       FileSystemDirectoryHandle: resolve() method - The resolve() method of the
+
+       FILESYSTEMDIRECTORYHANDLE: RESOLVE() METHOD
+
+       The resolve() method of the FileSystemDirectoryHandle interface returns an Array of directory names from the parent handle to the specified child entry, with the name of the child entry as the last array item.
+
+       SYNTAX
+
+         resolve(possibleDescendant)
+
+       PARAMETERS
+
+        * possibleDescendant
+          * : The FileSystemHandle from which to return the relative path.
+
+       RETURN VALUE
+
+       A Promise which resolves with an Array of strings, or null if possibleDescendant is not a descendant of this FileSystemDirectoryHandle.
+
+       EXCEPTIONS
+
+       No exceptions are thrown.
+
+       EXAMPLES
+
+       The following asynchronous function uses resolve() to find the path to a chosen file, relative to a specified directory handle.
+
+         async function returnPathDirectories(directoryHandle) {
+           // Get a file handle by showing a file picker:
+           const [handle] = await self.showOpenFilePicker();
+           if (!handle) {
+             // User canceled, or otherwise failed to open a file.
+             return;
+           }
+
+           // Check if handle exists inside our directory handle
+           const relativePaths = await directoryHandle.resolve(handle);
+
+           if (relativePaths === null) {
+             // Not inside directory handle
+           } else {
+             // relativePath is an array of names, giving the relative path
+             for (const name of relativePaths) {
+               // log each entry
+               console.log(name);
+             }
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File System API
+        * The File System Access API: simplifying access to local files
+
+Web APIs manual                         from the official documentation

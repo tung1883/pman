@@ -1,0 +1,94 @@
+WEBAPI.OBSERVABLE-TAKEUNTIL(1)   Sandbox manual   WEBAPI.OBSERVABLE-TAKEUNTIL(1)
+
+       NAME
+
+       Observable: takeUntil() method - The takeUntil() method of the Observable interface returns a new observable that emits values from the source observable until another obser
+
+       OBSERVABLE: TAKEUNTIL() METHOD
+
+       The takeUntil() method of the Observable interface returns a new observable that emits values from the source observable until another observable emits a value or errors.
+
+       SYNTAX
+
+         takeUntil(value)
+
+       PARAMETERS
+
+        * value
+          * : A value that can be converted to an observable by Observable.from(): an Observable, a Promise, an iterable object, or an async iterable object. The converted observable acts as the notifier that determines when to stop emitting source values.
+
+       RETURN VALUE
+
+       A new Observable. When subscribed to, it emits values from the source observable until the notifier emits a value or errors, then completes and unsubscribes from both observables. If the source completes or errors first, that notification is forwarded and the notifier is unsubscribed from.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if value cannot be converted to an observable.
+
+       DESCRIPTION
+
+       Like other observable-returning operators, this method is lazy: calling it creates a new observable without subscribing to the source. Processing starts when the returned observable is subscribed to.
+
+       The notifier is subscribed to before the source. If it emits a value or errors synchronously, the returned observable completes without subscribing to the source. If the notifier completes without emitting a value, the source continues uninterrupted.
+
+       A notifier error completes the returned observable successfully; it is not forwarded as an error.
+
+       You can technically pass a synchronous iterable as the value, but the converted observable either never emits if the iterable is empty (and takeUntil() never unsubscribes), or it immediately emits if the iterable is non-empty (and takeUntil() immediately unsubscribes).
+
+       EXAMPLES
+
+       USING TAKEUNTIL()
+
+       This example displays the mouse coordinates when the pointer moves over either of two elements. Clicking anywhere in the example completes the observable and stops coordinate reporting. Click Restart after the stream ends to try again.
+
+         <div></div>
+         <div></div>
+         <p></p>
+         <button id="restart" disabled>Restart</button>
+
+         div {
+           height: 120px;
+           background-color: purple;
+           margin-bottom: 40px;
+         }
+
+         const outputElem = document.querySelector("p");
+
+         const restart = document.querySelector("#restart");
+
+         function start() {
+           restart.disabled = true;
+           outputElem.textContent = "Move the mouse";
+           document.body
+             .when("mousemove")
+             .filter((e) => e.target.matches("div"))
+             .map((e) => ({ x: e.clientX, y: e.clientY }))
+             .takeUntil(
+               document.body.when("click").filter((event) => event.target !== restart),
+             )
+             .subscribe({
+               next: reportCoords,
+               complete() {
+                 restart.disabled = false;
+               },
+             });
+
+           function reportCoords(e) {
+             outputElem.textContent = `${e.x},${e.y}`;
+           }
+         }
+
+         restart.when("click").subscribe(start);
+         start();
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using observables
+        * Observable explainer
+
+Web APIs manual                         from the official documentation

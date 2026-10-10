@@ -1,0 +1,39 @@
+SHELLCHECK.SC2306(1)             Sandbox manual             SHELLCHECK.SC2306(1)
+
+       NAME
+
+       Escape glob characters in arguments to expr to avoid pathname expansion. - f=$(expr "$c"  9 / 5 + 32)
+
+       ESCAPE GLOB CHARACTERS IN ARGUMENTS TO EXPR TO AVOID PATHNAME EXPANSIO
+
+       ESCAPE GLOB CHARACTERS IN ARGUMENTS TO EXPR TO AVOID PATHNAME EXPANSIO
+
+       PROBLEMATIC CODE
+
+         f=$(expr "$c" * 9 / 5 + 32)
+
+       CORRECT CODE
+
+       Prefer rewriting to a modern style (see [[SC2003]]):
+
+         f=$((c * 9 / 5 + 32))
+
+       If you do not wish to do so, at least escape the glob characters when passing them to expr:
+
+         f=$(expr "$c" \* 9 / 5 + 32)
+
+       RATIONALE
+
+       expr is a command so expr 2 * 2 will consider * to mean "all files in the current directory". This causes the expression to fail to evaluate unless you are in an empty directory with the failglob and nullglob options turned off.
+
+       Prefer rewriting it using the modern, POSIX standard arithmetic expansion $((..)). If you do not wish to do so, you can escape any characters like * to avoid the shell performing pathname expansion on them.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

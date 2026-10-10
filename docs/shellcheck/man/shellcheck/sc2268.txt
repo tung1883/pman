@@ -1,0 +1,53 @@
+SHELLCHECK.SC2268(1)             Sandbox manual             SHELLCHECK.SC2268(1)
+
+       NAME
+
+       Avoid x-prefix in comparisons as it no longer serves a purpose. - test x"$var" = x
+
+       AVOID X-PREFIX IN COMPARISONS AS IT NO LONGER SERVES A PURPOSE
+
+       AVOID X-PREFIX IN COMPARISONS AS IT NO LONGER SERVES A PURPOSE
+
+       PROBLEMATIC CODE
+
+         [ "x$pass" = "xswordfish" ]
+
+         test x"$var" = x
+
+       CORRECT CODE
+
+         [ "$pass" = "swordfish" ]
+
+         test "$var" = ""
+
+       RATIONALE
+
+       Some older shells would get confused if the first argument started with a dash, or consisted of ! or (. As a workaround, people would prefix variables and values to be compared with x to ensure the left-hand side always started with an alphanumeric character.
+
+       POSIX ensures this is not necessary, and all modern shells now follow suit.
+
+       EXAMPLES
+
+       Bash 1.14 from 1992 incorrectly fails this test. This was fixed for Bash 2.0 in 1996:
+
+         var='!'
+         [ "$var" = "!" ]
+
+       Dash 0.5.4 from 2007 incorrectly passes this test. This was fixed for Dash 0.5.5 in 2008:
+
+         x='(' y=')'
+         [ "$x" = "$y" ]
+
+       Zsh (while not supported by ShellCheck) fixed the same problem in 2015.
+
+       EXCEPTIONS
+
+       If you are targeting especially old shells, you can ignore this warning (or use a different letter).
+
+       RELATED RESOURCES
+
+        * [What exactly was the point of [ "x$var" = "xval" ]](https://www.vidarholen.net/contents/blog/?p=1035)?
+        * Wooledge Bash Pitfall #4
+        * Problems With the test Builtin: What Does -a Mean?
+
+ShellCheck manual                       from the official documentation

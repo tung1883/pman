@@ -1,0 +1,63 @@
+WEBAPI.STORAGE-SETITEM(1)        Sandbox manual        WEBAPI.STORAGE-SETITEM(1)
+
+       NAME
+
+       Storage: setItem() method - The setItem() method of the Storage
+
+       STORAGE: SETITEM() METHOD
+
+       The setItem() method of the Storage interface, when passed a key name and value, will add that key to the given Storage object, or update that key's value if it already exists.
+
+       SYNTAX
+
+         setItem(keyName, keyValue)
+
+       PARAMETERS
+
+        * keyName
+          * : A string containing the name of the key you want to create/update.
+        * keyValue
+          * : A string containing the value you want to give the key you are
+       creating/updating.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * QuotaExceededError
+          * : Thrown if the storage run out of disk quota or the user declined to grant you more space.
+
+       EXAMPLES
+
+       The following function creates three data items inside local storage.
+
+         function populateStorage() {
+           localStorage.setItem("bgcolor", "red");
+           localStorage.setItem("font", "Helvetica");
+           localStorage.setItem("image", "myCat.png");
+         }
+
+       > To see this used within a real-world example, see our Web Storage Demo.
+       Storage only supports storing and retrieving strings. If you want to save other data types, you have to convert them to strings. For plain objects and arrays, you can use JSON.stringify().
+
+         const person = { name: "Alex" };
+         localStorage.setItem("user", person);
+         console.log(localStorage.getItem("user")); // "[object Object]"; not useful!
+         localStorage.setItem("user", JSON.stringify(person));
+         console.log(JSON.parse(localStorage.getItem("user"))); // { name: "Alex" }
+
+       However, there's no generic way to store arbitrary data types. Furthermore, the retrieved object is a deep copy of the original object and mutations to it do not affect the original object.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Storage.getItem()
+        * Storage.removeItem()
+        * Using the Web Storage API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,858 @@
+ARCH.NETWORK-CONFIGURATION-WIRELESS(1) Sandbox manual ARCH.NETWORK-CONFIGURATION-WIRELESS(1)
+
+       The main article on network configuration is Network configuration.
+
+       Configuring wireless is a two-part process; the first part is to identify and ensure the correct driver for your wireless device is installed (they are available on the installation media, but often have to be installed explicitly), and to configure the interface. The second is choosing a method of managing wireless connections. This article covers both parts, and provides additional links to wireless management tools.
+
+       The #iw section describes how to manually manage your wireless network interface / your wireless LANs using iw. The Network configuration#Network managers section describes several programs that can be used to automatically manage your wireless interface, some of which include a GUI and all of which include support for network profiles (useful when frequently switching wireless networks, like with laptops).
+
+       DEVICE DRIVER
+
+       The default Arch Linux kernel is modular, meaning many of the drivers for machine hardware reside on the hard drive and are available as modules. At boot, udev takes an inventory of your hardware and loads appropriate modules (drivers) for your corresponding hardware, which will in turn allow creation of a network interface.
+
+       Some wireless chipsets also require firmware, in addition to a corresponding driver. Many firmware images are provided by the linux-firmware package; however, proprietary firmware images are not included and have to be installed separately. This is described in #Installing driver/firmware.
+
+       Note If the proper module is not loaded by udev on boot, simply load it manually. If udev loads more than one driver for a device, the resulting conflict may prevent successful configuration. Make sure to blacklist the unwanted module.
+
+       CHECK THE DRIVER STATUS
+
+       To check if the driver for your card has been loaded, check the output of the lspci -k or lsusb -v command, depending on if the card is connected by PCIe or USB. You should see that some kernel driver is in use, for example:
+
+         $ lspci -knnd ::0280
+
+         00:14.3 Network controller [0280]: Intel Corporation BE201 320MHz [8086:a840] (rev 10)
+         	Subsystem: Intel Corporation Device [8086:00e4]
+         	Kernel driver in use: iwlwifi
+         	Kernel modules: iwlwifi
+
+       Note
+
+        * If the card is a USB device, running dmesg | grep usbcore as root should give something like usbcore: registered new interface driver rtl8187 as output.
+        * If you do not see the card at all, it may not be seated/plugged in properly in its M.2 slot/PCIe slot/USB port. Try re-plugging it in.
+       Also check the output of the ip link command to see if a wireless interface was created; usually the naming of the wireless network interfaces starts with the letters "wl", e.g. wlan0 or wlp2s0. Then bring the interface up with:
+
+         # ip link set interface up
+
+       For example, assuming the interface is wlan0, this is ip link set wlan0 up.
+
+       Note
+
+        * If you get errors like RTNETLINK answers: Operation not possible due to RF-kill, make sure that the device is not hard-blocked or soft-blocked. See #Rfkill caveat for details.
+        * If you get the error message SIOCSIFFLAGS: No such file or directory, it most certainly means that your wireless chipset requires a firmware to function.
+       Check kernel messages for firmware being loaded:
+
+         # dmesg | grep firmware
+
+         [    3.347770] iwlwifi 0000:00:14.3: Direct firmware load for iwlwifi-bz-b0-fm-c0-99.ucode failed with error -2
+         [    3.351615] iwlwifi 0000:00:14.3: loaded firmware version 98.d661c37c.0 bz-b0-fm-c0-98.ucode op_mode iwlmld
+
+       If there is no relevant output, check the messages for the full output for the module you identified earlier (iwlwifi in this example) to identify the relevant message or further issues:
+
+         # dmesg | grep iwlwifi
+
+         [    3.330590] iwlwifi 0000:00:14.3: enabling device (0000 -> 0002)
+         [    3.347075] iwlwifi 0000:00:14.3: Detected crf-id 0xbadcafe, cnv-id 0x1080900 wfpm id 0x80005b20
+         [    3.347090] iwlwifi 0000:00:14.3: PCI dev a840/00e4, rev=0x461, rfid=0x20112200
+         [    3.347092] iwlwifi 0000:00:14.3: Detected Intel(R) Wi-Fi 7 BE201 320MHz
+         [    3.347770] iwlwifi 0000:00:14.3: Direct firmware load for iwlwifi-bz-b0-fm-c0-99.ucode failed with error -2
+         [    3.351213] iwlwifi 0000:00:14.3: TLV_FW_FSEQ_VERSION: FSEQ Version: 0.0.4.196
+         [    3.351615] iwlwifi 0000:00:14.3: loaded firmware version 98.d661c37c.0 bz-b0-fm-c0-98.ucode op_mode iwlmld
+         [    3.914194] iwlwifi 0000:00:14.3: Detected RF FM, rfid=0x20112200
+         [    3.914986] iwlwifi 0000:00:14.3: loaded PNVM version 752be616
+
+       If the kernel module is successfully loaded and the interface is up, you can skip the next section.
+
+       INSTALLING DRIVER/FIRMWARE
+
+       Check the following lists to discover if your card is supported:
+
+        * See the table of existing Linux wireless drivers and follow to the specific driver's page, which contains a list of supported devices. There is also a List of Wi-Fi Device IDs in Linux.
+        * The Ubuntu Wiki has a good list of wireless cards and whether or not they are supported either in the Linux kernel or by a user-space driver (includes driver name).
+        * Linux Wireless Support and The Linux Questions' Hardware Compatibility List (HCL) also have a good database of kernel-friendly hardware.
+       Note that some vendors ship products that may contain different chip sets, even if the product identifier is the same. Only the USB ID (for USB devices) or PCI ID (for PCIe devices) is authoritative.
+
+       If your wireless card is listed above, follow the #Troubleshooting drivers and firmware subsection of this page, which contains information about installing drivers and firmware of some specific wireless cards. Then check the driver status again.
+
+       If your wireless card is not listed above, it is likely supported only under Windows (some Broadcom, 3com, etc). For these, you can try to use ndiswrapper.
+
+       UTILITIES
+
+       Just like other network interfaces, the wireless ones are controlled with ip from the iproute2 package.
+
+       Managing a wireless connection can be accomplished using a network manager which will use wpa_supplicant or iwd for wireless authentication, or using wpa_supplicant or iwd directly. For lower level configuring, or if you are using a legacy driver or a legacy authentication method, there are iw and the deprecated wireless_tools.
+
+       IW AND WIRELESS_TOOLS COMPARISON
+
+         Software | Package | WEXT2 | nl80211 | WEP | WPA/WPA2/WPA3 | Archiso
+         iw | iw | No | Yes | Yes | No | Yes
+         wireless_tools1 | wireless_tools | Yes | No | Yes | No | Yes
+        * Deprecated.
+        * Note that some ancient drivers only support WEXT.
+       The table below gives an overview of comparable commands for iw and wireless_tools. See Replacing iwconfig with iw for more examples.
+
+         iw command | wireless_tools command | Description
+         iw dev wlan0 link | iwconfig wlan0 | Getting link status.
+         iw dev wlan0 scan | iwlist wlan0 scan | Scanning for available access points.
+         iw dev wlan0 set type ibss | iwconfig wlan0 mode ad-hoc | Setting the operation mode to ad-hoc.
+         iw dev wlan0 connect your_essid | iwconfig wlan0 essid your_essid | Connecting to open network.
+         iw dev wlan0 connect your_essid 2432 | iwconfig wlan0 essid your_essid freq 2432M | Connecting to open network specifying channel.
+         iw dev wlan0 connect your_essid key 0:your_key | iwconfig wlan0 essid your_essid key your_key | Connecting to WEP encrypted network using hexadecimal key.
+         iwconfig wlan0 essid your_essid key s:your_key | Connecting to WEP encrypted network using ASCII key.
+         iw dev wlan0 set power_save on | iwconfig wlan0 power on | Enabling power save.
+
+       IW
+
+       Note
+
+        * Note that most of the commands have to be executed with root permissions. Executed with normal user rights, some of the commands (e.g. iw list) will exit without error but not produce the correct output either, which can be confusing.
+        * Depending on your hardware and encryption type, some of these steps may not be necessary. Some cards are known to require interface activation and/or access point scanning before being associated to an access point and being given an IP address. Some experimentation may be required. For instance, WPA/WPA2 users may try to directly activate their wireless network from step #Connect to an access point.
+       Examples in this section assume that your wireless device interface is interface and that you are connecting to your_essid Wi-Fi access point. Replace both accordingly.
+
+       GET THE NAME OF THE INTERFACE
+
+       Tip See official documentation of the iw tool for more examples.
+
+       To get the name of your wireless interface, do:
+
+         $ iw dev
+
+       The name of the interface will be output after the word "Interface". For example, it is commonly wlan0.
+
+       GET THE STATUS OF THE INTERFACE
+
+       To check link status, use the following command.
+
+         $ iw dev interface link
+
+       You can get statistic information, such as the amount of tx/rx bytes, signal strength etc., with the following command:
+
+         $ iw dev interface station dump
+
+       ACTIVATE THE INTERFACE
+
+       Tip Usually this step is not required.
+
+       Some cards require that the kernel interface be activated before you can use iw or wireless_tools:
+
+         # ip link set interface up
+
+       Note If you get errors like RTNETLINK answers: Operation not possible due to RF-kill, make sure that hardware switch is on. See #Rfkill caveat for details.
+
+       To verify that the interface is up, inspect the output of the following command:
+
+         $ ip link show interface
+
+         3: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state DOWN mode DORMANT group default qlen 1000
+             link/ether 12:34:56:78:9a:bc brd ff:ff:ff:ff:ff:ff
+
+       The UP in <BROADCAST,MULTICAST,UP,LOWER_UP> is what indicates the interface is up, not the later state DOWN.
+
+       DISCOVER ACCESS POINTS
+
+       To see what access points are available:
+
+         # iw dev interface scan | less
+
+       Note If it displays Interface does not support scanning, then you probably forgot to install the firmware. In some cases, this message is also displayed when not running iw as root.
+
+       Tip Depending on your location, you might need to set the correct regulatory domain in order to see all available networks.
+
+       The important points to check:
+
+        * SSID: the name of the network.
+        * Signal: is reported in a wireless power ratio in dBm (e.g. from -100 to 0). The closer the negative value gets to zero, the better the signal. Observing the reported power on a good quality link and a bad one should give an idea about the individual range.
+        * Security: it is not reported directly, check the line starting with capability. If there is Privacy, for example capability: ESS Privacy ShortSlotTime (0x0411), then the network is protected somehow.
+          * If you see an RSN information block, then the network is protected by Robust Security Network protocol, also known as WPA2.
+          * If you see an WPA information block, then the network is protected by Wi-Fi Protected Access protocol.
+          * In the RSN and WPA blocks, you may find the following information:
+            * Group cipher: value in TKIP, CCMP, both, others.
+            * Pairwise ciphers: value in TKIP, CCMP, both, others. Not necessarily the same value than Group cipher.
+            * Authentication suites: value in PSK, 802.1x, others. For home router, you will usually find PSK (i.e. passphrase). In universities, you are more likely to find 802.1x suite which requires login and password. Then you will need to know which key management is in use (e.g. EAP), and what encapsulation it uses (e.g. PEAP). See #WPA2 Enterprise and Wikipedia:Authentication protocol for details.
+          * If you see neither RSN nor WPA blocks but there is Privacy, then WEP is used.
+
+       SET OPERATING MODE
+
+       You might need to set the proper operating mode of the wireless card. More specifically, if you are going to connect an ad-hoc network, you need to set the operating mode to ibss:
+
+         # iw dev interface set type ibss
+
+       Note Changing the operating mode on some cards might require the wireless interface to be down (ip link set interface down).
+
+       Note During changing of the operating mode to AP (iw interface set type ap) you will get an error like this:
+
+         You need to run a management daemon, e.g. hostapd,
+         see https://wireless.wiki.kernel.org/en/users/documentation/hostapd
+         for more information on how to do that.
+
+       This can be bypassed by changing the operating mode to __ap (iw interface set type __ap). [1]
+
+       CONNECT TO AN ACCESS POINT
+
+       Depending on the encryption, you need to associate your wireless device with the access point to use and pass the encryption key:
+
+        * No encryption
+
+         # iw dev interface connect "your_essid"
+
+        * WEP
+          * using a hexadecimal or ASCII key (the format is distinguished automatically, because a WEP key has a fixed length):
+
+         # iw dev interface connect "your_essid" key 0:your_key
+
+          * using a hexadecimal or ASCII key, specifying the third set up key as default (keys are counted from zero, four are possible):
+
+         # iw dev interface connect "your_essid" key d:2:your_key
+
+        * Other
+          * iw can only handle WEP. To connect using other encryption schemes, see the section on #Authentication below.
+       Regardless of the method used, you can check if you have associated successfully:
+
+         # iw dev interface link
+
+       AUTHENTICATION
+
+       There are mainly two options for Wi-Fi authentication on Linux: wpa_supplicant and iwd.
+
+       WPA2 PERSONAL
+
+       WPA2 Personal, a.k.a. WPA2-PSK, is a mode of Wi-Fi Protected Access.
+
+       You can authenticate to WPA2 Personal networks using wpa_supplicant or iwd, or connect using a network manager. If you only authenticated to the network, then to have a fully functional connection, you will still need to assign the IP address(es) and routes either manually or using a DHCP client.
+
+       WPA2 ENTERPRISE
+
+       WPA2 Enterprise is a mode of Wi-Fi Protected Access. It provides better security and key management than WPA2 Personal, and supports other enterprise-type functionality, such as VLANs and NAP. However, it requires an authentication server, called RADIUS server, to handle the authentication of users. This is in contrast to Personal mode which does not require anything beyond the wireless router or access points (APs), and uses a single passphrase or password for all users.
+
+       The Enterprise mode enables users to log onto the Wi-Fi network with a username and password and/or a digital certificate. Since each user has a dynamic and unique encryption key, it also helps to prevent user-to-user snooping on the wireless network, and improves encryption strength.
+
+       This section describes the configuration of network clients to connect to a wireless access point with WPA2 Enterprise mode. See Software access point#RADIUS for information on setting up an access point itself.
+
+       Note Enterprise mode requires a more complex client configuration, whereas Personal mode only requires entering a passphrase when prompted. Clients likely need to install the server’s CA certificate (plus per-user certificates if using EAP-TLS), and then manually configure the wireless security and 802.1X authentication settings.
+
+       For a comparison of protocols, see the following table.
+
+       Warning It is possible to use WPA2 Enterprise without the client checking the server CA certificate. However, you should always seek to do so, because without authenticating the access point, the connection can be subject to a man-in-the-middle attack. This may happen because while the connection handshake itself may be encrypted, the most widely used setups transmit the password itself either in plain text or the easily breakable #MS-CHAPv2. Hence, the client might send the password to a malicious access point which then proxies the connection.
+
+       MS-CHAPV2
+
+       WPA2-Enterprise wireless networks demanding MSCHAPv2 type-2 authentication with PEAP sometimes require pptpclient in addition to the stock ppp package. netctl seems to work out of the box without ppp-mppe, however. In either case, usage of MSCHAPv2 is discouraged as it is highly vulnerable, although using another method is usually not an option.
+
+       EDUROAM
+
+       eduroam is an international roaming service for users in research, higher education and further education, based on WPA2 Enterprise.
+
+       Note
+
+        * Check connection details first with your institution before applying any profiles listed in this section. Example profiles are not guaranteed to work or match any security requirements.
+        * When storing connection profiles unencrypted, it is recommended restrict read access to the root account by specifying chmod 600 profile as root.
+        * If authentication keeps failing with NetworkManager, try setting phase1-auth-flags=32 for TLS 1.0 or phase1-auth-flags=64 for TLS 1.1, as described in [2] and NetworkManager#WPA Enterprise connections fail to authenticate with OpenSSL "unsupported protocol" error.
+       Tip Configuration for NetworkManager can be generated with the eduroam Configuration Assistant Tool. It requires python and python-dbus to be installed.
+
+       MANUAL/AUTOMATIC SETUP
+
+        * wpa_supplicant can be configured directly by its configuration file or using its CLI/GUI front ends and used in combination with a DHCP client. See the examples in /usr/share/doc/wpa_supplicant/wpa_supplicant.conf for configuring the connection details.
+        * iwd#WPA Enterprise
+        * NetworkManager can create WPA2 Enterprise profiles with nmcli, nmtui or the graphical front ends.
+        * ConnMan needs a separate configuration file before connecting to the network. See connman-service.config(5) and ConnMan#Connecting to eduroam (802.1X) for details.
+        * netctl supports wpa_supplicant configuration through blocks included with WPAConfigSection=. See netctl.profile(5) for details.
+       Note Special quoting rules apply: see netctl.profile(5) § SPECIAL QUOTING RULES.
+
+       Tip Custom certificates can be specified by adding the line 'ca_cert="/path/to/special/certificate.cer"' in WPAConfigSection.
+
+       WPA3 PERSONAL
+
+       WPA3 Personal, a.k.a. WPA3-SAE, is a mode of Wi-Fi Protected Access.
+
+       Both wpa_supplicant and iwd support WPA3 Personal.
+
+       WPA3 ENTERPRISE
+
+       WPA3 Enterprise is a mode of Wi-Fi Protected Access.
+
+       wpa_supplicant (since version 2:2.10-8) supports WPA3 Enterprise. See FS#65314.
+
+       TIPS AND TRICKS
+
+       RESPECTING THE REGULATORY DOMAIN
+
+       The regulatory domain, or "regdomain", is used to reconfigure wireless drivers to make sure that wireless hardware usage complies with local laws set by the FCC, ETSI and other organizations. In practice the allowed wireless channels and radiated power are set:
+
+        * Regdomains affect the availability of wireless channels. In the 2.4GHz band, the allowed channels are 1-11 for the US, 1-14 for Japan, and 1-13 for most of the rest of the world. In the 5GHz band, the rules for allowed channels are much more complex. In either case, consult this list of WLAN channels for more detailed information. See MT7922 6GHz Debacle for more details on 6GHz / Wi-Fi 6E.
+        * Regdomains also affect the limit on the effective isotropic radiated power (EIRP) from wireless devices. This is derived from transmit power/"tx power", and is measured in dBm/mBm (1dBm=100mBm) or mW (log scale). In the 2.4GHz band, the maximum is 30dBm in the US and Canada, 20dBm in most of Europe, and 20dBm-30dBm for the rest of the world. In the 5GHz band, maximums are usually lower. Consult the wireless-regdb for more detailed information (EIRP dBm values are in the second set of brackets for each line).
+       Misconfiguring the regdomain is not recommended as it could break local laws and cause interference with other radio devices.
+
+       The kernel loads the database directly when wireless-regdb is installed. (If it is not installed, the kernel should log something like cfg80211: failed to load regulatory.db into the journal during boot.) For direct loading, the kernel should, for security's sake, be configured with CONFIG_CFG80211_USE_KERNEL_REGDB_KEYS set to yes to allow for cryptographic verification of the database. This is true of the stock Arch kernel, but if you are using an alternate kernel, or compiling your own, you should verify this. More information is available at this guide[dead link 2024-07-30—domain name not resolved].
+
+       To configure the regdomain, install wireless-regdb, then edit /etc/conf.d/wireless-regdom and uncomment the appropriate domain, and reboot the system. Regdomains use ISO 3166-1 alpha-2 country codes. For example, the regdomain of the United States would be "US", China would be "CN", etc.
+
+       The current regdomain can be temporarily set to the United States with:
+
+         # iw reg set US
+
+       And queried with:
+
+         $ iw reg get
+
+       Note Your device may be set to country "00", which is the "world regulatory domain" and contains generic settings. If this cannot be unset, check your configuration as detailed below.
+
+       However, setting the regdomain may not alter your settings. Some devices have a regdomain set in firmware/EEPROM, which dictates the limits of the device, meaning that setting regdomain in software can only increase restrictions, not decrease them. For example, a CN device could be set in software to the US regdomain, but because CN has an EIRP maximum of 20dBm, the device will not be able to transmit at the US maximum of 30dBm.
+
+       For example, to see if the regdomain is being set in firmware for an Atheros device:
+
+         # journalctl -kg ath:
+
+       For other chipsets, it may help to search for "EEPROM", "regdomain", or simply the name of the device driver.
+
+       To see if your regdomain change has been successful, and to query the number of available channels and their allowed transmit power:
+
+         $ iw list | grep -A 15 Frequencies:
+
+       wpa_supplicant can also use a regdomain in the country= line of /etc/wpa_supplicant/wpa_supplicant.conf.
+
+       It is also possible to configure the cfg80211 kernel module to use a specific regdomain by adding, for example, options cfg80211 ieee80211_regdom=JP as module options. The module option is inherited from the old regulatory implementation and in modern kernels act as a userspace regulatory hint as if it came through nl80211 through utilities like iw and wpa_supplicant.
+
+       RFKILL CAVEAT
+
+       Many laptops have a hardware button (or switch) to turn off the wireless card; however, the card can also be blocked by the kernel. This can be handled by rfkill(8). To show the current status:
+
+         $ rfkill
+
+         ID TYPE      DEVICE      SOFT      HARD
+          0 bluetooth hci0   unblocked unblocked
+          1 wlan      phy0   unblocked unblocked
+
+       If the card is hard-blocked, use the hardware button (switch) to unblock it. If the card is not hard-blocked but soft-blocked, use the following command:
+
+         # rfkill unblock wlan
+
+       Note It is possible that the card will go from hard-blocked and soft-unblocked state into hard-unblocked and soft-blocked state by pressing the hardware button (i.e. the soft-blocked bit is just switched no matter what). This can be adjusted by tuning some options of the rfkill kernel module.
+
+       Hardware buttons to toggle wireless cards are handled by a vendor specific kernel module. Frequently, these are WMI modules. Particularly for very new hardware models, it happens that the model is not fully supported in the latest stable kernel yet. In this case, it often helps to search the kernel bug tracker for information and report the model to the maintainer of the respective vendor kernel module, if it has not happened already.
+
+       See also [3].
+
+       POWER SAVING
+
+       See Power saving#Network interfaces.
+
+       TROUBLESHOOTING
+
+       This section contains general troubleshooting tips, not strictly related to problems with drivers or firmware. For such topics, see next section #Troubleshooting drivers and firmware.
+
+       TEMPORARY INTERNET ACCESS
+
+       If you have problematic hardware and need internet access to, for example, download some software or get help in forums, you can make use of Android's built-in feature for internet sharing via USB cable. See Android tethering#USB tethering for more information.
+
+       OBSERVING LOGS
+
+       A good first measure to troubleshoot is to analyze the system's logfiles first. In order not to manually parse through them all, it can help to open a second terminal/console window and watch the kernels messages with
+
+         # dmesg -w
+
+       while performing the action, e.g. the wireless association attempt.
+
+       When using a tool for network management, the same can be done for systemd with
+
+         # journalctl -f
+
+       Frequently, a wireless error is accompanied by a deauthentication with a particular reason code, for example:
+
+         wlan0: deauthenticating from XX:XX:XX:XX:XX:XX by local choice (reason=3)
+
+       Looking up the reason code might give a first hint. Maybe it also helps you to look at the control message flowchart, the journal messages will follow it.
+
+       The individual tools used in this article further provide options for more detailed debugging output, which can be used in a second step of the analysis, if required.
+
+       FAILED TO GET IP ADDRESS
+
+        * If you can get an IP address for a wired interface and not for a wireless interface, try disabling the wireless card's power saving features (specify off instead of on).
+        * If you get a timeout error due to a waiting for carrier problem, then you might have to set the channel mode to auto for the specific device:
+
+         # iwconfig wlan0 channel auto
+
+       Before changing the channel to auto, make sure your wireless interface is down. After it has successfully changed it, you can bring the interface up again and continue from there.
+
+       VALID IP ADDRESS BUT CANNOT RESOLVE HOST
+
+       If you are on a public wireless network that may have a captive portal, make sure to query an HTTP page (not an HTTPS page) from your web browser, as some captive portals only redirect HTTP. If this is not the issue, check if you can resolve domain names, it may be necessary to use the DNS server advertised via DHCP.
+
+       SETTING RTS AND FRAGMENTATION THRESHOLDS
+
+       Wireless hardware disables RTS and fragmentation by default. These are two different methods of increasing throughput at the expense of bandwidth (i.e. reliability at the expense of speed). These are useful in environments with wireless noise or many adjacent access points, which may create interference leading to timeouts or failing connections.
+
+       Packet fragmentation improves throughput by splitting up packets with size exceeding the fragmentation threshold. The maximum value (2346) effectively disables fragmentation since no packet can exceed it. The minimum value (256) maximizes throughput, but may carry a significant bandwidth cost.
+
+         # iw phy0 set frag 512
+
+       RTS improves throughput by performing a handshake with the access point before transmitting packets with size exceeding the RTS threshold. The maximum threshold (2347) effectively disables RTS since no packet can exceed it. The minimum threshold (0) enables RTS for all packets, which is probably excessive for most situations.
+
+         # iw phy0 set rts 500
+
+       Note phy0 is the name of the wireless device as listed by iw phy.
+
+       RANDOM DISCONNECTIONS
+
+       CAUSE #1
+
+       If your journal says wlan0: deauthenticating from MAC by local choice (reason=3) and you lose your Wi-Fi connection, it is likely that you have a bit too aggressive power-saving on your Wi-Fi card. Try disabling the wireless card's power saving features (specify off instead of on).
+
+       If your card does not support enabling/disabling power save mode, check the BIOS for power management options. Disabling PCI-Express power management in the BIOS of a Lenovo W520 resolved this issue.
+
+       CAUSE #2
+
+       If you are experiencing frequent disconnections and your journal shows messages such as
+
+       ieee80211 phy0: wlan0: No probe response from AP xx:xx:xx:xx:xx:xx after 500ms, disconnecting
+
+       try changing the channel bandwidth to 20MHz through your router's settings page.
+
+       CAUSE #3
+
+       On some laptop models with hardware rfkill switches (e.g., Thinkpad X200 series), due to wear or bad design, the switch (or its connection to the mainboard) might become loose over time resulting in seemingly random hardblocks/disconnects when you accidentally touch the switch or move the laptop. There is no software solution to this, unless your switch is electrical and the BIOS offers the option to disable the switch. If your switch is mechanical (and most are), there are lots of possible solutions, most of which aim to disable the switch: Soldering the contact point on the mainboard or Wi-Fi card, gluing or blocking the switch, using a screw nut to tighten the switch or removing it altogether.
+
+       CAUSE #4
+
+       Another cause for frequent disconnects or a complete failure to connect may also be a sub-standard router, incomplete settings of the router, interference by other wireless devices or low quality signal.
+
+       To troubleshoot, first try to connect to the router with no authentication and by getting closer to it. If it does not work, reboot the router and try with another device first.
+
+       If that works, enable WPA/WPA2 again but choose fixed and/or limited router settings. For example:
+
+        * If the router is considerably older than the wireless device you use for the client, test if it works with setting the router to one wireless mode.
+        * Disable mixed-mode authentication (e.g. only WPA2 with AES, or TKIP if the router is old).
+        * Try a fixed/free channel rather than "auto" channel (maybe the router next door is old and interfering).
+        * Disable WPS.
+        * Change the router's 5 GHz channel(s) to a non-DFS (Dynamic Frequency Selection) channel. Connections on such channels may be dropped or suddenly switched due to interference from nearby weather radar.
+        * Try setting your client to 2.4 GHz only instead of letting it choose what it thinks is best between 5 GHz and 2.4 GHz (the later has a lower throughput but will provide a more stable connection over longer distances).
+        * Disable 40MHz channel bandwidth (lower throughput but less likely collisions) with cfg80211.cfg80211_disable_40mhz_24ghz=1.
+        * If the router has quality of service settings, check completeness of settings (e.g. Wi-Fi Multimedia (WMM) is part of optional QoS flow control. An erroneous router firmware may advertise its existence although the setting is not enabled).
+
+       CAUSE #5
+
+       On some wireless network adapters (e.g. Qualcomm Atheros AR9485), random disconnects can happen with a DMA error:
+
+         # journalctl -xb
+
+         ath: phy0: DMA failed to stop in 10 ms AR_CR=0x00000024 AR_DIAG_SW=0x02000020 DMADBG_7=0x0000a400
+         wlp1s0: authenticate with 56:e7:ee:7b:55:bc
+         wlp1s0: send auth to 56:e7:ee:7b:55:bc (try 1/3)
+         wlp1s0: send auth to 56:e7:ee:7b:55:bc (try 2/3)
+         wlp1s0: send auth to 56:e7:ee:7b:55:bc (try 3/3)
+         wlp1s0: authentication with 56:e7:ee:7b:55:bc timed out
+
+       A possible workaround is to disable the Intel IOMMU driver (DMA), adding intel_iommu=off to the kernel parameters [4].
+
+       Note The Intel IOMMU driver is needed for some advanced virtual machine features, like PCI pass-through.
+
+       CAUSE #6
+
+       If you are using a device with iwlwifi and iwlmvm for wireless connectivity, and your Wi-Fi card appears to disappear when on battery power (perhaps after a reboot or resuming from suspend), this can be fixed by configuring power saving settings in iwlmvm.
+
+       Create the file /etc/modprobe.d/iwlmvm.conf if it does not exist already, then add the following line to it:
+
+         /etc/modprobe.d/iwlmvm.conf
+
+         options iwlmvm power_scheme=1
+
+       A power_scheme of 1 sets iwlmvm to "Always Active." Available options are:
+
+         Value | Description
+         1 | Always Active
+         2 | Balanced
+         3 | Low-power
+       This fix was discovered at [5].
+
+       CAUSE #7
+
+       If your device undergoes long periods of inactivity (e.g. a file server), the disconnection may be due to power saving, which will block incoming traffic and prevent connections. Try disabling power saving for the interface:
+
+         # iw dev interface set power_save off
+
+       You can create a udev rule to do this on boot, see Power management#Network interfaces.
+
+       CAUSE #8
+
+       If you notice occasional interruptions when connected to a mesh network (e.g., Wi-Fi 6) and notice a message such as:
+
+         # journalctl -b
+
+         kernel: wlan0: disconnect from AP aa:bb:cc:dd:ee:ff for new auth to 11:22:33:44:55:66
+
+       You are experiencing roaming issues. Depending on your mean of connection and the issue at hand, one could:
+
+        * Lock the BSSID (the aa:bb:cc:dd:ee:ff show above) in NetworkManager if roaming is not desired (see NetworkManager#Regular network disconnects, latency and lost packets (Wi-Fi)).
+        * Adjust the bgscan setting in Wpa_supplicant#Roaming
+
+       WI-FI NETWORKS INVISIBLE BECAUSE OF INCORRECT REGULATORY DOMAIN
+
+       If the computer's Wi-Fi channels do not match those of the user's country, some in-range Wi-Fi networks might be invisible because they use wireless channels that are not allowed by default. The solution is to configure the regulatory domain correctly; see #Respecting the regulatory domain.
+
+       UNABLE TO CONNECT TO VISIBLE EUROPEAN WIRELESS NETWORKS
+
+       WLAN adapters are shipped with a default regulatory domain. If your access point does not operate within these limitations, you will not be able to connect to the network. See #Respecting the regulatory domain.
+
+       TROUBLESHOOTING DRIVERS AND FIRMWARE
+
+       This section covers methods and procedures for installing kernel modules and firmware for specific chipsets, that differ from generic method.
+
+       See Kernel modules for general information on operations with modules.
+
+       RALINK/MEDIATEK
+
+       Some chipsets require additional firmware: linux-firmware-mediatek
+
+       RT2X00
+
+       Unified driver for Ralink chipsets (it replaces rt2500, rt61, rt73, etc). This driver has been in the Linux kernel since 2.6.24, you only need to load the right module for the chip: rt2400pci, rt2500pci, rt2500usb, rt61pci or rt73usb which will autoload the respective rt2x00 modules too.
+
+       A list of devices supported by the modules is available at the project's homepage.
+
+         Additional notes
+        * Since kernel 3.0, rt2x00 includes also these drivers: rt2800pci, rt2800usb.
+        * Since kernel 3.0, the staging drivers rt2860sta and rt2870sta are replaced by the mainline drivers rt2800pci and rt2800usb [6].
+        * Some devices have a wide range of options that can be configured with iwpriv. These are documented in the source tarballs available from Ralink.
+
+       RT3090
+
+       For devices which use the rt3090 chipset, it should be possible to use the rt2800pci driver; however, it does not work with this chipset very well (e.g. sometimes it is not possible to use higher rate than 2Mb/s).
+
+       RT3290
+
+       The rt3290 chipset is recognised by the kernel rt2800pci module. However, some users experience problems and reverting to a patched Ralink driver seems to be beneficial in these cases.
+
+       RT3573
+
+       New chipset as of 2012. It may require proprietary drivers from Ralink. Different manufacturers use it; see the Belkin N750 DB wireless usb adapter forums thread.
+
+       MT7612U
+
+       New chipset as of 2014, released under their new commercial name MediaTek. It is an AC1200 or AC1300 chipset. Manufacturer provides drivers for Linux on their support page. As of kernel 5.5 it should be supported by the included mt76 driver.
+
+       DFS channels are currently not supported in 5 GHz AP mode.
+
+       MT7921 / MT7922
+
+       There are some high latency problems with these MediaTek chipsets. To fix this, the only solution is to disable ASPM:
+
+         /etc/modprobe.d/wifi.conf
+
+         options mt7921e disable_aspm=1
+
+       This configuration file will take effect on next reboot or after reloading the module with modprobe:
+
+         # modprobe -r mt7921e && modprobe mt7921e
+
+       These are also sometimes branded as AMD RZ608 (mt7921) and RZ616 (mt7922).
+
+       REALTEK
+
+       See [7] for a list of Realtek chipsets and specifications.
+
+       RTL8192CU
+
+       The driver is now in the kernel, but many users have reported being unable to make a connection although scanning for networks does work.
+
+       8192cu-dkmsAUR includes many patches; try this if it does not work fine with the driver in kernel.
+
+       RTL8723AE/RTL8723BE
+
+       The rtl8723ae and rtl8723be modules are included in the mainline Linux kernel.
+
+       Some users may encounter errors with powersave on this card. This is shown with occasional disconnects that are not recognized by high level network managers (netctl, NetworkManager). This error can be confirmed by running dmesg -w as root or journalctl -f as root and looking for output related to powersave and the rtl8723ae/rtl8723be module. If you have this issue, use the fwlps=0 kernel module parameter which should prevent the Wi-Fi card from automatically sleeping and halting connection.
+
+       If you have poor signal, perhaps your device has only one physical antenna connected, and antenna autoselection is broken. You can force the choice of antenna with ant_sel=1 or ant_sel=2 kernel option. [8]
+
+       RTL88XXAU
+
+       Realtek chipsets rtl8811au, rtl8812au, rtl8814au and rtl8821au designed for various USB adapters ranging from AC600 to AC1900. Several packages provide various kernel drivers, these require DKMS (the dkms package and the kernel headers installed):
+
+         Chipset | Package | Notes
+         A backport of the Realtek Wi-Fi 5 drivers from the wireless-next repo. Supports:
+        * PCIe: RTL8723DE, RTL8814AE, RTL8821CE, RTL8822BE, RTL8822CE
+        * SDIO: RTL8723CS, RTL8723DS, RTL8821CS, RTL8822BS, RTL8822CS
+        * USB : RTL8723DU, RTL8811AU, RTL8811CU, RTL8812AU, RTL8812BU, RTL8812CU, RTL8814AU, RTL8821AU, RTL8821CU, RTL8822BU, RTL8822CU
+       rtl88xxyy | rtw88-dkms-gitAUR
+
+         rtl8812au | rtl8812au-dkms-gitAUR | (probably deprecated) Alternative official Realtek driver version for rtl8812au only.
+         rtl8811au, rtl8821au | rtl8821au-dkms-gitAUR | (probably deprecated) Alternative driver version for rtl8821au.
+         rtl8814au | rtl8814au-dkms-gitAUR | (probably deprecated) Possibly works for rtl8813au too.
+
+       RTL8811CU/RTL8821CU
+
+       rtl8821cu-dkms-gitAUR provides a kernel module for the Realtek 8811cu and 8821cu chipset.
+
+       This requires DKMS, so make sure you have your proper kernel headers installed.
+
+       If no wireless interface shows up even though the 8821cu module is loaded, you may need to manually specify the rtw_RFE_type kernel module parameter [9][10]. Try e.g. rtw_RFE_type=0x26, other values might also work.
+
+       RTL8821CE
+
+       rtl8821ce-dkms-gitAUR provides a kernel module for the Realtek 8821ce chipset found in the Asus X543UA.
+
+       This requires DKMS, so make sure you have your proper kernel headers installed.
+
+       Note It has been reported [11] that the default rtl8821ce module provided by Realtek is broken for Linux kernel ≥ 5.9, which may lead to low connectivity. The AUR version above should be preferred. See the statement on GitHub. Use lspci -k to check whether the default kernel driver (rtw88_8821ce) is in use. If it is, blacklist it and reboot your system.
+
+       RTL8822BU
+
+       rtl88x2bu-dkms-gitAUR provides a kernel module for the Realtek 8822bu chipset found in the Edimax EW7822ULC USB3, Asus AC53 Nano USB 802.11ac and TP-Link Archer T3U adapter.
+
+       This requires DKMS, so make sure you have your proper kernel headers installed.
+
+       RTL8XXXU
+
+       Issues with the rtl8xxxu mainline kernel module may be solved by compiling a third-party module for the specific chipset. The source code can be found in GitHub repositories.
+
+       Some drivers may be already prepared in the AUR, e.g. rtl8723bu-dkms-gitAUR, rtl8852au-dkms-gitAUR, rtl8852bu-dkms-gitAUR, rtl8852cu-dkms-gitAUR.
+
+       RTW88
+
+       RWT88 kernel module is included in all officially supported Arch Linux kernels. The number of supported devices grew over time, currently it supports most RTW88 chip devices if configured and compiled to do so.
+
+       As of Linux 6.10.3, the driver supports: 882BE (possibly), 8703B, 8723CS, 8723D, 8723DE, 8723DS, 8723DU, 8723X, 8821C, 8821CE, 8821CS, 8821CU, 8822B, 8822BE, 8822BS, 8822BU, 8822C, 8822CE, 8822CS, 8822CU.
+
+       To get more up-to-date list, Ctrl+F CONFIG_RTW88_ linux's config or check out wireless-next upstream.
+
+       Make sure that wireless-regdom is configured. Otherwise, you will be able to see all Wi-Fi networks, but will not be able to connect. Out-of-tree driver rtl88x2bu-dkms-gitAUR can connect without such configuration, so it's important to set regulatory domain when switching from it.
+
+       Here is how those symptoms look in dmesg:
+
+         [ +13.369951] wlan0: send auth to *WiFi_AP_mac* (try 1/3)
+         [  +0.000685] wlan0: authenticated
+         [  +0.000449] wlan0: associate with *WiFi_AP_mac* (try 1/3)
+         [  +0.000866] wlan0: RX AssocResp from *router_mac* (capab=0x1011 status=0 aid=2)
+         [  +0.323058] wlan0: associated
+         [  +0.000046] wlan0: deauthenticating from *WiFi_AP_mac* by local choice (Reason: 3=DEAUTH_LEAVING)
+
+       And in iwd log:
+
+         event: state, old: autoconnect_full, new: connecting
+         event: connect-timeout, reason: 0
+         event: connect-failed, status: 1
+
+       RTW89
+
+       The RTW89 kernel module has been merged into the upstream kernel and provides support for newer Realtek wireless chipsets.
+
+       This driver supports: 8852AE, 8851BE, 8852BE, and 8852CE.
+
+       On some computers, you may experience unstable connections. It seems like a common issue on late models from HP and Lenovo. Try disabling ASPM-related features using the config below.
+
+         /etc/modprobe.d/70-rtw89.conf
+
+         options rtw89_pci disable_aspm_l1=y disable_aspm_l1ss=y
+         options rtw89_core disable_ps_mode=y
+
+       See also:
+
+        * https://github.com/lwfinger/rtw89#option-configuration
+        * https://github.com/lwfinger/rtw89/issues/275#issuecomment-1784155449
+
+       QUALCOMM ATHEROS
+
+       There are different drivers for devices with Qualcomm Atheros chipset:
+
+        * ath5k is a driver which replaces the obsolete madwifi driver. Currently a better choice for some chipsets, but not all chipsets are supported (see below).
+        * ath9k is intended for newer Atheros chipsets. All of the chips with 802.11n capabilities are supported.
+        * ath12k is a Linux driver for Qualcomm Wi-Fi 7 (IEEE 802.11be) devices. ath12k uses mac80211.
+       There are some other drivers for some Atheros devices. See Linux Wireless documentation for details.
+
+       ATH5K
+
+       External resources:
+
+        * https://wireless.docs.kernel.org/en/latest/en/users/drivers/ath5k.html
+        * Debian:ath5k
+       If you find web pages randomly loading very slow, or if the device is unable to lease an IP address, try to switch from hardware to software encryption by loading the ath5k module with nohwcrypt=1 option. See Kernel modules#Setting module options for details.
+
+       Some laptops may have problems with their wireless LED indicator flickering red and blue. To solve this problem, do:
+
+         # echo none > /sys/class/leds/ath5k-phy0::tx/trigger
+         # echo none > /sys/class/leds/ath5k-phy0::rx/trigger
+
+       For alternatives, see this bug report.
+
+       ATH9K
+
+       External resources:
+
+        * https://wireless.wiki.kernel.org/en/users/drivers/ath9k
+        * Debian:ath9k
+       As of Linux 3.15.1, some users have been experiencing a decrease in bandwidth. In some cases, this can fixed by setting the nohwcrypt=1 kernel module parameter for the ath9k module.
+
+       Note Use the command lsmod to see what modules are in use and change ath9k if it is named differently (e.g. ath9k_htc).
+
+       POWER SAVING
+
+       Although Linux Wireless says that dynamic power saving is enabled for Atheros ath9k single-chips newer than AR9280, for some devices (e.g. AR9285), powertop might still report that power saving is disabled. In this case, enable it manually.
+
+       On some devices (e.g. AR9285), enabling the power saving might result in the following error:
+
+         # iw dev wlan0 set power_save on
+
+         command failed: Operation not supported (-95)
+
+       The solution is to set the ps_enable=1 kernel module parameter for the ath9k module.
+
+       INTEL
+
+       IWLEGACY
+
+       iwlegacy is the wireless driver for Intel's 3945 and 4965 wireless chips. The firmware is included in the linux-firmware-intel package.
+
+       udev should load the driver automatically, otherwise load iwl3945 or iwl4965 manually. See Kernel modules for details.
+
+       If you have problems connecting to networks in general (e.g. random failures with your card on bootup or your link quality is very poor), try to disable 802.11n:
+
+         /etc/modprobe.d/iwl4965.conf
+
+         options iwl4965 11n_disable=1
+
+       IWLWIFI
+
+       iwlwifi is the wireless driver for Intel's current wireless chips, such as 5100AGN, 5300AGN, and 5350AGN. See the full list of supported devices.
+
+       If you have problems connecting to networks in general or your link quality is very poor, try to disable 802.11n, and perhaps also enable software encryption:
+
+         /etc/modprobe.d/iwlwifi.conf
+
+         options iwlwifi 11n_disable=1 swcrypto=1
+
+       If you have a problem with slow uplink speed you may try disabling power saving for your wireless adapter.
+
+       If you have an 802.11ax (Wi-Fi 6) access point and have problems detecting the beacons or an unreliable connection, review Intel Article 54799.
+
+       Note Using 11n_disable=1 will also prevent 802.11ac and only allow connection with slower protocols (802.11a in the 5GHz band or 802.11b/g in the 2.4 GHz band).
+
+       BLUETOOTH COEXISTENCE
+
+       If you have difficulty connecting a bluetooth headset and maintaining good downlink speed, try disabling Bluetooth coexistence:
+
+         /etc/modprobe.d/iwlwifi.conf
+
+         options iwlwifi bt_coex_active=0
+
+       FIRMWARE ISSUES
+
+       Make sure your firmware is fully updated before trying anything else.
+
+       You may have some issue where the driver outputs stack traces & errors, which can cause some stuttering.
+
+         # dmesg
+
+         Microcode SW error detected.  Restarting 0x2000000.
+
+       Alternatively, you may simply experience miscellaneous issues (e.g. connection issues on 5GHz, random disconnections, no connection on resume).
+
+       To confirm it is the cause of the issues, downgrade the package linux-firmware-intel.
+
+       If confirmed, move the buggy firmware files so that an older version is loaded (to be able to have an up to date linux-firmware-intel since it is not only providing firmware updates for your Intel Wi-Fi card):
+
+         # for i in {64..73} ; do mv /usr/lib/firmware/iwlwifi-ty-a0-gf-a0-$i.ucode.xz /usr/lib/firmware/iwlwifi-ty-a0-gf-a0-$i.ucode.xz.bak ; done
+
+       To avoid having to repeat these steps manually after each update, use the NoExtract and NoUpgrade arrays in pacman.conf with a wildcard to block their installation.
+
+       ADAPTER NOT DETECTED AFTER BOOTING FROM WINDOWS
+
+       If the Wi-Fi adapter is not getting detected after finishing a session in Windows, this might be due to Windows' Fast Startup feature which is enabled by default. Try disabling Fast Startup. The iwlwifi kernel driver wiki has an entry for this.
+
+       DISABLING LED BLINK
+
+       Note This works with the iwlegacy and iwlwifi drivers.
+
+       The default settings on the module are to have the LED blink on activity. Some people find this extremely annoying. To have the LED on solid when Wi-Fi is active, you can use the systemd-tmpfiles:
+
+         /etc/tmpfiles.d/phy0-led.conf
+
+         w /sys/class/leds/phy0-led/trigger - - - - phy0radio
+
+       Run systemd-tmpfiles --create phy0-led.conf for the change to take effect, or reboot.
+
+       To see all the possible trigger values for this LED:
+
+         # cat /sys/class/leds/phy0-led/trigger
+
+       Tip If you do not have /sys/class/leds/phy0-led, you may try to use the led_mode="1" module option. It should be valid for both iwlwifi and iwlegacy drivers.
+
+       AICSEMI
+
+       AIC8800/8801/8800DC/8800DW/8800FC
+
+       The aic8800-dkmsAUR package should be used with these devices. These drivers are out of the mainline Linux kernel and require DKMS.
+
+       AIC8800D80
+
+       For this chip variant, aic8800d80-dkmsAUR package should be used instead of the one mentioned above.
+
+       BROADCOM
+
+       See Broadcom wireless.
+
+       OTHER DRIVERS/DEVICES
+
+       TENDA W322U
+
+       Treat this Tenda card as an rt2870sta device. See #rt2x00.
+
+       ORINOCO
+
+       This should be a part of the kernel package and be installed already.
+
+       Some Orinoco chipsets are Hermes II. You can use the wlags49_h2_cs driver instead of orinoco_cs and gain WPA support. To use the driver, blacklist orinoco_cs first.
+
+       PRISM54
+
+       The driver p54 is included in kernel, but you have to download the appropriate firmware for your card from this site and install it into the /usr/lib/firmware directory.
+
+       Note There is also an older, deprecated driver prism54, which might conflict with the newer driver (p54pci or p54usb). Make sure to blacklist prism54.
+
+       ZD1211RW
+
+       zd1211rw is a driver for the ZyDAS ZD1211 802.11b/g USB WLAN chipset, and it is included in recent versions of the Linux kernel. See [12] for a list of supported devices. You only need to install the firmware for the device, provided by the zd1211-firmwareAUR package.
+
+       HOSTAP_CS
+
+       Host AP is a Linux driver for wireless LAN cards based on Intersil's Prism2/2.5/3 chipset. The driver is included in Linux kernel.
+
+       Note Make sure to blacklist the orinico_cs driver, it may cause problems.
+
+       NDISWRAPPER
+
+       Ndiswrapper is a wrapper script that allows you to use some Windows drivers in Linux. You will need the .inf and .sys files from your Windows driver.
+
+       Tip If you need to extract these files from an .exe file, you can use cabextract.
+
+       Follow these steps to configure ndiswrapper.
+
+        * Install ndiswrapper.
+        * Install the driver to /etc/ndiswrapper/:
+
+         # ndiswrapper -i filename.inf
+
+        * List all installed drivers for ndiswrapper:
+
+         $ ndiswrapper -l
+
+        * Let ndiswrapper write its configuration in /etc/modprobe.d/ndiswrapper.conf:
+
+         # ndiswrapper -m
+         # depmod -a
+
+       The ndiswrapper install is almost finished; you can load the module at boot.
+
+       Test that ndiswrapper will load now:
+
+         # modprobe ndiswrapper
+
+       See Network configuration#Listing network interfaces for more assurance the wireless interface now exists.
+
+       If you have problems, some help is available at: ndiswrapper howto and ndiswrapper FAQ.
+
+       SEE ALSO
+
+        * The Linux Wireless project
+        * Aircrack-ng guide on installing drivers
+        * Wireless Device Database Wiki (This fork is hosted by wi-cat.ru since the original wiki has shut down. There are two less complete versions available: TechInfoDepot, deviwiki)
+        * https://github.com/morrownr/USB-WiFi – various information on different Wi-Fi adapters and chipsets, including performance tests, driver info and general info
+
+ArchWiki manual                         bundled documentation

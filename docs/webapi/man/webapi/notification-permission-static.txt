@@ -1,0 +1,66 @@
+WEBAPI.NOTIFICATION-PERMISSION-STATIC(1) Sandbox manual WEBAPI.NOTIFICATION-PERMISSION-STATIC(1)
+
+       NAME
+
+       Notification: permission static property - The permission read-only static property of the Notification
+
+       NOTIFICATION: PERMISSION STATIC PROPERTY
+
+       The permission read-only static property of the Notification interface indicates the current permission granted by the user for the current origin to display web notifications.
+
+       VALUE
+
+       A string representing the current permission. The value can be:
+
+        * granted
+          * : The user has explicitly granted permission for the current
+       origin to display system notifications.
+
+        * denied
+          * : The user has explicitly denied permission for the current
+       origin to display system notifications.
+
+        * default
+          * : The user decision is unknown; in this case the application
+       will act as if permission was denied.
+
+       EXAMPLES
+
+       The following snippet could be used if you wanted to first check whether notifications are supported, then check if permission has been granted for the current origin to send notifications, then request permission if required, before then sending a notification.
+
+         function notifyMe() {
+           if (!("Notification" in window)) {
+             // Check if the browser supports notifications
+             alert("This browser does not support desktop notification");
+           } else if (Notification.permission === "granted") {
+             // Check whether notification permissions have already been granted;
+             // if so, create a notification
+             const notification = new Notification("Hi there!");
+             // …
+           } else if (Notification.permission !== "denied") {
+             // We need to ask the user for permission
+             Notification.requestPermission().then((permission) => {
+               // If the user accepts, let's create a notification
+               if (permission === "granted") {
+                 const notification = new Notification("Hi there!");
+                 // …
+               }
+             });
+           }
+
+           // At last, if the user has denied notifications, and you
+           // want to be respectful there is no need to bother them anymore.
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Notifications API
+        * Using the Notifications API
+        * Permissions API
+        * Using the Permissions API
+
+Web APIs manual                         from the official documentation

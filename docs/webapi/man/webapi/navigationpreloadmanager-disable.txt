@@ -1,0 +1,53 @@
+WEBAPI.NAVIGATIONPRELOADMANAGER-DISABLE(1) Sandbox manual WEBAPI.NAVIGATIONPRELOADMANAGER-DISABLE(1)
+
+       NAME
+
+       NavigationPreloadManager: disable() method - The disable() method of the NavigationPreloadManager interface halts the automatic preloading of service-worker-managed resources previously
+
+       NAVIGATIONPRELOADMANAGER: DISABLE() METHOD
+
+       The disable() method of the NavigationPreloadManager interface halts the automatic preloading of service-worker-managed resources previously started using enable() It returns a promise that resolves with undefined.
+
+       The method may be called in the service worker's activate event handler (before the fetch event handler can be called).
+
+       SYNTAX
+
+         disable()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that resolves with undefined.
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : There is no active worker associated with the registration to which this NavigationPreloadManager belongs.
+
+       EXAMPLES
+
+       The code below shows how to disable preloading, after first using ServiceWorkerRegistration.navigationPreload to test that it is supported.
+
+         addEventListener("activate", (event) => {
+           event.waitUntil(
+             (async () => {
+               if (self.registration.navigationPreload) {
+                 // Disable navigation preloads!
+                 await self.registration.navigationPreload.disable();
+               }
+             })(),
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * NavigationPreloadManager.enable()
+
+Web APIs manual                         from the official documentation

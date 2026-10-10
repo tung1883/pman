@@ -1,0 +1,48 @@
+SHELLCHECK.SC3059(1)             Sandbox manual             SHELLCHECK.SC3059(1)
+
+       NAME
+
+       In POSIX sh, case modification is undefined. - (or "In dash, ... is not supported." when using dash)
+
+       IN POSIX SH, CASE MODIFICATION IS UNDEFINED
+
+       IN POSIX SH, CASE MODIFICATION IS UNDEFINED
+
+       (or "In dash, ... is not supported." when using dash)
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         x='test'
+         echo "${x^^[t]}"
+
+       CORRECT CODE
+
+       The easiest solution is to switch to a shell that does support name matching prefixes, like bash:
+
+         #!/bin/bash
+         x='test'
+         echo "${x^^[t]}"
+
+       Alternatively, use external tools like tr for case conversion
+
+         #!/bin/sh
+         x='test'
+         echo "$x" | tr 't' 'T'
+
+       RATIONALE
+
+       Case modification in parameter expansion (e.g., ${x^^}, ${x,,}, ${x^}, ${x,[pattern]}) is a bash and ksh extension. dash and POSIX sh do not support it.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+        * https://github.com/sbaudoin/sonar-shellcheck/blob/master/src/main/scripts/build_checks.yml
+
+ShellCheck manual                       from the official documentation

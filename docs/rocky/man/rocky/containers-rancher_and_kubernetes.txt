@@ -1,0 +1,125 @@
+ROCKY.CONTAINERS-RANCHER_AND_KUBERNETES(1) Sandbox manual ROCKY.CONTAINERS-RANCHER_AND_KUBERNETES(1)
+
+       NAME
+
+       Working with Rancher and Kubernetes - K8s has made a name for itself on the market, so there is no need to introduce it anymore.
+
+       WORKING WITH RANCHER AND KUBERNETES
+
+       Kubernetes (K8s) is an open-source container orchestration system for managing the deployment and management of containerized applications.
+
+       K8s has made a name for itself on the market, so there is no need to introduce it anymore.
+
+       Cloud providers have made it easy to deploy managed Kubernetes platforms, but what about setting up and managing an on-premise cluster?
+
+       How easy is it to manage multiple clusters, whether on-premise or multi-cloud?
+
+       The answer to the last two questions is No. Setting up an on-premise cluster is difficult, and managing a multi-cloud cluster can be a real headache.
+
+       That is where the subject of this guide comes in: Rancher! Rancher is also an open-source system, enabling the installation and orchestration of several multi-cloud or on-premise clusters and providing interesting features such as an application catalog and a practical web interface for visualizing resources.
+
+       Rancher will enable you to deploy Kubernetes clusters managed by cloud providers, import existing Kubernetes clusters, or deploy K3s (for short, it is a lighter version of K8s) or K8s clusters.
+
+       This guide will help you discover Rancher, install and start it, and then create an on-premise Kubernetes cluster deployed on Rocky Linux servers.
+
+       RANCHER DEPLOYMENT
+
+       Installing Rancher is quite trivial if you have Docker installed on your server.
+
+       You can find the Docker installation here in gemstones.
+
+       To run on a Rocky 9, Rancher will also require loading modules/ /run//run/
+
+       One way of ensuring the loading of necessary modules during system startup is to create a /etc/modules-load.d/rancher.conf file with the following contents:
+
+         ip_tables
+         ip_conntrack
+         iptable_filter
+         ipt_state
+
+       And the easiest way to apply that changes is to reboot the server: sudo reboot.
+
+       Once rebooted, you can ensure proper loading of the modules thanks to the lsmod | grep command.
+
+       We now have a system ready to receive the Rancher container:
+
+         docker pull rancher/rancher:latest
+         docker run -d --name=rancher --privileged --restart=unless-stopped -p 80:80 -p 443:443 rancher/rancher:latest
+
+       > Note:
+       If you are curious, look at the new container's logs. You will see that a K3s cluster (with a single node) has just been created! This is how Rancher works in its standalone version.
+
+       
+
+       As Rancher listens on port 443, open your firewall to allow access from the outside:
+
+         firewall-cmd --permanent --zone=public --add-service=https
+         firewall-cmd --zone=public --add-service=https
+
+       If you go to the newly deployed Rancher web interface, a message will inform you how to retrieve the admin administrator password in your container logs.
+
+       To do this, launch the following command:
+
+         docker logs rancher  2>&1 | grep "Bootstrap Password:"
+
+       You are ready to connect to the Rancher's webUI.
+
+       
+
+       > Note:
+       This solution is by no means production-ready. You will need to ensure the system is highly available, but it is a good start. Consider deploying Rancher on an existing K8s cluster for optimal HA.
+
+       KUBERNETES ON ROCKY LINUX 9 SERVERS
+
+       Rancher offers its docker-based version of Kubernetes: RKE (Rancher Kubernetes Engine).
+
+       All you need is several Rocky Linux servers and the Docker engine installed on them.
+
+       Do not forget that one of the requirements of Kubernetes is to have an odd number of master nodes (1 or 3, for example). For our tests, start with 3 master nodes and 2 additional nodes with only the worker role.
+
+       Once Docker is installed on the servers, stop firewalld and run nftables on each servers:
+
+         systemctl stop firewalld
+         systemctl disable firewalld
+         systemctl start nftables
+         systemctl enable nftables
+
+       We are ready for our cluster creation.
+
+       CLUSTER CREATION
+
+       In the cluster management area, create a new cluster:
+
+       
+
+       You are free to create a cluster in a hosted Kubernetes provider, provision new nodes, and create a cluster using RKE2/K3s, or, in our case, use existing nodes and create a cluster using RKE2/K3s.
+
+       Choose the last option.
+
+       Enter a cluster name and description.
+
+       Take your time to discover the various options available before launching cluster creation.
+
+       
+
+       Once the cluster has been created, go to the Registration tab to add our servers:
+
+       
+
+       First, select the various roles of the node you are adding and copy the necessary command line. If your cluster uses a self-signed certificate, check the appropriate box.
+
+       Go to the node you wish to add to the configuration and paste the command you copied earlier.
+
+       After a few minutes, the server will be added to the cluster, and if it is the first server and has all the roles, the cluster will become available in the web interface.
+
+       Once you have added the 5 servers, you should get a result similar to this one:
+
+       
+
+       CONCLUSION
+
+       Congratulations! You have installed your first Kubernetes cluster in just a few minutes/hours, thanks to Rancher's features.
+
+       If you are new to Kubernetes, you can already be proud of yourself: you are on the right track. You now have everything you need to continue your discovery of Kubernetes.
+
+Rocky Linux manual                      from the official documentation

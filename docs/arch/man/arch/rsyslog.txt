@@ -1,0 +1,164 @@
+ARCH.RSYSLOG(1)                  Sandbox manual                  ARCH.RSYSLOG(1)
+
+       rsyslog is a widely used syslog implementation. It can be configured to receive log entries from systemd's journal in order to process or filter them before quickly writing them to disk or sending them over network.
+
+       INSTALLATION
+
+       Note It is recommended to disable and uninstall the syslog-ng package to prevent possible conflicts.
+
+       Install the rsyslogAUR package.
+
+       ENABLING AND STARTING SERVICE
+
+       After installation, enable rsyslog.service and start it afterwards.
+
+       Starting the rsyslog.service unit first would likely fail, because enabling the service creates a symlink for syslog.service which would be missing otherwise; rsyslog.service would raise the error:
+
+         rsyslog.service: Job rsyslog.service/start failed with result 'dependency'
+
+       CONFIGURE HOSTNAME
+
+       Rsyslog uses the glibc routine gethostname() or gethostbyname() to determine the hostname of the local machine. The gethostname() or gethostbyname() routine check the contents of /etc/hosts for the fully qualified domain name (FQDN) if you are not using BIND or NIS.
+
+       You can check what the local machine's currently configured FQDN is by running hostname --fqdn. The output of hostname --short will be used by rsyslog when writing log messages. If you want to have full hostnames in logs, you need to add $PreserveFQDN on to the beginning of the file (before using any directive that write to files). This is because, rsyslog reads its configuration file and applies it on-the-go and then reads the later lines.
+
+       The /etc/hosts file contains a number of lines that map FQDNs to IP addresses and that map aliases to FQDNs. See the example /etc/hosts file below:
+
+         /etc/hosts
+
+         #<ip-address>    <hostname.domain.org> <hostname>
+         #<ip-address>    <actual FQDN> <aliases>
+         127.0.0.1        localhost.localdomain somehost.localdomain localhost somehost
+         ::1              localhost.localdomain somehost.localdomain localhost somehost
+
+       localhost.localdomain is the first item following the IP address, so gethostbyname() function will return localhost.localdomain as the local machine's FQDN. Then /var/log/messages file will use localhost as hostname.
+
+       To use somehost as the hostname. Move somehost.localdomain to the first item:
+
+         /etc/hosts
+
+         #<ip-address>    <hostname.domain.org> <hostname>
+         #<ip-address>    <actual FQDN> <aliases>
+         127.0.0.1        somehost.localdomain localhost.localdomain localhost somehost
+         ::1              somehost.localdomain localhost.localdomain localhost somehost
+
+       CONFIGURATION
+
+       rsyslog is configured in /etc/rsyslog.conf. See the official documentation for more information on the available configuration options.
+
+       By default, all syslog messages are handled by systemd's journal. In order to gather system logs in rsyslog, you either have to turn on #journald's syslog-forward feature or use the #imjournal module of rsyslog to gather the logs by importing it from the systemd journald.
+
+       IMJOURNAL
+
+       If you want rsyslog to pull messages from systemd, load the imjournal module:
+
+         /etc/rsyslog.conf
+
+         $ModLoad imjournal
+
+       See the documentation on the imjournal input module for more information.
+
+       JOURNALD'S SYSLOG-FORWARD FEATURE
+
+         /etc/systemd/journald.conf
+
+         ForwardToSyslog=yes
+
+       Log output can be fine tuned in /etc/rsyslog.conf. The daemon uses Facility levels (see below) to determine what gets put where. For example:
+
+         /etc/rsyslog.conf
+
+         # The authpriv file has restricted access.
+         authpriv.*                                              /var/log/secure
+
+       States that all messages falling under the authpriv facility are logged to /var/log/secure.
+
+       Another example, which would be similar to the behaviour of syslog-ng for the old auth.log:
+
+         /etc/rsyslog.conf
+
+         auth.*                                                  -/var/log/auth
+
+       See Systemd/Journal#Journald in conjunction with syslog for more information.
+
+       FACILITY LEVELS
+
+       Note The mapping between Facility Number and Keyword is not uniform over different operating systems and different syslog implementations. Use the keyword where possible, until it is determined which numbers are used by Arch.
+
+         Facility Number | Keyword | Facility Description
+         0 | kern | kernel messages
+         1 | user | user-level messages
+         2 | mail | mail system
+         3 | daemon | system daemons
+         4 | auth | security/authorization messages
+         5 | syslog | messages generated internally by syslogd
+         6 | lpr | line printer subsystem
+         7 | news | network news subsystem
+         8 | uucp | UUCP subsystem
+         9 | clock daemon
+         10 | authpriv | security/authorization messages
+         11 | ftp | FTP daemon
+         12 | - | NTP subsystem
+         13 | - | log audit
+         14 | - | log alert
+         15 | cron | clock daemon
+         16 | local0 | local use 0 (local0)
+         17 | local1 | local use 1 (local1)
+         18 | local2 | local use 2 (local2)
+         19 | local3 | local use 3 (local3)
+         20 | local4 | local use 4 (local4)
+         21 | local5 | local use 5 (local5)
+         22 | local6 | local use 6 (local6)
+         23 | local7 | local use 7 (local7)
+
+       SEVERITY LEVELS
+
+       As defined in RFC 5424, there are eight severity levels:
+
+         Code | Severity | Keyword | Description | General Description
+         0 | Emergency | emerg (panic) | System is unusable. | A "panic" condition usually affecting multiple apps/servers/sites. At this level it would usually notify all tech staff on call.
+         1 | Alert | alert | Action must be taken immediately. | Should be corrected immediately, therefore notify staff who can fix the problem. An example would be the loss of a primary ISP connection.
+         2 | Critical | crit | Critical conditions. | Should be corrected immediately, but indicates failure in a primary system, an example is a loss of a backup ISP connection.
+         3 | Error | err (error) | Error conditions. | Non-urgent failures, these should be relayed to developers or admins; each item must be resolved within a given time.
+         4 | Warning | warning (warn) | Warning conditions. | Warning messages, not an error, but indication that an error will occur if action is not taken, e.g. file system 85% full - each item must be resolved within a given time.
+         5 | Notice | notice | Normal but significant condition. | Events that are unusual but not error conditions - might be summarized in an email to developers or admins to spot potential problems - no immediate action required.
+         6 | Informational | info | Informational messages. | Normal operational messages - may be harvested for reporting, measuring throughput, etc. - no action required.
+         7 | Debug | debug | Debug-level messages. | Info useful to developers for debugging the application, not useful during operations.
+       Tip A common mnemonic used to remember the syslog levels in reverse order: "Do I Notice When Evenings Come Around Early".
+
+       EXAMPLES
+
+       JOURNALD WITH RSYSLOG FOR KERNEL MESSAGES
+
+       Since the syslog component of systemd, journald, does not flush its logs to disk during normal operation, these logs will be gone when the machine is shut down abnormally (power loss, kernel lock-ups, ...). In the case of kernel lock-ups, it can be important to have some kernel logs for debugging. Until journald gains a configuration option for flushing kernel logs, rsyslog can be used in conjunction with journald.
+
+       Summary of requirements:
+
+        * journald must still get all log messages.
+        * rsyslog must only log kernel messages, all other logs are handled by journald.
+        * Kernel logs must be logged separatedly to /var/log/kernel.log.
+        * Use systemd to start the service.
+       Installation and configuration steps:
+
+        * Install rsyslogAUR.
+        * Edit /etc/logrotate.d/rsyslog and add /var/log/kernel.log to the list of logs. Without this modification, the kernel log would grow indefinitely.
+        * Edit /etc/rsyslog.conf and comment everything except for $ModLoad imklog. If a heart-beat (repeated confirmation that the log is alive) is preferred, $ModLoad immark should remain uncommented as well.
+        * Add the next line to the same configuration file:
+
+         kern.*     /var/log/kernel.log;RSYSLOG_TraditionalFileFormat
+
+       The kern.* part catches all messages originating from the kernel. ;RSYSLOG_TraditionalFileFormat is used here to use a less verbose date format. By default, a date format like 2013-03-09T19:29:33.103897+01:00 is used. Since the kernel log contains a precision already (printk time) and the actual log time is irrelevant, a format like Mar 9 19:29:13 might be preferred.
+
+        * Since rsyslog should operate completely separated from systemd, remove the option that shares a socket with systemd:
+
+         # sed 's/^Sockets=/#&/' /usr/lib/systemd/system/rsyslog.service > /etc/systemd/system/rsyslog.service
+
+        * Next, make rsyslog start on boot and start it for this session by starting and enabling rsyslog.service.
+       Note rsyslog reads from /proc/kmsg. This means that subsequent reads from that file (either the user or a syslog daemon) will not read "old" logs from that file anymore. journald is not affected as it reads from /dev/kmsg which allows multiple readers.
+
+       SEE ALSO
+
+        * Rsyslog manual
+        * RELP - Rsyslog's reliable event logging protocol
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,103 @@
+WEBAPI.SVGAELEMENT-SEARCH(1)     Sandbox manual     WEBAPI.SVGAELEMENT-SEARCH(1)
+
+       NAME
+
+       SVGAElement: search property - The search property of the SVGAElement interface represents the element's query string.
+
+       SVGAELEMENT: SEARCH PROPERTY
+
+       The search property of the SVGAElement interface represents the element's query string. It is a "?" followed by the parameters of the SVG a element's href. If the URL does not have any parameters, this property contains an empty string, "".
+
+       This property can be set to change the query string of the URL. When setting, a single "?" prefix is added to the provided value, if not already present, and setting it to "" removes the query string. Setting it also rewrites the element's href attribute as a complete, absolute URL.
+
+       The query is percent-encoded when setting but not percent-decoded when reading.
+
+       See URL.search for more information.
+
+       VALUE
+
+       A string.
+
+       EXAMPLES
+
+       GETTING THE SEARCH STRING FROM AN SVG LINK
+
+       Given the following SVG:
+
+         <svg viewBox="0 0 200 30" xmlns="http://www.w3.org/2000/svg">
+           <a id="link" href="https://example.com/search?q=svg">
+             <text x="0" y="20">Search for SVG</text>
+           </a>
+         </svg>
+
+         <pre id="log"></pre>
+
+         svg {
+           width: 200px;
+           height: 30px;
+         }
+         svg a text {
+           fill: blue;
+           text-decoration: underline;
+         }
+         #log {
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+         }
+
+       We can read the query string of the link:
+
+         const link = document.getElementById("link");
+
+         log(`search: "${link.search}"`); // search: "?q=svg"
+
+       ADVANCED PARSING USING URLSEARCHPARAMS
+
+       Alternatively, URLSearchParams can be used to read individual parameters out of the query string:
+
+         <svg viewBox="0 0 200 30" xmlns="http://www.w3.org/2000/svg">
+           <a id="link" href="https://example.com/search?q=svg">
+             <text x="0" y="20">Search for SVG</text>
+           </a>
+         </svg>
+
+         <pre id="log"></pre>
+
+         svg {
+           width: 200px;
+           height: 30px;
+         }
+         svg a text {
+           fill: blue;
+           text-decoration: underline;
+         }
+         #log {
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+         }
+
+         const link = document.getElementById("link");
+         const params = new URLSearchParams(link.search);
+
+         log(`q: "${params.get("q")}"`); // q: "svg"
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * SVG a element
+        * HTMLAnchorElement.search
+
+Web APIs manual                         from the official documentation

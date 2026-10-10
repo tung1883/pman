@@ -1,0 +1,46 @@
+SHELLCHECK.SC1033(1)             Sandbox manual             SHELLCHECK.SC1033(1)
+
+       NAME
+
+       Test expression was opened with double [[ but closed with single ]. Make sure they match. - (or [[SC1034]] for vice versa)
+
+       TEST EXPRESSION WAS OPENED WITH DOUBLE BUT CLOSED WITH SINGLE . MAKE S
+
+       TEST EXPRESSION WAS OPENED WITH DOUBLE BUT CLOSED WITH SINGLE . MAKE S
+
+       (or [[SC1034]] for vice versa)
+
+       PROBLEMATIC CODE
+
+         [[ -z "$var" ]
+
+       CORRECT CODE
+
+         [[ -z "$var" ]]
+
+       RATIONALE
+
+       ShellCheck found a test expression [ ... ] (POSIX) or [[ ... ]] (ksh/bash), but where the opening and closing brackets did not match (i.e. [[ .. ] or [ .. ]]). The brackets need to match up to work.
+
+       Note in particular that [..] do not work like parentheses in other languages. You can not do:
+
+         # Invalid
+         [[ x ] || [ y ]]
+
+       You would instead use two separate test expressions joined by ||:
+
+         # Valid basic test expressions (sh/bash/ksh)
+         [ x ] || [ y ]
+
+         # Valid extended test expressions (bash/ksh)
+         [[ x ]] || [[ y ]]
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

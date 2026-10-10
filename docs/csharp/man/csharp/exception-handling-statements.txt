@@ -1,0 +1,392 @@
+CSHARP.EXCEPTION-HANDLING-STATEMENTS(1) Sandbox manual CSHARP.EXCEPTION-HANDLING-STATEMENTS(1)
+
+       NAME
+
+       Exception-handling statements - `throw`, `try-catch`, `try-finally`, and `try-catch-finally` - Use the C# throw statement to signal an occurrence of an exception. Use the C# try statements to catch and process exceptions occurred in a
+
+       EXCEPTION-HANDLING STATEMENTS - THROW, TRY-CATCH, TRY-FINALLY, AND TRY
+
+       Use the throw and try statements to work with exceptions. Use the throw statement to throw an exception. Use the try statement to catch and handle exceptions that might occur during execution of a code block.
+
+       THE THROW STATEMENT
+
+       The throw statement throws an exception:
+
+         if (shapeAmount <= 0)
+         {
+             throw new ArgumentOutOfRangeException(nameof(shapeAmount), "Amount of shapes must be positive.");
+         }
+
+       In a throw e; statement, the result of expression e must be implicitly convertible to Exception.
+
+       You can use the built-in exception classes, such as ArgumentOutOfRangeException or InvalidOperationException. .NET also provides the following helper methods to throw exceptions in certain conditions: ThrowIfNull* and ThrowIfNullOrEmpty*. You can also define your own exception classes that derive from Exception. For more information, see Creating and throwing exceptions.
+
+       Inside a catch block, use a throw; statement to re-throw the exception that the catch block handles:
+
+         try
+         {
+             ProcessShapes(shapeAmount);
+         }
+         catch (Exception e)
+         {
+             LogError(e, "Shape processing failed.");
+             throw;
+         }
+
+       > throw; preserves the original stack trace of the exception, which is stored in the StackTrace property. In contrast, throw e; updates the StackTrace property of e.
+       When an exception is thrown, the common language runtime (CLR) looks for the catch block that can handle this exception. If the currently executed method doesn't contain such a catch block, the CLR looks at the method that called the current method, and so on up the call stack. If there's no compatible catch block, the CLR terminates the executing thread. For more information, see the [How exceptions are handled] section of the [C# language specification].
+
+       THE THROW EXPRESSION
+
+       You can also use throw as an expression. This approach might be convenient in several cases, including:
+
+        * the conditional operator. The following example uses a throw expression to throw an ArgumentException when the passed array args is empty:
+        * the null-coalescing operator. The following example uses a throw expression to throw an ArgumentNullException when the string to assign to a property is null:
+        * an expression-bodied lambda or method. The following example uses a throw expression to throw an InvalidCastException to indicate that a conversion to a DateTime value isn't supported:
+
+       THE TRY STATEMENT
+
+       You can use the try statement in any of the following forms: try-catch - to handle exceptions that might occur during execution of the code inside a try block, try-finally - to specify the code that runs when control leaves the try block, and try-catch-finally - as a combination of the preceding two forms.
+
+       THE TRY-CATCH STATEMENT
+
+       Use the try-catch statement to handle exceptions that might occur during execution of a code block. Place the code where an exception might occur inside a try block. Use a catch clause to specify the base type of exceptions you want to handle in the corresponding catch block:
+
+         try
+         {
+             var result = Process(-3, 4);
+             Console.WriteLine($"Processing succeeded: {result}");
+         }
+         catch (ArgumentException e)
+         {
+             Console.WriteLine($"Processing failed: {e.Message}");
+         }
+
+       You can provide several catch clauses:
+
+         try
+         {
+             var result = await ProcessAsync(-3, 4, cancellationToken);
+             Console.WriteLine($"Processing succeeded: {result}");
+         }
+         catch (ArgumentException e)
+         {
+             Console.WriteLine($"Processing failed: {e.Message}");
+         }
+         catch (OperationCanceledException)
+         {
+             Console.WriteLine("Processing is cancelled.");
+         }
+
+       When an exception occurs, the runtime checks catch clauses in the specified order, from top to bottom. At most, only one catch block runs for any thrown exception. As the preceding example also shows, you can omit declaration of an exception variable and specify only the exception type in a catch clause. A catch clause without any specified exception type matches any exception and, if present, must be the last catch clause.
+
+       To re-throw a caught exception, use the throw statement, as the following example shows:
+
+         try
+         {
+             var result = Process(-3, 4);
+             Console.WriteLine($"Processing succeeded: {result}");
+         }
+         catch (Exception e)
+         {
+             LogError(e, "Processing failed.");
+             throw;
+         }
+
+       > throw; preserves the original stack trace of the exception, which is stored in the StackTrace property. In contrast, throw e; updates the StackTrace property of e.
+
+       A WHEN EXCEPTION FILTER
+
+       Along with an exception type, you can also specify an exception filter that further examines an exception and decides if the corresponding catch block handles that exception. An exception filter is a Boolean expression that follows the when keyword, as the following example shows:
+
+         try
+         {
+             var result = Process(-3, 4);
+             Console.WriteLine($"Processing succeeded: {result}");
+         }
+         catch (Exception e) when (e is ArgumentException || e is DivideByZeroException)
+         {
+             Console.WriteLine($"Processing failed: {e.Message}");
+         }
+
+       The preceding example uses an exception filter to provide a single catch block to handle exceptions of two specified types.
+
+       You can provide several catch clauses for the same exception type if they distinguish by exception filters. One of those clauses might have no exception filter. If such a clause exists, it must be the last of the clauses that specify that exception type.
+
+       If a catch clause has an exception filter, it can specify the exception type that is the same as or less derived than an exception type of a catch clause that appears after it. For example, if an exception filter is present, a catch (Exception e) clause doesn't need to be the last clause.
+
+       EXCEPTION FILTERS VS. TRADITIONAL EXCEPTION HANDLING
+
+       Exception filters provide significant advantages over traditional exception handling approaches. The key difference is when the exception handling logic is evaluated:
+
+        * Exception filters (when): The filter expression is evaluated before the stack is unwound. This means the original call stack and all local variables remain intact during filter evaluation.
+        * Traditional catch blocks: The catch block runs after the stack is unwound, potentially losing valuable debugging information.
+       Here's a comparison showing the difference:
+
+         public static void DemonstrateStackUnwindingDifference()
+         {
+             var localVariable = "Important debugging info";
+
+             try
+             {
+                 ProcessWithExceptionFilter(localVariable);
+             }
+             catch (InvalidOperationException ex) when (ex.Message.Contains("filter"))
+             {
+                 // Exception filter: Stack not unwound yet.
+                 // localVariable is still accessible in debugger.
+                 // Call stack shows original throwing location.
+                 Console.WriteLine($"Caught with filter: {ex.Message}");
+                 Console.WriteLine($"Local variable accessible: {localVariable}");
+             }
+
+             try
+             {
+                 ProcessWithTraditionalCatch(localVariable);
+             }
+             catch (InvalidOperationException ex)
+             {
+                 // Traditional catch: Stack already unwound.
+                 // Some debugging information may be lost.
+                 if (ex.Message.Contains("traditional"))
+                 {
+                     Console.WriteLine($"Caught with if: {ex.Message}");
+                     Console.WriteLine($"Local variable accessible: {localVariable}");
+                 }
+                 else
+                 {
+                     throw; // Re-throws and further modifies stack trace.
+                 }
+             }
+         }
+
+         private static void ProcessWithExceptionFilter(string context)
+         {
+             throw new InvalidOperationException($"Exception for filter demo: {context}");
+         }
+
+         private static void ProcessWithTraditionalCatch(string context)
+         {
+             throw new InvalidOperationException($"Exception for traditional demo: {context}");
+         }
+
+       ADVANTAGES OF EXCEPTION FILTERS
+
+        * Better debugging experience: Since the stack isn't unwound until a filter matches, debuggers can show the original point of failure with all local variables intact.
+        * Performance benefits: If no filter matches, the exception continues propagating without the overhead of stack unwinding and restoration.
+        * Cleaner code: Multiple filters can handle different conditions of the same exception type without requiring nested if-else statements.
+        * Logging and diagnostics: You can examine and log exception details before deciding whether to handle the exception:
+
+         public static void DemonstrateDebuggingAdvantage()
+         {
+             var contextData = new Dictionary<string, object>
+             {
+                 ["RequestId"] = Guid.NewGuid(),
+                 ["UserId"] = "user123",
+                 ["Timestamp"] = DateTime.Now
+             };
+
+             try
+             {
+                 // Simulate a deep call stack.
+                 Level1Method(contextData);
+             }
+             catch (Exception ex) when (LogAndFilter(ex, contextData))
+             {
+                 // This catch block may never execute if LogAndFilter returns false.
+                 // But LogAndFilter can examine the exception while the stack is intact.
+                 Console.WriteLine("Exception handled after logging");
+             }
+         }
+
+         private static void Level1Method(Dictionary<string, object> context)
+         {
+             Level2Method(context);
+         }
+
+         private static void Level2Method(Dictionary<string, object> context)
+         {
+             Level3Method(context);
+         }
+
+         private static void Level3Method(Dictionary<string, object> context)
+         {
+             throw new InvalidOperationException("Error in deep call stack");
+         }
+
+         private static bool LogAndFilter(Exception ex, Dictionary<string, object> context)
+         {
+             // This method runs before stack unwinding.
+             // Full call stack and local variables are still available.
+             Console.WriteLine($"Exception occurred: {ex.Message}");
+             Console.WriteLine($"Request ID: {context["RequestId"]}");
+             Console.WriteLine($"Full stack trace preserved: {ex.StackTrace}");
+
+             // Return true to handle the exception, false to continue search.
+             return ex.Message.Contains("deep call stack");
+         }
+
+       WHEN TO USE EXCEPTION FILTERS
+
+       Use exception filters when you need to:
+
+        * Handle exceptions based on specific conditions or properties.
+        * Preserve the original call stack for debugging.
+        * Log or examine exceptions before deciding whether to handle them.
+        * Handle the same exception type differently based on context.
+
+         public static void HandleFileOperations(string filePath)
+         {
+             try
+             {
+                 // Simulate file operation that might fail.
+                 ProcessFile(filePath);
+             }
+             catch (IOException ex) when (ex.Message.Contains("access denied"))
+             {
+                 Console.WriteLine("File access denied. Check permissions.");
+             }
+             catch (IOException ex) when (ex.Message.Contains("not found"))
+             {
+                 Console.WriteLine("File not found. Verify the path.");
+             }
+             catch (IOException ex) when (IsNetworkPath(filePath))
+             {
+                 Console.WriteLine($"Network file operation failed: {ex.Message}");
+             }
+             catch (IOException)
+             {
+                 Console.WriteLine("Other I/O error occurred.");
+             }
+         }
+
+         private static void ProcessFile(string filePath)
+         {
+             // Simulate different types of file exceptions.
+             if (filePath.Contains("denied"))
+                 throw new IOException("File access denied");
+             if (filePath.Contains("missing"))
+                 throw new IOException("File not found");
+             if (IsNetworkPath(filePath))
+                 throw new IOException("Network timeout occurred");
+         }
+
+         private static bool IsNetworkPath(string path)
+         {
+             return path.StartsWith(@"\\") || path.StartsWith("http");
+         }
+
+       STACK TRACE PRESERVATION
+
+       Exception filters preserve the original ex.StackTrace property. If a catch clause can't process the exception and re-throws it, the original stack information is lost. The when filter doesn't unwind the stack, so if a when filter is false, the original stack trace isn't changed.
+
+       The exception filter approach is valuable in applications where preserving debugging information is crucial for diagnosing code errors.
+
+       EXCEPTIONS IN ASYNC AND ITERATOR METHODS
+
+       If an exception occurs in an async function, the exception propagates to the caller of the function when you await the result of the function, as the following example shows:
+
+         public static async Task Run()
+         {
+             try
+             {
+                 Task<int> processing = ProcessAsync(-1);
+                 Console.WriteLine("Launched processing.");
+
+                 int result = await processing;
+                 Console.WriteLine($"Result: {result}.");
+             }
+             catch (ArgumentException e)
+             {
+                 Console.WriteLine($"Processing failed: {e.Message}");
+             }
+             // Output:
+             // Launched processing.
+             // Processing failed: Input must be non-negative. (Parameter 'input')
+         }
+
+         private static async Task<int> ProcessAsync(int input)
+         {
+             if (input < 0)
+             {
+                 throw new ArgumentOutOfRangeException(nameof(input), "Input must be non-negative.");
+             }
+
+             await Task.Delay(500);
+             return input;
+         }
+
+       If an exception occurs in an iterator method, the exception propagates to the caller only when the iterator advances to the next element.
+
+       THE TRY-FINALLY STATEMENT
+
+       In a try-finally statement, the finally block runs when control leaves the try block. Control might leave the try block as a result of
+
+        * normal execution,
+        * execution of a jump statement (that is, return, break, continue, or goto), or
+        * propagation of an exception out of the try block.
+       The following example uses the finally block to reset the state of an object before control leaves the method:
+
+         public async Task HandleRequest(int itemId, CancellationToken ct)
+         {
+             Busy = true;
+
+             try
+             {
+                 await ProcessAsync(itemId, ct);
+             }
+             finally
+             {
+                 Busy = false;
+             }
+         }
+
+       You can also use the finally block to clean up allocated resources used in the try block.
+
+       > When the type of a resource implements the IDisposable or IAsyncDisposable interface, consider the using statement. The using statement ensures that acquired resources are disposed when control leaves the using statement. The compiler transforms a using statement into a try-finally statement.
+       Whether the finally block executes depends on whether the operating system chooses to trigger an exception unwind operation. The only cases where finally blocks don't execute involve immediate termination of a program. For example, such a termination might happen because of the FailFast* call or an OverflowException or InvalidProgramException exception. Most operating systems perform reasonable resource clean-up as part of stopping and unloading the process.
+
+       THE TRY-CATCH-FINALLY STATEMENT
+
+       Use a try-catch-finally statement both to handle exceptions that might occur during execution of the try block and to specify the code that must run when control leaves the try statement:
+
+         public async Task ProcessRequest(int itemId, CancellationToken ct)
+         {
+             Busy = true;
+
+             try
+             {
+                 await ProcessAsync(itemId, ct);
+             }
+             catch (Exception e) when (e is not OperationCanceledException)
+             {
+                 LogError(e, $"Failed to process request for item ID {itemId}.");
+                 throw;
+             }
+             finally
+             {
+                 Busy = false;
+             }
+
+         }
+
+       When a catch block handles an exception, the finally block runs after the catch block finishes (even if another exception occurs during execution of the catch block). For information about catch and finally blocks, see The try-catch statement and The try-finally statement sections, respectively.
+
+       C# LANGUAGE SPECIFICATION
+
+       For more information, see the following sections of the [C# language specification]:
+
+        * [The throw statement]
+        * [The try statement]
+        * [Exceptions]
+
+       SEE ALSO
+
+        * Exceptions and exception handling
+        * Handling and throwing exceptions in .NET
+        * throw preferences (style rule IDE0016)
+        * FirstChanceException
+        * UnhandledException
+        * UnobservedTaskException
+
+C# manual                               from the official documentation

@@ -1,0 +1,73 @@
+ARCH.DHCPD(1)                    Sandbox manual                    ARCH.DHCPD(1)
+
+       dhcpd is the older ISC DHCP server.
+
+       Note
+
+        * dhcpd is no longer maintained. Internet Systems Consortium (ISC) promotes Kea as its official replacement.
+        * dhcpd (DHCP server daemon) is not the same as dhcpcd (DHCP client daemon).
+
+       INSTALLATION
+
+       Install the dhcp package.
+
+       CONFIGURATION
+
+       Assign a static IPv4 address to the interface you want dhcpd to listen on (here eth0). The specified subnet should not overlap with that of other interfaces:
+
+         # ip link set up dev eth0
+         # ip addr add 139.96.30.100/24 dev eth0 # arbitrary address
+
+       Tip
+
+        * To have a static IP address assigned at boot, see Network configuration#Static IP address.
+        * The RFC 1918 subnets are reserved for private networks and will not conflict with hosts on the Internet.
+       The default configuration file dhcpd.conf contains many uncommented examples, so relocate it:
+
+         # cp /etc/dhcpd.conf /etc/dhcpd.conf.example
+
+       To only listen on the subnet 139.96.30.0/24, you may create the following minimal configuration file:
+
+         /etc/dhcpd.conf
+
+         option domain-name-servers 8.8.8.8, 8.8.4.4;
+         option subnet-mask 255.255.255.0;
+         option routers 139.96.30.100;
+         subnet 139.96.30.0 netmask 255.255.255.0 {
+           range 139.96.30.150 139.96.30.250;
+         }
+
+       The options used in this configuration file are:
+
+       domain-name-servers which contains addresses of DNS servers supplied to the clients. Here we use Google's public DNS servers. If you have configured your own DNS server on a local machine, specify its address in your subnet (here 139.96.30.0/24).
+
+       subnet-mask and routers which define a subnet mask and a list of available routers on the subnet; routers also defines the default gateway served to the client. For small networks, you can usually use 255.255.255.0 as a mask and specify an IP address of the machine on which you are running dhcpd (here 139.96.30.100).
+
+       subnet which defines options for separate subnets that are applied to the network interfaces on which dhcpd is listening. Here we have defined the range of available IP addresses for a single subnet 139.96.30.0/24 (on a single interface eth0).
+
+       For a complete list of options, consult dhcpd.conf(5).
+
+       Note dhcpd only listens on interfaces with subnets declared in its configuration file, despite dhcpd(8) saying the opposite.
+
+       PXE
+
+       Preboot Execution Environment (PXE) configuration is done with the following two options:
+
+         /etc/dhcpd.conf
+
+         next-server 192.168.0.2;
+         filename "/pxelinux.0";
+
+       next-server is the IP address of the TFTP server, and filename is the image to boot.
+
+       This section can either be in an entire subnet, or just in a host definition.
+
+       USAGE
+
+       dhcpd includes two unit files, dhcpd4.service and dhcpd6.service, which can be used to control the daemon. They start the daemon on all network interfaces for IPv4 and IPv6 respectively.
+
+       SEE ALSO
+
+        * ISC DHCP Documentation
+
+ArchWiki manual                         bundled documentation

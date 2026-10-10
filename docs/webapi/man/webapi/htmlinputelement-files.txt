@@ -1,0 +1,49 @@
+WEBAPI.HTMLINPUTELEMENT-FILES(1) Sandbox manual WEBAPI.HTMLINPUTELEMENT-FILES(1)
+
+       NAME
+
+       HTMLInputElement: files property - The HTMLInputElement.files property allows you to access the FileList selected with the <input type="file"> element.
+
+       HTMLINPUTELEMENT: FILES PROPERTY
+
+       The HTMLInputElement.files property allows you to access the FileList selected with the element.
+
+       VALUE
+
+       A FileList object listing the selected files, if any, or null if the HTMLInputElement is not of type="file".
+
+       EXAMPLES
+
+       The example below shows how you can access the HTMLInputElement.files property and log the name, date modified, size, and type of each file selected by the user.
+
+       HTML
+
+         <input id="files" type="file" multiple />
+
+       JAVASCRIPT
+
+       Note that HTMLInputElement.files still returns an instance of FileList even if no files are selected. Therefore it's safe to iterate through it with for...of without checking if any files are selected.
+
+         const fileInput = document.getElementById("files");
+
+         console.log(fileInput.files instanceof FileList); // true even if empty
+
+         for (const file of fileInput.files) {
+           console.log(file.name); // prints file name
+           let fileDate = new Date(file.lastModified);
+           console.log(fileDate.toLocaleDateString()); // prints legible date
+           console.log(
+             file.size < 1000 ? file.size : `${Math.round(file.size / 1000)}KB`,
+           );
+           console.log(file.type); // prints MIME type
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * DataTransfer.files
+
+Web APIs manual                         from the official documentation

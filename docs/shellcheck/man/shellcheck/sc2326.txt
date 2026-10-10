@@ -1,0 +1,41 @@
+SHELLCHECK.SC2326(1)             Sandbox manual             SHELLCHECK.SC2326(1)
+
+       NAME
+
+       ! is not allowed in the middle of pipelines. Use command group as in cmd | { ! cmd; } if necessary. - cat | ! tee /dev/full
+
+       IS NOT ALLOWED IN THE MIDDLE OF PIPELINES. USE COMMAND GROUP AS IN CMD
+
+       IS NOT ALLOWED IN THE MIDDLE OF PIPELINES. USE COMMAND GROUP AS IN CMD
+
+       PROBLEMATIC CODE
+
+         cat | ! tee /dev/full
+
+       CORRECT CODE
+
+       Either negate the entire pipeline (this is equivalent unless pipefail is set):
+
+         ! cat | tee /dev/full
+
+       Or use a command group to negate a single stage:
+
+         cat | { ! tee /dev/full; }
+
+       RATIONALE
+
+       POSIX specifies that a status negation operator ! is only used to negate the status of an entire pipeline, not individual stages.
+
+       By default the status of a pipeline is that of the last command, so use ! in front of the pipeline to negate as necessary.
+
+       If you have set the option pipefail to OR the status of each stage together, and want to negate the status of only a single stage, you can use negate inside a { ! command group; }.
+
+       EXCEPTIONS
+
+       Ksh supports ! in front of individual pipeline stages. ShellCheck does not warn when the shebang declares that the script will run with Ksh.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

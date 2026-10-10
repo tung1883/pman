@@ -1,0 +1,69 @@
+WEBAPI.VALIDITYSTATE-RANGEUNDERFLOW(1) Sandbox manual WEBAPI.VALIDITYSTATE-RANGEUNDERFLOW(1)
+
+       NAME
+
+       ValidityState: rangeUnderflow property - The read-only rangeUnderflow property of the ValidityState interface indicates if the value of an <input>, after having been edited by the u
+
+       VALIDITYSTATE: RANGEUNDERFLOW PROPERTY
+
+       The read-only rangeUnderflow property of the ValidityState interface indicates if the value of an , after having been edited by the user, does not conform to the constraints set by the element's min attribute.
+
+       If the field is numeric in nature, including the , , , , , and types and a min value is set, if the value doesn't conform to the constraints set by the min value, the rangeUnderflow property will be true.
+
+       VALUE
+
+       A boolean that is true if the ValidityState does not conform to the constraints.
+
+       EXAMPLES
+
+       INPUT WITH NUMERIC UNDERFLOW
+
+       The following example checks the validity of a numeric input element. A constraint has been added using the min attribute which sets a minimum value of 18 for the input. If the user enters a number lower than 18, the element fails constraint validation, and the styles matching :invalid and :out-of-range CSS pseudo-classes
+
+         /* or :invalid */
+         input:out-of-range {
+           outline: red solid 3px;
+         }
+
+         body {
+           margin: 0.5rem;
+         }
+         pre {
+           padding: 1rem;
+           height: 2rem;
+           background-color: lightgrey;
+           outline: 1px solid grey;
+         }
+
+         <pre id="log">Validation logged here...</pre>
+         <input type="number" id="age" min="18" />
+
+         const userInput = document.getElementById("age");
+         const logElement = document.getElementById("log");
+
+         function log(text) {
+           logElement.innerText = text;
+         }
+
+         userInput.addEventListener("input", () => {
+           userInput.reportValidity();
+           if (userInput.validity.rangeUnderflow) {
+             log("Number is too low!");
+           } else {
+             log("Valid…");
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ValidityState.rangeOverflow
+        * Constraint validation
+        * Forms: Data form validation
+        * step attribute
+        * max attribute
+
+Web APIs manual                         from the official documentation

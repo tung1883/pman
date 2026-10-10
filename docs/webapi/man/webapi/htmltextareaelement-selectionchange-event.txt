@@ -1,0 +1,62 @@
+WEBAPI.HTMLTEXTAREAELEMENT-SELECTIONCHANGE-EVENT(1) Sandbox manual WEBAPI.HTMLTEXTAREAELEMENT-SELECTIONCHANGE-EVENT(1)
+
+       NAME
+
+       HTMLTextAreaElement: selectionchange event - The selectionchange event of the Selection API is fired when the text selection within a <textarea> element is changed.
+
+       HTMLTEXTAREAELEMENT: SELECTIONCHANGE EVENT
+
+       The selectionchange event of the Selection API is fired when the text selection within a element is changed. This includes both changes in the selected range of characters, or if the caret moves.
+
+       This event is not cancelable.
+
+       > When you change the selection programmatically, for example by calling setSelectionRange(), the selection updates immediately, but the selectionchange event is queued as a task. Its listeners run later, after the current script finishes executing. This contrasts with events such as focus and click, whose listeners run synchronously when triggered by focus() and click(), respectively.
+       The event is usually processed by adding an event listener on the , and in the handler function read by the HTMLTextAreaElement selectionStart, selectionEnd and selectionDirection properties.
+
+       It is also possible to add a listener on the global onselectionchange event handler, and within the handler function use Document.getSelection() to get the Selection. However this is not very useful for getting changes to _text_ selections.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("selectionchange", (event) => { })
+
+         onselectionchange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       The example below shows how to get the text selected in a element.
+
+       HTML
+
+         <div>
+           Enter and select text here:<br /><textarea
+             id="my-text"
+             rows="2"
+             cols="20"></textarea>
+         </div>
+         <div>selectionStart: <span id="start"></span></div>
+         <div>selectionEnd: <span id="end"></span></div>
+         <div>selectionDirection: <span id="direction"></span></div>
+
+       JAVASCRIPT
+
+         const myInput = document.getElementById("my-text");
+
+         myInput.addEventListener("selectionchange", () => {
+           document.getElementById("start").textContent = myInput.selectionStart;
+           document.getElementById("end").textContent = myInput.selectionEnd;
+           document.getElementById("direction").textContent = myInput.selectionDirection;
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

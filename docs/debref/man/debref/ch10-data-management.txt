@@ -1,0 +1,915 @@
+DEBREF.CH10-DATA-MANAGEMENT(1)   Sandbox manual   DEBREF.CH10-DATA-MANAGEMENT(1)
+
+       CHAPTER 10. DATA MANAGEMENT
+
+       Tools and tips for managing binary and text data on the Debian system are described.
+
+       10.1. SHARING, COPYING, AND ARCHIVING
+
+         Warning
+       The uncoordinated write access to actively accessed devices and files from multiple processes must not be done to avoid the race condition. File locking mechanisms using flock(1) may be used to avoid it.
+
+       The security of the data and its controlled sharing have several aspects.
+
+        * The creation of data archive
+        * The remote storage access
+        * The duplication
+        * The tracking of the modification history
+        * The facilitation of data sharing
+        * The prevention of unauthorized file access
+        * The detection of unauthorized file modification
+       These can be realized by using some combination of tools.
+
+        * Archive and compression tools
+        * Copy and synchronization tools
+        * Network filesystems
+        * Removable storage media
+        * The secure shell
+        * The authentication system
+        * Version control system tools
+        * Hash and cryptographic encryption tools
+
+       10.1.1. ARCHIVE AND COMPRESSION TOOLS
+
+       Here is a summary of archive and compression tools available on the Debian system.
+
+       Table 10.1. List of archive and compression tools
+
+         package | popcon | size | extension | command | comment
+         tar | V:906, I:1000 | 3101 | .tar | tar(1) | the standard archiver (de facto standard)
+         cpio | V:354, I:999 | 1201 | .cpio | cpio(1) | Unix System V style archiver, use with find(1)
+         binutils | V:190, I:637 | 1119 | .ar | ar(1) | archiver for the creation of static libraries
+         fastjar | V:0.9, I:9.8 | 182 | .jar | fastjar(1) | archiver for Java (zip like)
+         pax | V:5.4, I:9.5 | 167 | .pax | pax(1) | new POSIX standard archiver, compromise between tar and cpio
+         gzip | V:902, I:1000 | 256 | .gz | gzip(1), zcat(1), … | GNU LZ77 compression utility (de facto standard)
+         bzip2 | V:159, I:972 | 113 | .bz2 | bzip2(1), bzcat(1), … | Burrows-Wheeler block-sorting compression utility with higher compression ratio than gzip(1) (slower than gzip with similar syntax)
+         lzma | V:1, I:10 | 349 | .lzma | lzma(1) | LZMA compression utility with higher compression ratio than gzip(1) (deprecated)
+         xz-utils | V:309, I:981 | 1520 | .xz | xz(1), xzdec(1), … | XZ compression utility with higher compression ratio than bzip2(1) (slower than gzip but faster than bzip2; replacement for LZMA compression utility)
+         zstd | V:319, I:814 | 2308 | .zstd | zstd(1), zstdcat(1), … | Zstandard fast lossless compression utility
+         p7zip | V:5, I:184 | 8 | .7z | 7zr(1), p7zip(1) | 7-Zip file archiver with high compression ratio (LZMA compression)
+         p7zip-full | V:15, I:210 | 12 | .7z | 7z(1), 7za(1) | 7-Zip file archiver with high compression ratio (LZMA compression and others)
+         lzop | V:12, I:132 | 164 | .lzo | lzop(1) | LZO compression utility with higher compression and decompression speed than gzip(1) (lower compression ratio than gzip with similar syntax)
+         zip | V:48, I:360 | 635 | .zip | zip(1) | InfoZIP: DOS archive and compression tool
+         unzip | V:109, I:747 | 399 | .zip | unzip(1) | InfoZIP: DOS unarchive and decompression tool
+         Warning
+       Do not set the "$TAPE" variable unless you know what to expect. It changes tar(1) behavior.
+
+        * The gzipped tar(1) archive uses the file extension ".tgz" or ".tar.gz".
+        * The xz-compressed tar(1) archive uses the file extension ".txz" or ".tar.xz".
+        * Popular compression method in FOSS tools such as tar(1) has been moving as follows: gzip → bzip2 → xz
+        * cp(1), scp(1) and tar(1) may have some limitation for special files. cpio(1) is most versatile.
+        * cpio(1) is designed to be used with find(1) and other commands and suitable for creating backup scripts since the file selection part of the script can be tested independently.
+        * Internal structure of Libreoffice data files are ".jar" file which can be opened also by unzip.
+        * The de-facto cross platform archive tool is zip. Use it as "zip -rX" to attain the maximum compatibility. Use also the "-s" option, if the maximum file size matters.
+
+       10.1.2. COPY AND SYNCHRONIZATION TOOLS
+
+       Here is a summary of simple copy and backup tools available on the Debian system.
+
+       Table 10.2. List of copy and synchronization tools
+
+         package | popcon | size | tool | function
+         coreutils | V:910, I:1000 | 17994 | GNU cp | locally copy files and directories ("-a" for recursive)
+         openssh-client | V:657, I:996 | 3521 | scp | remotely copy files and directories (client, "-r" for recursive)
+         openssh-server | V:772, I:820 | 3594 | sshd | remotely copy files and directories (remote server)
+         rsync | V:196, I:542 | 835 | 1-way remote synchronization and backup
+         unison | V:2, I:11 | 14 | 2-way remote synchronization and backup
+       Copying files with rsync(8) offers richer features than others.
+
+        * delta-transfer algorithm that sends only the differences between the source files and the existing files in the destination
+        * quick check algorithm (by default) that looks for files that have changed in size or in last-modified time
+        * "--exclude" and "--exclude-from" options similar to tar(1)
+        * "a trailing slash on the source directory" syntax that avoids creating an additional directory level at the destination.
+         Tip
+       Version control system (VCS) tools in Table 10.14, “List of other version control system tools” can function as the multi-way copy and synchronization tools.
+
+       10.1.3. IDIOMS FOR THE ARCHIVE
+
+       Here are several ways to archive and unarchive the entire content of the directory "./source" using different tools.
+
+       GNU tar(1):
+
+         $ tar -cvJf archive.tar.xz ./source
+         $ tar -xvJf archive.tar.xz
+
+       Alternatively, by the following.
+
+         $ find ./source -xdev -print0 | tar -cvJf archive.tar.xz --null -T -
+
+       cpio(1):
+
+         $ find ./source -xdev -print0 | cpio -ov --null > archive.cpio; xz archive.cpio
+         $ zcat archive.cpio.xz | cpio -i
+
+       10.1.4. IDIOMS FOR THE COPY
+
+       Here are several ways to copy the entire content of the directory "./source" using different tools.
+
+        * Local copy: "./source" directory → "/dest" directory
+        * Remote copy: "./source" directory at local host → "/dest" directory at "user@host.dom" host
+       rsync(8):
+
+         # cd ./source; rsync -aHAXSv . /dest
+         # cd ./source; rsync -aHAXSv . user@host.dom:/dest
+
+       You can alternatively use "a trailing slash on the source directory" syntax.
+
+         # rsync -aHAXSv ./source/ /dest
+         # rsync -aHAXSv ./source/ user@host.dom:/dest
+
+       Alternatively, by the following.
+
+         # cd ./source; find . -print0 | rsync -aHAXSv0 --files-from=- . /dest
+         # cd ./source; find . -print0 | rsync -aHAXSv0 --files-from=- . user@host.dom:/dest
+
+       GNU cp(1) and openSSH scp(1):
+
+         # cd ./source; cp -a . /dest
+         # cd ./source; scp -pr . user@host.dom:/dest
+
+       GNU tar(1):
+
+         # (cd ./source && tar cf - . ) | (cd /dest && tar xvfp - )
+         # (cd ./source && tar cf - . ) | ssh user@host.dom '(cd /dest && tar xvfp - )'
+
+       cpio(1):
+
+         # cd ./source; find . -print0 | cpio -pvdm --null --sparse /dest
+
+       You can substitute "." with "foo" for all examples containing "." to copy files from "./source/foo" directory to "/dest/foo" directory.
+
+       You can substitute "." with the absolute path "/path/to/source/foo" for all examples containing "." to drop "cd ./source;". These copy files to different locations depending on tools used as follows.
+
+        * "/dest/foo": rsync(8), GNU cp(1), and scp(1)
+        * "/dest/path/to/source/foo": GNU tar(1), and cpio(1)
+         Tip
+       rsync(8) and GNU cp(1) have option "-u" to skip files that are newer on the receiver.
+
+       10.1.5. IDIOMS FOR THE SELECTION OF FILES
+
+       find(1) is used to select files for archive and copy commands (see Section 10.1.3, “Idioms for the archive” and Section 10.1.4, “Idioms for the copy”) or for xargs(1) (see Section 9.4.9, “Repeating a command looping over files”). This can be enhanced by using its command arguments.
+
+       Basic syntax of find(1) can be summarized as the following.
+
+        * Its conditional arguments are evaluated from left to right.
+        * This evaluation stops once its outcome is determined.
+        * "Logical OR" (specified by "-o" between conditionals) has lower precedence than "logical AND" (specified by "-a" or nothing between conditionals).
+        * "Logical NOT" (specified by "!" before a conditional) has higher precedence than "logical AND".
+        * "-prune" always returns logical TRUE and, if it is a directory, searching of file is stopped beyond this point.
+        * "-name" matches the base of the filename with shell glob (see Section 1.5.6, “Shell glob”) but it also matches its initial "." with metacharacters such as "*" and "?". (New POSIX feature)
+        * "-regex" matches the full path with emacs style BRE (see Section 1.6.2, “Regular expressions”) as default.
+        * "-size" matches the file based on the file size (value precedented with "+" for larger, precedented with "-" for smaller)
+        * "-newer" matches the file newer than the one specified in its argument.
+        * "-print0" always returns logical TRUE and print the full filename (null terminated) on the standard output.
+       find(1) is often used with an idiomatic style as the following.
+
+         # find /path/to \
+             -xdev -regextype posix-extended \
+             -type f -regex ".*\.cpio|.*~" -prune -o \
+             -type d -regex ".*/\.git" -prune -o \
+             -type f -size +99M -prune -o \
+             -type f -newer /path/to/timestamp -print0
+
+       This means to do following actions.
+
+        * Search all files starting from "/path/to"
+        * Globally limit its search within its starting filesystem and uses ERE (see Section 1.6.2, “Regular expressions”) instead
+        * Exclude files matching regex of ".*\.cpio" or ".*~" from search by stop processing
+        * Exclude directories matching regex of ".*/\.git" from search by stop processing
+        * Exclude files larger than 99 Megabytes (units of 1048576 bytes) from search by stop processing
+        * Print filenames which satisfy above search conditions and are newer than "/path/to/timestamp"
+       Please note the idiomatic use of "-prune -o" to exclude files in the above example.
+
+         Note
+       For non-Debian Unix-like system, some options may not be supported by find(1). In such a case, please consider to adjust matching methods and replace "-print0" with "-print". You may need to adjust related commands too.
+
+       10.1.6. ARCHIVE MEDIA
+
+       When choosing computer data storage media for important data archive, you should be careful about their limitations. For small personal data backup, I use CD-R and DVD-R by the brand name company and store in a cool, shaded, dry, clean environment. (Tape archive media seem to be popular for professional use.)
+
+         Note
+       A fire-resistant safe are meant for paper documents. Most of the computer data storage media have less temperature tolerance than paper. I usually rely on multiple secure encrypted copies stored in multiple secure locations.
+
+       Optimistic storage life of archive media seen on the net (mostly from vendor info).
+
+        * 100+ years : Acid free paper with ink
+        * 100 years : Optical storage (CD/DVD, CD/DVD-R)
+        * 30 years : Magnetic storage (tape, floppy)
+        * 20 years : Phase change optical storage (CD-RW)
+       These do not count on the mechanical failures due to handling etc.
+
+       Optimistic write cycle of archive media seen on the net (mostly from vendor info).
+
+        * 250,000+ cycles : Harddisk drive
+        * 10,000+ cycles : Flash memory
+        * 1,000 cycles : CD/DVD-RW
+        * 1 cycles : CD/DVD-R, paper
+         Caution
+       Figures of storage life and write cycle here should not be used for decisions on any critical data storage. Please consult the specific product information provided by the manufacture.
+
+         Tip
+       Since CD/DVD-R and paper have only 1 write cycle, they inherently prevent accidental data loss by overwriting. This is advantage!
+
+         Tip
+       If you need fast and frequent backup of large amount of data, a hard disk on a remote host linked by a fast network connection, may be the only realistic option.
+
+         Tip
+       If you use re-writable media for your backups, use of filesystem such as btrfs or zfs which supports read-only snapshots may be a good idea.
+
+       10.1.7. REMOVABLE STORAGE DEVICE
+
+       Removable storage devices may be any one of the following.
+
+        * USB flash drive
+        * Hard disk drive
+        * Optical disc drive
+        * Digital camera
+        * Digital music player
+       They may be connected via any one of the following.
+
+        * USB
+        * IEEE 1394 / FireWire
+        * PC Card
+       Modern desktop environments such as GNOME and KDE can mount these removable devices automatically without a matching "/etc/fstab" entry.
+
+        * udisks2 package provides a daemon and associated utilities to mount and unmount these devices.
+        * D-bus creates events to initiate automatic processes.
+        * PolicyKit provides required privileges.
+         Tip
+       Automounted devices may have the "uhelper=" mount option which is used by umount(8).
+
+         Tip
+       Automounting under modern desktop environment happens only when those removable media devices are not listed in "/etc/fstab".
+
+       Mount point under modern desktop environment is chosen as "/media/username/disk_label" which can be customized by the following.
+
+        * mlabel(1) for FAT filesystem
+        * genisoimage(1) with "-V" option for ISO9660 filesystem
+        * tune2fs(1) with "-L" option for ext2/ext3/ext4 filesystem
+         Tip
+       The choice of encoding may need to be provided as mount option (see Section 8.1.3, “Filename encoding”).
+
+         Tip
+       The use of the GUI menu to unmount a filesystem may remove its dynamically generated device node such as "/dev/sdc". If you wish to keep its device node, unmount it with the umount(8) command from the shell prompt.
+
+       10.1.8. FILESYSTEM CHOICE FOR SHARING DATA
+
+       When sharing data with other system via removable storage device, you should format it with common filesystem supported by both systems. Here is a list of filesystem choices.
+
+         Note
+       Statements on hard disk (HDD) are applicable to other storage devices such as SSD / USB flash drive / Memory card / ... . Replace device names in examples such as /dev/sda with applicable device names /dev/nvme0, /dev/mmcblk0, ... .
+
+       Table 10.3. List of filesystem choices for removable storage devices with typical usage scenarios
+
+         filesystem name | typical usage scenario
+         FAT12 | cross platform sharing of data on the floppy disk (<32MiB)
+         FAT16 | cross platform sharing of data on the small hard disk like device (<2GiB)
+         FAT32 | cross platform sharing of data on the large hard disk like device (<8TiB, supported by newer than MS Windows95 OSR2)
+         exFAT | cross platform sharing of data on the large hard disk like device (<512TiB, supported by WindowsXP, Mac OS X Snow Leopard 10.6.5, and Linux kernel since 5.4 release)
+         NTFS | cross platform sharing of data on the large hard disk like device (supported natively on MS Windows NT and later version, and supported by NTFS-3G via FUSE on Linux)
+         ISO9660 | cross platform sharing of static data on CD-R and DVD+/-R
+         UDF | incremental data writing on CD-R and DVD+/-R (new)
+         MINIX | space efficient unix file data storage on the floppy disk
+         ext2 | sharing of data on the hard disk like device with older Linux systems
+         ext3 | sharing of data on the hard disk like device with older Linux systems
+         ext4 | sharing of data on the hard disk like device with current Linux systems
+         btrfs | sharing of data on the hard disk like device with current Linux systems with read-only snapshots
+         Tip
+       See Section 9.9.1, “Removable disk encryption with dm-crypt/LUKS” for cross platform sharing of data using device level encryption.
+
+       The FAT filesystem is supported by almost all modern operating systems and is quite useful for the data exchange purpose via removable hard disk like media.
+
+       When formatting removable hard disk like devices for cross platform sharing of data with the FAT filesystem, the following should be safe choices.
+
+        * Partitioning them with fdisk(8), cfdisk(8) or parted(8) (see Section 9.6.2, “Disk partition configuration”) into a single primary partition and to mark it as the following.
+          * Type "6" for FAT16 for media smaller than 2GB.
+          * Type "c" for FAT32 (LBA) for larger media.
+        * Formatting the primary partition with mkfs.vfat(8) with the following.
+          * Just its device name, e.g. "/dev/sda1" for FAT16
+          * The explicit option and its device name, e.g. "-F 32 /dev/sda1" for FAT32
+       When using the FAT or ISO9660 filesystems for sharing data, the following should be the safe considerations.
+
+        * Archiving files into an archive file first using tar(1), or cpio(1) to retain the long filename, the symbolic link, the original Unix file permission and the owner information.
+        * Splitting the archive file into less than 2 GiB chunks with the split(1) command to protect it from the file size limitation.
+        * Encrypting the archive file to secure its contents from the unauthorized access.
+         Note
+       For FAT filesystems by its design, the maximum file size is (2^32 - 1) bytes = (4GiB - 1 byte). For some applications on the older 32 bit OS, the maximum file size was even smaller (2^31 - 1) bytes = (2GiB - 1 byte). Debian does not suffer the latter problem.
+
+         Note
+       Microsoft itself does not recommend to use FAT for drives or partitions of over 200 MB. Microsoft highlights its short comings such as inefficient disk space usage in their "Overview of FAT, HPFS, and NTFS File Systems". Of course, we should normally use the ext4 filesystem for Linux.
+
+         Tip
+       For more on filesystems and accessing filesystems, please read "Filesystems HOWTO".
+
+       10.1.9. SHARING DATA VIA NETWORK
+
+       When sharing data with other system via network, you should use common service. Here are some hints.
+
+       Table 10.4. List of the network service to choose with the typical usage scenario
+
+         network service | description of typical usage scenario
+         SMB/CIFS network mounted filesystem with Samba | sharing files via "Microsoft Windows Network", see smb.conf(5) and The Official Samba 3.x.x HOWTO and Reference Guide or the samba-doc package
+         NFS network mounted filesystem with the Linux kernel | sharing files via "Unix/Linux Network", see exports(5) and Linux NFS-HOWTO
+         HTTP service | sharing file between the web server/client
+         HTTPS service | sharing file between the web server/client with encrypted Secure Sockets Layer (SSL) or Transport Layer Security (TLS)
+         FTP service | sharing file between the FTP server/client
+       Although these filesystems mounted over network and file transfer methods over network are quite convenient for sharing data, these may be insecure. Their network connection must be secured by the following.
+
+        * Encrypt it with SSL/TLS
+        * Tunnel it via SSH
+        * Tunnel it via VPN
+        * Limit it behind the secure firewall
+       See also Section 6.5, “Other network application servers” and Section 6.6, “Other network application clients”.
+
+       10.2. BACKUP AND RECOVERY
+
+       We all know that computers fail sometime or human errors cause system and data damages. Backup and recovery operations are the essential part of successful system administration. All possible failure modes hit you some day.
+
+         Tip
+       Keep your backup system simple and backup your system often. Having backup data is more important than how technically good your backup method is.
+
+       10.2.1. BACKUP AND RECOVERY POLICY
+
+       There are 3 key factors which determine actual backup and recovery policy.
+
+        * Knowing what to backup and recover.
+          * Data files directly created by you: data in "~/"
+          * Data files created by applications used by you: data in "/var/" (except "/var/cache/", "/var/run/", and "/var/tmp/")
+          * System configuration files: data in "/etc/"
+          * Local programs: data in "/usr/local/" or "/opt/"
+          * System installation information: a memo in plain text on key steps (partition, …)
+          * Proven set of data: confirmed by experimental recovery operations in advance
+            * Cron job as a user process: files in "/var/spool/cron/crontabs" directory and restart cron(8). See Section 9.4.14, “Scheduling tasks regularly” for cron(8) and crontab(1).
+            * Systemd timer jobs as user processes: files in "~/.config/systemd/user" directory. See systemd.timer(5) and systemd.service(5).
+            * Autostart jobs as user processes: files in "~/.config/autostart" directory. See Desktop Application Autostart Specification.
+        * Knowing how to backup and recover.
+          * Secure storage of data: protection from overwrite and system failure
+          * Frequent backup: scheduled backup
+          * Redundant backup: data mirroring
+          * Fool proof process: easy single command backup
+        * Assessing risks and costs involved.
+          * Risk of data when lost
+            * Data should be at least on different disk partitions preferably on different disks and machines to withstand the filesystem corruption. Important data are best stored on a read-only filesystem. [4]
+          * Risk of data when breached
+            * Sensitive identity data such as "/etc/ssh/ssh_host_*_key", "~/.gnupg/*", "~/.ssh/*", "~/.local/share/keyrings/*", "/etc/passwd", "/etc/shadow", "popularity-contest.conf", "/etc/ppp/pap-secrets", and "/etc/exim4/passwd.client" should be backed up as encrypted. [5] (See Section 9.9, “Data encryption tips”.)
+            * Never hard code system login password nor decryption passphrase in any script even on any trusted system. (See Section 10.3.6, “Password keyring”.)
+          * Failure mode and their possibility
+            * Hardware (especially HDD) will break
+            * Filesystem may be corrupted and data in it may be lost
+            * Remote storage system can't be trusted for security breaches
+            * Weak password protection can be easily compromised
+            * File permission system may be compromised
+          * Required resources for backup: human, hardware, software, …
+            * Automatic scheduled backup with cron job or systemd timer job
+         Tip
+       You can recover debconf configuration data with "debconf-set-selections debconf-selections" and dpkg selection data with "dpkg --set-selection <dpkg-selections.list".
+
+         Note
+       Do not back up the pseudo-filesystem contents found on /proc, /sys, /tmp, and /run (see Section 1.2.12, “procfs and sysfs” and Section 1.2.13, “tmpfs”). Unless you know exactly what you are doing, they are huge useless data.
+
+         Note
+       You may wish to stop some application daemons such as MTA (see Section 6.2.4, “Mail transport agent (MTA)”) while backing up data.
+
+       10.2.2. BACKUP UTILITY SUITES
+
+       Here is a select list of notable backup utility suites available on the Debian system.
+
+       Table 10.5. List of backup suite utilities
+
+         package | popcon | size | description
+         bacula-common | V:6.3, I:7.1 | 2501 | Bacula: network backup, recovery and verification - common support files
+         bacula-client | V:0.3, I:1.8 | 199 | Bacula: network backup, recovery and verification - client meta-package
+         bacula-console | V:0.6, I:2.1 | 112 | Bacula: network backup, recovery and verification - text console
+         bacula-server | I:0.61 | 199 | Bacula: network backup, recovery and verification - server meta-package
+         amanda-common | V:0.6, I:2.2 | 9851 | Amanda: Advanced Maryland Automatic Network Disk Archiver (Libs)
+         amanda-client | V:0.6, I:2.2 | 1099 | Amanda: Advanced Maryland Automatic Network Disk Archiver (Client)
+         amanda-server | V:0.12, I:0.22 | 1093 | Amanda: Advanced Maryland Automatic Network Disk Archiver (Server)
+         backuppc | V:1.4, I:1.7 | 3088 | BackupPC is a high-performance, enterprise-grade system for backing up PCs (disk based)
+         duplicity | V:5, I:46 | 2679 | (remote) incremental backup
+         deja-dup | V:28, I:42 | 5274 | GUI frontend for duplicity
+         borgbackup | V:13, I:28 | 3532 | (remote) deduplicating backup
+         borgmatic | V:3.2, I:4.5 | 946 | borgbackup helper
+         rdiff-backup | V:2.2, I:6.5 | 1207 | (remote) incremental backup
+         restic | V:7, I:14 | 41617 | (remote) incremental backup
+         backupninja | V:2.1, I:2.6 | 360 | lightweight, extensible meta-backup system
+         slbackup | V:0.09, I:0.12 | 147 | (remote) incremental backup
+         backup-manager | V:0.43, I:0.75 | 573 | command-line backup tool
+         backup2l | V:0.34, I:0.47 | 110 | low-maintenance backup/restore tool for mountable media (disk based)
+       Backup tools have their specialized focuses.
+
+        * Mondo Rescue is a backup system to facilitate restoration of complete system quickly from backup CD/DVD etc. without going through normal system installation processes.
+        * Bacula, Amanda, and BackupPC are full featured backup suite utilities which are focused on regular backups over network.
+        * Duplicity, and Borg are simpler backup utilities for typical workstations.
+
+       10.2.3. BACKUP TIPS
+
+       For a personal workstation, full featured backup suite utilities designed for the server environment may not serve well. At the same time, existing backup utilities for workstations may have some shortcomings.
+
+       Here are some tips to make backup easier with minimal user efforts. These techniques may be used with any backup utilities.
+
+       For demonstration purpose, let's assume the primary user and group name to be penguin and create a backup and snapshot script example "/usr/local/bin/bkss.sh" as:
+
+         #!/bin/sh -e
+         SRC="$1" # source data path
+         DSTFS="$2" # backup destination filesystem path
+         DSTSV="$3" # backup destination subvolume name
+         DSTSS="${DSTFS}/${DSTSV}-snapshot" # snapshot destination path
+         if [ "$(stat -f -c %T "$DSTFS")" != "btrfs" ]; then
+           echo "E: $DESTFS needs to be formatted to btrfs" >&2 ; exit 1
+         fi
+         MSGID=$(notify-send -p "bkup.sh $DSTSV" "in progress ...")
+         if [ ! -d "$DSTFS/$DSTSV" ]; then
+           btrfs subvolume create "$DSTFS/$DSTSV"
+           mkdir -p "$DSTSS"
+         fi
+         rsync -aHxS --delete --mkpath "${SRC}/" "${DSTFS}/${DSTSV}"
+         btrfs subvolume snapshot -r "${DSTFS}/${DSTSV}" ${DSTSS}/$(date -u --iso=min)
+         notify-send -r "$MSGID" "bkup.sh $DSTSV" "finished!"
+
+       Here, only the basic tool rsync(1) is used to facilitate system backup and the storage space is efficiently used by Btrfs.
+
+         Tip
+       FYI: This author uses his own similar shell script "bss: Btrfs Subvolume Snapshot Utility" for his workstation.
+
+       10.2.3.1. GUI BACKUP
+
+       Here is an example to setup the single GUI click backup.
+
+        * Prepare a USB storage device to be used for backup.
+          * Format a USB storage device with one partition in btrfs with its label name as "BKUP". This can be encrypted (see Section 9.9.1, “Removable disk encryption with dm-crypt/LUKS”).
+          * Plug this in to your system. The desktop system should automatically mount it as "/media/penguin/BKUP".
+          * Execute "sudo chown penguin:penguin /media/penguin/BKUP" to make it writable by the user.
+        * Create "~/.local/share/applications/BKUP.desktop" following techniques written in Section 9.4.10, “Starting a program from GUI” as:
+
+         [Desktop Entry]
+         Name=bkss
+         Comment=Backup and snapshot of ~/Documents
+         Exec=/usr/local/bin/bkss.sh /home/penguin/Documents /media/penguin/BKUP Documents
+         Type=Application
+
+       For each GUI click, your data is backed up from "~/Documents" to a USB storage device and a read-only snapshot is created.
+
+       10.2.3.2. MOUNT EVENT TRIGGERED BACKUP
+
+       Here is an example to setup for the automatic backup triggered by the mount event.
+
+        * Prepare a USB storage device to be used for backup as in Section 10.2.3.1, “GUI backup”.
+        * Create a systemd service unit file "~/.config/systemd/user/back-BKUP.service" as:
+
+         [Unit]
+         Description=USB Disk backup
+         Requires=media-%u-BKUP.mount
+         After=media-%u-BKUP.mount
+
+         [Service]
+         ExecStart=/usr/local/bin/bkss.sh %h/Documents /media/%u/BKUP Documents
+         StandardOutput=append:%h/.cache/systemd-snap.log
+         StandardError=append:%h/.cache/systemd-snap.log
+
+         [Install]
+         WantedBy=media-%u-BKUP.mount
+
+        * Enable this systemd unit configuration with the following:
+
+          $ systemctl --user enable bkup-BKUP.service
+
+       For each mount event, your data is backed up from "~/Documents" to a USB storage device and a read-only snapshot is created.
+
+       Here, names of systemd mount units that systemd currently has in memory can be asked to the service manager of the calling user with "systemctl --user list-units --type=mount".
+
+       10.2.3.3. TIMER EVENT TRIGGERED BACKUP
+
+       Here is an example to setup for the automatic backup triggered by the timer event.
+
+        * Prepare a USB storage device to be used for backup as in Section 10.2.3.1, “GUI backup”.
+        * Create a systemd timer unit file "~/.config/systemd/user/snap-Documents.timer" as:
+
+         [Unit]
+         Description=Run btrfs subvolume snapshot on timer
+         Documentation=man:btrfs(1)
+
+         [Timer]
+         OnStartupSec=30
+         OnUnitInactiveSec=900
+
+         [Install]
+         WantedBy=timers.target
+
+        * Create a systemd service unit file "~/.config/systemd/user/snap-Documents.service" as:
+
+         [Unit]
+         Description=Run btrfs subvolume snapshot
+         Documentation=man:btrfs(1)
+
+         [Service]
+         Type=oneshot
+         Nice=15
+         ExecStart=/usr/local/bin/bkss.sh %h/Documents /media/%u/BKUP Documents
+         IOSchedulingClass=idle
+         CPUSchedulingPolicy=idle
+         StandardOutput=append:%h/.cache/systemd-snap.log
+         StandardError=append:%h/.cache/systemd-snap.log
+
+        * Enable this systemd unit configuration with the following:
+
+          $ systemctl --user enable snap-Documents.timer
+
+       For each timer event, your data is backed up from "~/Documents" to a USB storage device and a read-only snapshot is created.
+
+       Here, names of systemd timer user units that systemd currently has in memory can be asked to the service manager of the calling user with "systemctl --user list-units --type=timer".
+
+       For the modern desktop system, this systemd approach can offer more fine grained control than the traditional Unix ones using at(1), cron(8), or anacron(8).
+
+       10.3. DATA SECURITY INFRASTRUCTURE
+
+       The data security infrastructure is provided by the combination of data encryption tool, message digest tool, and signature tool.
+
+       Table 10.6. List of data security infrastructure tools
+
+         package | popcon | size | command | description
+         gnupg | V:406, I:864 | 465 | gpg(1) | GNU Privacy Guard - OpenPGP encryption and signing tool
+         gpgv | V:219, I:932 | 577 | gpgv(1) | GNU Privacy Guard - OpenPGP signature verification tool
+         sq | V:1, I:30 | 23926 | sq(1) | Sequoia-PGP - OpenPGP encryption and signing tool
+         sqv | V:443, I:518 | 1855 | sqv(1) | Sequoia-PGP - OpenPGP signature verification tool
+         paperkey | V:1, I:11 | 58 | paperkey(1) | extract just the secret information out of OpenPGP secret keys
+         cryptsetup | V:35, I:80 | 465 | cryptsetup(8), … | utilities for dm-crypt block device encryption supporting LUKS
+         coreutils | V:910, I:1000 | 17994 | md5sum(1) | compute and check MD5 message digest
+         coreutils | V:910, I:1000 | 17994 | sha1sum(1) | compute and check SHA1 message digest
+         openssl | V:855, I:997 | 2532 | openssl(1ssl) | compute message digest with "openssl dgst" (OpenSSL)
+         libsecret-tools | V:1, I:12 | 45 | secret-tool(1) | store and retrieve passwords (CLI)
+         seahorse | V:73, I:258 | 7999 | seahorse(1) | key management tool (GNOME)
+       See Section 9.9, “Data encryption tips” on dm-crypt and fscrypt which implement automatic data encryption infrastructure via Linux kernel modules.
+
+       10.3.1. KEY MANAGEMENT FOR GNUPG
+
+       Here are GNU Privacy Guard commands for the basic key management.
+
+       Table 10.7. List of GNU Privacy Guard commands for the key management
+
+         command | description
+         gpg --gen-key | generate a new key
+         gpg --gen-revoke my_user_ID | generate revoke key for my_user_ID
+         gpg --edit-key user_ID | edit key interactively, "help" for help
+         gpg -o file --export | export all public keys to file
+         gpg -o file --export-secret-keys | export all private key to file
+         gpg --import file | import all keys from file
+         gpg --send-keys user_ID | send key of user_ID to keyserver
+         gpg --recv-keys user_ID | recv. key of user_ID from keyserver
+         gpg --list-keys user_ID | list keys of user_ID
+         gpg --list-sigs user_ID | list sig. of user_ID
+         gpg --check-sigs user_ID | check sig. of user_ID
+         gpg --fingerprint user_ID | check fingerprint of user_ID
+         gpg --refresh-keys | update local keyring
+       Here is the meaning of the trust code.
+
+       Table 10.8. List of the meaning of the trust code
+
+         code | description of trust
+         - | no owner trust assigned / not yet calculated
+         e | trust calculation failed
+         q | not enough information for calculation
+         n | never trust this key
+         m | marginally trusted
+         f | fully trusted
+         u | ultimately trusted
+       The following generates my key "9563FC29932C409F1A77F9C1AB8A1522D8234C6A".
+
+         $ gpg --gen-key
+         gpg (GnuPG) 2.4.7; Copyright (C) 2024 g10 Code GmbH
+         ...
+         GnuPG needs to construct a user ID to identify your key.
+
+         Real name: Osamu Aoki
+         Email address: osamu@debian.org
+         You selected this USER-ID:
+             "Osamu Aoki <osamu@debian.org>"
+
+         Change (N)ame, (E)mail, or (O)kay/(Q)uit? o
+         ...
+         public and secret key created and signed.
+
+         pub   ed25519 2026-02-14 [SC] [expires: 2029-02-13]
+               9563FC29932C409F1A77F9C1AB8A1522D8234C6A
+         uid                      Osamu Aoki <osamu@debian.org>
+         sub   cv25519 2026-02-14 [E] [expires: 2029-02-13]
+
+       The following uploads my key "9563FC29932C409F1A77F9C1AB8A1522D8234C6A" to the popular keyserver "hkp://keys.gnupg.net".
+
+         $ gpg --keyserver hkp://keys.gnupg.net --send-keys 9563FC29932C409F1A77F9C1AB8A1522D8234C6A
+
+       A good default keyserver set up in "~/.gnupg/gpg.conf" (or old location "~/.gnupg/options") contains the following.
+
+         keyserver hkp://keys.gnupg.net
+
+       The following obtains unknown keys from the keyserver.
+
+         $ gpg --list-sigs --with-colons | grep '^sig.*\[User ID not found\]' |\
+                   cut -d ':' -f 5| sort | uniq | xargs gpg --recv-keys
+
+       There was a bug in OpenPGP Public Key Server (pre version 0.9.6) which corrupted key with more than 2 sub-keys. The newer gnupg (>1.2.1-2) package can handle these corrupted subkeys. See gpg(1) under "--repair-pks-subkey-bug" option.
+
+       Use of SHA-1 for hash has been deprecated. If your old RSA based openPGP key uses SHA-1 for hash, fix it using FixKeyWithSha1.
+
+         Tip
+       The sq(1) and sqv(1) commands are an alternative set of openPGP commands. See sq user documentation and A Practical Introduction to using sq, Sequoia PGP’s CLI.
+
+       10.3.2. USING GNUPG ON FILES
+
+       Here are examples for using GNU Privacy Guard commands on files.
+
+       Table 10.9. List of GNU Privacy Guard commands on files
+
+         command | description
+         gpg -a -s file | sign file into ASCII armored file.asc
+         gpg --armor --sign file | , ,
+         gpg --clearsign file | clear-sign message
+         gpg --clearsign file|mail foo@example.org | mail a clear-signed message to foo@example.org
+         gpg --clearsign --not-dash-escaped patchfile | clear-sign patchfile
+         gpg --verify file | verify clear-signed file
+         gpg -o file.sig -b file | create detached signature
+         gpg -o file.sig --detach-sign file | , ,
+         gpg --verify file.sig file | verify file with file.sig
+         gpg -o crypt_file.gpg -r name -e file | public-key encryption intended for name from file to binary crypt_file.gpg
+         gpg -o crypt_file.gpg --recipient name --encrypt file | , ,
+         gpg -o crypt_file.asc -a -r name -e file | public-key encryption intended for name from file to ASCII armored crypt_file.asc
+         gpg -o crypt_file.gpg -c file | symmetric encryption from file to crypt_file.gpg
+         gpg -o crypt_file.gpg --symmetric file | , ,
+         gpg -o crypt_file.asc -a -c file | symmetric encryption intended for name from file to ASCII armored crypt_file.asc
+         gpg -o file -d crypt_file.gpg -r name | decryption
+         gpg -o file --decrypt crypt_file.gpg | , ,
+
+       10.3.3. USING GNUPG WITH MUTT
+
+       Add the following to "~/.muttrc" to keep a slow GnuPG from automatically starting, while allowing it to be used by typing "S" at the index menu.
+
+         macro index S ":toggle pgp_verify_sig\n"
+         set pgp_verify_sig=no
+
+       10.3.4. USING GNUPG WITH VIM
+
+       The gnupg plugin let you run GnuPG transparently for files with extension ".gpg", ".asc", and ".pgp".[6]
+
+         $ sudo aptitude install vim-scripts
+         $ echo "packadd! gnupg" >> ~/.vim/vimrc
+
+       10.3.5. THE MD5 SUM
+
+       md5sum(1) provides utility to make a digest file using the method in rfc1321 and verifying each file with it.
+
+         $ md5sum foo bar >baz.md5
+         $ cat baz.md5
+         d3b07384d113edec49eaa6238ad5ff00  foo
+         c157a79031e1c40f85931829bc5fc552  bar
+         $ md5sum -c baz.md5
+         foo: OK
+         bar: OK
+
+         Note
+       The computation for the MD5 sum is less CPU intensive than the one for the cryptographic signature by GNU Privacy Guard (GnuPG). Usually, only the top level digest file is cryptographically signed to ensure data integrity.
+
+       10.3.6. PASSWORD KEYRING
+
+       On GNOME system, the GUI tool seahorse(1) manages passwords and stores them securely in the keyring ~/.local/share/keyrings/*.
+
+       secret-tool(1) can store password to the keyring from the command line.
+
+       Let's store passphrase used for LUKS/dm-crypt encrypted disk image
+
+         $ secret-tool store --label='LUKS passphrase for disk.img' LUKS my_disk.img
+         Password: ********
+
+       This stored password can be retrieved and fed to other programs, e.g., cryptsetup(8).
+
+         $ secret-tool lookup LUKS my_disk.img | \
+           cryptsetup open disk.img disk_img --type luks --keyring -
+         $ sudo mount /dev/mapper/disk_img /mnt
+
+         Tip
+       Whenever you need to provide password in a script, use secret-tool and avoid directly hardcoding the passphrase in it.
+
+       10.4. SOURCE CODE MERGE TOOLS
+
+       There are many merge tools for the source code. Following commands caught my eyes.
+
+       Table 10.10. List of source code merge tools
+
+         package | popcon | size | command | description
+         patch | V:107, I:729 | 242 | patch(1) | apply a diff file to an original
+         vim | V:81, I:342 | 4164 | vimdiff(1) | compare 2 files side by side in vim
+         imediff | V:0.02, I:0.28 | 329 | imediff(1) | interactive full screen 2/3-way merge tool
+         meld | V:5, I:24 | 3992 | meld(1) | compare and merge files (GTK)
+         wiggle | V:0.02, I:0.14 | 175 | wiggle(1) | apply rejected patches
+         diffutils | V:895, I:998 | 1768 | diff(1) | compare files line by line
+         diffutils | V:895, I:998 | 1768 | diff3(1) | compare and merges three files line by line
+         quilt | V:2, I:18 | 880 | quilt(1) | manage series of patches
+         wdiff | V:6, I:40 | 651 | wdiff(1) | display word differences between text files
+         diffstat | V:9, I:97 | 79 | diffstat(1) | produce a histogram of changes by the diff
+         patchutils | V:12, I:96 | 269 | combinediff(1) | create a cumulative patch from two incremental patches
+         patchutils | V:12, I:96 | 269 | dehtmldiff(1) | extract a diff from an HTML page
+         patchutils | V:12, I:96 | 269 | filterdiff(1) | extract or excludes diffs from a diff file
+         patchutils | V:12, I:96 | 269 | fixcvsdiff(1) | fix diff files created by CVS that patch(1) mis-interprets
+         patchutils | V:12, I:96 | 269 | flipdiff(1) | exchange the order of two patches
+         patchutils | V:12, I:96 | 269 | grepdiff(1) | show which files are modified by a patch matching a regex
+         patchutils | V:12, I:96 | 269 | interdiff(1) | show differences between two unified diff files
+         patchutils | V:12, I:96 | 269 | lsdiff(1) | show which files are modified by a patch
+         patchutils | V:12, I:96 | 269 | recountdiff(1) | recompute counts and offsets in unified context diffs
+         patchutils | V:12, I:96 | 269 | rediff(1) | fix offsets and counts of a hand-edited diff
+         patchutils | V:12, I:96 | 269 | splitdiff(1) | separate out incremental patches
+         patchutils | V:12, I:96 | 269 | unwrapdiff(1) | demangle patches that have been word-wrapped
+         dirdiff | V:0.1, I:1.4 | 167 | dirdiff(1) | display differences and merge changes between directory trees
+         docdiff | V:0.02, I:0.19 | 554 | docdiff(1) | compare two files word by word / char by char
+         makepatch | V:0.01, I:0.16 | 99 | makepatch(1) | generate extended patch files
+         makepatch | V:0.01, I:0.16 | 99 | applypatch(1) | apply extended patch files
+
+       10.4.1. EXTRACTING DIFFERENCES FOR SOURCE FILES
+
+       The following procedures extract differences between two source files and create unified diff files "file.patch0" or "file.patch1" depending on the file location.
+
+         $ diff -u file.old file.new > file.patch0
+         $ diff -u old/file new/file > file.patch1
+
+       10.4.2. MERGING UPDATES FOR SOURCE FILES
+
+       The diff file (alternatively called patch file) is used to send a program update. The receiving party applies this update to another file by the following.
+
+         $ patch -p0 file < file.patch0
+         $ patch -p1 file < file.patch1
+
+       10.4.3. INTERACTIVE MERGE
+
+       If you have two versions of a source code, you can perform 2-way merge interactively using imediff(1) by the following.
+
+         $ imediff -o file.merged file.old file.new
+
+       If you have three versions of a source code, you can perform 3-way merge interactively using imediff(1) by the following.
+
+         $ imediff -o file.merged file.yours file.base file.theirs
+
+       10.5. GIT
+
+       Git is the tool of choice these days for the version control system (VCS) since Git can do everything for both local and remote source code management.
+
+       Debian provides free Git services via Debian Salsa service. Its documentation can be found at https://wiki.debian.org/Salsa .
+
+       Here are some Git related packages.
+
+       Table 10.11. List of git related packages and commands
+
+         package | popcon | size | command | description
+         git | V:409, I:623 | 52512 | git(7) | Git, the fast, scalable, distributed revision control system
+         gitk | V:4, I:26 | 2045 | gitk(1) | GUI Git repository browser with history
+         qgit | V:0.2, I:2.0 | 1431 | qgit(1) | GUI Git repository browser with history
+         git-cola | V:0.6, I:3.4 | 5129 | git-cola(1) | GUI Git repository browser with history
+         tig | V:2, I:11 | 1245 | tig(1) | console Git repository browser with history
+         lazygit | V:0.9, I:4.0 | 24167 | lazygit(1) | console Git repository browser with history
+         git-gui | V:2, I:16 | 2549 | git-gui(1) | GUI for Git (No history)
+         git-email | V:0.4, I:9.9 | 1229 | git-send-email(1) | send a collection of patches as email from the Git
+         git-buildpackage | V:1.2, I:7.2 | 2027 | git-buildpackage(1) | automate the Debian packaging with the Git
+         dgit | V:0.1, I:1.0 | 755 | dgit(1) | git interoperability with the Debian archive
+         imediff | V:0.02, I:0.28 | 329 | git-ime(1) | interactive git commit split helper tool
+         stgit | V:0.07, I:0.49 | 6177 | stg(1) | quilt on top of git (Python)
+         git-doc | I:11 | 15192 | N/A | official documentation for Git
+         gitmagic | I:0.56 | 721 | N/A | "Git Magic", easier to understand guide for Git
+
+       10.5.1. CONFIGURATION OF GIT CLIENT
+
+       You may wish to set several global configuration in "~/.gitconfig" such as your name and email address used by Git by the following.
+
+         $ git config --global user.name "Name Surname"
+         $ git config --global user.email yourname@example.com
+
+       You may also customize the Git default behavior by the following.
+
+         $ git config --global init.defaultBranch main
+         $ git config --global pull.rebase true
+         $ git config --global push.default current
+
+       If you are too used to CVS or Subversion commands, you may wish to set several command aliases by the following.
+
+         $ git config --global alias.ci "commit -a"
+         $ git config --global alias.co checkout
+
+       You can check your global configuration by the following.
+
+         $ git config --global --list
+
+       10.5.2. BASIC GIT COMMANDS
+
+       Git operation involves several data.
+
+        * The working tree which holds user facing files and to which you make changes.
+          * The changes to be recorded must be explicitly selected and staged to the index. This is git add and git rm commands.
+        * The index which holds staged files.
+          * Staged files will be committed to the local repository upon the subsequent request. This is git commit command.
+        * The local repository which holds committed files.
+          * Git records the linked history of the committed data and organizes them as branches in the repository.
+          * The local repository can send data to the remote repository by git push command.
+          * The local repository can receive data from the remote repository by git fetch and git pull commands.
+            * The git pull command performs git merge or git rebase command after git fetch command.
+            * Here, git merge combines two separate branches of history at the end to a point. (This is default of git pull without customization and may be good for upstream people who publish branch to many people.)
+            * Here, git rebase creates one single branch of sequential history of the remote branch one followed by the local branch one. (This is pull.rebase true customization case and may be good for rest of us.)
+        * The remote repository which holds committed files.
+          * The communication to the remote repository uses secure communication protocols such as SSH or HTTPS.
+       The working tree is files outside of the .git/ directory. Files inside of the .git/ directory hold the index, the local repository data, and some git configuration text files.
+
+       Here is an overview of main Git commands.
+
+       Table 10.12. Main Git commands
+
+         Git command | function
+         git init | create the (local) repository
+         git clone URL | clone the remote repository to a local repository with the working tree
+         git pull origin main | update the local main branch by the remote repository origin
+         git add . | add file(s) in the working tree to the index for pre-existing files in index only
+         git add -A . | add file(s) in the working tree to the index for all files including removals
+         git rm filename | remove file(s) from the working tree and the index
+         git commit | commit staged changes in the index to the local repository
+         git commit -a | add all changes in the working tree to the index and commit them to the local repository (add + commit)
+         git push -u origin branch_name | update the remote repository origin by the local branch_name branch (initial invocation)
+         git push origin branch_name | update the remote repository origin by the local branch_name branch (subsequent invocation)
+         git diff treeish1 treeish2 | show difference between treeish1 commit and treeish2 commit
+         gitk | GUI display of VCS repository branch history tree
+
+       10.5.3. GIT TIPS
+
+       Here are some Git tips.
+
+       Table 10.13. Git tips
+
+         Git command line | function
+         gitk --all | see complete Git history and operate on them such as resetting HEAD to another commit, cheery-picking patches, creating tags and branches ...
+         git stash | get the clean working tree without losing data
+         git remote -v | check settings for remote
+         git branch -vv | check settings for branch
+         git status | show working tree status
+         git config -l | list git settings
+         git reset --hard HEAD; git clean -x -d -f | revert all working tree changes and clean them up completely
+         git rm --cached filename | revert staged index changed by git add filename
+         git reflog | get reference log (useful for recovering commits from the removed branch)
+         git branch new_branch_name HEAD@{6} | create a new branch from reflog information
+         git remote add new_remote URL | add a new_remote remote repository pointed by URL
+         git remote rename origin upstream | rename the remote repository name from origin to upstream
+         git branch -u upstream/branch_name | set the remote tracking to the remote repository upstream and its branch name branch_name.
+         git remote set-url origin https://foo/bar.git | change URL of origin
+         git remote set-url --push upstream DISABLED | disable push to upstream (Edit .git/config to re-enable)
+         git remote update upstream | fetch updates of all remote branches in the upstream repository
+         git fetch upstream foo:upstream-foo | create a local (possibly orphan) upstream-foo branch as a copy of foo branch in the upstream repository
+         git checkout -b topic_branch ; git push -u topic_branch origin | make a new topic_branch and push it to origin
+         git branch -m oldname newname | rename local branch name
+         git push -d origin branch_to_be_removed | remove remote branch (new method)
+         git push origin :branch_to_be_removed | remove remote branch (old method)
+         git checkout --orphan unconnected | create a new unconnected branch
+         git rebase -i origin/main | reorder/drop/squish commits from origin/main to clean branch history
+         git reset HEAD^; git commit --amend | squash last 2 commits into one
+         git checkout topic_branch ; git merge --squash topic_branch | squash entire topic_branch into a commit
+         git fetch --unshallow --update-head-ok origin '+refs/heads/*:refs/heads/*' | convert a shallow clone to the full clone of all branches
+         git ime | split the last commit into a series of file-by-file smaller commits etc. (imediff package required)
+         git repack -a -d; git prune | repack the local repository into single pack (this may limit chance of lost data recovery from erased branch etc.)
+         Warning
+       Do not use the tag string with spaces in it even if some tools such as gitk(1) allow you to use it. It may choke some other git commands.
+
+         Caution
+       If a local branch which has been pushed to remote repository is rebased or squashed, pushing this branch has risks and requires --force option. This is usually not an acceptable for main branch but may be acceptable for a topic branch before merging to main branch.
+
+         Caution
+       Invoking a git subcommand directly as "git-xyz" from the command line has been deprecated since early 2006.
+
+         Tip
+       If there is a executable file git-foo in the path specified by $PATH, entering "git foo" without hyphen to the command line invokes this git-foo. This is a feature of the git command.
+
+       10.5.4. GIT REFERENCES
+
+       See the following.
+
+        * manpage: git(1) (/usr/share/doc/git-doc/git.html)
+        * Git User's Manual (/usr/share/doc/git-doc/user-manual.html)
+        * A tutorial introduction to git (/usr/share/doc/git-doc/gittutorial.html)
+        * A tutorial introduction to git: part two (/usr/share/doc/git-doc/gittutorial-2.html)
+        * Everyday GIT With 20 Commands Or So (/usr/share/doc/git-doc/giteveryday.html)
+        * Git Magic (/usr/share/doc/gitmagic/html/index.html)
+
+       10.5.5. OTHER VERSION CONTROL SYSTEMS
+
+       The version control systems (VCS) is sometimes known as the revision control system (RCS), or the software configuration management (SCM).
+
+       Here is a summary of the notable other non-Git VCS on the Debian system.
+
+       Table 10.14. List of other version control system tools
+
+         package | popcon | size | tool | VCS type | comment
+         mercurial | V:4, I:23 | 2575 | Mercurial | distributed | DVCS in Python and some C
+         darcs | V:0.2, I:3.3 | 38856 | Darcs | distributed | DVCS with smart algebra of patches (slow)
+         tla | V:0.04, I:0.70 | 1022 | GNU arch | distributed | DVCS mainly by Tom Lord (historic)
+         bzr | V:0.1, I:4.3 | 28 | GNU Bazaar | distributed | DVCS influenced by tla written in Python (historic)
+         subversion | V:9, I:55 | 4848 | Subversion | remote | "CVS done right", newer standard remote VCS (historic)
+         cvs | V:3, I:23 | 4835 | CVS | remote | previous standard remote VCS (historic)
+         tkcvs | V:0.12, I:0.91 | 34 | CVS, … | remote | GUI display of VCS (CVS, Subversion, RCS) repository tree
+         rcs | V:2.1, I:9.5 | 578 | RCS | local | "Unix SCCS done right" (historic)
+         cssc | V:0.01, I:0.30 | 2044 | CSSC | local | clone of the Unix SCCS (historic)
+       [4] A write-once media such as CD/DVD-R can prevent overwrite accidents. (See Section 9.8, “The binary data” for how to write to the storage media from the shell commandline. GNOME desktop GUI environment gives you easy access via menu: "Places→CD/DVD Creator".)
+
+       [5]  Some of these data can not be regenerated by entering the same input string to the system.
+
+       [6] If you use "~/.vimrc" instead of "~/.vim/vimrc", please substitute accordingly.
+
+Debian Reference manual                 bundled documentation

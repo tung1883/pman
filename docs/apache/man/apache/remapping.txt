@@ -1,0 +1,401 @@
+APACHE.REMAPPING(1)              Sandbox manual              APACHE.REMAPPING(1)
+
+       FROM OLD TO NEW (INTERNAL)
+
+         Description:
+       Assume we have recently renamed the page foo.html to bar.html and now want to provide the old URL for backward compatibility. However, we want that users of the old URL even not recognize that the pages was renamed - that is, we don't want the address to change in their browser.
+
+         Solution:
+       We rewrite the old URL to the new one internally via the following rule:
+
+         RewriteEngine  on
+         RewriteRule    "^/foo\.html$"  "/bar.html" [PT]
+
+       FORCING HTTPS
+
+         Description:
+       You want all HTTP requests to be redirected to HTTPS. This is one of the most common uses of mod_rewrite, but in most cases it is better accomplished without it.
+
+         Solution:
+       The preferred approach uses a Redirect directive in a dedicated HTTP virtual host:
+
+         <VirtualHost *:80>
+             ServerName www.example.com
+             Redirect permanent "/" "https://www.example.com/"
+         </VirtualHost>
+
+         <VirtualHost *:443>
+             ServerName www.example.com
+             # ... SSL configuration goes here
+         </VirtualHost>
+
+         Discussion:
+       If you do not have access to the main server configuration and must use a .htaccess file, mod_rewrite is the appropriate tool:
+
+         RewriteEngine On
+         RewriteCond "%{HTTPS}" !=on
+         RewriteRule "^(.*)" "https://%{SERVER_NAME}$1" [R=301,L]
+
+       The %{HTTPS} variable is set to on when the connection is using SSL/TLS, and is empty or off otherwise. Using R=301 issues a permanent redirect, which tells search engines to update their index.
+
+       See also the When not to use mod_rewrite document for more discussion of the Redirect approach.
+
+       BEHIND A LOAD BALANCER OR SSL TERMINATOR
+
+       The %{HTTPS} variable is not a general-purpose environment variable — it queries mod_ssl directly. If SSL/TLS is terminated at an upstream load balancer or reverse proxy, mod_ssl is not handling the connection and %{HTTPS} will always report off, even when the original client connected over HTTPS.
+
+       In this situation, check the header set by the upstream proxy instead. Most load balancers set X-Forwarded-Proto:
+
+         RewriteEngine On
+         RewriteCond "%{HTTP:X-Forwarded-Proto}" =http [NC]
+         RewriteRule "^(.*)" "https://%{SERVER_NAME}$1" [R=301,L]
+
+       Only trust X-Forwarded-Proto if you control the upstream proxy and it overwrites the header on every request. An attacker can forge this header when connecting directly to your server. Consider restricting access so that only your load balancer can reach the backend, or use mod_remoteip to validate the source.
+
+       EXEMPTING ACME CHALLENGE REQUESTS FROM HTTPS REDIRECT
+
+         Description:
+       You have forced all traffic to HTTPS (as above), but your ACME client (Let's Encrypt, Certbot, etc.) needs plain HTTP access to /.well-known/acme-challenge/ to complete domain validation.
+
+         Solution:
+       Place an exception before your HTTPS redirect rule:
+
+         RewriteEngine On
+         RewriteRule "^/\.well-known/acme-challenge/" - [L]
+         RewriteCond "%{HTTPS}" !=on
+         RewriteRule "^(.*)" "https://%{SERVER_NAME}$1" [R=301,L]
+
+         Discussion:
+       The dash (-) substitution means "do not rewrite." Combined with [L], it stops rule processing for any request matching the ACME challenge path, allowing it to be served over plain HTTP. All other requests continue to the next rule and are redirected to HTTPS as usual.
+
+       If you are using the Redirect approach in a dedicated port-80 VirtualHost, use an Alias and RedirectMatch instead:
+
+         <VirtualHost *:80>
+             ServerName www.example.com
+
+             # Allow ACME challenges over HTTP
+             Alias "/.well-known/acme-challenge/" "/var/www/acme/.well-known/acme-challenge/"
+             <Directory "/var/www/acme/.well-known/acme-challenge">
+                 Require all granted
+             </Directory>
+
+             # Everything else goes to HTTPS
+             RedirectMatch permanent "^/(?!\.well-known/acme-challenge/)(.*)$" "https://www.example.com/$1"
+         </VirtualHost>
+
+       TRAILING SLASH NORMALIZATION
+
+         Description:
+       You want to ensure that URLs for directories always end with a trailing slash, or conversely, that they never do. This is a common requirement for SEO and for consistent URL handling by web applications.
+
+         Solution:
+       To add a trailing slash to URLs that map to directories:
+
+         RewriteCond "%{REQUEST_FILENAME}" -d
+         RewriteCond "%{REQUEST_URI}" "!/$"
+         RewriteRule "^(.*)$" "$1/" [R=301,L]
+
+       To remove a trailing slash (except for actual directories):
+
+         RewriteCond "%{REQUEST_FILENAME}" !-d
+         RewriteCond "%{REQUEST_URI}" "(.+)/$"
+         RewriteRule "^" "%1" [R=301,L]
+
+         Discussion:
+       Apache's mod_dir already handles trailing slash redirects for real directories when DirectorySlash is enabled (the default). You only need a mod_rewrite rule if you want to enforce trailing slash behavior for URLs that do not correspond to actual directories on disk, or if you want to remove trailing slashes.
+
+       FRONT CONTROLLER / APPLICATION ROUTING
+
+       Most modern web frameworks route all requests through a single entry point (a "front controller"). The FallbackResource directive handles this more simply and efficiently than mod_rewrite. See When NOT to use mod_rewrite for the recommended approach.
+
+       If you genuinely need mod_rewrite for this (for example, to add conditions beyond "file doesn't exist"), see the per-directory rewrites document for an annotated example that also demonstrates RewriteBase usage.
+
+       REWRITING FROM OLD TO NEW (EXTERNAL)
+
+         Description:
+       Assume again that we have recently renamed the page foo.html to bar.html and now want to provide the old URL for backward compatibility. But this time we want that the users of the old URL get hinted to the new one, i.e. their browsers Location field should change, too.
+
+         Solution:
+       We force a HTTP redirect to the new URL which leads to a change of the browsers and thus the users view:
+
+         RewriteEngine  on
+         RewriteRule    "^/foo\.html$"  "bar.html"  [R]
+
+         Discussion
+       In this example, as contrasted to the internal example above, we can simply use the Redirect directive. mod_rewrite was used in that earlier example in order to hide the redirect from the client:
+
+         Redirect "/foo.html" "/bar.html"
+
+       RESOURCE MOVED TO ANOTHER SERVER
+
+         Description:
+       If a resource has moved to another server, you may wish to have URLs continue to work for a time on the old server while people update their bookmarks.
+
+         Solution:
+       You can use mod_rewrite to redirect these URLs to the new server, but you might also consider using the Redirect or RedirectMatch directive.
+
+         #With mod_rewrite
+         RewriteEngine on
+         RewriteRule   "^/docs/(.+)"  "http://new.example.com/docs/$1"  [R,L]
+
+         #With RedirectMatch
+         RedirectMatch "^/docs/(.*)" "http://new.example.com/docs/$1"
+
+         #With Redirect
+         Redirect "/docs/" "http://new.example.com/docs/"
+
+         Discussion:
+       For simple redirections to another server, the Redirect or RedirectMatch directives are preferred, as they are simpler and more efficient.
+
+       BACKWARD COMPATIBILITY FOR FILE EXTENSION CHANGE
+
+         Description:
+       How can we make URLs backward compatible (still existing virtually) after migrating document.YYYY to document.XXXX, e.g. after translating a bunch of .html files to .php?
+
+         Solution:
+       The URL is rewritten from the old extension to the new one only if the target file with the new extension exists and the original file with the old extension does not. Otherwise, the URL is left unchanged.
+
+         #   backward compatibility ruleset for
+         #   rewriting document.html to document.php
+         #   when and only when document.php exists
+         <Directory "/var/www/htdocs">
+             RewriteEngine on
+             RewriteBase   "/var/www/htdocs"
+
+             RewriteCond   "$1.php"           -f
+             RewriteCond   "$1.html"          !-f
+             RewriteRule   "^(.*).html$"      "$1.php"
+         </Directory>
+
+         Discussion
+       This example uses an often-overlooked feature of mod_rewrite, by taking advantage of the order of execution of the ruleset. In particular, mod_rewrite evaluates the left-hand-side of the RewriteRule before it evaluates the RewriteCond directives. Consequently, $1 is already defined by the time the RewriteCond directives are evaluated. This allows us to test for the existence of the original (document.html) and target (document.php) files using the same base filename.
+
+       This ruleset is designed to use in a per-directory context (In a <Directory> block or in a .htaccess file), so that the -f checks are looking at the correct directory path. You may need to set a RewriteBase directive to specify the directory base that you're working in.
+
+       CANONICAL HOSTNAMES
+
+         Description:
+       The goal of this rule is to force the use of a particular hostname, in preference to other hostnames which may be used to reach the same site. For example, if you wish to force the use of www.example.com instead of example.com, you might use a variant of the following recipe.
+
+         Solution:
+       The very best way to solve this doesn't involve mod_rewrite at all, but rather uses the Redirect directive placed in a virtual host for the non-canonical hostname(s).
+
+         <VirtualHost *:80>
+           ServerName undesired.example.com
+           ServerAlias example.com notthis.example.com
+
+           Redirect "/" "http://www.example.com/"
+         </VirtualHost>
+
+         <VirtualHost *:80>
+           ServerName www.example.com
+         </VirtualHost>
+
+       You can alternatively accomplish this using the <If> directive: (2.4 and later)
+
+         <If "%{HTTP_HOST} != 'www.example.com'">
+             Redirect "/" "http://www.example.com/"
+         </If>
+
+       Or, for example, to redirect a portion of your site to HTTPS, you might do the following:
+
+         <If "%{SERVER_PROTOCOL} != 'HTTPS'">
+             Redirect "/admin/" "https://www.example.com/admin/"
+         </If>
+
+       If, for whatever reason, you still want to use mod_rewrite - if, for example, you need this to work with a larger set of RewriteRules - you might use one of the recipes below.
+
+       For sites running on a port other than 80:
+
+         RewriteCond "%{HTTP_HOST}"   "!^www\.example\.com" [NC]
+         RewriteCond "%{HTTP_HOST}"   "!^$"
+         RewriteCond "%{SERVER_PORT}" "!^80$"
+         RewriteRule "^/?(.*)"        "http://www.example.com:%{SERVER_PORT}/$1" [L,R,NE]
+
+       And for a site running on port 80
+
+         RewriteCond "%{HTTP_HOST}"   "!^www\.example\.com"       [NC]
+         RewriteCond "%{HTTP_HOST}"   "!^$"
+         RewriteRule "^/?(.*)"        "http://www.example.com/$1" [L,R,NE]
+
+       If you wanted to do this generically for all domain names - that is, if you want to redirect example.com to www.example.com for all possible values of example.com, you could use the following recipe:
+
+       To do the reverse - strip the www. prefix - swap the condition:
+
+         RewriteCond "%{HTTP_HOST}" "^www\.(.+)$"              [NC]
+         RewriteRule "^(.*)"        "http://%1/$1"             [L,R,NE]
+
+       To generically add www. to any hostname:
+
+         RewriteCond "%{HTTP_HOST}" "!^www\."                    [NC]
+         RewriteCond "%{HTTP_HOST}" "!^$"
+         RewriteRule "^/?(.*)"      "http://www.%{HTTP_HOST}/$1" [L,R,NE]
+
+       These rulesets will work either in your main server configuration file, or in a .htaccess file placed in the DocumentRoot of the server.
+
+         Discussion:
+       If you have access to the server configuration, a Redirect in a dedicated <VirtualHost> is the cleanest approach. Canonicalizing the hostname ensures that search engines treat your site as a single entity and avoids cookie scope issues that arise when the same site is reachable under multiple names.
+
+       Use the <If> directive as a middle ground, and mod_rewrite only if you are limited to .htaccess.
+
+       SEARCH FOR PAGES IN MORE THAN ONE DIRECTORY
+
+         Description:
+       A particular resource might exist in one of several places, and we want to look in those places for the resource when it is requested. Perhaps we've recently rearranged our directory structure, dividing content into several locations.
+
+         Solution:
+       The following ruleset searches in two directories to find the resource, and, if not finding it in either place, will attempt to just serve it out of the location requested.
+
+         RewriteEngine on
+
+         #   first try to find it in dir1/...
+         #   ...and if found stop and be happy:
+         RewriteCond         "%{DOCUMENT_ROOT}/dir1/%{REQUEST_URI}"  -f
+         RewriteRule "^(.+)" "%{DOCUMENT_ROOT}/dir1/$1"  [L]
+
+         #   second try to find it in dir2/...
+         #   ...and if found stop and be happy:
+         RewriteCond         "%{DOCUMENT_ROOT}/dir2/%{REQUEST_URI}"  -f
+         RewriteRule "^(.+)" "%{DOCUMENT_ROOT}/dir2/$1"  [L]
+
+         #   else go on for other Alias or ScriptAlias directives,
+         #   etc.
+         RewriteRule "^"     "-"                                          [PT]
+
+         Discussion:
+       This is useful during migrations when content is being moved between directories. For permanent setups, consider using Alias or symbolic links instead.
+
+       CANONICAL URLS
+
+         Description:
+       On some webservers there is more than one URL for a resource. Usually there are canonical URLs (which are be actually used and distributed) and those which are just shortcuts, internal ones, and so on. Independent of which URL the user supplied with the request, they should finally see the canonical one in their browser address bar.
+
+         Solution:
+       We do an external HTTP redirect for all non-canonical URLs to fix them in the location view of the Browser and for all subsequent requests. In the example ruleset below we replace /puppies and /canines by the canonical /dogs.
+
+         RewriteRule   "^/(puppies|canines)/(.*)"    "/dogs/$2"  [R]
+
+         Discussion:
+       This should really be accomplished with Redirect or RedirectMatch directives:
+
+         RedirectMatch "^/(puppies|canines)/(.*)" "/dogs/$2"
+
+       MOVED DOCUMENTROOT
+
+         Description:
+       Usually the DocumentRoot of the webserver directly relates to the URL "/". But often this data is not really of top-level priority. For example, you may wish for visitors, on first entering a site, to go to a particular subdirectory /about/. This may be accomplished using the following ruleset:
+
+         Solution:
+       We redirect the URL / to /about/:
+
+         RewriteEngine on
+         RewriteRule   "^/$"  "/about/"  [R]
+
+       Note that this can also be handled using the RedirectMatch directive:
+
+         RedirectMatch "^/$" "http://example.com/about/"
+
+       Note also that the example rewrites only the root URL. That is, it rewrites a request for http://example.com/, but not a request for http://example.com/page.html. If you have in fact changed your document root - that is, if all of your content is in fact in that subdirectory, it is greatly preferable to simply change your DocumentRoot directive, or move all of the content up one directory, rather than rewriting URLs.
+
+       REWRITE QUERY STRING
+
+         Description:
+       You want to capture a particular value from a query string and either replace it or incorporate it into another component of the URL.
+
+         Solutions:
+       Many of the solutions in this section will all use the same condition, which leaves the matched value in the %2 backreference. %1 is the beginning of the query string (up to the key of intererest), and %3 is the remainder. This condition is a bit complex for flexibility and to avoid double '&&' in the substitutions.
+
+        * This solution removes the matching key and value:
+
+         # Remove mykey=???
+         RewriteCond "%{QUERY_STRING}" "(.*(?:^|&))mykey=([^&]*)&?(.*)&?$"
+         RewriteRule "(.*)"            "$1?%1%3"
+
+        * This solution uses the captured value in the URL substitution, discarding the rest of the original query by appending a '?':
+
+         # Copy from query string to PATH_INFO
+         RewriteCond "%{QUERY_STRING}" "(.*(?:^|&))mykey=([^&]*)&?(.*)&?$"
+         RewriteRule "(.*)"            "$1/products/%2/?" [PT]
+
+        * This solution checks the captured value in a subsequent condition:
+
+         # Capture the value of mykey in the query string
+         RewriteCond "%{QUERY_STRING}" "(.*(?:^|&))mykey=([^&]*)&?(.*)&?$"
+         RewriteCond "%2"              !=not-so-secret-value
+         RewriteRule "(.*)"            "-" [F]
+
+        * This solution shows the reverse of the previous ones, copying path components (perhaps PATH_INFO) from the URL into the query string.
+
+         # The desired URL might be /products/kitchen-sink, and the script expects
+         # /path?products=kitchen-sink.
+         RewriteRule "^/?path/([^/]+)/([^/]+)" "/path?$1=$2" [PT]
+
+         Discussion:
+       See also the [QSA] and [QSD] flags, which control whether the original query string is appended to or discarded from the substitution.
+
+       STRUCTURED USERDIRS
+
+         Description:
+       Some sites with thousands of users use a structured homedir layout, i.e. each homedir is in a subdirectory which begins (for instance) with the first character of the username. So, /~larry/anypath is /home/l/larry/public_html/anypath while /~waldo/anypath is /home/w/waldo/public_html/anypath.
+
+         Solution:
+       We use the following ruleset to expand the tilde URLs into the above layout.
+
+         RewriteEngine on
+         RewriteRule   "^/~(([a-z])[a-z0-9]+)(.*)"  "/home/$2/$1/public_html$3"
+
+         Discussion:
+       This technique is primarily useful for large hosting environments with thousands of users. For most sites, mod_userdir handles tilde-based user URLs without requiring mod_rewrite.
+
+       REDIRECTING ANCHORS
+
+         Description:
+       By default, redirecting to an HTML anchor doesn't work, because mod_rewrite escapes the # character, turning it into %23. This, in turn, breaks the redirection.
+
+         Solution:
+       Use the [NE] flag on the RewriteRule. NE stands for No Escape.
+
+         Discussion:
+       This technique will of course also work with other special characters that mod_rewrite, by default, URL-encodes.
+
+       TIME-DEPENDENT REWRITING
+
+         Description:
+       We wish to use mod_rewrite to serve different content based on the time of day.
+
+         Solution:
+       There are a lot of variables named TIME_xxx for rewrite conditions. In conjunction with the special lexicographic comparison patterns <STRING, >STRING and =STRING we can do time-dependent redirects:
+
+         RewriteEngine on
+         RewriteCond   "%{TIME_HOUR}%{TIME_MIN}" >0700
+         RewriteCond   "%{TIME_HOUR}%{TIME_MIN}" <1900
+         RewriteRule   "^foo\.html$"             "foo.day.html" [L]
+         RewriteRule   "^foo\.html$"             "foo.night.html"
+
+       This provides the content of foo.day.html under the URL foo.html from 07:01-18:59 and at the remaining time the contents of foo.night.html.
+
+       mod_cache, intermediate proxies and browsers may each cache responses and cause the either page to be shown outside of the time-window configured. mod_expires may be used to control this effect. You are, of course, much better off simply serving the content dynamically, and customizing it based on the time of day.
+
+         Discussion:
+       Serving dynamic content through your application is almost always a better approach. Caching by browsers, proxies, and mod_cache makes time-based rewriting unreliable in practice.
+
+       ON-THE-FLY CONTENT-REGENERATION
+
+         Description:
+       We wish to dynamically generate content, but store it statically once it is generated. This rule will check for the existence of the static file, and if it's not there, generate it. The static files can be removed periodically, if desired (say, via cron) and will be regenerated on demand.
+
+         Solution:
+       This is done via the following ruleset:
+
+         # This example is valid in per-directory context only
+         RewriteCond "%{REQUEST_URI}"   !-U
+         RewriteRule "^(.+)\.html$"     "/regenerate_page.cgi"   [PT,L]
+
+       The -U operator determines whether the test string (in this case, REQUEST_URI) is a valid URL. It does this via a subrequest. In the event that this subrequest fails - that is, the requested resource doesn't exist - this rule invokes the CGI program /regenerate_page.cgi, which generates the requested resource and saves it into the document directory, so that the next time it is requested, a static copy can be served.
+
+       In this way, documents that are infrequently updated can be served in static form. if documents need to be refreshed, they can be deleted from the document directory, and they will then be regenerated the next time they are requested.
+
+         Discussion:
+       Modern approaches such as mod_cache, CDN caching layers, or application-level caching provide more robust and controllable solutions for serving pre-generated static content. The -U subrequest test used here also carries a performance cost on every request.
+
+Apache HTTP Server manual               bundled documentation

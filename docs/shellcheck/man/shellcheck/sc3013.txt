@@ -1,0 +1,55 @@
+SHELLCHECK.SC3013(1)             Sandbox manual             SHELLCHECK.SC3013(1)
+
+       NAME
+
+       In POSIX sh, -nt is undefined. - Note: Removed in v0.11.0 - 2025-08-23
+
+       IN POSIX SH, -NT IS UNDEFINED
+
+       IN POSIX SH, -NT IS UNDEFINED
+
+       _Note: Removed in v0.11.0 - 2025-08-23_
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         if [ Foo.java -nt Foo.class ]
+         then
+           javac Foo.java
+         fi
+
+       CORRECT CODE
+
+       The easiest fix is to switch to a shell that does support -nt, like bash:
+
+         #!/bin/bash
+         if [ Foo.java -nt Foo.class ]
+         then
+           javac Foo.java
+         fi
+
+       Otherwise, find can be used:
+
+         #!/bin/sh
+         if [ -n "$(find Foo.java -newer Foo.class)" ]
+         then
+           javac Foo.java
+         fi
+
+       RATIONALE
+
+       test -nt is an extension in ksh, bash and dash, but it is not specified by POSIX.
+
+       EXCEPTIONS
+
+       If you only intend to target shells that supports this feature, you can change the shebang to a shell that guarantees support, or [[ignore]] this warning.
+
+       You can use # shellcheck disable=SC3000-SC4000 to ignore all such compatibility warnings.
+
+       RELATED RESOURCES
+
+        * Greg's Wiki
+            * BashFAQ #3: How can I sort or compare files based on some metadata attribute (newest / oldest modification time, size, etc)?
+            * Bashism - Conditionals
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,60 @@
+WEBAPI.HTMLGEOLOCATIONELEMENT-PERMISSIONSTATUS(1) Sandbox manual WEBAPI.HTMLGEOLOCATIONELEMENT-PERMISSIONSTATUS(1)
+
+       NAME
+
+       HTMLGeolocationElement: permissionStatus property - The permissionStatus read-only property of the HTMLGeolocationElement interface returns an enumerated value representing the current permiss
+
+       HTMLGEOLOCATIONELEMENT: PERMISSIONSTATUS PROPERTY
+
+       The permissionStatus read-only property of the HTMLGeolocationElement interface returns an enumerated value representing the current permission status for the geolocation feature.
+
+       If you want to access the initial permission status for the geolocation feature as it was when the page first loaded, use the initialPermissionStatus property.
+
+       VALUE
+
+       An enumerated value, which can be one of:
+
+        * granted
+          * : The user has granted permission for the browser to use the geolocation feature, either via the element or some other mechanism. When using the element, this means that the user has pressed the rendered button and selected an "allow" option, at which point the browser will start to request location data.
+        * denied
+          * : The user has denied permission for the browser to use the geolocation feature, either via the element or some other mechanism. When using the element, this means that the user has pressed the rendered button and selected a "don't allow" option, at which point the browser will not request location data until the user presses the rendered button again and selects an "allow" option.
+        * prompt
+          * : The user has not specifically granted or denied permission for the browser to use the geolocation feature, which means that the browser won't request location data until they grant permission. When using the element, this means that the user has not yet pressed the rendered button. When they do, they'll be given the option to grant or deny permission for the browser to request location data.
+       The permission status persists between page loads. If the element has its autolocate attribute set to true, and permission was previously granted, the browser will start to request location data as soon as the element renders without requiring the user to press the button.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+         <geolocation></geolocation>
+
+         const geo = document.querySelector("geolocation");
+         console.log(geo.permissionStatus);
+         // "prompt" if this is the first time the user has accessed this page
+
+       USING PERMISSION STATUS TO INFORM THE USER
+
+       In our Embedded map example (source code), we add a promptaction event listener to the HTMLGeolocationElement object representing our element.
+
+         geo.addEventListener("promptaction", notifyUserGrantPermission);
+
+       In the referenced notifyUserGrantPermission() function, we use the permissionStatus property to check whether the permission status is denied or prompt and if so, we ask the user to press the button again and allow location. We don't need to ask this if they grant permission.
+
+         function notifyUserGrantPermission() {
+           if (geo.permissionStatus === "denied" || geo.permissionStatus === "prompt") {
+             statusElem.textContent =
+               'Please press the "Use location" button again and allow location for this site.';
+           }
+         }
+
+       See the main HTMLGeolocationElement page for a full walkthrough of this example.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * element
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,67 @@
+WEBAPI.RTCPEERCONNECTION-ICECONNECTIONSTATECHANGE-EVENT(1) Sandbox manual WEBAPI.RTCPEERCONNECTION-ICECONNECTIONSTATECHANGE-EVENT(1)
+
+       NAME
+
+       RTCPeerConnection: iceconnectionstatechange event - An iceconnectionstatechange event is sent to an RTCPeerConnection object each time the ICE connection state changes during the negotiation p
+
+       RTCPEERCONNECTION: ICECONNECTIONSTATECHANGE EVENT
+
+       An iceconnectionstatechange event is sent to an RTCPeerConnection object each time the ICE connection state changes during the negotiation process. The new ICE connection state is available in the object's iceConnectionState property.
+
+       One common task performed by the iceconnectionstatechange event listener is to trigger ICE restart when the state changes to failed.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("iceconnectionstatechange", (event) => { })
+
+         oniceconnectionstatechange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       USAGE NOTES
+
+       A successful connection attempt will typically involve the state starting at new, then transitioning through checking, then connected, and finally completed. However, under certain circumstances, the connected state can be skipped, causing a connection to transition directly from the checking state to completed. This can happen when only the last checked candidate is successful, and the gathering and end-of-candidates signals both occur before the successful negotiation is completed.
+
+       ICE CONNECTION STATE DURING ICE RESTARTS
+
+       When an ICE restart is processed, the gathering and connectivity checking process is started over from the beginning, which will cause the iceConnectionState to transition to connected if the ICE restart was triggered while in the completed state. If ICE restart is initiated while in the transient disconnected state, the state transitions instead to checking, essentially indicating that the negotiation is ignoring the fact that the connection had been temporarily lost.
+
+       STATE TRANSITIONS AS NEGOTIATION ENDS
+
+       When the negotiation process runs out of candidates to check, the ICE connection transitions to one of two states. If no suitable candidates were found, the state transitions to failed. If at least one suitable candidate was successfully identified, the state transitions to completed. The ICE layer makes this determination upon receiving the end-of-candidates signal, which is provided by calling addIceCandidate() with a candidate whose candidate property is an empty string (""), or by setting the RTCPeerConnection property canTrickleIceCandidates to false.
+
+       EXAMPLES
+
+       An event handler for this event can be added using the oniceconnectionstatechange property or by using addEventListener() on the RTCPeerConnection.
+
+       In this example, a handler for iceconnectionstatechange is set up to update a call state indicator by using the value of iceConnectionState to create a string which corresponds to the name of a CSS class that we can assign to the status indicator to cause it to reflect the current state of the connection.
+
+         pc.addEventListener("iceconnectionstatechange", (ev) => {
+           let stateElem = document.querySelector("#call-state");
+           stateElem.className = `${pc.iceConnectionState}-state`;
+         });
+
+       This can also be written as:
+
+         pc.oniceconnectionstatechange = (ev) => {
+           let stateElem = document.querySelector("#call-state");
+           stateElem.className = `${pc.iceConnectionState}-state`;
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * RTCPeerConnection
+        * RTCPeerConnection.iceConnectionState
+
+Web APIs manual                         from the official documentation

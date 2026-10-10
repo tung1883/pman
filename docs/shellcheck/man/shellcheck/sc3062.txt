@@ -1,0 +1,46 @@
+SHELLCHECK.SC3062(1)             Sandbox manual             SHELLCHECK.SC3062(1)
+
+       NAME
+
+       In POSIX sh, unary -o to check options is undefined. - if [ -o braceexpand ]
+
+       IN POSIX SH, UNARY -O TO CHECK OPTIONS IS UNDEFINED
+
+       IN POSIX SH, UNARY -O TO CHECK OPTIONS IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         if [ -o braceexpand ]
+         then
+          echo "Brace expansion available and enabled."
+         fi
+
+       CORRECT CODE
+
+       $- will be set to a list of shell options:
+
+         case $- of
+           *B*) echo "Brace expansion available and enabled."
+         esac
+
+       However, not all options are available through $-. If you need to check those, ignore this suggestion with a directive:
+
+         # shellcheck disable=SC3062
+         if [ -n "$BASH_VERSION" ] && [ -o pipefail ]
+         then
+           echo "This is bash and pipefail is enabled."
+         fi
+
+       RATIONALE
+
+       [ -o option ] is a bash/ksh extension, while $- is standard POSIX. Do note that letters outside the POSIX set are not guaranteed to be compatible, such as B above.
+
+       EXCEPTIONS
+
+       As described.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

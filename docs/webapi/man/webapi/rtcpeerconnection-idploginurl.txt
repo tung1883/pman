@@ -1,0 +1,52 @@
+WEBAPI.RTCPEERCONNECTION-IDPLOGINURL(1) Sandbox manual WEBAPI.RTCPEERCONNECTION-IDPLOGINURL(1)
+
+       NAME
+
+       RTCPeerConnection: idpLoginUrl property - The idpLoginUrl read-only property of the RTCPeerConnection interface returns a string containing the URL endpoint the application can open 
+
+       RTCPEERCONNECTION: IDPLOGINURL PROPERTY
+
+       The idpLoginUrl read-only property of the RTCPeerConnection interface returns a string containing the URL endpoint the application can open to log users in to the identity provider (IdP). This value is null until the IdP indicates that login is needed.
+
+       When a call to RTCPeerConnection.getIdentityAssertion() fails because the IdP requires user authentication, the resulting promise is rejected with an RTCError whose errorDetail is "idp-need-login". The browser then sets this property to the login URL provided by the IdP. The application can open this URL (for example, in a pop-up window or ) to allow the user to complete the login process before retrying the identity assertion.
+
+       VALUE
+
+       A string containing the IdP login URL, or null if no login is needed.
+
+       EXAMPLES
+
+       HANDLING AN IDP LOGIN REQUIREMENT
+
+       In this example, the application attempts to gather an identity assertion. If the IdP rejects the attempt because the user is not authenticated, the application opens the login URL provided in idpLoginUrl.
+
+         const pc = new RTCPeerConnection();
+         pc.setIdentityProvider("login.example.com");
+
+         pc.getIdentityAssertion().catch((error) => {
+           if (pc.idpLoginUrl) {
+             console.log(`IdP login required at: ${pc.idpLoginUrl}`);
+             // Open the login page in a popup window
+             const loginWindow = window.open(
+               pc.idpLoginUrl,
+               "idp-login",
+               "width=500,height=600",
+             );
+           } else {
+             console.error("Identity assertion failed:", error);
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * RTCPeerConnection.peerIdentity
+        * RTCPeerConnection.getIdentityAssertion()
+        * RTCPeerConnection.setIdentityProvider()
+        * RTCIdentityAssertion
+
+Web APIs manual                         from the official documentation

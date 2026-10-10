@@ -1,0 +1,53 @@
+SHELLCHECK.SC2264(1)             Sandbox manual             SHELLCHECK.SC2264(1)
+
+       NAME
+
+       This function unconditionally re-invokes itself. Missing command? - ls() {
+
+       THIS FUNCTION UNCONDITIONALLY RE-INVOKES ITSELF. MISSING COMMAND
+
+       THIS FUNCTION UNCONDITIONALLY RE-INVOKES ITSELF. MISSING COMMAND
+
+       PROBLEMATIC CODE
+
+         ls() {
+           ls --color=always "$@"
+         }
+
+         cd() {
+           cd "$@" && ls
+         }
+
+       CORRECT CODE
+
+       Note that command is the literal name of a shell builtin. You should not replace it:
+
+         ls() {
+           command ls --color=always "$@"
+         }
+
+         cd() {
+           command cd "$@" && ls
+         }
+
+       RATIONALE
+
+       ShellCheck found a function that immediately and unconditionally re-invokes itself, causing infinite recursion.
+
+       This generally happens when writing a wrapper function with the same name as an existing command, but forgetting to make sure it invokes the existing command and not itself. This is what happened in both of the problematic examples.
+
+       To invoke a command when a function by the same name is defined, i.e. to suppress function lookup during execution, use the command confusingly named command. For example, to run the system's ls instead of the shell function ls, use command ls.
+
+       EXCEPTIONS
+
+       ShellCheck does not intend to warn about infinite recursion or fork bombs in general. This warning is purely meant for unintentional bugs in well meaning wrapper functions.
+
+       If ShellCheck is triggering on an intentionally malicious fork bomb, either [[ignore]] the issue, or simply add a leading command or condition:
+
+       :() { true && :|: & }
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

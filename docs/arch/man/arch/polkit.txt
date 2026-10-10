@@ -1,0 +1,284 @@
+ARCH.POLKIT(1)                   Sandbox manual                   ARCH.POLKIT(1)
+
+       From polkit homepage:
+
+       polkit is an application-level toolkit for defining and handling the policy that allows unprivileged processes to speak to privileged processes: It is a framework for centralizing the decision making process with respect to granting access to privileged operations for unprivileged applications.
+
+       Polkit is used for controlling system-wide privileges. It provides an organized way for non-privileged processes to communicate with privileged ones. In contrast to systems such as sudo, it does not grant root permission to an entire process, but rather allows a finer level of control of centralized system policy.
+
+       Polkit works by delimiting distinct actions, e.g. running GParted, and delimiting users by group or by name, e.g. members of the wheel group. It then defines how – if at all – those users are allowed those actions, e.g. by identifying as members of the group by typing in their passwords.
+
+       INSTALLATION
+
+       Install the polkit package.
+
+       AUTHENTICATION AGENTS
+
+       An authentication agent is used to make the user of a session prove that they really are the user (by authenticating as the user) or an administrative user (by authenticating as an administrator). The polkit package contains pkttyagent, a textual authentication agent which is used as a general fallback.
+
+       If you are using a graphical environment, make sure that a graphical authentication agent is installed and autostarted on login (e.g. via xinitrc).
+
+       Cinnamon, Deepin, Hyprland, GNOME, GNOME Flashback, KDE, LXDE, LXQt, MATE, and Xfce have an authentication agent already. In other desktop environments, you have to choose one of the following implementations:
+
+        * hyprpolkitagent, which provides /usr/lib/hyprpolkitagent/hyprpolkitagent
+        * lxqt-policykit, which provides /usr/bin/lxqt-policykit-agent
+        * lxsession, which provides /usr/bin/lxpolkit
+        * mate-polkit, which provides /usr/lib/mate-polkit/polkit-mate-authentication-agent-1
+        * polkit-gnome, which provides /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+        * polkit-kde-agent, which provides /usr/lib/polkit-kde-authentication-agent-1
+        * pantheon-polkit-agent, which provides /usr/lib/policykit-1-pantheon/io.elementary.desktop.agent-polkit
+        * soteria-gitAUR, which provides /usr/lib/soteria-polkit/soteria
+        * xfce-polkitAUR or xfce-polkit-gitAUR, which provides /usr/lib/xfce-polkit/xfce-polkit
+       Tip Before continuing, check your autostart configuration with a look at the process list. For example, with pgrep -af polkit-gnome.
+
+       CONFIGURATION
+
+       Warning Do not amend the default permission files of packages, as these may be overwritten on package upgrades.
+
+       Polkit definitions can be divided into two kinds:
+
+        * Actions are defined in XML .policy files located in /usr/share/polkit-1/actions. Each action has a set of default permissions attached to it (e.g. you need to identify as an administrator to use the GParted action). The defaults can be overruled but editing the actions files is NOT the correct way.
+        * Authorization rules are defined in JavaScript .rules files. They are found in two places:
+          * 3rd party packages can use /usr/share/polkit-1/rules.d.
+          * /etc/polkit-1/rules.d is for local configuration.
+       Polkit operates on top of the existing permissions systems in Linux – group membership, administrator status – it does not replace them. The .rules files designate a subset of users, refer to one (or more) of the actions specified in the actions files, and determine with what restrictions these actions can be taken by those users. As an example, a rules file could overrule the default requirement for all users to authenticate as an admin when using GParted, determining that some specific user does not need to. A different example: A certain user is not allowed to use GParted at all.
+
+       Note This does not preclude running GParted by means which do not respect polkit, such as the command line. Therefore, polkit should be used to expand access to privileged services for unprivileged users, rather than try to curtail the rights of (semi-)privileged users. For security purposes, sudoers is still the way to go.
+
+       ACTIONS
+
+       Tip To display Policykit actions in a graphical interface, install the polkit-explorer-gitAUR package.
+
+       The actions available to you via polkit will depend on the packages you have installed. Some are used in multiple desktop environments (org.freedesktop.*), some are DE-specific (org.gnome.*) and some are specific to a single program (org.gnome.gparted.policy). The command pkaction lists all the actions defined in /usr/share/polkit-1/actions for quick reference.
+
+       To get an idea of what polkit can do, here are a few commonly used groups of actions:
+
+        * systemd-logind (org.freedesktop.login1.policy) actions regulated by polkit include powering off, rebooting, suspending and hibernating the system, including when other users may still be logged in.
+        * udisks (org.freedesktop.udisks2.policy) actions regulated by polkit include mounting file systems and unlocking encrypted devices.
+        * NetworkManager (org.freedesktop.NetworkManager.policy) actions regulated by polkit include turning on and off the network, Wi-Fi or mobile broadband.
+       Each action is defined in an <action> tag in a .policy file. The org.gnome.gparted.policy contains a single action and looks like this:
+
+         <?xml version="1.0" encoding="UTF-8"?>
+         <!DOCTYPE policyconfig PUBLIC
+          "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+          "http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
+         <policyconfig>
+
+           <action id="org.gnome.gparted">
+             <message>Authentication is required to run the GParted Partition Editor</message>
+             <icon_name>gparted</icon_name>
+             <defaults>
+               <allow_any>auth_admin</allow_any>
+               <allow_inactive>auth_admin</allow_inactive>
+               <allow_active>auth_admin</allow_active>
+             </defaults>
+             <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/gparted</annotate>
+             <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+           </action>
+
+         </policyconfig>
+
+       The attribute id is the actual command sent to D-Bus, the message tag is the explanation to the user when authentication is required and the icon_name is sort of obvious.
+
+       The defaults tag is where the permissions or lack thereof are located. It contains three settings: allow_any, allow_inactive, and allow_active. Both inactive and active here refer to local sessions on local consoles or displays, whereas the allow_any setting is used for all others, including remote sessions (SSH, VNC, etc.).
+
+       For each of these settings the following options are available:
+
+        * no: The user is not authorized to carry out the action. There is therefore no need for authentication.
+        * yes: The user is authorized to carry out the action without any authentication.
+        * auth_self: Authentication is required but the user need not be an administrative user.
+        * auth_admin: Authentication as an administrative user is required.
+        * auth_self_keep: The same as auth_self but, like sudo, the authorization lasts a few minutes.
+        * auth_admin_keep: The same as auth_admin but, like sudo, the authorization lasts a few minutes.
+       These are default setting and unless overruled in later configuration will be valid for all users.
+
+       See the polkit(8) man page for a detailed explanation.
+
+       As can be seen from the GParted action, users are required to authenticate as administrators in order to use GParted, regardless of whether the session is active or inactive.
+
+       AUTHORIZATION RULES
+
+       Add custom rules or override defaults in /etc/polkit-1/rules.d. Rules must have root:polkitd ownership. After adding a new rule, reload polkit.service.
+
+       The addRule() method is used for adding a function that may be called whenever an authorization check for action and subject is performed. Functions are called in the order they have been added until one of the functions returns a value. Hence, to add an authorization rule that is processed before other rules, put it in a file in /etc/polkit-1/rules.d with a name that sorts before other rules files, for example 00-early-checks.rules.
+
+       The layout of the .rules files is fairly self-explanatory:
+
+         /* Allow users in admin group to run GParted without authentication */
+         polkit.addRule(function(action, subject) {
+             if (action.id == "org.gnome.gparted" &&
+                 subject.isInGroup("admin")) {
+                 return polkit.Result.YES;
+             }
+         });
+
+       Inside the function, we check for the specified action ID (org.gnome.gparted) and for the user's group (admin), then return a value "yes".
+
+       ADMINISTRATOR IDENTITIES
+
+       The addAdminRule() method is used for adding a function that may be called whenever administrator authentication is required. The function is used to specify what identities may be used for administrator authentication for the authorization check identified by action and subject. Functions added are called in the order they have been added until one of the functions returns a value.
+
+       The default configuration for administrator identities is contained in the file /usr/share/polkit-1/rules.d/50-default.rules so any changes to that configuration should be made by copying the file to the /etc/polkit-1/rules.d directory and editing that file:
+
+         /etc/polkit-1/rules.d/50-default.rules
+
+         polkit.addAdminRule(function(action, subject) {
+             return ["unix-group:wheel"];
+         });
+
+       The only part to edit (once copied) is the return array of the function: as whom should a user authenticate when asked to authenticate as an administrative user? If they are a member of the group designated as admins, they only need enter their own password. If some other user, e.g. root, is the only admin identity, they would need to enter the root password. User and group identifiers are written as unix-user:username or unix-group:groupname.
+
+       The Arch default is to make all members of the group wheel administrators. A rule like below will have polkit ask for the root password instead of the users password for Admin authentication.
+
+         /etc/polkit-1/rules.d/49-rootpw_global.rules
+
+         /* Always authenticate Admins by prompting for the root
+          * password, similar to the rootpw option in sudo
+          */
+         polkit.addAdminRule(function(action, subject) {
+             return ["unix-user:root"];
+         });
+
+       PASSWORD EXPIRATION
+
+       Polkit rules that return AUTH_SELF_KEEP or AUTH_ADMIN_KEEP only ask for the password every 5 minutes by default. This can be configured in the polkitd conf files:
+
+         /etc/polkit-1/polkitd.conf
+
+         [Polkitd]
+         ExpirationSeconds=300
+
+       EXAMPLES
+
+       ALLOW A USER TO USE THE ORG.FREEDESKTOP.TIMEDATE1.SET-TIMEZONE ACTION
+
+       To allow a user named archie to use the org.freedesktop.timedate1.set-timezone action without authentication, create the following polkit rule file as root:
+
+         /etc/polkit-1/rules.d/49-allow-archie-set-timezone.rules
+
+         polkit.addRule(function(action, subject) {
+             if (action.id == "org.freedesktop.timedate1.set-timezone" &&
+                 subject.user == "archie") {
+                 return polkit.Result.YES;
+             }
+         });
+
+       After saving the rule file, the policy should take effect immediately. You can test it by setting the timezone using the timedatectl:
+
+         [archie]$ timedatectl set-timezone America/New_York
+
+       If the operation completes without asking for authentication, then the rule works as intended. If the action does not seem to be allowed, ensure there are no conflicting rules with higher precedence (lower number prefixes) in /etc/polkit-1/rules.d/.
+
+       DEBUGGING/LOGGING
+
+       To enable logging with polkit.log() function, remove the --no-debug flag from the ExecStart command of polkit.service file; either by editing the unit temporarily (with systemctl --runtime) or permanently with:
+
+         /etc/systemd/system/polkit.service.d/debug.conf
+
+         [Service]
+         ExecStart=
+         ExecStart=/usr/lib/polkit-1/polkitd --log-level=notice
+
+       The following rule logs detailed information about any requested access:
+
+         /etc/polkit-1/rules.d/00-log-access.rules
+
+         polkit.addRule(function(action, subject) {
+             polkit.log("action=" + action);
+             polkit.log("subject=" + subject);
+         });
+
+       To manually test rules, use pkcheck:[1]
+
+         $ pkcheck -u -p $$ --enable-internal-agent -a action
+
+       DISABLE SUSPEND AND HIBERNATE
+
+       The following rule disables suspend and hibernate for all users.
+
+         /etc/polkit-1/rules.d/10-disable-suspend.rules
+
+         polkit.addRule(function(action, subject) {
+             if (action.id == "org.freedesktop.login1.suspend" ||
+                 action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+                 action.id == "org.freedesktop.login1.hibernate" ||
+                 action.id == "org.freedesktop.login1.hibernate-multiple-sessions")
+             {
+                 return polkit.Result.NO;
+             }
+         });
+
+       BYPASS PASSWORD PROMPT
+
+       To achieve something similar to the sudo NOPASSWD option and get authorized solely based on user/group identity, you can create custom rules in /etc/polkit-1/rules.d/. This allows you to override password authentication either only for specific actions or globally. See [2] for an example rule set.
+
+       GLOBALLY
+
+       Create the following file as root:
+
+         /etc/polkit-1/rules.d/49-nopasswd_global.rules
+
+         /* Allow members of the wheel group to execute any actions
+          * without password authentication, similar to "sudo NOPASSWD:"
+          */
+         polkit.addRule(function(action, subject) {
+             if (subject.isInGroup("wheel")) {
+                 return polkit.Result.YES;
+             }
+         });
+
+       Replace wheel by any group of your preference.
+
+       This will result in automatic authentication for any action requiring admin rights via Polkit. As such, be careful with the group you choose to give such rights to.
+
+       There is also AUTH_ADMIN_KEEP which allows to keep the authorization for 5 minutes.
+
+       run0 on polkit 127 keeps authorization by default.
+
+       FOR SPECIFIC ACTIONS
+
+       Create the following file as root:
+
+         /etc/polkit-1/rules.d/49-nopasswd_limited.rules
+
+         /* Allow members of the wheel group to execute the defined actions
+          * without password authentication, similar to "sudo NOPASSWD:"
+          */
+         polkit.addRule(function(action, subject) {
+             if ((action.id == "org.gnome.gparted" ||
+         	 action.id == "org.libvirt.unix.manage") &&
+                 subject.isInGroup("wheel"))
+             {
+                 return polkit.Result.YES;
+             }
+         });
+
+       The action.ids selected here are just (working) examples for GParted and Libvirt, but you can replace them by any other of your liking as long as they exist (custom made or supplied by a package), and so can you define any group instead of wheel.
+
+       UDISKS
+
+       File managers may ask for a password when trying to mount a storage device, or yield a Not authorized or similar error. See Udisks#Configuration for details.
+
+       ALLOW MANAGEMENT OF INDIVIDUAL SYSTEMD UNITS BY REGULAR USERS
+
+       By checking for certain values passed to the polkit policy check, you can give specific users or groups the ability to manage specific units. As an example, you might want regular users to start and stop wpa_supplicant:
+
+         /etc/polkit-1/rules.d/10-wifimanagement.rules
+
+         polkit.addRule(function(action, subject) {
+             if (action.id == "org.freedesktop.systemd1.manage-units") {
+                 if (action.lookup("unit") == "wpa_supplicant.service") {
+                     var verb = action.lookup("verb");
+                     if (verb == "start" || verb == "stop" || verb == "restart") {
+                         return polkit.Result.YES;
+                     }
+                 }
+             }
+         });
+
+       SEE ALSO
+
+        * Polkit manual page
+        * The Polkit authentication framework (openSUSE Leap Security guide)
+
+ArchWiki manual                         bundled documentation

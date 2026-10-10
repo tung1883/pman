@@ -1,0 +1,78 @@
+SHELLCHECK.SC2249(1)             Sandbox manual             SHELLCHECK.SC2249(1)
+
+       NAME
+
+       Consider adding a default ) case, even if it just exits with error. - This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for mor
+
+       CONSIDER ADDING A DEFAULT ) CASE, EVEN IF IT JUST EXITS WITH ERROR
+
+       CONSIDER ADDING A DEFAULT ) CASE, EVEN IF IT JUST EXITS WITH ERROR
+
+       OPTIONAL - ADD-DEFAULT-CASE
+
+       This is an [[optional]] rule, which means that it has a special "long name" and is not enabled by default. See the [[optional]] page for more details. In short, you have to enable it with the long name instead of the "SC" code like you would with a normal rule:
+
+       SHELLCHECKRC
+
+         enable=add-default-case # SC2249
+
+       PROBLEMATIC CODE
+
+         case "$1" in
+           start) start_service ;;
+           stop)  stop_service ;;
+           restart|reload|force-reload)
+             stop_service;
+             start_service;;
+         esac
+
+       CORRECT CODE
+
+         case "$1" in
+           start) start_service ;;
+           stop)  stop_service ;;
+           restart|reload|force-reload)
+             stop_service;
+             start_service;;
+           *)
+             echo >&2 "Invalid choice: $1"
+             exit 1
+         esac
+
+       RATIONALE
+
+       ShellCheck found a case statement that may not be considering all possible cases. This may mean that only the happy paths are accounted for.
+
+       Consider adding a default case to handle other values. If you don't know what to do or don't believe it'll ever happen, exiting with an error is good, fail-fast practice.
+
+       The example is adapted from a real world Debian init script, which due to a missing default case reports success on any misspelled command (here with underscore instead of dash):
+
+         $ /etc/init.d/screen-cleanup force_reload && echo success
+         success
+
+       EXCEPTIONS
+
+       This suggestion only triggers in verbose mode (-S verbose).
+
+       If you don't have a default case because the default should be to take no action, consider adding a comment to other humans:
+
+         case "$(uname)" in
+           CYGWIN*) cygwin=1;;
+           MINGW*) mingw=1;;
+           *) ;; # No special workarounds identified
+         esac
+
+       If you believe that it's impossible for the expression to have any other value, it's considered good practice to add the equivalent of an assert(0) to fail fast if this assumption should turn out to be incorrect in the current or future versions:
+
+         case "$result" in
+           true)  proceed;;
+           false) cancel;;
+           *) echo >&2 "Submit bug report: '$result' should be true or false."
+              exit 127
+         esac
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

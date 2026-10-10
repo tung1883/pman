@@ -1,0 +1,221 @@
+ARCH.GDISK(1)                    Sandbox manual                    ARCH.GDISK(1)
+
+       GPT fdisk—consisting of the gdisk, cgdisk, sgdisk, and fixparts programs—is a set of text-mode partitioning tools made by Rod Smith. They work on Globally Unique Identifier (GUID) Partition Table (GPT) disks, rather than on the older (and once more common) Master Boot Record (MBR) partition tables.
+
+       gdisk, cgdisk and sgdisk all have the same functionality but provide different user interfaces. gdisk is text-mode interactive, sgdisk is command-line, and cgdisk has a curses-based interface. This article covers gdisk(8) and sgdisk(8) utilities.
+
+       Tip
+
+        * For basic partitioning functionality with a text user interface, cgdisk(8) can be used.
+        * GPT fdisk website has detailed walkthroughs for gdisk, cgdisk, sgdisk and FixParts.
+
+       INSTALLATION
+
+       Install the gptfdisk package.
+
+       LIST PARTITIONS
+
+       To list partition tables and partitions on a block device, you can run the following, where device is a name like /dev/sda, /dev/nvme0n1, /dev/mmcblk0, etc.:
+
+         # gdisk -l /dev/sda
+
+       or alternatively the same action using sgdisk:
+
+         # sgdisk -p /dev/sda
+
+       BACKUP AND RESTORE PARTITION TABLE
+
+       Before making changes to a disk, you may want to backup the partition table and partition scheme of the drive. You can also use a backup to copy the same partition layout to numerous drives.
+
+       Using sgdisk you can create a binary backup consisting of the protective MBR, the main GPT header, the backup GPT header, and one copy of the partition table. The example below will save the partition table of /dev/sda to a file sgdisk-sda.bin:
+
+         # sgdisk -b=sgdisk-sda.bin /dev/sda
+
+       You can later restore the backup by running:
+
+         # sgdisk -l=sgdisk-sda.bin /dev/sda
+
+       If you want to clone your current device's partition layout (/dev/sda in this case) to another drive (/dev/sdc) run:
+
+         # sgdisk -R=/dev/sdc /dev/sda
+
+       If both drives will be in the same computer, you need to randomize the disk and partition GUIDs:
+
+         # sgdisk -G /dev/sdc
+
+       CREATE A PARTITION TABLE AND PARTITIONS
+
+       The first step to partitioning a disk is making a partition table. After that, the actual partitions are created according to the desired partition scheme.
+
+       Before beginning, you may wish to backup your current partition table and scheme.
+
+       The following shows how to use gdisk to perform both the creation of a partition table and the creation of the actual partitions. Alternatively, you may use the curses-based version called cgdisk; however, the following instructions do not apply to it. See cgdisk(8) for its usage.
+
+       gdisk performs partition alignment automatically on a 2048 512-byte sector (1 MiB) block size base which should be compatible with all Advanced Format HDDs and the vast majority of SSDs if not all.
+
+       To use gdisk, run the program with the name of the block device you want to change/edit. This example uses /dev/sda:
+
+         # gdisk /dev/sda
+
+       CREATE NEW TABLE
+
+       Warning If you create a new partition table on a disk with data on it, it will erase all the data on the disk. Make sure this is what you want to do.
+
+       Tip
+
+        * Check that your NVMe drives and Advanced Format hard disk drives are using the optimal logical sector size before partitioning.
+        * Consider performing SSD memory cell clearing before partitioning an SSD.
+       To create a new GUID Partition Table and clear all current partition data, type o at the prompt. Skip this step if the table you require has already been created.
+
+       CREATE PARTITIONS
+
+       Create a new partition with the n command. You must enter the partition number, first sector, last sector and the partition type.
+
+       Note See Partitioning#Partition scheme for considerations concerning the size and location of partitions.
+
+       PARTITION NUMBER
+
+       A partition number is the number assigned to a partition, e.g. a partition with number 1 on a disk /dev/sda would be /dev/sda1, /dev/nvme0n1p1 on /dev/nvme0n1 and /dev/mmcblk0p1 on /dev/mmcblk0. See Device file#Partition for details on the naming scheme. Partition numbers may not always match the order of partitions on disk, in which case they can be sorted.
+
+       It is advised to choose the default number suggested by gdisk.
+
+       FIRST AND LAST SECTOR
+
+       The first and last sectors of the partition can be specified in sector numbers or as positions measured in kibibytes (K), mebibytes (M), gibibytes (G), tebibytes (T), or pebibytes (P);
+
+       The position can be specified in:
+
+        * absolute terms from the start of the disk. E.g. 40M as a first sector specifies a position 40 MiB from the start of the disk.
+        * relative terms by preceding the size with +size or -size. E.g. +2G to specify a point 2 GiB after the default start sector, or -200M to specify a point 200 MiB before the last available sector.
+       Pressing the Enter key with no input specifies the default value, which is the start of the largest available block for the first sector and the end of the same block for the last sector.
+
+       Note Make sure to specify partition sizes using relative terms with the +size{M,G,T,P} notation and not use sizes smaller than 1 MiB. Such partitions will always be aligned according to the device properties.
+
+       Tip Leave a 1 MiB free space somewhere in the first 2 TiB of the disk (e.g. by using +1M as the first sector of a partition) in case you ever need to create a BIOS boot partition.
+
+       PARTITION TYPE
+
+       Select the partition's type by entering gdisk's internal type code or specifying the partition type GUID manually. The default, Linux filesystem (GUID 0FC63DAF-8483-4772-8E79-3D69D8477DE4, gdisk's internal code 8300), should be fine for most use cases.
+
+       Tip
+
+        * Press L to show gdisk's internal code list.
+        * It is advised to follow the Discoverable Partitions Specification since systemd-gpt-auto-generator(8) will automount them. See #Prevent GPT partition automounting if you want to disable automounting for a partition.
+       Common partition types
+
+         Partition type | Mountpoint | gdisk's  code | Partition type GUID
+         Linux filesystem | Any | 8300 | 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+         EFI system partition | Any1 | ef00 | C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+         BIOS boot partition | None | ef02 | 21686148-6449-6E6F-744E-656564454649
+         XBOOTLDR partition | Any | ea00 | BC13C2FF-59E6-4262-A352-B275FD6F7172
+         Linux x86-64 root (/) | / | 8304 | 4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709
+         Linux swap | [SWAP] | 8200 | 0657FD6D-A4AB-43C4-84E5-0933C84B4F4F
+         Linux /home | /home | 8302 | 933AC7E1-2EB4-4F13-B844-0E14E2AEF915
+         Linux /srv | /srv | 8306 | 3B8F8425-20E0-4F3B-907F-1A25A76F98E8
+         Linux /var | /var1 | 8310 | 4D21B016-B534-45C2-A9FB-5C16E091FD2D
+         Linux /var/tmp | /var/tmp1 | 8311 | 7EC6F557-3BC5-4ACA-B293-16EF5DF639D1
+         Linux LVM | Any | 8e00 | E6D6D379-F507-44C2-A23C-238F2A3DF928
+         Linux RAID | Any | fd00 | A19D880F-05FC-4D3B-A006-743F0F84911E
+         Linux LUKS | Any | 8309 | CA7D7CCB-63ED-4C53-861C-1742536059CC
+         Linux dm-crypt | Any | 8308 | 7FFEC5C9-2D00-49B7-8941-3EA10A5586B7
+        * systemd-gpt-auto-generator(8) will only automount the partition if specific conditions are met. See systemd#GPT partition automounting for details.
+       Repeat this procedure until you have the partitions you desire.
+
+       WRITE CHANGES TO DISK
+
+       Tip Use the command c to change a partition's name (PARTLABEL) for easy distinguishing.
+
+       Write the table to disk and exit via the w command.
+
+       TIPS AND TRICKS
+
+       CONVERT BETWEEN MBR AND GPT
+
+       Tip Read Rod Smith's Converting to or from GPT for more detailed information and walktrough.
+
+       gdisk, sgdisk and cgdisk have the ability to convert MBR and BSD disklabels to GPT without data loss. Upon conversion, all the MBR primary partitions and the logical partitions become GPT partitions with the correct partition type GUIDs and Unique partition GUIDs created for each partition.
+
+       After conversion, the boot loader will need to be reinstalled to configure it to boot from GPT.
+
+       Warning
+
+        * GPT stores a secondary table at the end of disk. This data structure consumes 33 512-byte sectors (16.5 KiB) by default. MBR does not have a similar data structure at its end, which means that the last partition on an MBR disk sometimes extends to the very end of the disk and prevents complete conversion. If this happens to you, you must abandon the conversion and resize the final partition.
+        * There are known corruption issues with the backup GPT on laptops that are Intel chipset based, and run in RAID mode. The solution is to use AHCI instead of RAID, if possible.
+       To convert an MBR partition table to GPT using sgdisk, use the -g/--mbrtogpt option:
+
+         # sgdisk -g /dev/sda
+
+       To convert GPT to MBR use the -m/--gpttombr option. Note that it is not possible to convert more than four partitions from GPT to MBR.
+
+         # sgdisk -m /dev/sda
+
+       SORT PARTITIONS
+
+       This applies for when a new partition is created in the space between two partitions or a partition is deleted. /dev/sda is used in this example.
+
+         # sgdisk -s /dev/sda
+
+       After sorting the partitions if you are not using Persistent block device naming, it might be required to adjust the /etc/fstab and/or the /etc/crypttab configuration files.
+
+       Note The kernel must read the new partition table for the partitions (e.g. /dev/sda1) to be usable. Reboot the system or tell the kernel to reread the partition table.
+
+       RECOVER GPT HEADER
+
+       In case main GPT header or backup GPT header gets damaged, you can recover one from the other with gdisk. /dev/sda is used in this example.
+
+         # gdisk /dev/sda
+
+       choose r for recovery and transformation options (experts only). From there choose either
+
+        * b: use backup GPT header (rebuilding main)
+        * d: use main GPT header (rebuilding backup)
+       When done write the table to disk and exit via the w command.
+
+       EXPAND A GPT DISK
+
+       After enlarging a disk (e.g. in hardware RAID or a virtual machine disk) the newly added free space will not be immediately usable since GPT keeps data at the end of the disk. You must relocate the backup GPT header to the new end of the disk.
+
+       Run sgdisk with the option -e/--move-second-header, e.g.:
+
+         # sgdisk -e /dev/sda
+
+       Afterwards print the partition table; the total free space should now be increased.
+
+       PREVENT GPT PARTITION AUTOMOUNTING
+
+       systemd-gpt-auto-generator(8) will automount partitions following the Discoverable Partitions Specification. Sometimes that may not be desirable.
+
+       The automounting can be disabled by setting the partition attribute 63 "do not automount" on the partition.
+
+       Start gdisk, e.g.:
+
+         # gdisk /dev/sda
+
+       Press p to print the partition table and take note of the partition number(s) of the for which you want to disable automounting.
+
+       Press x extra functionality (experts only).
+
+       Press a set attributes. Input the partition number and set the attribute 63. Under Set fields are: it should now show 63 (do not automount). Press Enter to end attribute changing. Repeat this for all partitions you want to prevent from automounting.
+
+       When done write the table to disk and exit via the w command.
+
+       Alternatively using sgdisk, the attribute can be set using the -A/--attributes= option; see sgdisk(8) for usage. For example, to set partition attribute 63 "do not automount" on /dev/sda2 run:
+
+         # sgdisk -A 2:set:63 /dev/sda
+
+       GDISK EFI APPLICATION
+
+       There is no package for the EFI version of gdisk, but Rod Smith provides a prebuilt gdisk-1.04 EFI binary on SourceForge. Download gdisk-efi-*.zip and extract the archive. To use it, copy gdisk_x64.efi to the EFI system partition and launch it from your boot loader or UEFI Shell.
+
+       gdisk_x64.efi allows you to edit the partition table before the operating system is even booted. It is used the same way as the gdisk binary on Linux.
+
+       Note gdisk_x64.efi cannot access the file system, thus it cannot backup the partition table to a file or restore it from a backup file.
+
+       See README-efi.txt for more information.
+
+       SEE ALSO
+
+        * GPT fdisk Tutorial - offical webpage of GPT fdisk with detailed walkthroughs.
+        * GPT fdisk's SourceForge page
+
+ArchWiki manual                         bundled documentation

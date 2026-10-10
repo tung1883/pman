@@ -1,0 +1,131 @@
+DOCKER.SWARM-INIT(1)             Sandbox manual             DOCKER.SWARM-INIT(1)
+
+       NAME
+
+       docker swarm init - Initialize a swarm
+
+       DOCKER SWARM INIT
+
+       Initialize a swarm
+
+       USAGE
+
+         docker swarm init [OPTIONS]
+
+       DESCRIPTION
+
+       Initialize a swarm. The Docker Engine targeted by this command becomes a manager in the newly created single-node swarm.
+
+       OPTIONS
+
+        * --advertise-addr (string): Advertised address (format: [:port])
+        * --autolock (bool): Enable manager autolocking (requiring an unlock key to start a stopped manager)
+        * --availability (string): Availability of the node (active, pause, drain) [default: active]
+        * --cert-expiry (duration): Validity period for node certificates (ns|us|ms|s|m|h) [default: 2160h0m0s]
+        * --data-path-addr (string): Address or interface to use for data path traffic (format: )
+        * --data-path-port (uint32): Port number to use for data path traffic (1024 - 49151). If no value is set or is set to 0, the default port (4789) is used.
+        * --default-addr-pool (ipNetSlice): default address pool in CIDR format
+        * --default-addr-pool-mask-length (uint32): default address pool subnet mask length [default: 24]
+        * --dispatcher-heartbeat (duration): Dispatcher heartbeat period (ns|us|ms|s|m|h) [default: 5s]
+        * --external-ca (external-ca): Specifications of one or more certificate signing endpoints
+        * --force-new-cluster (bool): Force create a new cluster from current state
+        * --listen-addr (node-addr): Listen address (format: [:port]) [default: 0.0.0.0:2377]
+        * --max-snapshots (uint64): Number of additional Raft snapshots to retain
+        * --snapshot-interval (uint64): Number of log entries between Raft snapshots [default: 10000]
+        * --task-history-limit (int64): Task history retention limit [default: 5]
+
+       EXAMPLES
+
+         $ docker swarm init --advertise-addr 192.168.99.121
+
+         Swarm initialized: current node (bvz81updecsj6wjz393c09vti) is now a manager.
+
+         To add a worker to this swarm, run the following command:
+
+             docker swarm join --token SWMTKN-1-aabbccdd00112233aabbccdd00112233aabbccdd00112233aa-aabbccdd00112233... 172.17.0.2:2377
+
+         To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+       The docker swarm init command generates two random tokens: a worker token and a manager token. When you join a new node to the swarm, the node joins as a worker or manager node based upon the token you pass to swarm join.
+
+       After you create the swarm, you can display or rotate the token using swarm join-token.
+
+       PROTECT MANAGER KEYS AND DATA (--AUTOLOCK) #AUTOLOCK
+
+       The --autolock flag enables automatic locking of managers with an encryption key. The private keys and data stored by all managers are protected by the encryption key printed in the output, and is inaccessible without it. Make sure to store this key securely, in order to reactivate a manager after it restarts. Pass the key to the docker swarm unlock command to reactivate the manager. You can disable autolock by running docker swarm update --autolock=false. After disabling it, the encryption key is no longer required to start the manager, and it will start up on its own without user intervention.
+
+       CONFIGURE NODE HEALTHCHECK FREQUENCY (--DISPATCHER-HEARTBEAT) #DISPATC
+
+       The --dispatcher-heartbeat flag sets the frequency at which nodes are told to report their health.
+
+       USE AN EXTERNAL CERTIFICATE AUTHORITY (--EXTERNAL-CA) #EXTERNAL-CA
+
+       This flag sets up the swarm to use an external CA to issue node certificates. The value takes the form protocol=X,url=Y. The value for protocol specifies what protocol should be used to send signing requests to the external CA. Currently, the only supported value is cfssl. The URL specifies the endpoint where signing requests should be submitted.
+
+       FORCE-RESTART NODE AS A SINGLE-MODE MANAGER (--FORCE-NEW-CLUSTER) #FOR
+
+       This flag forces an existing node that was part of a quorum that was lost to restart as a single-node Manager without losing its data.
+
+       SPECIFY INTERFACE FOR INBOUND CONTROL PLANE TRAFFIC (--LISTEN-ADDR) #L
+
+       The node listens for inbound swarm manager traffic on this address. The default is to listen on 0.0.0.0:2377. It is also possible to specify a network interface to listen on that interface's address; for example --listen-addr eth0:2377.
+
+       Specifying a port is optional. If the value is a bare IP address or interface name, the default port 2377 is used.
+
+       SPECIFY INTERFACE FOR OUTBOUND CONTROL PLANE TRAFFIC (--ADVERTISE-ADDR
+
+       The --advertise-addr flag specifies the address that will be advertised to other members of the swarm for API access and overlay networking. If unspecified, Docker will check if the system has a single IP address, and use that IP address with the listening port (see --listen-addr). If the system has multiple IP addresses, --advertise-addr must be specified so that the correct address is chosen for inter-manager communication and overlay networking.
+
+       It is also possible to specify a network interface to advertise that interface's address; for example --advertise-addr eth0:2377.
+
+       Specifying a port is optional. If the value is a bare IP address or interface name, the default port 2377 is used.
+
+       SPECIFY INTERFACE FOR DATA TRAFFIC (--DATA-PATH-ADDR) #DATA-PATH-ADDR
+
+       The --data-path-addr flag specifies the address that global scope network drivers will publish towards other nodes in order to reach the containers running on this node. Using this parameter you can separate the container's data traffic from the management traffic of the cluster.
+
+       If unspecified, the IP address or interface of the advertise address is used.
+
+       Setting --data-path-addr does not restrict which interfaces or source IP addresses the VXLAN socket is bound to. Similar to --advertise-addr, the purpose of this flag is to inform other members of the swarm about which address to use for control plane traffic. To restrict access to the VXLAN port of the node, use firewall rules.
+
+       CONFIGURE PORT NUMBER FOR DATA TRAFFIC (--DATA-PATH-PORT) #DATA-PATH-P
+
+       The --data-path-port flag allows you to configure the UDP port number to use for data path traffic. The provided port number must be within the 1024 - 49151 range. If this flag isn't set, or if it's set to 0, the default port number 4789 is used. The data path port can only be configured when initializing the swarm, and applies to all nodes that join the swarm. The following example initializes a new Swarm, and configures the data path port to UDP port 7777;
+
+         $ docker swarm init --data-path-port=7777
+
+       After the swarm is initialized, use the docker info command to verify that the port is configured:
+
+         $ docker info
+         <...>
+         ClusterID: 9vs5ygs0gguyyec4iqf2314c0
+         Managers: 1
+         Nodes: 1
+         Data Path Port: 7777
+         <...>
+
+       SPECIFY DEFAULT SUBNET POOLS (--DEFAULT-ADDR-POOL) #DEFAULT-ADDR-POOL
+
+       The --default-addr-pool flag specifies default subnet pools for global scope networks. For example, to specify two address pools:
+
+         $ docker swarm init \
+           --default-addr-pool 30.30.0.0/16 \
+           --default-addr-pool 40.40.0.0/16
+
+       Use the --default-addr-pool-mask-length flag to specify the default subnet pools mask length for the subnet pools.
+
+       SET LIMIT FOR NUMBER OF SNAPSHOTS TO KEEP (--MAX-SNAPSHOTS) #MAX-SNAPS
+
+       This flag sets the number of old Raft snapshots to retain in addition to the current Raft snapshots. By default, no old snapshots are retained. This option may be used for debugging, or to store old snapshots of the swarm state for disaster recovery purposes.
+
+       CONFIGURE RAFT SNAPSHOT LOG INTERVAL (--SNAPSHOT-INTERVAL) #SNAPSHOT-I
+
+       The --snapshot-interval flag specifies how many log entries to allow in between Raft snapshots. Setting this to a high number will trigger snapshots less frequently. Snapshots compact the Raft log and allow for more efficient transfer of the state to new managers. However, there is a performance cost to taking snapshots frequently.
+
+       CONFIGURE THE AVAILABILITY OF A MANAGER (--AVAILABILITY) #AVAILABILITY
+
+       The --availability flag specifies the availability of the node at the time the node joins a master. Possible availability values are active, pause, or drain.
+
+       This flag is useful in certain situations. For example, a cluster may want to have dedicated manager nodes that don't serve as worker nodes. You can do this by passing --availability=drain to docker swarm init.
+
+Docker manual                           from the official documentation

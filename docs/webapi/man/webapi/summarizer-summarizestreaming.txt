@@ -1,0 +1,78 @@
+WEBAPI.SUMMARIZER-SUMMARIZESTREAMING(1) Sandbox manual WEBAPI.SUMMARIZER-SUMMARIZESTREAMING(1)
+
+       NAME
+
+       Summarizer: summarizeStreaming() method - The summarizeStreaming() method of the Summarizer interface generates a new summary as a ReadableStream.
+
+       SUMMARIZER: SUMMARIZESTREAMING() METHOD
+
+       The summarizeStreaming() method of the Summarizer interface generates a new summary as a ReadableStream.
+
+       SYNTAX
+
+         summarizeStreaming(input)
+         summarizeStreaming(input, options)
+
+       PARAMETERS
+
+        * input
+          * : A string representing the text to be summarized.
+        * options (optional)
+          * : An object specifying configuration options for the summarizeStreaming() operation. Possible values include:
+            * context
+              * : A string describing the context the input text is being used in, which helps the Summarizer generate a more suitable summary.
+            * signal
+              * : An AbortSignal object instance, which allows the summarizeStreaming() operation to be aborted via the associated AbortController.
+
+       RETURN VALUE
+
+       A ReadableStream containing the generated summary.
+
+       EXCEPTIONS
+
+        * AbortError DOMException
+          * : Thrown if the Summarizer was previously destroyed (had Summarizer.destroy() called on it, or was aborted via its abort signal after creation).
+        * InvalidStateError DOMException
+          * : Thrown if the current Document is not active.
+        * NotAllowedError DOMException
+          * : Thrown if usage of the Summarizer API is blocked by a summarizer Permissions-Policy.
+        * NotReadableError DOMException
+          * : Thrown if the output summary was filtered by the user agent, for example because it was detected to be harmful, inaccurate, or nonsensical.
+        * NotSupportedError DOMException
+          * : Thrown if the provided context is not in language the Summarizer supports.
+        * QuotaExceededError
+          * : Thrown if the summarize operation exceeds the available inputQuota.
+        * UnknownError DOMException
+          * : Thrown if the summarizeStreaming() call failed for any other reason, or a reason the user agent did not wish to disclose.
+
+       EXAMPLES
+
+       BASIC SUMMARIZESTREAMING() USAGE
+
+         const summarizer = await Summarizer.create({
+           sharedContext:
+             "A general summary to help a user decide if the text is worth reading",
+           type: "tldr",
+           length: "short",
+         });
+
+         const stream = summarizer.summarizeStreaming(myTextString);
+         let summary = "";
+
+         for await (const chunk of stream) {
+           summary += chunk;
+         }
+
+         console.log("Stream complete");
+         summaryOutput.textContent = summary;
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Summarizer API
+        * Web AI demos on chrome.dev
+
+Web APIs manual                         from the official documentation

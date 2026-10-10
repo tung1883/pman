@@ -1,0 +1,106 @@
+WEBAPI.VIDEOFRAME(1)             Sandbox manual             WEBAPI.VIDEOFRAME(1)
+
+       NAME
+
+       VideoFrame - windowanddedicated
+
+       VIDEOFRAME
+
+       window_and_dedicated
+
+       The VideoFrame interface of the Web Codecs API represents a frame of a video.
+
+       VideoFrame is a transferable object.
+
+       DESCRIPTION
+
+       A VideoFrame object can be created or accessed in a number of ways. The MediaStreamTrackProcessor breaks a media track into individual VideoFrame objects.
+
+       A VideoFrame is an image source and has a constructor that accepts any other canvas source ( an SVGImageElement, an HTMLVideoElement, an HTMLCanvasElement, an ImageBitmap, an OffscreenCanvas, or another VideoFrame). This means that a frame can be created from an image or video element.
+
+       A second constructor enables the creation of a VideoFrame from its binary pixel representation in an ArrayBuffer, a TypedArray, or a DataView.
+
+       Created frames may then be turned into a media track, for example with the MediaStreamTrackGenerator interface that creates a media track from a stream of frames.
+
+       CONSTRUCTOR
+
+        * VideoFrame()
+          * : Creates a new VideoFrame object.
+
+       INSTANCE PROPERTIES
+
+        * VideoFrame.format (read-only)
+          * : Returns the pixel format of the VideoFrame.
+        * VideoFrame.codedWidth (read-only)
+          * : Returns the width of the VideoFrame in pixels, potentially including non-visible padding, and prior to considering potential ratio adjustments.
+        * VideoFrame.codedHeight (read-only)
+          * : Returns the height of the VideoFrame in pixels, potentially including non-visible padding, and prior to considering potential ratio adjustments.
+        * VideoFrame.codedRect (read-only)
+          * : Returns a DOMRectReadOnly with the width and height matching codedWidth and codedHeight.
+        * VideoFrame.visibleRect (read-only)
+          * : Returns a DOMRectReadOnly describing the visible rectangle of pixels for this VideoFrame.
+        * VideoFrame.displayWidth (read-only)
+          * : Returns the width of the VideoFrame when displayed after applying aspect ratio adjustments.
+        * VideoFrame.displayHeight (read-only)
+          * : Returns the height of the VideoFrame when displayed after applying aspect ratio adjustments.
+        * VideoFrame.duration (read-only)
+          * : Returns an integer indicating the duration of the video in microseconds.
+        * VideoFrame.timestamp (read-only)
+          * : Returns an integer indicating the timestamp of the video in microseconds.
+        * VideoFrame.colorSpace (read-only)
+          * : Returns a VideoColorSpace object.
+        * VideoFrame.flip (read-only) (experimental)
+          * : Returns whether the VideoFrame is horizontally mirrored.
+        * VideoFrame.rotation (read-only) (experimental)
+          * : Returns the rotation (0, 90, 180, or 270) in degrees clockwise applied to the VideoFrame. Arbitrary numbers (including negatives) are rounded to the next quarter turn.
+
+       INSTANCE METHODS
+
+        * VideoFrame.allocationSize()
+          * : Returns the number of bytes required to hold the VideoFrame as filtered by options passed into the method.
+        * VideoFrame.copyTo()
+          * : Copies the contents of the VideoFrame to an ArrayBuffer.
+        * VideoFrame.clone()
+          * : Creates a new VideoFrame object with reference to the same media resource as the original.
+        * VideoFrame.close()
+          * : Clears all states and releases the reference to the media resource.
+        * VideoFrame.metadata() (experimental)
+          * : Returns the metadata associated with the VideoFrame.
+
+       EXAMPLES
+
+       In the following example frames are returned from a MediaStreamTrackProcessor, then encoded. See the full example and read more about it in the article Video processing with WebCodecs.
+
+         let frameCounter = 0;
+
+         const track = stream.getVideoTracks()[0];
+         const mediaProcessor = new MediaStreamTrackProcessor(track);
+
+         const reader = mediaProcessor.readable.getReader();
+         while (true) {
+           const result = await reader.read();
+           if (result.done) break;
+
+           let frame = result.value;
+           if (encoder.encodeQueueSize > 2) {
+             // Too many frames in flight, encoder is overwhelmed
+             // let's drop this frame.
+             frame.close();
+           } else {
+             frameCounter++;
+             const insertKeyframe = frameCounter % 150 === 0;
+             encoder.encode(frame, { keyFrame: insertKeyframe });
+             frame.close();
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Video processing with WebCodecs
+        * WebCodecs examples
+
+Web APIs manual                         from the official documentation

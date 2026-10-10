@@ -1,0 +1,43 @@
+K8S.TASKS-DEBUG-CLUSTER-RESOURCE-USAGE-MONITORING(1) Sandbox manual K8S.TASKS-DEBUG-CLUSTER-RESOURCE-USAGE-MONITORING(1)
+
+       NAME
+
+       Tools for Monitoring Resources - To scale an application and provide a reliable service, you need to
+
+       TOOLS FOR MONITORING RESOURCES
+
+       To scale an application and provide a reliable service, you need to understand how the application behaves when it is deployed. You can examine application performance in a Kubernetes cluster by examining the containers, pods, services, and the characteristics of the overall cluster. Kubernetes provides detailed information about an application's resource usage at each of these levels. This information allows you to evaluate your application's performance and where bottlenecks can be removed to improve overall performance.
+
+       In Kubernetes, application monitoring does not depend on a single monitoring solution. On new clusters, you can use resource metrics or full metrics pipelines to collect monitoring statistics.
+
+       RESOURCE METRICS PIPELINE
+
+       The resource metrics pipeline provides a limited set of metrics related to cluster components such as the Horizontal Pod Autoscaler controller, as well as the kubectl top utility. These metrics are collected by the lightweight, short-term, in-memory metrics-server and are exposed via the metrics.k8s.io API.
+
+       metrics-server discovers all nodes on the cluster and queries each node's kubelet for CPU and memory usage. The kubelet acts as a bridge between the Kubernetes master and the nodes, managing the pods and containers running on a machine. The kubelet translates each pod into its constituent containers and fetches individual container usage statistics from the container runtime through the container runtime interface. If you use a container runtime that uses Linux cgroups and namespaces to implement containers, and the container runtime does not publish usage statistics, then the kubelet can look up those statistics directly (using code from cAdvisor). No matter how those statistics arrive, the kubelet then exposes the aggregated pod resource usage statistics through the metrics-server Resource Metrics API. This API is served at /metrics/resource on the kubelet's authenticated and read-only ports.
+
+       FULL METRICS PIPELINE
+
+       A full metrics pipeline gives you access to richer metrics. Kubernetes can respond to these metrics by automatically scaling or adapting the cluster based on its current state, using mechanisms such as the Horizontal Pod Autoscaler. The monitoring pipeline fetches metrics from the kubelet and then exposes them to Kubernetes via an adapter by implementing either the custom.metrics.k8s.io or external.metrics.k8s.io API.
+
+       Kubernetes is designed to work with OpenMetrics, which is one of the CNCF Observability and Analysis - Monitoring Projects, built upon and carefully extending Prometheus exposition format in almost 100% backwards-compatible ways.
+
+       If you glance over at the CNCF Landscape, you can see a number of monitoring projects that can work with Kubernetes by _scraping_ metric data and using that to help you observe your cluster. It is up to you to select the tool or tools that suit your needs. The CNCF landscape for observability and analytics includes a mix of open-source software, paid-for software-as-a-service, and other commercial products.
+
+       When you design and implement a full metrics pipeline you can make that monitoring data available back to Kubernetes. For example, a HorizontalPodAutoscaler can use the processed metrics to work out how many Pods to run for a component of your workload.
+
+       Integration of a full metrics pipeline into your Kubernetes implementation is outside the scope of Kubernetes documentation because of the very wide scope of possible solutions.
+
+       The choice of monitoring platform depends heavily on your needs, budget, and technical resources. Kubernetes does not recommend any specific metrics pipeline; many options are available. Your monitoring system should be capable of handling the OpenMetrics metrics transmission standard and needs to be chosen to best fit into your overall design and deployment of your infrastructure platform.
+
+       ## WHATSNEXT
+
+       Learn about additional debugging tools, including:
+
+        * Logging
+        * Getting into containers via exec
+        * Connecting to containers via proxies
+        * Connecting to containers via port forwarding
+        * Inspect Kubernetes node with crictl
+
+Kubernetes manual                       from the official documentation

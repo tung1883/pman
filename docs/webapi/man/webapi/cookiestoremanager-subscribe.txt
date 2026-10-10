@@ -1,0 +1,80 @@
+WEBAPI.COOKIESTOREMANAGER-SUBSCRIBE(1) Sandbox manual WEBAPI.COOKIESTOREMANAGER-SUBSCRIBE(1)
+
+       NAME
+
+       CookieStoreManager: subscribe() method - windowandservice
+
+       COOKIESTOREMANAGER: SUBSCRIBE() METHOD
+
+       window_and_service
+
+       The subscribe() method of the CookieStoreManager interface subscribes a ServiceWorkerRegistration to cookie change events.
+
+       Duplicate subscriptions are ignored: that is, if a service worker subscribes more than once to the same cookie, it will only receive each change notification once.
+
+       SYNTAX
+
+         subscribe(subscriptions)
+
+       PARAMETERS
+
+        * subscriptions
+          * : An array of objects, each of which has the following properties:
+            * name (optional)
+              * : A string equal to the name of a cookie. If name is omitted, the service worker is subscribed to change events for all cookies that are in scope.
+            * url (optional)
+              * : A string equal to the URL of a cookie scope. This may be narrower than the scope of the service worker registration. If url is omitted, it defaults to the scope of the service worker registration.
+
+       RETURN VALUE
+
+       A Promise that resolves with undefined when the subscription completes.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the url is not a valid URL, or doesn't start with the service worker registration's scope.
+
+       EXAMPLES
+
+       SETTING NAME AND URL
+
+       In this example, the ServiceWorkerRegistration represented by registration is subscribing to change events on the cookie named "cookie1" with a scope of "/path1".
+
+         // Subscribe to a specific cookie and URL
+         const subscriptions = [{ name: "cookie1", url: `/path1` }];
+         await registration.cookies.subscribe(subscriptions);
+
+       SETTING NAME ONLY
+
+       In this example, we set only name and omit url: the subscription applies to all cookies named cookie1 within the service worker's scope.
+
+         // Subscribe to all cookies named "cookie1" in the registration scope
+         await registration.cookies.subscribe([{ name: "cookie1" }]);
+
+       SETTING URL ONLY
+
+       In this example we set only url, and omit name: the subscription applies to all cookies within the specified URL scope.
+
+         // Subscribe to all cookie changes within a specific path
+         await registration.cookies.subscribe([{ url: "/path/one/" }]);
+
+       SUBSCRIBING TO ALL COOKIES
+
+       In this example, both name and url are omitted. The subscription applies to all cookies within the service worker's scope.
+
+         // Subscribe to all cookie changes within the entire registration scope
+         await registration.cookies.subscribe([{}]);
+
+       SETTING A URL OUTSIDE THE SERVICE WORKER'S SCOPE
+
+       If the URL is outside the service worker's scope, subscribe() will throw a TypeError.
+
+         await registration.cookies.subscribe([
+           { name: "cookie1", url: "/out-of-scope/" },
+         ]);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

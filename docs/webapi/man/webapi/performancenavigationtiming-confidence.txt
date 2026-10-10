@@ -1,0 +1,44 @@
+WEBAPI.PERFORMANCENAVIGATIONTIMING-CONFIDENCE(1) Sandbox manual WEBAPI.PERFORMANCENAVIGATIONTIMING-CONFIDENCE(1)
+
+       NAME
+
+       PerformanceNavigationTiming: confidence property - The confidence read-only property of the PerformanceNavigationTiming interface returns a PerformanceTimingConfidence object containing infor
+
+       PERFORMANCENAVIGATIONTIMING: CONFIDENCE PROPERTY
+
+       The confidence read-only property of the PerformanceNavigationTiming interface returns a PerformanceTimingConfidence object containing information that indicates whether a performance record reflects typical application performance, or is likely affected by external factors.
+
+       For example, if a website has loaded after a browser "cold start" or session restore, its pages may load more slowly as a result. In such cases, a low confidence value would be returned for an associated performance record. On the other hand, if the browser determines a returned performance record to be representative of typical application performance, a high confidence value is returned.
+
+       This confidence measure is useful for developers when trying to determine whether a performance issue is a legitimate concern, or an outlier being caused by external factors.
+
+       VALUE
+
+       A PerformanceTimingConfidence object.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       This example uses a PerformanceObserver to retrieve confidence data from observed PerformanceNavigationTiming entries. The value property is an enumerated value of low or high, indicating a broad confidence measure, whereas the randomizedTriggerRate property is a number inside the interval 0 to 1 inclusive, representing a percentage value that indicates how often noise is applied when exposing the value.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             console.log(
+               `${entry.name} confidence: ${entry.confidence.value}`,
+               `Trigger rate: ${entry.confidence.randomizedTriggerRate}`,
+             );
+           });
+         });
+
+         observer.observe({ type: "navigation", buffered: true });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * PerformanceTimingConfidence
+
+Web APIs manual                         from the official documentation

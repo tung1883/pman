@@ -1,0 +1,122 @@
+WEBAPI.RTCICECANDIDATEPAIRSTATS(1) Sandbox manual WEBAPI.RTCICECANDIDATEPAIRSTATS(1)
+
+       NAME
+
+       RTCIceCandidatePairStats - The RTCIceCandidatePairStats dictionary of the WebRTC API is used to report statistics that provide insight into the quality and performance
+
+       RTCICECANDIDATEPAIRSTATS
+
+       The RTCIceCandidatePairStats dictionary of the WebRTC API is used to report statistics that provide insight into the quality and performance of an RTCPeerConnection while connected and configured as described by the specified pair of ICE candidates.
+
+       The statistics can be obtained by iterating the RTCStatsReport returned by RTCPeerConnection.getStats() until you find an entry with the type of "candidate-pair".
+
+       INSTANCE PROPERTIES
+
+        * availableIncomingBitrate (optional)
+          * : A number representing the available inbound capacity of the network.
+       This reports the total number of bits per second available for all of the candidate pair's incoming RTP streams. It does not take into account the size of the Internet Protocol (IP) overhead, nor any other transport layers such as TCP or UDP.
+
+        * availableOutgoingBitrate (optional)
+          * : A number representing the approximate available outbound capacity of the network.
+       This reports the total number of bits per second available for all of the candidate pair's outgoing RTP streams. It does not take into account the size of the IP overhead, nor any other transport layers such as TCP or UDP.
+
+        * bytesDiscardedOnSend (optional) (experimental)
+          * : An integer representing the total number of bytes discarded due to socket errors on this candidate pair.
+        * bytesReceived (optional)
+          * : An integer representing the total number of payload bytes received on this candidate pair.
+        * bytesSent (optional)
+          * : An integer representing the total number of payload bytes sent on this candidate pair (the total number of bytes sent excluding any headers, padding, or other protocol overhead).
+        * consentRequestsSent (optional) (experimental)
+          * : An integer representing the total number of STUN consent requests sent on this candidate pair.
+        * currentRoundTripTime (optional)
+          * : A number representing the total time, in seconds, that elapsed between the most recently-sent STUN request and the response being received.
+       This may be based upon requests that were involved in confirming permission to open the connection.
+
+        * lastPacketReceivedTimestamp (optional)
+          * : A DOMHighResTimeStamp value indicating the time at which the last packet was received by the local peer from the remote peer for this candidate pair. Timestamps are not recorded for STUN packets.
+        * lastPacketSentTimestamp (optional)
+          * : A DOMHighResTimeStamp value indicating the time at which the last packet was sent from the local peer to the remote peer for this candidate pair. Timestamps are not recorded for STUN packets.
+        * localCandidateId (optional)
+          * : A string representing the unique ID corresponding to the RTCIceCandidate from the data included in the RTCIceCandidateStats object providing statistics for the candidate pair's local candidate.
+        * nominated (optional)
+          * : A Boolean value which, if true, indicates that the candidate pair described by this object is one which has been proposed for use, and will be (or was) used if its priority is the highest among the nominated candidate pairs. See 7.1.3.2.4 for details.
+        * packetsDiscardedOnSend (optional) (experimental)
+          * : An integer representing the total number of packets discarded due to socket errors on this candidate pair.
+        * packetsReceived (optional) (experimental)
+          * : An integer representing the total number of packets received on this candidate pair.
+        * packetsSent (optional) (experimental)
+          * : An integer representing the total number of packets sent on this candidate pair.
+        * remoteCandidateId (optional)
+          * : A string containing a unique ID corresponding to the remote candidate from which data was taken to construct the RTCIceCandidateStats object describing the remote end of the connection.
+        * requestsReceived (optional)
+          * : An integer representing the total number of connectivity check requests that have been received, including retransmissions. This value includes both connectivity checks and STUN consent checks.
+        * requestsSent (optional)
+          * : An integer representing the total number of connectivity check requests that have been sent, _not_ including retransmissions.
+        * responsesReceived (optional)
+          * : An integer representing the total number of connectivity check responses that have been received.
+        * responsesSent (optional)
+          * : An integer representing the total number of connectivity check responses that have been sent. This includes both connectivity check requests and STUN consent requests.
+        * state (optional)
+          * : A string which indicates the state of the connection between the two candidates.
+        * totalRoundTripTime (optional)
+          * : A number indicating the total time, in seconds, that has elapsed between sending STUN requests and receiving responses to them, for all such requests made to date on this candidate pair.
+       This includes both connectivity check and consent check requests. You can compute the average round trip time (RTT) by dividing this value by responsesReceived.
+
+        * transportId (optional)
+          * : A string that uniquely identifies the RTCIceTransport that was inspected to obtain the transport-related statistics (as found in RTCTransportStats) used in generating this object.
+
+       COMMON INSTANCE PROPERTIES
+
+       The following properties are common to all WebRTC statistics objects.
+
+       
+
+        * id
+          * : A string that uniquely identifies the object that is being monitored to produce this set of statistics.
+        * timestamp
+          * : A DOMHighResTimeStamp object indicating the time at which the sample was taken for this statistics object.
+        * type
+          * : A string with the value "candidate-pair", indicating the type of statistics that the object contains.
+
+       DEPRECATED PROPERTIES
+
+       The following properties have been removed from the specification and should no longer be used. You should update any existing code to avoid using them as soon as is practical. Check the compatibility table for details on which browsers support them and in which versions.
+
+        * priority (deprecated) (optional) {{non-standard_inline}}
+          * : An integer value indicating the candidate pair's priority.
+        * readable (deprecated) (optional) {{Non-standard_Inline}}
+          * : A Boolean value indicating whether or not data can be sent over the connection described by the candidate pair.
+        * writable (deprecated) (optional) {{Non-standard_Inline}}
+          * : A Boolean value indicating whether or not data can be received on the connection described by the candidate pair.
+
+       NON-STANDARD PROPERTIES
+
+        * selected {{Non-standard_Inline}} (optional)
+          * : A Firefox-specific Boolean value which is true if the candidate pair described by this object is the one currently in use.
+       The spec-compliant way to determine the selected candidate pair is to look for a stats object of type transport, which is an RTCTransportStats object. That object's selectedCandidatePairId property indicates whether or not the specified transport is the one being used.
+
+       USAGE NOTES
+
+       The currently-active ICE candidate pair—if any—can be obtained by calling the RTCIceTransport method getSelectedCandidatePair(), which returns an RTCIceCandidatePair object, or null if there isn't a pair selected. The active candidate pair describes the current configuration of the two ends of the RTCPeerConnection.
+
+       Any candidate pair that isn't the active pair of candidates for a transport gets deleted if the RTCIceTransport performs an ICE restart, at which point the state of the ICE transport returns to new and negotiation starts once again. For more information, see ICE restart.
+
+       EXAMPLE
+
+       This example computes the average time elapsed between connectivity checks.
+
+         if (rtcStats && rtcStats.type === "candidate-pair") {
+           let elapsed =
+             (rtcStats.lastRequestTimestamp - rtcStats.firstRequestTimestamp) /
+             rtcStats.requestsSent;
+
+           console.log(`Average time between ICE connectivity checks: ${elapsed} ms.`);
+         }
+
+       The code begins by looking at rtcStats to see if its type is candidate-pair. If it is, then we know that rtcStats is in fact an RTCIceCandidatePairStats object. We can then compute the average time elapsed between STUN connectivity checks and log that information.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

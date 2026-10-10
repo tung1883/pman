@@ -1,0 +1,39 @@
+SHELLCHECK.SC2163(1)             Sandbox manual             SHELLCHECK.SC2163(1)
+
+       NAME
+
+       This does not export FOO. Remove $/${} for that, or use ${var?} to quiet. - MYVAR=foo
+
+       THIS DOES NOT EXPORT FOO. REMOVE / FOR THAT, OR USE VAR TO QUIET
+
+       THIS DOES NOT EXPORT FOO. REMOVE / FOR THAT, OR USE VAR TO QUIET
+
+       PROBLEMATIC CODE
+
+         MYVAR=foo
+         export $MYVAR
+
+       CORRECT CODE
+
+         MYVAR=foo
+         export MYVAR
+
+       RATIONALE
+
+       export takes a variable name, but shellcheck has noticed that you give it an expanded variable instead. The problematic code does not export MYVAR but a variable called foo if any.
+
+       EXCEPTIONS
+
+       If this is intentional and you do want to export foo instead of MYVAR, you can either use a directive:
+
+         # shellcheck disable=SC2163
+         export "$MYVAR"
+
+       Or after (but not including) version 0.4.7, take advantage of the fact that ShellCheck only warns when no parameter expansion modifiers are applied:
+
+         export "${MYVAR}"    # ShellCheck warns
+         export "${MYVAR?}"   # No warning
+
+       ${MYVAR?} fails when MYVAR is unset, which is fine since export would have failed too. The main side effect is an improved runtime error message in that case.
+
+ShellCheck manual                       from the official documentation

@@ -1,0 +1,91 @@
+WEBAPI.PERMISSIONS-API(1)        Sandbox manual        WEBAPI.PERMISSIONS-API(1)
+
+       NAME
+
+       Permissions API - The Permissions API provides a consistent programmatic way to query the status of API permissions attributed to the current context, such as
+
+       PERMISSIONS API
+
+       The Permissions API provides a consistent programmatic way to query the status of API permissions attributed to the current context, such as a web page or worker. For example, it can be used to determine if permission to access a particular feature or API has been granted, denied, or requires specific user permission.
+
+       CONCEPTS AND USAGE
+
+       Historically different APIs handle their own permissions inconsistently — for example the Notifications API provided its own methods for requesting permissions and checking permission status, whereas the Geolocation API did not. The Permissions API provides the tools to allow developers to implement a consistent user experience for working with permissions.
+
+       The permissions from this API effectively aggregate all security restrictions for the context, including any requirement for an API to be used in a secure context, Permissions-Policy restrictions applied to the document, requirements for user interaction, and user prompts. So, for example, if an API is restricted by permissions policy, the returned permission would be denied and the user would not be prompted for access.
+
+       The permissions property has been made available on the Navigator object, both in the standard browsing context and the worker context (WorkerNavigator — so permission checks are available inside workers), and returns a Permissions object that provides access to the Permissions API functionality.
+
+       Once you have this object you can then use the Permissions.query() method to return a promise that resolves with the PermissionStatus for a specific API.
+
+       REQUESTING PERMISSION
+
+       If the permission status is prompt, the user must acknowledge a prompt to grant access to the feature.
+
+       The mechanism that triggers this prompt will depend on the specific API — it is not defined as part of the Permissions API. Generally the trigger is code calling a method to access or open the feature, or that registers for notifications from the feature that will subsequently access it.
+
+       Note that not all features require a prompt. Permission might be granted by a Permission Policy, implicitly by transient activation, or via some other mechanism.
+
+       REVOKING PERMISSION
+
+       Permission revocation is not managed by the API. More specifically, a Permissions.revoke() method was proposed, but has since been removed from those browsers where it was implemented.
+
+       Users can manually remove permission for particular sites using browser settings:
+
+        * Firefox: _Hamburger Menu > Settings > Privacy & Security > Permissions_ (then select the Settings button for the permission of interest).
+        * Chrome: _Hamburger Menu > Settings > Show advanced settings_. In the _Privacy_ section, click _Content Settings_. In the resulting dialog, find the _Location_ section and select _Ask when a site tries to…_. Finally, click _Manage Exceptions_ and remove the permissions you granted to the sites you are interested in.
+
+       PERMISSION-AWARE APIS
+
+       Not all APIs' permission statuses can be queried using the Permissions API. A non-exhaustive list of permission-aware APIs includes:
+
+        * Background Synchronization API: background-sync (should always be granted)
+        * Clipboard API: clipboard-read, clipboard-write
+        * Compute Pressure API: compute-pressure
+        * Geolocation API: geolocation
+        * Local Font Access API: local-fonts
+        * Local Network Access: local-network, loopback-network. The older local-network-access permission is still supported as an alias for the more granular equivalents.
+        * Media Capture and Streams API: microphone, camera
+        * Notifications API: notifications
+        * Web-based Payment Handler API: payment-handler
+        * Push API: push
+        * Screen Capture API: captured-surface-control, display-capture
+        * Screen Wake Lock API: screen-wake-lock
+        * Sensor APIs: accelerometer, gyroscope, magnetometer, ambient-light-sensor
+        * Storage Access API: storage-access, top-level-storage-access
+        * Storage API: persistent-storage
+        * Web Bluetooth API: bluetooth
+        * Web MIDI API: midi
+        * Web Periodic Background Synchronization API: periodic-background-sync
+        * Window Management API: window-management
+
+       INTERFACES
+
+        * Permissions
+          * : Provides the core Permission API functionality, such as methods for querying and revoking permissions.
+        * PermissionStatus
+          * : Provides access to the current status of a permission, and an event handler to respond to changes in permission status.
+
+       EXTENSIONS TO OTHER INTERFACES
+
+        * Navigator.permissions and WorkerNavigator.permissions (read-only)
+          * : Provides access to the Permissions object from the main context and worker context respectively.
+
+       EXAMPLES
+
+       We have created an example called Location Finder. You can run the example live, view the source code on GitHub, or read more about how it works in our article Using the Permissions API.
+
+       The Permissions.query() example also so shows code that tests most permissions on the current browser and logs the result.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Permissions API
+        * Using the Permissions API to Detect How Often Users Allow or Deny Camera Access
+        * Notification.permission
+        * Privacy, permissions, and information security
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,102 @@
+WEBAPI.REPORTINGOBSERVER-REPORTINGOBSERVER(1) Sandbox manual WEBAPI.REPORTINGOBSERVER-REPORTINGOBSERVER(1)
+
+       NAME
+
+       ReportingObserver: ReportingObserver() constructor - The ReportingObserver() constructor of the Reporting API creates a new ReportingObserver object instance, which can be used to collect and a
+
+       REPORTINGOBSERVER: REPORTINGOBSERVER() CONSTRUCTOR
+
+       The ReportingObserver() constructor of the Reporting API creates a new ReportingObserver object instance, which can be used to collect and access reports.
+
+       SYNTAX
+
+         new ReportingObserver(callback)
+         new ReportingObserver(callback, options)
+
+       PARAMETERS
+
+        * callback
+          * : A callback function that runs when the observer starts to collect reports (i.e., via ReportingObserver.observe()).
+       The callback function is given two parameters:
+
+            * reports
+              * : A sequence of objects representing the reports collected in the observer's report queue.
+       Report objects are expected to have the following properties:
+
+                * body
+                  * : An object representing the body of the report.
+       The structure of the report (in particular of its body), depends on its type.
+
+                * type
+                  * : A string indicating the type of the report.
+       For information on report types see options.types below.
+
+                * url
+                  * : A string representing the URL of the document that generated the report.
+            * observer
+              * : A reference to the same ReportingObserver object, allowing for recursive report collection, and so on.
+        * options (optional)
+          * : An object allowing you to set the options for creating the object.
+       The available options are:
+
+            * types
+              * : An array of strings representing the types of report to be collected by this observer.
+       Available types include:
+
+                * coep
+                  * : Violations of the site's Cross-Origin-Embedder-Policy (COEP).
+       Reports are COEPViolationReport instances.
+
+                * crash
+                  * : Browser crash reports.
+       Reports are CrashReport instances. Note that crash reports aren't retrievable via a ReportingObserver but can be sent to a server.
+
+                * csp-violation
+                  * : Violations of the site's CSP policy.
+       Reports are CSPViolationReport instances.
+
+                * deprecation
+                  * : Deprecated features used by the site.
+       Reports are DeprecationReport instances.
+
+                * integrity-violation
+                  * : Violations of the page's integrity policy.
+       Reports are IntegrityViolationReport instances.
+
+                * intervention
+                  * : Features blocked by the user agent, for example, if an ad significantly impacts page performance.
+       Reports are InterventionReport instances.
+
+                * permissions-policy-violation
+                  * : Violations of the site's Permissions-Policy.
+       Reports are PermissionsPolicyViolationReport instances.
+
+       If this option is omitted, all supported types are collected.
+
+            * buffered
+              * : A boolean that defines whether the reports that were generated before the observer was able to be created should be observable (true) or not (false).
+
+       EXAMPLES
+
+       DISPLAY SPECIFIC REPORT TYPES
+
+       This code shows how to create a ReportingObserver that could be used to observe deprecation and integrity-violation reports.
+
+         const options = {
+           types: ["deprecation", "integrity-violation"],
+           buffered: true,
+         };
+
+         const observer = new ReportingObserver((reports, observer) => {
+           reportBtn.onclick = () => displayReports(reports);
+         }, options);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Reporting API
+
+Web APIs manual                         from the official documentation

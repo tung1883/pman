@@ -1,0 +1,48 @@
+SHELLCHECK.SC2218(1)             Sandbox manual             SHELLCHECK.SC2218(1)
+
+       NAME
+
+       This function is only defined later. Move the definition up. - myfunction
+
+       THIS FUNCTION IS ONLY DEFINED LATER. MOVE THE DEFINITION UP
+
+       THIS FUNCTION IS ONLY DEFINED LATER. MOVE THE DEFINITION UP
+
+       PROBLEMATIC CODE
+
+         #!/bin/sh
+         myfunction
+
+         myfunction() {
+           echo "Hello World"
+         }
+
+       CORRECT CODE
+
+         #!/bin/sh
+         myfunction() {
+           echo "Hello World"
+         }
+         myfunction
+
+       RATIONALE
+
+       You are calling a function that you are defining later in the file. The function definition must come first.
+
+       Function definitions are much like variable assignments, and define a name at the point the definition is "executed". This is why they must happen before their first use.
+
+       This is especially apparent when defining functions conditionally:
+
+         case "$(uname -s)" in
+           Linux) hi() { echo "Hello from Linux"; } ;;
+           Darwin) hi() { echo "Hello from macOS"; } ;;
+           *) hi() { echo "Hello from something else"; } ;;
+         esac
+
+         hi
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

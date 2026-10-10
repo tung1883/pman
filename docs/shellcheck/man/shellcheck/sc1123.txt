@@ -1,0 +1,61 @@
+SHELLCHECK.SC1123(1)             Sandbox manual             SHELLCHECK.SC1123(1)
+
+       NAME
+
+       ShellCheck directives are only valid in front of complete compound commands, like if, not e.g. individual elif branches. - if [ "$prod" = "true" ]
+
+       SHELLCHECK DIRECTIVES ARE ONLY VALID IN FRONT OF COMPLETE COMPOUND COM
+
+       SHELLCHECK DIRECTIVES ARE ONLY VALID IN FRONT OF COMPLETE COMPOUND COM
+
+       PROBLEMATIC CODE
+
+         if [ "$prod" = "true" ]
+         then
+           echo "Prod mode"
+         elif [ "$debug" = "true" ]
+         then
+           echo "Debug mode"
+         fi
+
+       CORRECT CODE
+
+         # Applies to entire `if...fi` command
+         # shellcheck disable=2154
+         if [ "$prod" = "true" ]
+         then
+           echo "Prod mode"
+         elif [ "$debug" = "true" ]
+         then
+           echo "Debug mode"
+         fi
+
+       or
+
+         if [ "$prod" = "true" ]
+         then
+           echo "Prod mode"
+         elif  # Applies only to this [ .. ] command
+               # shellcheck disable=2154
+               [ "$debug" = "true" ]
+         then
+           echo "Debug mode"
+         fi
+
+       RATIONALE
+
+       You appear to have put a directive before a non-command keyword, such as elif, else, do, ;; or similar.
+
+       Unlike many other linters, ShellCheck comment directives apply to the next shell command, rather than to the next line of text.
+
+       This means that you can put a directive in front of a while loop, if statement or function definition, and it will apply to that entire structure.
+
+       However, it also means that you can not apply the directive to non-commands like an individual elif or else block since these are not commands by themselves, and rather just parts of an if compound command.
+
+       Please move the directive in front of the nearest applicable command that contains the code you want to apply it to, such as before the if.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

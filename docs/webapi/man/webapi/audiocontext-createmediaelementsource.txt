@@ -1,0 +1,72 @@
+WEBAPI.AUDIOCONTEXT-CREATEMEDIAELEMENTSOURCE(1) Sandbox manual WEBAPI.AUDIOCONTEXT-CREATEMEDIAELEMENTSOURCE(1)
+
+       NAME
+
+       AudioContext: createMediaElementSource() method - The createMediaElementSource() method of the AudioContext Interface is used to create a new MediaElementAudioSourceNode object, given an exi
+
+       AUDIOCONTEXT: CREATEMEDIAELEMENTSOURCE() METHOD
+
+       The createMediaElementSource() method of the AudioContext Interface is used to create a new MediaElementAudioSourceNode object, given an existing HTML or element, the audio from which can then be played and manipulated.
+
+       For more details about media element audio source nodes, check out the MediaElementAudioSourceNode reference page.
+
+       SYNTAX
+
+         createMediaElementSource(myMediaElement)
+
+       PARAMETERS
+
+        * myMediaElement
+          * : An HTMLMediaElement object that you want to feed into an audio processing graph to manipulate.
+
+       RETURN VALUE
+
+       A MediaElementAudioSourceNode.
+
+       EXAMPLES
+
+       This simple example creates a source from an element using createMediaElementSource(), then passes the audio through a GainNode before feeding it into the AudioDestinationNode for playback. When the mouse pointer is moved, the updatePage() function is invoked, which calculates the current gain as a ratio of mouse Y position divided by overall window height. You can therefore increase and decrease the volume of the playing music by moving the mouse pointer up and down.
+
+       > You can also view this example running live, or view the source.
+
+         const audioCtx = new AudioContext();
+         const myAudio = document.querySelector("audio");
+
+         // Create a MediaElementAudioSourceNode
+         // Feed the HTMLMediaElement into it
+         const source = audioCtx.createMediaElementSource(myAudio);
+
+         // Create a gain node
+         const gainNode = audioCtx.createGain();
+
+         // Create variables to store mouse pointer Y coordinate
+         // and HEIGHT of screen
+         let curY;
+         const HEIGHT = window.innerHeight;
+
+         // Get new mouse pointer coordinates when mouse is moved
+         // then set new gain value
+         document.onmousemove = updatePage;
+
+         function updatePage(e) {
+           curY = e.pageY;
+           gainNode.gain.value = curY / HEIGHT;
+         }
+
+         // Connect the AudioBufferSourceNode to the gainNode
+         // and the gainNode to the destination, so we can play the
+         // music and adjust the volume using the mouse cursor
+         source.connect(gainNode);
+         gainNode.connect(audioCtx.destination);
+
+       > As a consequence of calling createMediaElementSource(), audio playback from the HTMLMediaElement will be re-routed into the processing graph of the AudioContext. So playing/pausing the media can still be done through the media element API and the player controls.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

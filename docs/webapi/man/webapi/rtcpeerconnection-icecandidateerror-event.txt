@@ -1,0 +1,51 @@
+WEBAPI.RTCPEERCONNECTION-ICECANDIDATEERROR-EVENT(1) Sandbox manual WEBAPI.RTCPEERCONNECTION-ICECANDIDATEERROR-EVENT(1)
+
+       NAME
+
+       RTCPeerConnection: icecandidateerror event - The icecandidateerror event is sent to an RTCPeerConnection if an error occurs while performing ICE negotiation through a STUN or TURN serve
+
+       RTCPEERCONNECTION: ICECANDIDATEERROR EVENT
+
+       The icecandidateerror event is sent to an RTCPeerConnection if an error occurs while performing ICE negotiation through a STUN or TURN server.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("icecandidateerror", (event) => { })
+
+         onicecandidateerror = (event) => { }
+
+       EVENT TYPE
+
+       An RTCPeerConnectionIceErrorEvent. Inherits from Event.
+
+       RTCPeerConnectionIceErrorEvent
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The following example establishes a handler for icecandidateerror events that occur on the RTCPeerConnection pc. This handler looks specifically for 701 errors that indicate that candidates couldn't reach the STUN or TURN server.
+
+       When this happens, the server URL and the error message are passed to a function called reportConnectFail() to log or output the connection failure.
+
+         pc.addEventListener("icecandidateerror", (event) => {
+           if (event.errorCode === 701) {
+             reportConnectFail(event.url, event.errorText);
+           }
+         });
+
+       Note that if multiple STUN and/or TURN servers are provided when creating the connection, this error may happen more than once, if more than one of those servers fails. Each provided server is tried until a connection is established.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+
+Web APIs manual                         from the official documentation

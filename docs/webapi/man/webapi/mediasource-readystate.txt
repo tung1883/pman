@@ -1,0 +1,61 @@
+WEBAPI.MEDIASOURCE-READYSTATE(1) Sandbox manual WEBAPI.MEDIASOURCE-READYSTATE(1)
+
+       NAME
+
+       MediaSource: readyState property - windowanddedicated
+
+       MEDIASOURCE: READYSTATE PROPERTY
+
+       window_and_dedicated
+
+       The readyState read-only property of the MediaSource interface returns an enum representing the state of the current MediaSource. The three possible values are:
+
+        * closed: The source is not currently attached to a media element.
+        * open: The source is attached to a media element and ready to receive
+       SourceBuffer objects.
+
+        * ended: The source is attached to a media element but the stream has
+       been ended via a call to MediaSource.endOfStream().
+
+       VALUE
+
+       A string.
+
+       EXAMPLES
+
+       The following snippet is from an example written by Nick Desaulniers (view the full demo live, or download the source for further investigation). The function getMediaSource(), which is not defined here, returns a MediaSource.
+
+         let mediaSource;
+
+         if ("MediaSource" in window && MediaSource.isTypeSupported(mimeCodec)) {
+           mediaSource = getMediaSource();
+           console.log(mediaSource.readyState); // closed
+           video.src = URL.createObjectURL(mediaSource);
+           mediaSource.addEventListener("sourceopen", sourceOpen);
+         } else {
+           console.error("Unsupported MIME type or codec: ", mimeCodec);
+         }
+
+         function sourceOpen() {
+           console.log(this.readyState); // open
+           const sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
+           fetchAB(assetURL, (buf) => {
+             sourceBuffer.addEventListener("updateend", () => {
+               mediaSource.endOfStream();
+               video.play();
+               console.log(mediaSource.readyState); // ended
+             });
+             sourceBuffer.appendBuffer(buf);
+           });
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * SourceBuffer
+        * SourceBufferList
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,81 @@
+WEBAPI.MUTATIONRECORD-REMOVEDNODES(1) Sandbox manual WEBAPI.MUTATIONRECORD-REMOVEDNODES(1)
+
+       NAME
+
+       MutationRecord: removedNodes property - The MutationRecord read-only property removedNodes is a NodeList of nodes removed from a target node by a mutation observed with a MutationO
+
+       MUTATIONRECORD: REMOVEDNODES PROPERTY
+
+       The MutationRecord read-only property removedNodes is a NodeList of nodes removed from a target node by a mutation observed with a MutationObserver.
+
+       VALUE
+
+       A NodeList containing the nodes removed from the target of the mutation observed by the MutationObserver.
+
+       EXAMPLES
+
+       OBSERVING REMOVED NODES
+
+       In the following example, there are two buttons: one to add new nodes to a target node, and one to remove them. A MutationObserver is used to observe the target node for changes; when a change is detected, the observer calls a function, logRemovedNodes().
+
+       The logRemovedNodes() function checks that the MutationRecord's type is childList, which means that the target node's children have changed. If the type is childList the function updates the total number of nodes that have been removed. However, note that clicking the "Add a node" button will not increment the total number of removed nodes, because in this case record.removedNodes will have a length of 0.
+
+       HTML
+
+         <button id="add-nodes">Add a node</button>
+         <button id="remove-nodes">Remove a node</button>
+         <button id="reset">Reset</button>
+
+         <pre id="counter">Total removed nodes: 0</pre>
+         <div id="target"></div>
+
+         #counter {
+           border: 1px dotted black;
+           padding: 0.5rem;
+         }
+
+       JAVASCRIPT
+
+         const addNodes = document.querySelector("#add-nodes");
+         const removeNodes = document.querySelector("#remove-nodes");
+         const reset = document.querySelector("#reset");
+         const counter = document.querySelector("#counter");
+         const target = document.querySelector("#target");
+         let totalRemovedNodes = 0;
+
+         addNodes.addEventListener("click", () => {
+           const newPara = document.createElement("p");
+           newPara.textContent = `Current time: ${Date.now()}`;
+           target.appendChild(newPara);
+         });
+
+         removeNodes.addEventListener("click", () => {
+           const lastChild = target.lastChild;
+           if (lastChild) {
+             target.removeChild(lastChild);
+           }
+         });
+
+         reset.addEventListener("click", () => self.location.reload());
+
+         function logRemovedNodes(records) {
+           for (const record of records) {
+             // Check if the childList of the target node has been mutated
+             if (record.type === "childList") {
+               totalRemovedNodes += record.removedNodes.length;
+               // Log the number of nodes removed
+               counter.textContent = `Total removed nodes: ${totalRemovedNodes}`;
+             }
+           }
+         }
+
+         const observer = new MutationObserver(logRemovedNodes);
+         observer.observe(target, { childList: true });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

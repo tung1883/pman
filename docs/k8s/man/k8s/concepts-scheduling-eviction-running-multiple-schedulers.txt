@@ -1,0 +1,41 @@
+K8S.CONCEPTS-SCHEDULING-EVICTION-RUNNING-MULTIPLE-SCHEDULERS(1) Sandbox manual K8S.CONCEPTS-SCHEDULING-EVICTION-RUNNING-MULTIPLE-SCHEDULERS(1)
+
+       NAME
+
+       Running multiple schedulers - Kubernetes allows you to run multiple schedulers within a single cluster.
+
+       RUNNING MULTIPLE SCHEDULERS
+
+       Kubernetes allows you to run multiple schedulers within a single cluster.
+
+       This page describes the general principles of running multiple schedulers in a cluster, assuming that at least one of these schedulers is the default kube-scheduler. If you are only running custom or third-party schedulers, refer to their specific documentation.
+
+       DEPLOYMENT STRATEGIES
+
+       When running multiple schedulers, you must decide how they interact with each other and the cluster's nodes. There are three common deployment scenarios:
+
+       HIGH AVAILABILITY (STANDBY REPLICAS)
+
+       If you want to run a single logical scheduler (such as kube-scheduler) but ensure it remains available if a failure occurs, you should run multiple replicas of the scheduler and enable leader election.
+
+       When leader election is enabled, only one replica (the leader) is active and schedules Pods, while the others remain in standby mode. If the active leader fails, one of the standby replicas automatically wins the leader election and takes over the scheduling work.
+
+       For details on how to configure this, see Enable leader election.
+
+       MULTIPLE SCHEDULER PROFILES OR INSTANCES
+
+       If you want to use different configurations or scheduling rules for different workloads, you can either configure a single kube-scheduler instance with multiple scheduling profiles, or run several separate instances of kube-scheduler.
+
+        * Multiple profiles in one instance: A single kube-scheduler process can run multiple profiles (each with a unique scheduler name). Because these profiles run in the same process and share the same scheduling queue and cache, they do not make conflicting scheduling decisions. You can still use node affinity if you want to isolate workloads by directing each profile to a specific node pool.
+        * Multiple separate instances: If you run several separate kube-scheduler processes (deployments), they do not coordinate with each other and might make conflicting scheduling decisions (such as overcommitting a node's resources). To prevent this, each scheduler instance must target a disjoint set of nodes using node affinity.
+
+       MIXING KUBE-SCHEDULER WITH CUSTOM SCHEDULERS
+
+       If you run kube-scheduler alongside custom or third-party schedulers, run the schedulers on disjoint pools of nodes to avoid resource conflicts. Depending on how your custom scheduler is designed, it might support running in an active-active configuration, or it might require its own leader election mechanism. Always check the documentation for your custom scheduler.
+
+       ## WHATSNEXT
+
+        * Read about Configuring Multiple Schedulers.
+        * Learn about Assigning Pods to Nodes.
+
+Kubernetes manual                       from the official documentation

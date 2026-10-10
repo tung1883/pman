@@ -1,0 +1,34 @@
+APACHE.MOD_AUTHZ_OWNER(1)        Sandbox manual        APACHE.MOD_AUTHZ_OWNER(1)
+
+       CONFIGURATION EXAMPLES
+
+       REQUIRE FILE-OWNER
+
+       Consider a multi-user system running the Apache Web server, with each user having his or her own files in ~/public_html/private. Assuming that there is a single AuthDBMUserFile database that lists all of their web-usernames, and that these usernames match the system's usernames that actually own the files on the server, then the following stanza would allow only the user himself access to his own files. User jones would not be allowed to access files in /home/smith/public_html/private unless they were owned by jones instead of smith.
+
+         <Directory "/home/*/public_html/private">
+             AuthType Basic
+             AuthName MyPrivateFiles
+             AuthBasicProvider dbm
+             AuthDBMUserFile "/usr/local/apache2/etc/.htdbm-all"
+             Require file-owner
+         </Directory>
+
+       REQUIRE FILE-GROUP
+
+       Consider a system similar to the one described above, but with some users that share their project files in ~/public_html/project-foo. The files are owned by the system group foo and there is a single AuthDBMGroupFile database that contains all of the web-usernames and their group membership, i.e. they must be at least member of a group named foo. So if jones and smith are both member of the group foo, then both will be authorized to access the project-foo directories of each other.
+
+         <Directory "/home/*/public_html/project-foo">
+             AuthType Basic
+             AuthName "Project Foo Files"
+             AuthBasicProvider dbm
+
+             # combined user/group database
+             AuthDBMUserFile  "/usr/local/apache2/etc/.htdbm-all"
+             AuthDBMGroupFile "/usr/local/apache2/etc/.htdbm-all"
+
+             Satisfy All
+             Require file-group
+         </Directory>
+
+Apache HTTP Server manual               bundled documentation

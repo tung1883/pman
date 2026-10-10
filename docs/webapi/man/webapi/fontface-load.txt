@@ -1,0 +1,64 @@
+WEBAPI.FONTFACE-LOAD(1)          Sandbox manual          WEBAPI.FONTFACE-LOAD(1)
+
+       NAME
+
+       FontFace: load() method - The load() method of the FontFace interface requests and loads a font whose source was specified as a URL. It returns a Promise that resolve
+
+       FONTFACE: LOAD() METHOD
+
+       The load() method of the FontFace interface requests and loads a font whose source was specified as a URL. It returns a Promise that resolves with the current FontFace object.
+
+       If the source for the font face was specified as binary data, or the font status property of the font face is anything other than unloaded, then this method does nothing.
+
+       SYNTAX
+
+         load()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that resolves with a reference to the current FontFace object when the font loads or rejects with a NetworkError DOMException if the loading process fails.
+
+       EXCEPTIONS
+
+        * NetworkError DOMException
+          * : Indicates that the attempt to load the font failed.
+
+       EXAMPLES
+
+       This simple example loads a font and uses it to display some text in a canvas element (with an id of js-canvas).
+
+         <canvas id="js-canvas"></canvas>
+
+         const canvas = document.getElementById("js-canvas");
+
+         // load the "Bitter" font from Google Fonts
+         const fontFile = new FontFace(
+           "FontFamily Style Bitter",
+           'url("https://fonts.gstatic.com/s/bitter/v7/HEpP8tJXlWaYHimsnXgfCOvvDin1pK8aKteLpeZ5c0A.woff2")',
+         );
+         document.fonts.add(fontFile);
+
+         fontFile.load().then(
+           () => {
+             // font loaded successfully!
+             canvas.width = 650;
+             canvas.height = 100;
+             const ctx = canvas.getContext("2d");
+
+             ctx.font = '36px "FontFamily Style Bitter"';
+             ctx.fillText("Bitter font loaded", 20, 50);
+           },
+           (err) => {
+             console.error(err);
+           },
+         );
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

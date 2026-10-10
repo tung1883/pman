@@ -1,0 +1,70 @@
+K8S.TASKS-CONFIGURE-POD-CONTAINER-CONFIGURE-BIND-MOUNT-OPTIONS(1) Sandbox manual K8S.TASKS-CONFIGURE-POD-CONTAINER-CONFIGURE-BIND-MOUNT-OPTIONS(1)
+
+       NAME
+
+       Set Bind Mount Options on Volume Mounts - This page shows how to apply security-related bind mount options (noexec,
+
+       SET BIND MOUNT OPTIONS ON VOLUME MOUNTS
+
+       This page shows how to apply security-related bind mount options (noexec, nodev, nosuid) to volume mounts in a Pod.
+
+       ## PREREQUISITES
+
+       You need to have the VolumeBindMountOptions feature gate enabled on the API server and the kubelet. The container runtime must also support the mount_options field in the CRI Mount message.
+
+       CREATE A POD WITH BIND MOUNT OPTIONS #CREATE-POD
+
+       The .spec.containers[].volumeMounts[].bindMountOptions field accepts a list of bind mount flags. The allowed values are noexec, nodev, and nosuid.
+
+       For example, to mount an emptyDir volume at /tmp with noexec and nosuid so that binaries cannot be executed and set-user-ID bits are ignored:
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: bind-mount-options-demo
+         spec:
+           containers:
+           - image: registry.k8s.io/busybox
+             name: test-container
+             command: ["sleep", "3600"]
+             volumeMounts:
+             - mountPath: /tmp
+               name: tmp-volume
+               bindMountOptions:
+               - noexec
+               - nosuid
+           volumes:
+           - name: tmp-volume
+             emptyDir: {}
+
+        1. Create the pod on your cluster:
+
+            kubectl apply -f https://k8s.io/examples/pods/bind-mount-options.yaml
+
+        1. Verify the pod is running:
+
+            kubectl get pod bind-mount-options-demo
+
+        1. Check the mount options on the volume:
+
+            kubectl exec bind-mount-options-demo -- mount | grep /tmp
+
+       The output should include noexec and nosuid in the mount options.
+
+        1. Verify that executing a binary on the mount fails:
+
+            kubectl exec bind-mount-options-demo -- sh -c 'cp /bin/ls /tmp/ls && /tmp/ls'
+
+       The output is similar to:
+
+            sh: /tmp/ls: Permission denied
+
+        1. Delete the Pod that you created for this exercise:
+
+            kubectl delete pod bind-mount-options-demo
+
+       ## WHATSNEXT
+
+        * Learn more about bind mount options for volumes
+
+Kubernetes manual                       from the official documentation

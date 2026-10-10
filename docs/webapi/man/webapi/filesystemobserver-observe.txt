@@ -1,0 +1,94 @@
+WEBAPI.FILESYSTEMOBSERVER-OBSERVE(1) Sandbox manual WEBAPI.FILESYSTEMOBSERVER-OBSERVE(1)
+
+       NAME
+
+       FileSystemObserver: observe() method - The observe() method of the
+
+       FILESYSTEMOBSERVER: OBSERVE() METHOD
+
+       {{non-standard_header}}
+
+       The observe() method of the FileSystemObserver interface asks the observer to start observing changes to a given file or directory.
+
+       SYNTAX
+
+         observe(handle)
+         observe(handle, options)
+
+       PARAMETERS
+
+        * handle
+          * : The handle of the file system entry representing the file or directory to observe.
+            * For the user-observable file system, this can be a FileSystemFileHandle or a FileSystemDirectoryHandle.
+            * For the Origin Private File System (OPFS), it can be a FileSystemFileHandle, a FileSystemDirectoryHandle, or a FileSystemSyncAccessHandle.
+        * options (optional)
+          * : An object specifying options for the observe() call. This can contain the following properties:
+            * recursive
+              * : A boolean specifying whether you want to observe changes to a directory recursively. If set to true, changes are observed in the directory itself and all contained subdirectories and files. If set to false, changes are only observed in the directory itself and directly contained files (that is, files in subdirectories are excluded). Defaults to false.
+       This property has no effect if handle represents a file.
+
+       RETURN VALUE
+
+       A Promise that resolves to undefined.
+
+       EXCEPTIONS
+
+        * NotFoundError DOMException
+          * : Thrown if the file or directory represented by handle could not be found.
+
+       EXAMPLES
+
+       OBSERVE A FILE OR DIRECTORY
+
+       Assuming a FileSystemObserver instance is available, you can start observing changes to a file system entry by calling observe().
+
+       You can observe a file or directory in the user-observable file system or the Origin Private File System (OPFS) by passing a FileSystemFileHandle or FileSystemDirectoryHandle to observe(). Instances of these objects can be returned, for example, when asking the user to select a file or directory using Window.showSaveFilePicker() or Window.showDirectoryPicker():
+
+         // Observe a file
+         async function observeFile() {
+           const fileHandle = await window.showSaveFilePicker();
+
+           await observer.observe(fileHandle);
+         }
+
+         // Observe a directory
+         async function observeDirectory() {
+           const directoryHandle = await window.showDirectoryPicker();
+
+           await observer.observe(directoryHandle);
+         }
+
+       You can also observe changes to the OPFS by passing a FileSystemSyncAccessHandle to observe():
+
+         // Observe an OPFS file system entry
+         async function observeOPFSFile() {
+           const root = await navigator.storage.getDirectory();
+           const draftHandle = await root.getFileHandle("draft.txt", { create: true });
+           const syncHandle = await draftHandle.createSyncAccessHandle();
+
+           await observer.observe(syncHandle);
+         }
+
+       OBSERVE A DIRECTORY RECURSIVELY
+
+       To observe a directory recursively, call observe() with the recursive option set to true:
+
+         // Observe a directory recursively
+         async function observeDirectory() {
+           const directoryHandle = await window.showDirectoryPicker();
+
+           await observer.observe(directoryHandle, { recursive: true });
+         }
+
+       SPECIFICATIONS
+
+       Not currently part of a specification. See https://github.com/whatwg/fs/pull/165 for the relevant specification PR.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * File System API
+        * The File System Observer API origin trial on developer.chrome.com (2024)
+
+Web APIs manual                         from the official documentation

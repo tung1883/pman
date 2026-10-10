@@ -1,0 +1,51 @@
+SHELLCHECK.SC2102(1)             Sandbox manual             SHELLCHECK.SC2102(1)
+
+       NAME
+
+       Ranges can only match single chars (mentioned due to duplicates). - echo [100-999].txt
+
+       RANGES CAN ONLY MATCH SINGLE CHARS (MENTIONED DUE TO DUPLICATES)
+
+       RANGES CAN ONLY MATCH SINGLE CHARS (MENTIONED DUE TO DUPLICATES)
+
+       PROBLEMATIC CODE
+
+         echo [100-999].txt
+
+       CORRECT CODE
+
+         echo [1-9][0-9][0-9].txt
+
+       RATIONALE
+
+       ShellCheck found a glob range expression (such as [a-z]) that contains multiple of the same character.
+
+       Range expressions can only be used to match a single character in a given set, so [ab] and [abba] will both match the same thing: either one a or one b.
+
+       Having multiple of the same character often means you're trying to match more than one character, such as in the problematic example where someone tried to match any number from 100 to 999. Instead, it matches a single digit just like [0-9].txt, and specifies 0, 1 and 9 multiple times.
+
+       In Bash, most uses can be rewritten using extglob and/or brace expansion. For example:
+
+         cat *.[dev,prod,test].conf   # Doesn't work
+         cat *.{dev,prod,test}.conf   # Works in bash
+         cat *.@(dev|prod|test).conf  # Works in bash with `shopt -s extglob`
+
+       In POSIX sh, you may have to write multiple globs, one after the other:
+
+         cat *.dev.conf *.prod.conf *.test.conf
+
+       EXCEPTIONS
+
+       There is currently a bug in which a range expression whose contents is a variable gets parsed verbatim, e.g. [$foo]. In this case, either ignore the warning or make the square brackets part of the variable contents instead.
+
+       v0.7.2 and below would unintentionally show this warning for subscripts in arrays in [[ -v array[xx] ]] and other dereferencing operators. In these versions, you can either [[ignore]] the message or quote the word (as in [[ -v 'array[xx]' ]])
+
+       Note that IPv6 URLs trigger this warning, but the correct solution in this case is to quote them:
+
+       curl 'http://[2607:f8b0:4002:c0c::65]/'
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

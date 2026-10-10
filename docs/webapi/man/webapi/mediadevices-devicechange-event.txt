@@ -1,0 +1,177 @@
+WEBAPI.MEDIADEVICES-DEVICECHANGE-EVENT(1) Sandbox manual WEBAPI.MEDIADEVICES-DEVICECHANGE-EVENT(1)
+
+       NAME
+
+       MediaDevices: devicechange event - The devicechange event is sent to a MediaDevices instance whenever a media device such as a camera, microphone, or speaker is connected to o
+
+       MEDIADEVICES: DEVICECHANGE EVENT
+
+       The devicechange event is sent to a MediaDevices instance whenever a media device such as a camera, microphone, or speaker is connected to or removed from the system.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("devicechange", (event) => { })
+
+         ondevicechange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLE
+
+       In this example, we create a function called updateDeviceList(), which is called once when MediaDevices.getUserMedia() successfully obtains a stream, and then is called any time the device list changes. It displays in the browser window two lists: one of audio devices and one of video devices, with both the device's label (name) and whether it's an input or an output device. Because the example provides a handler for the devicechange event, the list is refreshed any time a media device is attached to or removed from the device running the sample.
+
+         <p>Click the start button below to begin the demonstration.</p>
+         <div id="startButton" class="button">Start</div>
+         <video id="video" width="160" height="120" autoplay></video><br />
+
+         <div class="left">
+           <h2>Audio devices:</h2>
+           <ul class="deviceList" id="audioList"></ul>
+         </div>
+         <div class="right">
+           <h2>Video devices:</h2>
+           <ul class="deviceList" id="videoList"></ul>
+         </div>
+
+         <output></output>
+
+         body {
+           font:
+             14px "Open Sans",
+             "Arial",
+             sans-serif;
+         }
+
+         video {
+           margin-top: 20px;
+           border: 1px solid black;
+         }
+
+         .button {
+           cursor: pointer;
+           width: 160px;
+           border: 1px solid black;
+           font-size: 16px;
+           text-align: center;
+           padding-top: 2px;
+           padding-bottom: 4px;
+           color: white;
+           background-color: darkgreen;
+         }
+
+         h2 {
+           margin-bottom: 4px;
+         }
+
+         .left {
+           float: left;
+           width: 48%;
+           margin-right: 2%;
+         }
+
+         .right {
+           float: right;
+           width: 48%;
+           margin-left: 2%;
+         }
+
+         .deviceList {
+           border: 1px solid black;
+           list-style-type: none;
+           margin-top: 2px;
+           padding: 6px;
+         }
+
+         // UI elements
+         const videoElement = document.querySelector("#video");
+         const logElement = document.querySelector("output");
+         const startButton = document.querySelector("#startButton");
+
+         function log(msg) {
+           logElement.innerText += `${msg}\n`;
+         }
+
+         startButton.addEventListener("click", () => {
+           const constraints = {
+             video: {
+               width: 160,
+               height: 120,
+               frameRate: 30,
+             },
+             audio: {
+               sampleRate: 44100,
+               sampleSize: 16,
+               volume: 0.25,
+             },
+           };
+
+           navigator.mediaDevices
+             .getUserMedia(constraints)
+             .then((stream) => {
+               videoElement.srcObject = stream;
+               updateDeviceList();
+             })
+             .catch((err) => {
+               log(`${err.name}: ${err.message}`);
+             });
+         });
+
+       We set up global variables that contain references to the elements that are used to list the audio and video devices:
+
+         const audioList = document.getElementById("audioList");
+         const videoList = document.getElementById("videoList");
+
+       GETTING AND DRAWING THE DEVICE LIST
+
+       Now let's take a look at updateDeviceList() itself. This method is called any time we want to fetch the current list of media devices and then update the displayed lists of audio and video devices using that information.
+
+         function updateDeviceList() {
+           navigator.mediaDevices.enumerateDevices().then((devices) => {
+             audioList.textContent = "";
+             videoList.textContent = "";
+
+             devices.forEach((device) => {
+               const elem = document.createElement("li");
+               const [kind, type, direction] = device.kind.match(/(\w+)(input|output)/i);
+
+               elem.innerHTML = `<strong>${device.label}</strong> (${direction})`;
+               if (type === "audio") {
+                 audioList.appendChild(elem);
+               } else if (type === "video") {
+                 videoList.appendChild(elem);
+               }
+             });
+           });
+         }
+
+       updateDeviceList() consists entirely of a call to the function enumerateDevices() on the MediaDevices object referenced in the navigator.mediaDevices property, as well as the code that's run when the Promise returned by enumerateDevices() is fulfilled. The fulfillment handler is called when the device list is ready. The list is passed into the fulfillment handler as an array of MediaDeviceInfo objects, each describing one media input or output device.
+
+       A forEach() loop is used to scan through all the devices. For each device, we create a new object to be used to display it to the user.
+
+       The line let [kind, type, direction] = device.kind.match(/(\w+)(input|output)/i); deserves special notice. This uses destructuring assignment to assign the values of the first three items in the array returned by String.match() to the variables kind, type, and direction. We do this because the value of MediaDeviceInfo.kind is a single string that includes both the media type and the direction the media flows, such as "audioinput" or "videooutput". This line, then, pulls out the type ("audio" or "video") and direction ("input" or "output") so they can be used to construct the string displayed in the list.
+
+       Once the string is assembled, containing the device's name in bold and the direction in parentheses, it's appended to the appropriate list by calling appendChild() on either audioList or videoList, as appropriate based on the device type.
+
+       HANDLING DEVICE LIST CHANGES
+
+       We call updateDeviceList() in two places. The first is in the getUserMedia() promise's fulfillment handler, to initially fill out the list when the stream is opened. The second is in the event handler for this devicechange event:
+
+         navigator.mediaDevices.ondevicechange = (event) => {
+           updateDeviceList();
+         };
+
+       With this code in place, each time the user plugs in a camera, microphone, or other media device, or turns one on or off, we call updateDeviceList() to redraw the list of connected devices.
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

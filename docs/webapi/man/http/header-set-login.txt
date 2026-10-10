@@ -1,0 +1,43 @@
+HTTP.HEADER-SET-LOGIN(1)         Sandbox manual         HTTP.HEADER-SET-LOGIN(1)
+
+       NAME
+
+       Set-Login header - The HTTP Set-Login response header is sent by a federated identity provider (IdP) to set its login status, and indicates whether any users a
+
+       SET-LOGIN HEADER
+
+       The HTTP Set-Login response header is sent by a federated identity provider (IdP) to set its login status, and indicates whether any users are logged into the IdP on the current browser or not. This is stored by the browser and used by the FedCM API to reduce the number of requests it makes to the IdP as the browser doesn't need to request accounts when there are no users logged in to the IdP. It also mitigates potential timing attacks.
+
+       The header may be set on any response resulting from a top-level navigation or a same-origin subresource request on the IdP's origin site. Any interaction with the IdP site may result in this header being set, and the login status being stored by the browser.
+
+       See Update login status using the Login Status API for more information about FedCM login status.
+
+       Header type Response header
+
+       SYNTAX
+
+         Set-Login: <status>
+
+       DIRECTIVES
+
+        * 
+          * : A string representing the login status to set for the IdP. Possible values are:
+            * logged-in: The IdP has at least one user account signed in.
+            * logged-out: All IdP user accounts are currently signed out.
+       > Browsers ignore this header if it contains any other value.
+
+       EXAMPLES
+
+         Set-Login: logged-in
+
+         Set-Login: logged-out
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Federated Credential Management (FedCM) API
+
+HTTP manual                             from the official documentation

@@ -1,0 +1,279 @@
+WEBAPI.REQUESTINIT(1)            Sandbox manual            WEBAPI.REQUESTINIT(1)
+
+       NAME
+
+       RequestInit - The RequestInit dictionary of the Fetch API represents the set of options that can be used to configure a fetch request.
+
+       REQUESTINIT
+
+       The RequestInit dictionary of the Fetch API represents the set of options that can be used to configure a fetch request.
+
+       You can pass a RequestInit object into the Request() constructor, or directly into the fetch() function call.
+
+       You can also construct a Request with a RequestInit, and pass the Request to a fetch() call along with another RequestInit. If you do this, and the same option is set in both places, then the value passed directly into fetch() is used.
+
+       INSTANCE PROPERTIES
+
+        * attributionReporting (optional) (deprecated)
+          * : Indicates that you want the request's response to be able to register a JavaScript-based attribution source or attribution trigger. attributionReporting is an object containing the following properties:
+            * eventSourceEligible
+              * : A boolean. If set to true, the request's response is eligible to register an attribution source. If set to false, it isn't.
+            * triggerEligible
+              * : A boolean. If set to true, the request's response is eligible to register an attribution trigger. If set to false, it isn't.
+       See the Attribution Reporting API for more details.
+
+        * body (optional)
+          * : The request body contains content to send to the server, for example in a POST or PUT request. It is specified as an instance of any of the following types:
+            * a string
+            * ArrayBuffer
+            * Blob
+            * DataView
+            * File
+            * FormData
+            * TypedArray
+            * URLSearchParams
+            * ReadableStream
+       See Setting a body for more details.
+
+        * browsingTopics (optional) (deprecated)
+          * : A boolean specifying that the selected topics for the current user should be sent in a Sec-Browsing-Topics header with the associated request.
+        * cache (optional)
+          * : The cache mode you want to use for the request. This may be any one of the following values:
+            * default
+              * : The browser looks in its HTTP cache for a response matching the request.
+                * If there is a match and it is fresh, it will be returned from the cache.
+                * If there is a match but it is stale, the browser will make a conditional request to the remote server. If the server indicates that the resource has not changed, it will be returned from the cache. Otherwise the resource will be downloaded from the server and the cache will be updated.
+                * If there is no match, the browser will make a normal request, and will update the cache with the downloaded resource.
+            * no-store
+              * : The browser fetches the resource from the remote server without first looking in the cache, _and will not_ update the cache with the downloaded resource.
+            * reload
+              * : The browser fetches the resource from the remote server without first looking in the cache, _but then will_ update the cache with the downloaded resource.
+            * no-cache
+              * : The browser looks in its HTTP cache for a response matching the request.
+                * If there is a match, _fresh or stale,_ the browser will make a conditional request to the remote server. If the server indicates that the resource has not changed, it will be returned from the cache. Otherwise the resource will be downloaded from the server and the cache will be updated.
+                * If there is no match, the browser will make a normal request, and will update the cache with the downloaded resource.
+            * force-cache
+              * : The browser looks in its HTTP cache for a response matching the request.
+                * If there is a match, _fresh or stale_, it will be returned from the cache.
+                * If there is no match, the browser will make a normal request, and will update the cache with the downloaded resource.
+            * only-if-cached
+              * : The browser looks in its HTTP cache for a response matching the request. (experimental)
+                * If there is a match, _fresh or stale_, it will be returned from the cache.
+                * If there is no match, a network error is returned.
+       The "only-if-cached" mode can only be used if the request's mode is "same-origin". Cached redirects will be followed if the request's redirect property is "follow" and the redirects do not violate the "same-origin" mode.
+
+        * credentials (optional)
+          * : Controls whether or not the browser sends credentials with the request, as well as whether any Set-Cookie response headers are respected. Credentials are cookies, TLS client certificates, or authentication headers containing a username and password. This option may be any one of the following values:
+            * omit
+              * : Never send credentials in the request or include credentials in the response.
+            * same-origin
+              * : Only send and include credentials for same-origin requests.
+            * include
+              * : Always include credentials, even for cross-origin requests.
+       Including credentials in cross-origin requests can make a site vulnerable to CSRF attacks, so even if credentials is set to include, the server must also agree to their inclusion by including the Access-Control-Allow-Credentials in its response. Additionally, in this situation the server must explicitly specify the client's origin in the Access-Control-Allow-Origin response header (that is, * is not allowed).
+
+       See Including credentials for more details.
+
+       Defaults to same-origin.
+
+        * duplex (optional) (experimental)
+          * : Controls duplex behavior of the request. If this is present it must have the value half, meaning that the browser must send the entire request before processing the response.
+       This option must be present when body is a ReadableStream.
+
+        * headers (optional)
+          * : Any headers you want to add to your request, contained
+       within a Headers object or an object literal whose keys are the names of headers and whose values are the header values.
+
+       Many headers are set automatically by the browser and can't be set by a script: these are called Forbidden request headers.
+
+       If the mode option is set to no-cors, you can only set CORS-safelisted request headers.
+
+       See Setting headers for more details.
+
+        * integrity (optional)
+          * : Contains the subresource integrity
+       value of the request.
+
+       This will be checked when the resource is fetched, just as it would be when the integrity attribute is set on a element. The browser will compute the hash of the fetched resource using the specified algorithm, and if the result does not match the value specified, the browser will reject the fetch request with a network error.
+
+       The format of this option is - where:
+
+            * is one of the following values: sha256, sha384, or sha512
+            * is the Base64-encoding of the result of hashing the resource with the specified hash algorithm.
+       Defaults to an empty string.
+
+        * keepalive (optional)
+          * : A boolean.
+       When set to true, the browser will not abort the associated request if the page that initiated it is unloaded before the request is complete. This enables a fetch() request to send analytics at the end of a session even if the user navigates away from or closes the page.
+
+       This has some advantages over using Navigator.sendBeacon() for the same purpose. For example, you can use HTTP methods other than POST, customize request properties, and access the server response via the fetch Promise fulfillment. It is also available in service workers.
+
+       The body size for keepalive requests is limited to 64 kibibytes.
+
+       Defaults to false.
+
+        * method (optional)
+          * : The request method.
+       Defaults to GET.
+
+        * mode (optional)
+          * : Sets cross-origin behavior for the request. One of the following values:
+            * same-origin
+              * : Disallows cross-origin requests. If a same-origin request is sent to a different origin, the result is a network error.
+            * cors
+              * : If the request is cross-origin then it will use the Cross-Origin Resource Sharing (CORS) mechanism. Only CORS-safelisted response headers are exposed in the response.
+            * no-cors
+              * : Disables CORS for cross-origin requests. This option comes with the following restrictions:
+                * The method may only be one of HEAD, GET or POST.
+                * The headers may only be CORS-safelisted request headers, with the additional restriction that the Range header is also not allowed. This also applies to any headers added by service workers.
+                * The response is _opaque_, meaning that its headers and body are not available to JavaScript, and its status code is always 0.
+       The main application for no-cors is for a service worker: although the response to a no-cors request can't be read by JavaScript, it can be cached by a service worker and then used as a response to an intercepted fetch request. Note that in this situation you don't know whether the request succeeded or not, so you should adopt a caching strategy which enables the cached response to be updated from the network (such as cache first with cache refresh).
+
+            * navigate
+              * : Used only by HTML navigation. A navigate request is created only while navigating between documents.
+       See Making cross-origin requests for more details.
+
+       Defaults to cors.
+
+        * priority (optional)
+          * : Specifies the priority of the fetch request relative to other requests of the same type. Must be one of the following:
+            * high
+              * : A high priority fetch request relative to other requests of the same type.
+            * low
+              * : A low priority fetch request relative to other requests of the same type.
+            * auto
+              * : No user preference for the fetch priority.
+       It is used if no value is set or if an invalid value is set.
+
+       Defaults to auto.
+
+        * privateToken (optional)
+          * : An object containing options for initiating a private state token operation. Possible properties include:
+            * issuers
+              * : An array of strings containing the URLs of issuers that you want to forward redemption records for. This setting is ignored unless operation is set to send-redemption-record, in which case the issuers array must be included.
+            * operation
+              * : A string representing the type of token operation you want to initiate. When specifying the privateToken option, this property is mandatory. Possible values are:
+                * token-request
+                  * : Initiates a token request operation.
+                * token-redemption
+                  * : Initiates a token redemption operation.
+                * send-redemption-record
+                  * : Initiates a send redemption record operation.
+            * refreshPolicy
+              * : An enumerated value that specifies the expected behavior when a non-expired redemption record for the current user and site has previously been set. This setting is ignored unless operation is set to token-redemption. Possible values are:
+                * none
+                  * : The previously-set redemption record should be used, and a new one should not be issued. This is the default value.
+                * refresh
+                  * : A new redemption record is always issued.
+            * version
+              * : A number indicating the version of the cryptographic protocol you wish to use when generating a token. Currently this is always set to 1, which is the only version that the specification supports. When specifying the privateToken option, this property is mandatory.
+        * redirect (optional)
+          * : Determines the browser's behavior in case the server replies with a redirect status. One of the following values:
+            * follow
+              * : Automatically follow redirects.
+            * error
+              * : Reject the promise with a network error when a redirect status is returned.
+            * manual
+              * : Return a response with almost all fields filtered out, to enable a service worker to store the response and later replay it.
+       Defaults to follow.
+
+        * referrer (optional)
+          * : A string specifying the value to use for the request's Referer header. One of the following:
+            * A same-origin relative or absolute URL
+              * : Set the Referer header to the given value. Relative URLs are resolved relative to the URL of the page that made the request.
+            * An empty string
+              * : Omit the Referer header.
+            * about:client
+              * : Set the Referer header to the default value for the context of the request (for example, the URL of the page that made the request).
+       Defaults to about:client.
+
+        * referrerPolicy (optional)
+          * : A string that sets a policy for the Referer header. The syntax and semantics of this option are exactly the same as for the Referrer-Policy header.
+        * signal (optional)
+          * : An AbortSignal. If this option is set, the request can be canceled by calling abort() on the corresponding AbortController.
+        * targetAddressSpace (optional)
+          * : An enumerated value that specifies whether the request is intended to be a loopback, local, or public request. This controls how the user agent will handle mixed-content.
+       Valid values are:
+
+            * local
+              * : The request is to a local address, which is only accessible on the local network; its target will differ on different networks. For example, 192.168.0.1.
+            * loopback
+              * : The request is to a loopback address, which is only accessible on the local device; its target will differ on every device. For example, 127.0.0.1, which is generally known as localhost.
+            * public
+              * : The request is to an address available from anywhere on the internet; its target is the same for all devices globally.
+       See Local Network Access for more information.
+
+       EXAMPLES
+
+       PASSING OPTIONS INTO FETCH()
+
+       In this example we pass the method, body, and headers options directly into the fetch() method call:
+
+         async function post() {
+           const response = await fetch("https://example.org/post", {
+             method: "POST",
+             body: JSON.stringify({ username: "example" }),
+             headers: {
+               "Content-Type": "application/json",
+             },
+           });
+
+           console.log(response.status);
+         }
+
+       PASSING OPTIONS INTO THE REQUEST() CONSTRUCTOR
+
+       In this example we create a Request, passing the same set of options into its constructor, and then pass the request into fetch():
+
+         async function post() {
+           const request = new Request("https://example.org/post", {
+             method: "POST",
+             body: JSON.stringify({ username: "example" }),
+             headers: {
+               "Content-Type": "application/json",
+             },
+           });
+
+           const response = await fetch(request);
+
+           console.log(response.status);
+         }
+
+       PASSING OPTIONS INTO BOTH REQUEST() AND FETCH()
+
+       In this example we create a Request, passing the method, headers, and body options into its constructor. We then pass the request into fetch() along with body and referrer options:
+
+         async function post() {
+           const request = new Request("https://example.org/post", {
+             method: "POST",
+             headers: {
+               "Content-Type": "application/json",
+             },
+             body: JSON.stringify({ username: "example1" }),
+           });
+
+           const response = await fetch(request, {
+             body: JSON.stringify({ username: "example2" }),
+             referrer: "",
+           });
+
+           console.log(response.status);
+         }
+
+       In this case the request will be sent with the following options:
+
+        * method: "POST"
+        * headers: {"Content-Type": "application/json"}
+        * body: '{"username":"example2"}'
+        * referrer: ""
+
+       SPECIFICATIONS
+
+       SEE ALSO
+
+        * Using Fetch
+        * ServiceWorker API
+        * HTTP access control (CORS)
+        * HTTP
+
+Web APIs manual                         from the official documentation

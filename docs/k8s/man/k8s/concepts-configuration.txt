@@ -1,0 +1,86 @@
+K8S.CONCEPTS-CONFIGURATION(1)    Sandbox manual    K8S.CONCEPTS-CONFIGURATION(1)
+
+       NAME
+
+       Configuration - Kubernetes provides ways to separate configuration from code. This is a common
+
+       CONFIGURATION
+
+       Kubernetes provides ways to _separate configuration from code_. This is a common practice that aligns with DevOps as a practice, and with cloud native architecture.
+
+       If you have a container image that allows separate configuration, you can deploy the same application code in different contexts. For example, you can run tests against the built image, and then run that exact same image in a production context. Doing that gives you better confidence in your testing, compared with if you deployed the application one way for tests and a different way in production.
+
+       To learn about configuring the kubectl command-line tool, read configure access to multiple clusters.
+
+       KUBERNETES CONFIGURATION-RELATED APIS #API-KINDS
+
+       Kubernetes provides two main API kinds that you can use to store configuration, ready for a Pod (or other component) to load and use: ConfigMap, and Secret.
+
+       The special-use CertificateSigningRequest and ClusterTrustBundle API kinds also hold configuration data that's relevant to some specific cases, such as TLS configuration.
+
+       All of these configuration mechanisms, even for certificates, are designed so that configuration can be reused and shared across multiple Pods. You typically don't have to write the configuration out once per Pod, and you should design applications where possible so that they can work with shared configuration.
+
+       To learn about using configuration in your applications, read inject data into applications.
+
+       CONFIGMAPS
+
+       SECRETS
+
+       A Secret is an object that contains an amount of confidential data, such as a password, a token, or a key.
+
+       Secrets are similar to ConfigMaps but are specifically intended to hold confidential data. Read the page about Secrets to learn about the benefits (and limitations) around information security and Secrets.
+
+       CONFIGURATION VIA SIDECAR CONTAINERS OR INIT CONTAINERS #CONFIG-HELPER
+
+       You can also use an init container or a sidecar container to provide configuration to your workload.
+
+       This is useful if you already have some means, outside of Kubernetes, to store configuration or security keys or other information that your containers must use, and that shouldn't be stored in container images.
+
+       SIDECAR CONTAINER HELPER #CONFIG-HELPER-SIDECAR
+
+       A _sidecar_ configuration helper runs in the same Pod as the application container, so each Pod has its own sidecar. A typical configuration sidecar fetches configuration data over the Pod network, and then writes it into a volume that is mounted into both containers.
+
+       There are many variations on this basic pattern, that still have a helper container writing configuration for the app container to consume.
+
+       INIT CONTAINER HELPER #CONFIG-HELPER-INIT-CONTAINER
+
+       Pods can have _init_ containers that start before the main application. Unlike sidecars, init containers complete before the Pod's main (application) containers start up, so the configuration only gets set once.
+
+       You have two main options for configuration using init containers:
+
+       CONFIGURATION VIA THE FILESYSTEM #INIT-CONTAINER-SHARED-VOLUME
+
+       With this option, the init container fetches configuration and writes the configuration to a file, or several files, typically to a Pod-local volume.
+
+       CONFIGURATION VIA ENVIRONMENT VARIABLES #INIT-CONTAINER-ENV-FILES
+
+       This is done using a local volume, but only the init container mounts that volume. The kubelet then reads from that volume before starting the app container.
+
+       Read Define Environment Variable Values Using An Init Container to learn more.
+
+       CLUSTER CONFIGURATION
+
+       This section of the documentation is about configuration. However, if you are doing platform-level or cluster-level configuration, read the cluster administration pages and look through the list of cluster administration tasks.
+
+       ## WHATSNEXT
+
+       The following links are all relevant to the overall idea of _configuration_ and Kubernetes:
+
+        * Configure Pods and Containers
+        * Inject Data Into Applications
+        * Policies, another form of configuration
+        * Management of Kubernetes Objects Using Configuration Files,
+       which is about Kubernetes manifests
+
+          * Kubernetes Object Management is also about object management / configuration
+        * Configure Redis Using A ConfigMap
+       (a tutorial)
+
+        * Updating Configuration via a ConfigMap
+       (another tutorial)
+
+       and you can review the list of configuration file formats in the reference section.
+
+       Within this section of the documentation, you can read about:
+
+Kubernetes manual                       from the official documentation

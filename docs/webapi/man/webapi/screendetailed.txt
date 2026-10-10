@@ -1,0 +1,75 @@
+WEBAPI.SCREENDETAILED(1)         Sandbox manual         WEBAPI.SCREENDETAILED(1)
+
+       NAME
+
+       ScreenDetailed - The ScreenDetailed interface of the Window Management API represents detailed information about one specific screen available to the user's 
+
+       SCREENDETAILED
+
+       The ScreenDetailed interface of the Window Management API represents detailed information about one specific screen available to the user's device.
+
+       ScreenDetailed objects can be accessed via the ScreenDetails.screens and ScreenDetails.currentScreen properties.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its parent, Screen._
+
+        * availLeft (read-only) (experimental)
+          * : A number representing the x-coordinate (left-hand edge) of the available screen area.
+        * availTop (read-only) (experimental)
+          * : A number representing the y-coordinate (top edge) of the available screen area.
+        * devicePixelRatio (read-only) (experimental)
+          * : A number representing the screen's device pixel ratio.
+        * isInternal (read-only) (experimental)
+          * : A boolean indicating whether the screen is internal to the device or external.
+        * isPrimary (read-only) (experimental)
+          * : A boolean indicating whether the screen is set as the operating system (OS) primary screen or not.
+        * label (read-only) (experimental)
+          * : A string providing a descriptive label for the screen, for example "Built-in Retina Display".
+        * left (read-only) (experimental)
+          * : A number representing the x-coordinate (left-hand edge) of the total screen area.
+        * top (read-only) (experimental)
+          * : A number representing the y-coordinate (top edge) of the total screen area.
+
+       EVENTS
+
+       _Inherits events from its parent, Screen._
+
+        * change (experimental)
+          * : Fired on a specific screen when any property of the screen changes — width or height, available width or available height, color depth, or orientation, screen position and available screen position, device pixel ratio, label or screen's designation.
+
+       EXAMPLES
+
+       When Window.getScreenDetails() is invoked, the user will be asked for permission to manage windows on all their displays (the status of this permission can be checked using Permissions.query() to query window-management). Provided they grant permission, the resulting ScreenDetails object contains ScreenDetailed objects representing all the screens available to the user's system.
+
+       The following example opens a window in the top-left corner of the OS primary screen:
+
+         // Return ScreenDetails
+         const allScreens = await window.getScreenDetails();
+
+         // Return the primary screen ScreenDetailed object
+         const primaryScreenDetailed = allScreens.screens.find(
+           (screenDetailed) => screenDetailed.isPrimary,
+         );
+
+         // Open a window in the top-left corner of the OS primary screen
+         window.open(
+           "https://example.com",
+           "_blank",
+           `left=${primaryScreenDetailed.availLeft},
+            top=${primaryScreenDetailed.availTop},
+            width=200,
+            height=200`,
+         );
+
+       > See Multi-window learning environment for a full example (see the source code also).
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Window Management API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,110 @@
+WEBAPI.ANIMATION-REMOVE-EVENT(1) Sandbox manual WEBAPI.ANIMATION-REMOVE-EVENT(1)
+
+       NAME
+
+       Animation: remove event - The remove event of the Animation interface fires when the animation is automatically removed by the browser.
+
+       ANIMATION: REMOVE EVENT
+
+       The remove event of the Animation interface fires when the animation is automatically removed by the browser.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("remove", (event) => { })
+
+         onremove = (event) => { }
+
+       EVENT TYPE
+
+       An AnimationPlaybackEvent. Inherits from Event.
+
+       AnimationPlaybackEvent
+
+       EXAMPLES
+
+       REMOVING REPLACED ANIMATIONS
+
+       In this example we have a element, and an event listener that runs whenever the mouse moves. The mousemove event handler sets up an animation that animates the to the position of the mouse pointer. This could result in a huge animations list, which could create a memory leak. For this reason, modern browsers automatically remove forwards-filling animations that are overridden by other animations.
+
+       The number of animations created is displayed. A remove event listener is used to count and display the number of animations removed as well.
+
+       All but one of the animations should eventually be removed.
+
+       HTML
+
+         <button id="start">Click to drag</button>
+         <br />
+         <button id="reset">Reset example</button>
+         <p>
+           Click the button to start the animation (disabled by default to protect those
+           who suffer migraines when experiencing such animations).
+         </p>
+         <p>Animations created: <span id="count-created">0</span></p>
+         <p>Animations removed: <span id="count-removed">0</span></p>
+
+       CSS
+
+         :root,
+         body {
+           margin: 0;
+           padding: 0;
+           height: 100%;
+         }
+
+         button {
+           margin: 0.5rem 0;
+         }
+
+       JAVASCRIPT
+
+         const button = document.querySelector("#start");
+         let created = 0;
+         let removed = 0;
+
+         button.addEventListener(
+           "click",
+           () => {
+             document.body.addEventListener("mousemove", (event) => {
+               const animation = button.animate(
+                 { transform: `translate(${event.clientX}px, ${event.clientY}px)` },
+                 { duration: 500, fill: "forwards" },
+               );
+               created++;
+               showCounts();
+
+               // the remove event fires after the animation is removed
+               animation.addEventListener("remove", () => {
+                 removed++;
+                 showCounts();
+               });
+             });
+           },
+           { once: true },
+         );
+
+         function showCounts() {
+           document.getElementById("count-created").textContent = created;
+           document.getElementById("count-removed").textContent = removed;
+         }
+
+         const reset = document.querySelector("#reset");
+         reset.addEventListener("click", () => {
+           document.location.reload();
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Animations API
+        * Animation, AnimationPlaybackEvent
+        * Animation.replaceState, to check whether an animation has been removed
+        * Animation.persist(), to prevent removal of an animation
+
+Web APIs manual                         from the official documentation

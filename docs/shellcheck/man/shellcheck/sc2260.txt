@@ -1,0 +1,33 @@
+SHELLCHECK.SC2260(1)             Sandbox manual             SHELLCHECK.SC2260(1)
+
+       NAME
+
+       This redirection overrides the output pipe. Use tee to output to both. - env > environment.txt | grep '^ANDROID'
+
+       THIS REDIRECTION OVERRIDES THE OUTPUT PIPE. USE TEE TO OUTPUT TO BOTH
+
+       THIS REDIRECTION OVERRIDES THE OUTPUT PIPE. USE TEE TO OUTPUT TO BOTH
+
+       PROBLEMATIC CODE
+
+         env > environment.txt | grep '^ANDROID'
+
+       CORRECT CODE
+
+         env | tee environment.txt | grep '^ANDROID'
+
+       RATIONALE
+
+       A process only has a single standard output stream. Pipes and output redirections both overwrite it, so you can't use both at the same time. If you try, the redirection takes precedence and the output pipe is closed.
+
+       If you want to dump output to a file while also piping it, use tee as in the example.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

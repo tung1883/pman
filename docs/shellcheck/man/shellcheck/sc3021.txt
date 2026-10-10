@@ -1,0 +1,43 @@
+SHELLCHECK.SC3021(1)             Sandbox manual             SHELLCHECK.SC3021(1)
+
+       NAME
+
+       In POSIX sh, >& filename (as opposed to >& fd) is undefined. - Note: ShellCheck 0.8.0 and below would trigger this warning on the perfectly POSIX compatible construct >& fd. If you are using >& to copy a
+
+       IN POSIX SH, & FILENAME (AS OPPOSED TO & FD) IS UNDEFINED
+
+       IN POSIX SH, & FILENAME (AS OPPOSED TO & FD) IS UNDEFINED
+
+       Note: ShellCheck 0.8.0 and below would trigger this warning on the perfectly POSIX compatible construct >& fd. If you are using >& to copy an integer file descriptor, please ignore this warning.
+
+       PROBLEMATIC CODE
+
+         mycommand >& log.txt
+
+       CORRECT CODE
+
+         mycommand > log.txt 2>&1
+
+       The following construct is also fine, as it uses an integer file descriptor instead of a filename:
+
+         fd=3
+         mycommand >& $fd
+
+       RATIONALE
+
+       There are two forms of the >& file descriptor operator:
+
+        * >& integer such as >& 3 is a POSIX compatible synonym for 1>&3
+        * >& filename such as >& log.txt is a Bash specific synonym for > log.txt 2>&1
+       If (and only if) you are using the latter form, write it out as shown in the correct example to ensure portability.
+
+       EXCEPTIONS
+
+       ShellCheck 0.8.0 and below incorrectly emits this warning for constructs like >& $var, even though this would be POSIX compatible when $var is an integer. In such cases, please ignore this warning.
+
+       RELATED RESOURCES
+
+        * Shellcheck issue #2520
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

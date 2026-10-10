@@ -1,0 +1,57 @@
+WEBAPI.TEXTFORMAT-UNDERLINESTYLE(1) Sandbox manual WEBAPI.TEXTFORMAT-UNDERLINESTYLE(1)
+
+       NAME
+
+       TextFormat: underlineStyle property - The underlineStyle property of the TextFormat interface indicates the style of the underline that needs to be applied to the text range that
+
+       TEXTFORMAT: UNDERLINESTYLE PROPERTY
+
+       The underlineStyle property of the TextFormat interface indicates the style of the underline that needs to be applied to the text range that is being formatted.
+
+       VALUE
+
+       A String that is one of the following values:
+
+        * "none": No underline.
+        * "solid": A solid underline.
+        * "double": A double underline.
+        * "dotted": A dotted underline.
+        * "dashed": A dashed underline.
+        * "wavy": A wavy underline.
+
+       EXAMPLES
+
+       READING THE UNDERLINE STYLE THAT NEEDS TO BE APPLIED
+
+       The following example shows how to use the textformatupdate event's underlineStyle property to determine the underline style that needs to be applied to the text being formatted. Note that the event listener callback in this example is only called when using an IME window to compose text.
+
+         <div id="editor"></div>
+
+         #editor {
+           height: 200px;
+           background: #eeeeee;
+         }
+
+         const editorEl = document.getElementById("editor");
+         const editContext = new EditContext(editorEl);
+         editorEl.editContext = editContext;
+
+         editContext.addEventListener("textformatupdate", (e) => {
+           const formats = e.getTextFormats();
+
+           for (const format of formats) {
+             console.log(
+               `IME wants to apply a ${format.underlineStyle} underline between ${format.rangeStart} and ${format.rangeEnd}.`,
+             );
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The TextFormat interface it belongs to.
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,78 @@
+WEBAPI.EDITCONTEXT-UPDATESELECTION(1) Sandbox manual WEBAPI.EDITCONTEXT-UPDATESELECTION(1)
+
+       NAME
+
+       EditContext: updateSelection() method - The updateSelection() method of the EditContext interface updates the internal state of the selection within the editable text context. This
+
+       EDITCONTEXT: UPDATESELECTION() METHOD
+
+       The updateSelection() method of the EditContext interface updates the internal state of the selection within the editable text context. This method is used to update the selection state when the user interacts with the text rendering in the EditContext's associated element, such as by clicking or dragging the mouse, or by using the keyboard.
+
+       SYNTAX
+
+         updateSelection(start, end)
+
+       PARAMETERS
+
+        * start
+          * : A number representing the new selection start.
+        * end
+          * : A number representing the new selection end. If the start and end values are the same, the selection is equivalent to a caret.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the method is called with fewer than two arguments, or if either argument is not a non-negative number.
+
+       EXAMPLES
+
+       UPDATING THE SELECTION WHEN THE USER INTERACTS WITH THE TEXT
+
+       This example shows how to use the updateSelection method to update the selection in the EditContext of a canvas element when the arrow keys are used to move the caret or select text in the editable region.
+
+         <canvas id="editor-canvas"></canvas>
+
+         const canvas = document.getElementById("editor-canvas");
+         const editContext = new EditContext();
+         canvas.editContext = editContext;
+
+         canvas.addEventListener("keydown", (e) => {
+           if (e.key === "ArrowLeft") {
+             const newPosition = Math.max(editContext.selectionStart - 1, 0);
+
+             if (e.shiftKey) {
+               editContext.updateSelection(newPosition, editContext.selectionEnd);
+             } else {
+               editContext.updateSelection(newPosition, newPosition);
+             }
+           } else if (e.key === "ArrowRight") {
+             const newPosition = Math.min(
+               editContext.selectionEnd + 1,
+               editContext.text.length,
+             );
+
+             if (e.shiftKey) {
+               editContext.updateSelection(editContext.selectionStart, newPosition);
+             } else {
+               editContext.updateSelection(newPosition, newPosition);
+             }
+           }
+
+           console.log(
+             `The new EditContext selection is ${editContext.selectionStart}, ${editContext.selectionEnd}`,
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The EditContext interface it belongs to.
+
+Web APIs manual                         from the official documentation

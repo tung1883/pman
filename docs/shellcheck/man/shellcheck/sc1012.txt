@@ -1,0 +1,77 @@
+SHELLCHECK.SC1012(1)             Sandbox manual             SHELLCHECK.SC1012(1)
+
+       NAME
+
+       \t is just literal t here. For tab, use "$(printf '\t')" instead. - $ var=foo\tbar
+
+       T IS JUST LITERAL T HERE. FOR TAB, USE (PRINTF ' T') INSTEAD
+
+       T IS JUST LITERAL T HERE. FOR TAB, USE (PRINTF ' T') INSTEAD
+
+       PROBLEMATIC CODE
+
+         $ var=foo\tbar
+         $ printf '<%s>\n' "$var"
+         <footbar>
+
+         $ var=foo\\tbar
+         $ printf '<%s>\n' "$var"
+         <foo\tbar>
+
+       or
+
+         # Want newline
+         $ var=foo\nbar
+         $ printf '<%s>\n' "$var"
+         <foonbar>
+
+         $ var=foo\\nbar
+         $ printf '<%s>\n' "$var"
+         <foo\nbar>
+
+       CORRECT CODE
+
+         $ var="foo$(printf '\t')bar"  # As suggested in warning
+         $ printf '<%s>\n' "$var"
+         <foo	bar>
+
+         $ var="$(printf 'foo\tbar')"  # Equivalent alternative
+         $ printf '<%s>\n' "$var"
+         <foo	bar>
+
+       or
+
+         $ # Literal, quoted newline
+         $ line="foo
+         > bar"
+         $ printf '<%s>\n' "$line"
+         <foo
+         bar>
+
+       or
+
+         $ # Newline using ANSI-C quoting
+         $ line=$'foo\nbar'
+         $ printf '<%s>\n' "$line"
+         <foo
+         bar>
+
+       RATIONALE
+
+       ShellCheck has found a \t, \n or \r in a context where they just become regular letters t, n or r. Most likely, it was intended as a tab, newline or carriage return.
+
+       To generate such characters (plus other less common ones including \a, \f and octal escapes) , use printf as in the example. The exception is for newliness that would be stripped by command substitution; in these cases, use a literal quoted newline instead.
+
+       Other characters like \z generate a [[SC1001]] info message, as the intent is less certain.
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+       https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html#index-printf https://pubs.opengroup.org/onlinepubs/9799919799/utilities/printf.html https://www.gnu.org/software/bash/manual/html_node/ANSI_002dC-Quoting.html
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

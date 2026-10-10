@@ -1,0 +1,41 @@
+SHELLCHECK.SC2328(1)             Sandbox manual             SHELLCHECK.SC2328(1)
+
+       NAME
+
+       This redirection takes output away from the command substitution. - (and companion warning "This command substitution will be empty because the command's output gets redirected away" which points to the relev
+
+       THIS REDIRECTION TAKES OUTPUT AWAY FROM THE COMMAND SUBSTITUTION
+
+       THIS REDIRECTION TAKES OUTPUT AWAY FROM THE COMMAND SUBSTITUTION
+
+       (and companion warning "This command substitution will be empty because the command's output gets redirected away" which points to the relevant command substitution)
+
+       PROBLEMATIC CODE
+
+         var=$(tr -d ':' < input.txt > output.txt)
+
+       CORRECT CODE
+
+         var=$(tr -d ':' < input.txt)
+
+         # If the output should be captured IN ADDITION to being written to file
+         var=$(tr -d ':' < input.txt | tee output.txt)
+
+         # If the output should NOT BE captured at all
+         tr -d ':' < input.txt > output.txt
+
+       RATIONALE
+
+       ShellCheck has found a command substitution ($(..), .. ) that appears to never capture any output because the command's output is being redirected.
+
+       Decide whether you want the output to be captured (by removing the redirection), to go into wherever it's redirected (by not running the command in a command substitution), or both (by using tee to copy the output to both file and stdout).
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

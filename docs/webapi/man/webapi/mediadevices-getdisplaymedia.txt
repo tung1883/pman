@@ -1,0 +1,165 @@
+WEBAPI.MEDIADEVICES-GETDISPLAYMEDIA(1) Sandbox manual WEBAPI.MEDIADEVICES-GETDISPLAYMEDIA(1)
+
+       NAME
+
+       MediaDevices: getDisplayMedia() method - The getDisplayMedia() method of the MediaDevices interface prompts the user to select and grant permission to capture the contents of a disp
+
+       MEDIADEVICES: GETDISPLAYMEDIA() METHOD
+
+       The getDisplayMedia() method of the MediaDevices interface prompts the user to select and grant permission to capture the contents of a display or portion thereof (such as a window) as a MediaStream.
+
+       The resulting stream can then be recorded using the MediaStream Recording API or transmitted as part of a WebRTC session.
+
+       See Using the Screen Capture API for more details and an example.
+
+       SYNTAX
+
+         getDisplayMedia()
+         getDisplayMedia(options)
+
+       PARAMETERS
+
+        * options (optional)
+          * : An object specifying requirements for the returned MediaStream.
+       The options for getDisplayMedia() work in the same as the constraints for the MediaDevices.getUserMedia() method, although in that case only audio and video can be specified. The list of possible option properties for getDisplayMedia() is as follows:
+
+            * video (optional)
+              * : A boolean or a MediaTrackConstraints instance; the default value is true.
+       If this option is omitted or set to true, the returned MediaStream will contain a video track. Since getDisplayMedia() requires a video track, if this option is set to false the promise will reject with a TypeError.
+
+            * audio (optional)
+              * : A boolean or a MediaTrackConstraints instance; the default value is false.
+       A value of true indicates that the returned MediaStream will contain an audio track, if audio is supported and available for the display surface chosen by the user.
+
+            * controller (experimental) (optional)
+              * : A CaptureController object instance containing methods that can be used to further manipulate the capture session if included.
+            * monitorTypeSurfaces (experimental) (optional)
+              * : An enumerated value specifying whether the browser should offer entire screens in the screen capture options presented to the user alongside tab and window options.
+       This option is intended to protect companies from leakage of private information through employee error when using video conferencing apps. Possible values are:
+
+                * include: Hints that the browser should include screen options.
+                * exclude: Hints that screen options should be excluded.
+       > You cannot set monitorTypeSurfaces: "exclude" at the same time as displaySurface: "monitor" as the two settings are contradictory.
+       > Trying to do so will result in the getDisplayMedia() call failing with a TypeError.
+            * preferCurrentTab {{non-standard_inline}} (experimental) (optional)
+              * : A boolean; a value of true instructs the browser to offer the current tab as the most prominent capture source, that is, as a separate "This Tab" option in the "Choose what to share" options presented to the user.
+       This is useful as many app types generally just want to share the current tab. For example, a slide deck app might want to let the user stream the current tab containing the presentation to a virtual conference.
+
+            * selfBrowserSurface (experimental) (optional)
+              * : An enumerated value specifying whether the browser should allow the user to select the current tab for capture.
+       This helps to avoid the "infinite hall of mirrors" effect experienced when a video conferencing app inadvertently shares its own display. Possible values are:
+
+                * include: Hints that the browser should include the current tab in the choices offered for capture.
+                * exclude: Hints that the current tab should be excluded from the choices.
+            * surfaceSwitching (experimental) (optional)
+              * : An enumerated value specifying whether the browser should display a control to allow the user to dynamically switch the shared tab during screen-sharing.
+       This is more convenient than having to go through the whole sharing process again each time a user wants to switch the shared tab. Possible values are:
+
+                * include: Hints that the browser should include the control.
+                * exclude: Hints that the control should not be shown.
+            * systemAudio (experimental) (optional)
+              * : An enumerated value that hints whether the browser should include system audio among the possible audio sources offered to the user when a monitor is shared.
+       Possible values are:
+
+                * include: Hints that the browser should include the system audio in the list of choices.
+                * exclude: Hints that system audio should be excluded from the choices shown.
+       Browsers may ignore this hint and determine which audio sources to offer, sometimes based on operating system constraints. For this reason the returned stream might contain no audio track even when audio is true and systemAudio is include. In Chrome (documentation), systemAudio: "include" does not guarantee that system audio will be available, but systemAudio: "exclude" prevents system audio from being offered when sharing a screen (audio from a shared browser tab or window may still be available).
+
+            * windowAudio (experimental) (optional)
+              * : An enumerated value that hints to the browser what audio sharing option the user should be presented with alongside window sharing options. Possible values are:
+                * exclude: Hints that audio should not be shareable when a window sharing option is chosen.
+                * window: Hints that when a window sharing option is chosen, only audio originating from that window should be shared.
+                * system: Hints that when a window sharing option is chosen, all system audio should be shared.
+       > For most of these options, a default value is not mandated by the spec. For standalone options, where a default is not mentioned, see the Browser compatibility section for browser-specific defaults.
+       > See the article Capabilities, constraints, and settings for a lot more detail on how these options work.
+
+       RETURN VALUE
+
+       A Promise that resolves to a MediaStream containing a video track whose contents come from a user-selected screen area, as well as an optional audio track.
+
+       > Browser support for audio tracks varies, both in terms of whether or not they're supported at all by the media recorder and in terms of the audio sources supported.
+       > Check the compatibility table for details for each browser.
+
+       EXCEPTIONS
+
+        * AbortError DOMException
+          * : Thrown if an error or failure does not match any of the other exceptions listed here.
+        * InvalidStateError DOMException
+          * : Thrown if the call to getDisplayMedia() was not made from code running due to a transient activation, such as an event handler.
+       Or if the browser context is not fully active or does not focused. Or if the controller options has been already used in creating another MediaStream.
+
+        * NotAllowedError DOMException
+          * : Thrown if the permission to access a screen area was denied by the user, or the current browsing instance is not permitted access to screen sharing (for example by a Permissions Policy).
+        * NotFoundError DOMException
+          * : Thrown if no sources of screen video are available for capture.
+        * NotReadableError DOMException
+          * : Thrown if the user selected a screen, window, tab, or another source of screen data, but a hardware or operating system level error or lockout occurred, preventing the sharing of the selected source.
+        * OverconstrainedError DOMException
+          * : Thrown if, after creating the stream, applying any specified constraints fails because no compatible stream could be generated.
+        * TypeError
+          * : Thrown if the specified options include values that are not permitted when calling getDisplayMedia(), for example a video property set to false, or if any specified MediaTrackConstraints are not permitted.
+       min and exact values are not permitted in constraints used in getDisplayMedia() calls.
+
+       SECURITY
+
+       Because getDisplayMedia() could be used in nefarious ways, it can be a source of significant privacy and security concerns. For that reason, the specification details measures browsers are required to take in order to fully support getDisplayMedia().
+
+        * The specified options can't be used to limit the choices available to the user.
+       Instead, they must be applied after the user chooses a source, in order to generate output that matches the options.
+
+        * The go-ahead permission to use getDisplayMedia() cannot be persisted for reuse.
+       The user must be prompted for permission every time.
+
+        * Transient user activation is required.
+       The user has to interact with the page or a UI element in order for this feature to work.
+
+        * Browsers are encouraged to provide a warning to users about sharing displays or windows that contain browsers, and to keep a close eye on what other content might be getting captured and shown to other users.
+
+       EXAMPLES
+
+       In the example below a startCapture() method is created, which initiates screen capture given a set of options specified by the displayMediaOptions parameter.
+
+         const displayMediaOptions = {
+           video: {
+             displaySurface: "browser",
+           },
+           audio: {
+             suppressLocalAudioPlayback: false,
+           },
+           preferCurrentTab: false,
+           selfBrowserSurface: "exclude",
+           systemAudio: "include",
+           surfaceSwitching: "include",
+           monitorTypeSurfaces: "include",
+         };
+
+         async function startCapture(displayMediaOptions) {
+           let captureStream;
+
+           try {
+             captureStream =
+               await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+           } catch (err) {
+             console.error(`Error: ${err}`);
+           }
+           return captureStream;
+         }
+
+       This uses await to asynchronously wait for getDisplayMedia() to resolve with a MediaStream which contains the display contents as requested by the specified options. The stream is then returned to the caller for use, perhaps for adding to a WebRTC call using RTCPeerConnection.addTrack() to add the video track from the stream.
+
+       > The Screen sharing controls demo provides a complete implementation that allows you to create a screen capture with your choice of getDisplayMedia() constraints and options.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Screen Capture API
+        * Using the Screen Capture API
+        * Media Capture and Streams API
+        * WebRTC API
+        * getUserMedia(): Capturing media from a
+       camera and/or microphone
+
+Web APIs manual                         from the official documentation

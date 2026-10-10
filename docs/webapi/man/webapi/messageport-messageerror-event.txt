@@ -1,0 +1,64 @@
+WEBAPI.MESSAGEPORT-MESSAGEERROR-EVENT(1) Sandbox manual WEBAPI.MESSAGEPORT-MESSAGEERROR-EVENT(1)
+
+       NAME
+
+       MessagePort: messageerror event - The messageerror event is fired on a MessagePort object when it receives a message that can't be deserialized.
+
+       MESSAGEPORT: MESSAGEERROR EVENT
+
+       The messageerror event is fired on a MessagePort object when it receives a message that can't be deserialized.
+
+       This event is not cancellable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("messageerror", (event) => { })
+
+         onmessageerror = (event) => { }
+
+       EVENT TYPE
+
+       A MessageEvent. Inherits from Event.
+
+       MessageEvent
+
+       EXAMPLES
+
+       ATTEMPTING TO SHARE MEMORY
+
+       A common cause of messageerror events is attempting to send a SharedArrayBuffer object, or a buffer view backed by one, across agent clusters. For example, a window is not in the same agent cluster as a shared worker it created, so suppose the page runs the following code:
+
+         const worker = new SharedWorker("worker.js");
+         worker.port.start();
+         worker.port.addEventListener("message", (event) => {
+           worker.port.postMessage(new SharedArrayBuffer(1024));
+         });
+
+       And worker.js contains the following code:
+
+         self.addEventListener("connect", (event) => {
+           console.log("Hello");
+           const port = event.ports[0];
+           port.start();
+           port.postMessage("Port connected");
+           port.addEventListener("messageerror", (event) => {
+             console.log("Message error");
+           });
+         });
+
+       Then the shared worker will receive a messageerror event when it tries to deserialize the message sent from the window.
+
+       > You can use browser devtools to debug your SharedWorker, by entering a URL in your browser address bar to access the devtools workers inspector; for example, in Chrome, the URL chrome://inspect/#workers, and in Firefox, the URL about:debugging#workers.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Related events: message.
+        * Using channel messaging
+
+Web APIs manual                         from the official documentation

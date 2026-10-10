@@ -1,0 +1,33 @@
+DOCKER.BUILD-CI-GITHUB-ACTIONS-EXPORT-DOCKER(1) Sandbox manual DOCKER.BUILD-CI-GITHUB-ACTIONS-EXPORT-DOCKER(1)
+
+       NAME
+
+       Export to Docker with GitHub Actions - You may want your build result to be available in the Docker client through
+
+       EXPORT TO DOCKER WITH GITHUB ACTIONS
+
+       You may want your build result to be available in the Docker client through docker images to be able to use it in another step of your workflow:
+
+         name: ci
+
+         on:
+           push:
+
+         jobs:
+           docker:
+             runs-on: ubuntu-latest
+             steps:
+               - name: Set up Docker Buildx
+                 uses: docker/setup-buildx-action@
+
+               - name: Build
+                 uses: docker/build-push-action@
+                 with:
+                   load: true
+                   tags: myimage:latest
+
+               - name: Inspect
+                 run: |
+                   docker image inspect myimage:latest
+
+Docker manual                           from the official documentation

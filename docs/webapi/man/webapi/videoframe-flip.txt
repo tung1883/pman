@@ -1,0 +1,41 @@
+WEBAPI.VIDEOFRAME-FLIP(1)        Sandbox manual        WEBAPI.VIDEOFRAME-FLIP(1)
+
+       NAME
+
+       VideoFrame: flip property - windowanddedicated
+
+       VIDEOFRAME: FLIP PROPERTY
+
+       window_and_dedicated
+
+       The flip property of the VideoFrame interface returns a boolean that indicates whether the VideoFrame is horizontally mirrored.
+
+       VALUE
+
+       A boolean. If true, horizontal mirroring is applied. Defaults to false.
+
+       EXAMPLES
+
+       DETECTING WHEN A CAMERA VIDEO IS FLIPPED
+
+       Given a stream of video frames from a camera, obtained using a MediaStreamTrackProcessor, you can check the flip property on the VideoFrame objects to see whether or not the frames are flipped.
+
+         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+         const track = stream.getTracks()[0];
+
+         const trackProcessor = new MediaStreamTrackProcessor(track);
+
+         const reader = trackProcessor.readable.getReader();
+         while (true) {
+           const result = await reader.read();
+           if (result.done) break;
+           const frameFromCamera = result.value;
+           // Returns `true` if the frame is horizontally flipped
+           console.log(frameFromCamera.flip);
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

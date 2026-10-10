@@ -1,0 +1,95 @@
+WEBAPI.SERVICEWORKER(1)          Sandbox manual          WEBAPI.SERVICEWORKER(1)
+
+       NAME
+
+       ServiceWorker - The ServiceWorker interface of the Service Worker API provides a reference to a service worker. Multiple browsing contexts (e.g., pages, wor
+
+       SERVICEWORKER
+
+       The ServiceWorker interface of the Service Worker API provides a reference to a service worker. Multiple browsing contexts (e.g., pages, workers, etc.) can be associated with the same service worker, each through a unique ServiceWorker object.
+
+       A ServiceWorker object is available via a number of properties:
+
+        * ServiceWorkerRegistration.active
+        * ServiceWorkerGlobalScope.serviceWorker
+        * ServiceWorkerContainer.controller — when the service worker is in activating or activated state
+        * ServiceWorkerRegistration.installing — when the service worker is in installing state
+        * ServiceWorkerRegistration.waiting — when the service worker is in installed state
+       The ServiceWorker.state property and statechange event can be used to check and observe changes in the lifecycle-state of the object's associated service worker. Related lifecycle events, such as install and activate are fired at the service worker itself.
+
+       Service workers allow static import of ECMAScript modules, if supported, using import. Dynamic import is disallowed by the specification — calling import() will throw.
+
+       Service workers can only be registered in the Window scope in some or all browsers, because the ServiceWorker object is not exposed to DedicatedWorkerGlobalScope and SharedWorkerGlobalScope. Check the browser compatibility for information.
+
+       INSTANCE PROPERTIES
+
+       _The ServiceWorker interface inherits properties from its parent, EventTarget._
+
+        * ServiceWorker.scriptURL (read-only)
+          * : Returns the ServiceWorker serialized script URL defined as part of ServiceWorkerRegistration. The URL must be on the same origin as the document that registers the ServiceWorker.
+        * ServiceWorker.state (read-only)
+          * : Returns the state of the service worker. It returns one of the following values: parsed, installing, installed, activating, activated, or redundant.
+
+       INSTANCE METHODS
+
+       _The ServiceWorker interface inherits methods from its parent, EventTarget._
+
+        * ServiceWorker.postMessage()
+          * : Sends a message — consisting of any structured-cloneable JavaScript object — to the service worker. The message is transmitted to the service worker using a message event on its global scope.
+
+       EVENTS
+
+        * statechange
+          * : Fired when ServiceWorker.state changes.
+        * error
+          * : Fired when an error happens inside the ServiceWorker object.
+
+       EXAMPLES
+
+       This code snippet is from the service worker registration-events sample (live demo). The code listens for any change in the ServiceWorker.state and returns its value.
+
+         if ("serviceWorker" in navigator) {
+           navigator.serviceWorker
+             .register("service-worker.js", {
+               scope: "./",
+             })
+             .then((registration) => {
+               let serviceWorker;
+               if (registration.installing) {
+                 serviceWorker = registration.installing;
+                 document.querySelector("#kind").textContent = "installing";
+               } else if (registration.waiting) {
+                 serviceWorker = registration.waiting;
+                 document.querySelector("#kind").textContent = "waiting";
+               } else if (registration.active) {
+                 serviceWorker = registration.active;
+                 document.querySelector("#kind").textContent = "active";
+               }
+               if (serviceWorker) {
+                 // logState(serviceWorker.state);
+                 serviceWorker.addEventListener("statechange", (e) => {
+                   // logState(e.target.state);
+                 });
+               }
+             })
+             .catch((error) => {
+               // Something went wrong during registration. The service-worker.js file
+               // might be unavailable or contain a syntax error.
+             });
+         } else {
+           // The current browser doesn't support service workers.
+           // Perhaps it is too old or we are not in a Secure Context.
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The Offline Cookbook (service workers)
+        * Using Service Workers
+        * Service worker basic code example
+        * Using web workers
+
+Web APIs manual                         from the official documentation

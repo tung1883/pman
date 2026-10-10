@@ -1,0 +1,22 @@
+APACHE.FD-LIMITS(1)              Sandbox manual              APACHE.FD-LIMITS(1)
+
+       SPLITTING UP YOUR LOG FILES
+
+       If you want to log multiple virtual hosts to the same log file, you may want to split up the log files afterwards in order to run statistical analysis of the various virtual hosts. This can be accomplished in the following manner.
+
+       First, you will need to add the virtual host information to the log entries. This can be done using the  LogFormat directive, and the %v variable. Add this to the beginning of your log format string:
+
+         LogFormat "%v %h %l %u %t \"%r\" %>s %b" vhost
+         CustomLog logs/multiple_vhost_log vhost
+
+       This will create a log file in the common log format, but with the canonical virtual host (whatever appears in the ServerName directive) prepended to each line. (See mod_log_config for more about customizing your log files.)
+
+       When you wish to split your log file into its component parts (one file per virtual host), you can use the program split-logfile to accomplish this. You'll find this program in the support directory of the Apache distribution.
+
+       Run this program with the command:
+
+       split-logfile < /logs/multiple_vhost_log
+
+       This program, when run with the name of your vhost log file, will generate one file for each virtual host that appears in your log file. Each file will be called hostname.log.
+
+Apache HTTP Server manual               bundled documentation

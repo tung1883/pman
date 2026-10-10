@@ -1,0 +1,58 @@
+WEBAPI.SHAREDSTORAGE-SET(1)      Sandbox manual      WEBAPI.SHAREDSTORAGE-SET(1)
+
+       NAME
+
+       SharedStorage: set() method - The set() method of the SharedStorage interface either stores a new key-value pair in the current origin's shared storage or updates an exis
+
+       SHAREDSTORAGE: SET() METHOD
+
+       {{non-standard_header}}
+
+       The set() method of the SharedStorage interface either stores a new key-value pair in the current origin's shared storage or updates an existing one.
+
+       SYNTAX
+
+         set(key, value)
+         set(key, value, options)
+
+       PARAMETERS
+
+        * key
+          * : A string representing the key in the key-value pair that you want to add or update.
+        * value
+          * : A string representing the value you want to add or update.
+        * options (optional)
+          * : An options object containing the following properties:
+            * ignoreIfPresent
+              * : A boolean value. The value true causes the set operation to abort if a key-value pair with the specified key already exists. The default value false causes the set operation to overwrite the previous value.
+
+       RETURN VALUE
+
+       A Promise that fulfills with undefined.
+
+       EXCEPTIONS
+
+        * The Promise rejects with a TypeError if:
+          * The created entry was not successfully stored in the database due to shared storage not being available (for example it is disabled using a browser setting).
+          * key and/or value exceed the browser-defined maximum length.
+          * The calling site does not have the Shared Storage API included in a successful privacy sandbox enrollment process.
+        * In the case of WorkletSharedStorage, the Promise rejects with a TypeError if the worklet module has not been added with SharedStorageWorklet.addModule().
+       > In the case of WindowSharedStorage, if the set() operation doesn't successfully write to the database for a reason other than shared storage not being available, no error is thrown — the operation still fulfills with undefined.
+
+       EXAMPLES
+
+         window.sharedStorage
+           .set("ab-testing-group", "0", {
+             ignoreIfPresent: true,
+           })
+           .then(() => console.log("Set operation completed"));
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Shared Storage API
+
+Web APIs manual                         from the official documentation

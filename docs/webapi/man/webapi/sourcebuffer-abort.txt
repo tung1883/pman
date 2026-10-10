@@ -1,0 +1,54 @@
+WEBAPI.SOURCEBUFFER-ABORT(1)     Sandbox manual     WEBAPI.SOURCEBUFFER-ABORT(1)
+
+       NAME
+
+       SourceBuffer: abort() method - windowanddedicated
+
+       SOURCEBUFFER: ABORT() METHOD
+
+       window_and_dedicated
+
+       The abort() method of the SourceBuffer interface aborts the current segment and resets the segment parser.
+
+       SYNTAX
+
+         abort()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * InvalidStateError DOMException
+          * : Thrown if the MediaSource.readyState property of the
+       parent media source is not equal to open, or this SourceBuffer has been removed from the MediaSource.
+
+       EXAMPLES
+
+       The spec description of abort() is somewhat confusing — consider for example step 1 of reset parser state. The MSE API is fully asynchronous, but this step seems to suggest a synchronous (blocking) operation, which doesn't make sense.
+
+       Saying that, current implementations can be useful in certain situations, when you want to stop the current append (or whatever) operation occurring on a source buffer, and then immediately start performing operations on it again. For example, consider this code:
+
+         sourceBuffer.addEventListener("updateend", (ev) => {
+           // …
+         });
+
+         sourceBuffer.appendBuffer(buf);
+
+       Let's say that after the call to appendBuffer BUT before the updateend event fires (i.e., a buffer is being appended but the operation has not yet completed) a user "scrubs" the video seeking to a new point in time. In this case you would want to manually call abort() on the source buffer to stop the decoding of the current buffer, then fetch and append the newly requested segment that relates to the current new position of the video.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * MediaSource
+        * SourceBufferList
+
+Web APIs manual                         from the official documentation

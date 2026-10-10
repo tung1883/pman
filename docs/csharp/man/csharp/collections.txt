@@ -1,0 +1,245 @@
+CSHARP.COLLECTIONS(1)            Sandbox manual            CSHARP.COLLECTIONS(1)
+
+       NAME
+
+       Collections - Learn about collections in C#, which are used to work with groups of objects. Collections have different characteristics regarding adding an
+
+       COLLECTIONS
+
+       The .NET runtime provides many collection types that store and manage groups of related objects. Some of the collection types, such as Array, Span1, and Memory1, are recognized in the C# language. In addition, interfaces like IEnumerable1 are recognized in the language for enumerating the elements of a collection.
+
+       Collections provide a flexible way to work with groups of objects. You can classify different collections by these characteristics:
+
+        * Element access: Every collection can be enumerated to access each element in order. Some collections access elements by index, the element's position in an ordered collection. The most common example is List1. Other collections access elements by key, where a value is associated with a single key. The most common example is Dictionary2. You choose between these collection types based on how your app accesses elements.
+        * Performance profile: Every collection has different performance profiles for actions like adding an element, finding an element, or removing an element. You can pick a collection type based on the operations used most in your app.
+        * Grow and shrink dynamically: Most collections support adding or removing elements dynamically. Notably, Array, Span1, and Memory1 don't.
+       In addition to those characteristics, the runtime provides specialized collections that prevent adding or removing elements or modifying the elements of the collection. Other specialized collections provide safety for concurrent access in multithreaded apps.
+
+       You can find all the collection types in the .NET API reference. For more information, see Commonly Used Collection Types and Selecting a Collection Class.
+
+       > For the examples in this article, you might need to add using directives for the System.Collections.Generic and System.Linq namespaces.
+       Arrays are represented by Array and have syntax support in the C# language. This syntax provides more concise declarations for array variables.
+
+       Span1 is a ref struct type that provides a snapshot over a sequence of elements without copying those elements. The compiler enforces safety rules to ensure the Span can't be accessed after the sequence it references is no longer in scope. It's used in many .NET APIs to improve performance. Memory1 provides similar behavior when you can't use a ref struct type.
+
+       Beginning with C# 12, all of the collection types can be initialized by using a Collection expression.
+
+       INDEXABLE COLLECTIONS
+
+       An indexable collection is a collection where you can access each element by using its index. An element's index is the number of elements before it in the sequence. Therefore, the element referenced by index 0 is the first element, index 1 is the second, and so on. These examples use the List1 class. It's the most common indexable collection.
+
+       The following example creates and initializes a list of strings, removes an element, and adds an element to the end of the list. After each modification, it iterates through the strings by using a foreach statement or a for loop:
+
+         // Create a list of strings by using a
+         // collection initializer.
+         List<string> salmons = ["chinook", "coho", "pink", "sockeye"];
+
+         // Iterate through the list.
+         foreach (var salmon in salmons)
+         {
+             Console.Write(salmon + " ");
+         }
+         // Output: chinook coho pink sockeye
+
+         // Remove an element from the list by specifying
+         // the object.
+         salmons.Remove("coho");
+
+         // Iterate using the index:
+         for (var index = 0; index < salmons.Count; index++)
+         {
+             Console.Write(salmons[index] + " ");
+         }
+         // Output: chinook pink sockeye
+
+         // Add the removed element
+         salmons.Add("coho");
+         // Iterate through the list.
+         foreach (var salmon in salmons)
+         {
+             Console.Write(salmon + " ");
+         }
+         // Output: chinook pink sockeye coho
+
+       The following example removes elements from a list by index. Instead of a foreach statement, it uses a for statement that iterates in descending order. The RemoveAt* method causes elements after a removed element to have a lower index value.
+
+         List<int> numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+         // Remove odd numbers.
+         for (var index = numbers.Count - 1; index >= 0; index--)
+         {
+             if (numbers[index] % 2 == 1)
+             {
+                 // Remove the element by specifying
+                 // the zero-based index in the list.
+                 numbers.RemoveAt(index);
+             }
+         }
+
+         // Iterate through the list.
+         // A lambda expression is placed in the ForEach method
+         // of the List(T) object.
+         numbers.ForEach(
+             number => Console.Write(number + " "));
+         // Output: 0 2 4 6 8
+
+       For the type of elements in the List1, you can also define your own class. In the following example, the Galaxy class that the List1 uses is defined in the code.
+
+         private static void IterateThroughList()
+         {
+             var theGalaxies = new List<Galaxy>
+             {
+                 new (){ Name="Tadpole", MegaLightYears=400},
+                 new (){ Name="Pinwheel", MegaLightYears=25},
+                 new (){ Name="Milky Way", MegaLightYears=0},
+                 new (){ Name="Andromeda", MegaLightYears=3}
+             };
+
+             foreach (Galaxy theGalaxy in theGalaxies)
+             {
+                 Console.WriteLine(theGalaxy.Name + "  " + theGalaxy.MegaLightYears);
+             }
+
+             // Output:
+             //  Tadpole  400
+             //  Pinwheel  25
+             //  Milky Way  0
+             //  Andromeda  3
+         }
+
+         public class Galaxy
+         {
+             public string Name { get; set; }
+             public int MegaLightYears { get; set; }
+         }
+
+       For more information about indices, see the Explore indexes and ranges article.
+
+       KEY/VALUE PAIR COLLECTIONS
+
+       These examples use the Dictionary2 class. It's the most common dictionary collection. A dictionary collection enables you to access elements in the collection by using the key of each element. Each addition to the dictionary consists of a value and its associated key.
+
+       The following example creates a Dictionary collection and iterates through the dictionary by using a foreach statement.
+
+         private static void IterateThruDictionary()
+         {
+             Dictionary<string, Element> elements = BuildDictionary();
+
+             foreach (KeyValuePair<string, Element> kvp in elements)
+             {
+                 Element theElement = kvp.Value;
+
+                 Console.WriteLine("key: " + kvp.Key);
+                 Console.WriteLine("values: " + theElement.Symbol + " " +
+                     theElement.Name + " " + theElement.AtomicNumber);
+             }
+         }
+
+         public class Element
+         {
+             public required string Symbol { get; init; }
+             public required string Name { get; init; }
+             public required int AtomicNumber { get; init; }
+         }
+
+         private static Dictionary<string, Element> BuildDictionary() =>
+             new ()
+             {
+                 {"K",
+                     new (){ Symbol="K", Name="Potassium", AtomicNumber=19}},
+                 {"Ca",
+                     new (){ Symbol="Ca", Name="Calcium", AtomicNumber=20}},
+                 {"Sc",
+                     new (){ Symbol="Sc", Name="Scandium", AtomicNumber=21}},
+                 {"Ti",
+                     new (){ Symbol="Ti", Name="Titanium", AtomicNumber=22}}
+             };
+
+       The following example uses the ContainsKey* method and the Item* property of Dictionary to quickly find an item by key. The Item property enables you to access an item in the elements collection by using the elements[symbol] in C#.
+
+         if (elements.ContainsKey(symbol) == false)
+         {
+             Console.WriteLine(symbol + " not found");
+         }
+         else
+         {
+             Element theElement = elements[symbol];
+             Console.WriteLine("found: " + theElement.Name);
+         }
+
+       The following example uses the TryGetValue* method to quickly find an item by key.
+
+         if (elements.TryGetValue(symbol, out Element? theElement) == false)
+             Console.WriteLine(symbol + " not found");
+         else
+             Console.WriteLine("found: " + theElement.Name);
+
+       ITERATORS
+
+       An iterator is used to perform a custom iteration over a collection. An iterator can be a method or a get accessor. An iterator uses a yield return statement to return each element of the collection one at a time.
+
+       You call an iterator by using a foreach statement. Each iteration of the foreach loop calls the iterator. When a yield return statement is reached in the iterator, an expression is returned, and the current location in code is retained. Execution restarts from that location the next time that the iterator is called.
+
+       For more information, see Iterators (C#).
+
+       The following example uses an iterator method. The iterator method has a yield return statement that is inside a for loop. In the ListEvenNumbers method, each iteration of the foreach statement body creates a call to the iterator method, which proceeds to the next yield return statement.
+
+         private static void ListEvenNumbers()
+         {
+             foreach (int number in EvenSequence(5, 18))
+             {
+                 Console.Write(number.ToString() + " ");
+             }
+             Console.WriteLine();
+             // Output: 6 8 10 12 14 16 18
+         }
+
+         private static IEnumerable<int> EvenSequence(
+             int firstNumber, int lastNumber)
+         {
+             // Yield even numbers in the range.
+             for (var number = firstNumber; number <= lastNumber; number++)
+             {
+                 if (number % 2 == 0)
+                 {
+                     yield return number;
+                 }
+             }
+         }
+
+       LINQ AND COLLECTIONS
+
+       You can use language-integrated query (LINQ) to access collections. LINQ queries provide filtering, ordering, and grouping capabilities. For more information, see Getting Started with LINQ in C#.
+
+       The following example runs a LINQ query against a generic List. The LINQ query returns a different collection that contains the results.
+
+         private static void ShowLINQ()
+         {
+             List<Element> elements = BuildList();
+
+             // LINQ Query.
+             var subset = from theElement in elements
+                          where theElement.AtomicNumber < 22
+                          orderby theElement.Name
+                          select theElement;
+
+             foreach (Element theElement in subset)
+             {
+                 Console.WriteLine(theElement.Name + " " + theElement.AtomicNumber);
+             }
+
+             // Output:
+             //  Calcium 20
+             //  Potassium 19
+             //  Scandium 21
+         }
+
+         private static List<Element> BuildList() => new()
+             {
+                 { new(){ Symbol="K", Name="Potassium", AtomicNumber=19}},
+                 { new(){ Symbol="Ca", Name="Calcium", AtomicNumber=20}},
+                 { new(){ Symbol="Sc", Name="Scandium", AtomicNumber=21}},
+                 { new(){ Symbol="Ti", Name="Titanium", AtomicNumber=22}}
+             };
+
+C# manual                               from the official documentation

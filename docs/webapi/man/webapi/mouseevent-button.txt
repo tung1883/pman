@@ -1,0 +1,72 @@
+WEBAPI.MOUSEEVENT-BUTTON(1)      Sandbox manual      WEBAPI.MOUSEEVENT-BUTTON(1)
+
+       NAME
+
+       MouseEvent: button property - The MouseEvent.button read-only property indicates which button was pressed or released on the mouse to trigger the event.
+
+       MOUSEEVENT: BUTTON PROPERTY
+
+       The MouseEvent.button read-only property indicates which button was pressed or released on the mouse to trigger the event.
+
+       This property only guarantees to indicate which buttons are pressed or released during events caused by pressing or releasing one or multiple buttons. As such, it is not reliable for events such as mouseenter, mouseleave, mouseover, mouseout, or mousemove.
+
+       Users may change the configuration of buttons on their pointing device so that if an event's button property is zero, it may not have been caused by the button that is physically left–most on the pointing device; however, it should behave as if the left button was clicked in the standard button layout.
+
+       > Do not confuse this property with the MouseEvent.buttons property, which indicates which buttons are pressed for all mouse events types.
+
+       VALUE
+
+       A number representing a given button:
+
+        * 0: Main button, usually the left button or the un-initialized
+       state
+
+        * 1: Auxiliary button, usually the wheel button or the middle
+       button (if present)
+
+        * 2: Secondary button, usually the right button
+        * 3: Fourth button, typically the _Browser Back_ button
+        * 4: Fifth button, typically the _Browser Forward_ button
+       As noted above, buttons may be configured differently to the standard "left to right" layout. A mouse configured for left-handed use may have the button actions reversed. Some pointing devices only have one button and use keyboard or other input mechanisms to indicate main, secondary, auxiliary, etc. Others may have many buttons mapped to different functions and button values.
+
+       EXAMPLES
+
+       HTML
+
+         <button id="button">Click here with your mouse…</button>
+         <p id="log"></p>
+
+       JAVASCRIPT
+
+         const button = document.querySelector("#button");
+         const log = document.querySelector("#log");
+         button.addEventListener("mouseup", (e) => {
+           switch (e.button) {
+             case 0:
+               log.textContent = "Left button clicked.";
+               break;
+             case 1:
+               log.textContent = "Middle button clicked.";
+               break;
+             case 2:
+               log.textContent = "Right button clicked.";
+               break;
+             default:
+               log.textContent = `Unknown button code: ${e.button}`;
+           }
+         });
+         button.addEventListener("contextmenu", (e) => {
+           e.preventDefault();
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * MouseEvent
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,123 @@
+ARCH.HAPROXY(1)                  Sandbox manual                  ARCH.HAPROXY(1)
+
+       HAProxy is a free, very fast and reliable solution offering high availability, load balancing, and proxying for TCP and HTTP-based applications. It is particularly suited for very high traffic web sites and powers quite a number of the world's most visited ones. Over the years it has become the de-facto standard opensource load balancer, is now shipped with most mainstream Linux distributions, and is often deployed by default in cloud platforms.
+
+       INSTALLATION
+
+       Install the haproxy package.
+
+       RUNNING
+
+       Enable haproxy.service. HAProxy's configuration can be reloaded live by reloading haproxy.service as root.
+
+       CONFIGURATION
+
+       An example configuration is available in /etc/haproxy/haproxy.cfg. Edit it to suit your needs, and then start haproxy.service.
+
+       GENERAL CONFIGURATION
+
+       ACLS
+
+       HAProxy supports ACLs, which can be used to test conditions and perform a given action based on the results of those tests. A typical ACL would be written as follows:
+
+         /etc/haproxy/haproxy.cfg
+
+         acl photo_page path_beg /photos
+
+       In this case, the ACL is matched if the user's request path begins with /photos.
+
+       BACKENDS
+
+       In HAProxy terminology, backends are a server or set of servers that will receive forwarded requests. Backends can balance load based on several load balancing algorithms, including:
+
+        * Round-robin
+        * Static round-robin (also known as weighted round-robin)
+        * Least connections
+       An example backend may be written as follows:
+
+         /etc/haproxy/haproxy.cfg
+
+         backend http-in
+            balance roundrobin
+            server s1 web1.example.com:80 check
+            server s2 web2.example.com:80 check
+
+       FRONTENDS
+
+       Frontends are used to define how requests should be forwarded to backends. They consist of the following:
+
+        * IP addresses and ports
+        * ACLs
+        * use_backend rules
+
+       HEALTH CHECKS
+
+       When a backend is declared with the check option, HAProxy will check on startup and on scheduled intervals if the backend is available to process forwarded requests. If a backend fails the health check, it will be removed from rotation until it is deemed to be healthy again, i.e. it passes the health check.
+
+       By default, HAProxy will attempt to establish a TCP connection to the backend to determine healthiness.
+
+       If a large number of backends are declared with the check option, HAProxy will query all of them on startup, which may delay startup time.
+
+       LOGGING WITH SYSTEMD
+
+       To configure HAproxy to use systemd /dev/log compatibility socket add the following to your configuration file under the global section.
+
+         log /dev/log local0 info
+
+       If you use the chroot option in your global configuration, you need to bind the socket into the chroot.
+
+       For this we will use a systemd.mount(5) unit. Generate the unit name with:
+
+         # systemd-escape --suffix=mount --path /var/lib/haproxy/dev/log
+
+       We want mount /dev/log into the chroot, but just after journald came up. Create a replacement unit file:
+
+         /etc/systemd/system/var-lib-haproxy-dev-log.mount
+
+         [Unit]
+         Requires=systemd-journald.service
+         Description=/Expose Systemd Log for HAProxy
+
+         [Mount]
+         What=/dev/log
+         Where=/var/lib/haproxy/dev/log
+         Type=none
+         Options=bind
+
+       With the mount file created it is time to expand the original service unit so it mounts up everything correctly. Use a drop-in file for haproxy.service and add:
+
+         /etc/systemd/system/haproxy.service.d/override.conf
+
+         [Unit]
+         Requires=var-lib-haproxy-dev-log.mount
+
+       PERFORMING TLS/SSL TERMINATION
+
+       In order to use haproxy as a TLS terminator you have to set inside your frontend section
+
+         bind :80
+         bind :443 ssl crt /path/to/combined/cert
+
+       Note To generate the cert you can run cat certificate-full-chain certificate-private-key > combined-cert.
+
+       Tip To add support for HTTP/2 add alpn h2,http/1.1 at the end of the bind :443 line.
+
+       REDIRECTING HTTP TO HTTPS
+
+       Set in your frontend section
+
+         redirect scheme https code 301 if !{ ssl_fc }
+
+       VIRTUAL HOST LIKE CONFIGURATION
+
+       Suppose you have two backends: foo and bar and each should handle requests only for a specific domain. In order to perform this in your frontend section you can configure
+
+         use_backend foo-backend if { hdr(host) -i foo.example.com || hdr(host) -i www.foo.example.com }
+         use_backend bar-backend if { hdr(host) -i bar.example.com || hdr(host) -i www.bar.example.com }
+
+       SEE ALSO
+
+        * The official HAProxy website
+        * Configuration guide
+
+ArchWiki manual                         bundled documentation

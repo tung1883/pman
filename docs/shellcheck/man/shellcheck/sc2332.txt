@@ -1,0 +1,50 @@
+SHELLCHECK.SC2332(1)             Sandbox manual             SHELLCHECK.SC2332(1)
+
+       NAME
+
+       [ ! -o opt ] is always true because -o becomes logical OR. Use [[ ]] or ! [ -o opt ]. - Or "[ ! -a file ] is always true because -a becomes logical AND. Use -e instead."
+
+       O OPT IS ALWAYS TRUE BECAUSE -O BECOMES LOGICAL OR. USE OR -O OPT
+
+       O OPT IS ALWAYS TRUE BECAUSE -O BECOMES LOGICAL OR. USE OR -O OPT
+
+       Or "[ ! -a file ] is always true because -a becomes logical AND. Use -e instead."
+
+       PROBLEMATIC CODE
+
+         if [ ! -o braceexpand ]
+         then
+           ..
+         fi
+
+       CORRECT CODE
+
+         if [[ ! -o braceexpand ]]
+         then
+           ..
+         fi
+
+       or
+
+         if ! [ -o braceexpand ]
+         then
+           ..
+         fi
+
+       RATIONALE
+
+       Bash interprets [ ! -o opt ] as [ "!" ] || [ "opt" ] instead of negating the condition. As a result, the condition is always true.
+
+       Avoid this by using [[ ! -o opt ]] or ! [ -o opt ].
+
+       The same issue applies to [ ! -a file ], but this is easier fixed using POSIX standard [ ! -e file ].
+
+       EXCEPTIONS
+
+       None.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

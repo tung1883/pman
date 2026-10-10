@@ -1,0 +1,107 @@
+APACHE.MOD_CGI(1)                Sandbox manual                APACHE.MOD_CGI(1)
+
+       CGI ENVIRONMENT VARIABLES
+
+       The server will set the CGI environment variables as described in the CGI specification (RFC 3875), with the following provisions:
+
+         PATH_INFO
+       This will not be available if the AcceptPathInfo directive is explicitly set to off. The default behavior, if AcceptPathInfo is not given, is that mod_cgi will accept path info (trailing  /more/path/info following the script filename in the URI), while the core server will return a 404 NOT FOUND error for requests with additional path info. Omitting the AcceptPathInfo directive has the same effect as setting it On for mod_cgi requests.
+
+         REMOTE_HOST
+       This will only be set if HostnameLookups is set to on (it is off by default), and if a reverse DNS lookup of the accessing host's address indeed finds a host name.
+
+         REMOTE_IDENT
+       This will only be set if IdentityCheck is set to on and the accessing host supports the ident protocol. Note that the contents of this variable cannot be relied upon because it can easily be faked, and if there is a proxy between the client and the server, it is usually totally useless.
+
+         REMOTE_USER
+       This will only be set if the CGI script is subject to authentication.
+
+       This module also leverages the core functions ap_add_common_vars and ap_add_cgi_vars to add environment variables like:
+
+         DOCUMENT_ROOT
+       Set with the content of the related DocumentRoot directive.
+
+         SERVER_NAME
+       The fully qualified domain name related to the request.
+
+         SERVER_ADDR
+       The IP address of the Virtual Host serving the request.
+
+         SERVER_ADMIN
+       Set with the content of the related ServerAdmin directive.
+
+       For an exhaustive list it is suggested to write a basic CGI script that dumps all the environment variables passed by Apache in a convenient format.
+
+       CGI DEBUGGING
+
+       Debugging CGI scripts has traditionally been difficult, mainly because it has not been possible to study the output (standard output and error) for scripts which are failing to run properly. These directives provide more detailed logging of errors when they occur.
+
+       CGI LOGFILE FORMAT
+
+       When configured, the CGI error log logs any CGI which does not execute properly. Each CGI script which fails to operate causes several lines of information to be logged. The first two lines are always of the format:
+
+       %% [time] request-line  %% HTTP-status CGI-script-filename
+
+       If the error is that CGI script cannot be run, the log file will contain an extra two lines:
+
+       %%error  error-message
+
+       Alternatively, if the error is the result of the script returning incorrect header information (often due to a bug in the script), the following information is logged:
+
+       %request  All HTTP request headers received  POST or PUT entity (if any)  %response  All headers output by the CGI script  %stdout  CGI standard output  %stderr  CGI standard error
+
+       (The %stdout and %stderr parts may be missing if the script did not output anything on standard output or standard error).
+
+       CGISCRIPTTIMEOUT DIRECTIVE
+
+         Description: | The length of time to wait for more output from the CGI program
+         Syntax: | CGIScriptTimeout time[s|ms]
+         Default: | value of Timeout directive when unset
+         Context: | server config, virtual host, directory, .htaccess
+         Status: | Base
+         Module: | mod_cgi
+         Compatibility: | Available in version 2.4.59 and later.
+       This directive limits the length of time to wait for more output from the CGI program. If the time is exceeded, the request and CGI are terminated.
+
+       EXAMPLE
+
+         CGIScriptTimeout 20
+
+       SCRIPTLOG DIRECTIVE
+
+         Description: | Location of the CGI script error logfile
+         Syntax: | ScriptLog file-path
+         Context: | server config, virtual host
+         Status: | Base
+         Module: | mod_cgi, mod_cgid
+       The ScriptLog directive sets the CGI script error logfile. If no ScriptLog is given, no error log is created. If given, any CGI errors are logged into the filename given as argument. If this is a relative file or path it is taken relative to the ServerRoot.
+
+       EXAMPLE
+
+         ScriptLog logs/cgi_log
+
+       This log will be opened as the user the child processes run as, i.e. the user specified in the main User directive. This means that either the directory the script log is in needs to be writable by that user or the file needs to be manually created and set to be writable by that user. If you place the script log in your main logs directory, do NOT change the directory permissions to make it writable by the user the child processes run as.
+
+       Note that script logging is meant to be a debugging feature when writing CGI scripts, and is not meant to be activated continuously on running servers. It is not optimized for speed or efficiency, and may have security problems if used in a manner other than that for which it was designed.
+
+       SCRIPTLOGBUFFER DIRECTIVE
+
+         Description: | Maximum amount of PUT or POST requests that will be recorded in the scriptlog
+         Syntax: | ScriptLogBuffer bytes
+         Default: | ScriptLogBuffer 1024
+         Context: | server config, virtual host
+         Status: | Base
+         Module: | mod_cgi, mod_cgid
+       The size of any PUT or POST entity body that is logged to the file is limited, to prevent the log file growing too big too quickly if large bodies are being received. By default, up to 1024 bytes are logged, but this can be changed with this directive.
+
+       SCRIPTLOGLENGTH DIRECTIVE
+
+         Description: | Size limit of the CGI script logfile
+         Syntax: | ScriptLogLength bytes
+         Default: | ScriptLogLength 10385760
+         Context: | server config, virtual host
+         Status: | Base
+         Module: | mod_cgi, mod_cgid
+       ScriptLogLength can be used to limit the size of the CGI script logfile. Since the logfile logs a lot of information per CGI error (all request headers, all script output) it can grow to be a big file. To prevent problems due to unbounded growth, this directive can be used to set an maximum file-size for the CGI logfile. If the file exceeds this size, no more information will be written to it.
+
+Apache HTTP Server manual               bundled documentation

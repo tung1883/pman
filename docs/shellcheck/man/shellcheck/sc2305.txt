@@ -1,0 +1,35 @@
+SHELLCHECK.SC2305(1)             Sandbox manual             SHELLCHECK.SC2305(1)
+
+       NAME
+
+       Quote regex argument to expr to avoid it expanding as a glob. - expr "$input" : [0-9]
+
+       QUOTE REGEX ARGUMENT TO EXPR TO AVOID IT EXPANDING AS A GLOB
+
+       QUOTE REGEX ARGUMENT TO EXPR TO AVOID IT EXPANDING AS A GLOB
+
+       PROBLEMATIC CODE
+
+         expr "$input" : [0-9]*
+
+       CORRECT CODE
+
+         expr "$input" : "[0-9]*"
+
+       RATIONALE
+
+       ShellCheck found an expr command using : to match a regex, but the regex is not quoted and therefore being treated as a glob.
+
+       This means that if the problematic code is ever executed in a directory containing a file matching [0-9]*, such as 2021-reports or 12 Angry Men [1957].mkv, it will be replaced be replaced and cause the command to error or incorrectly match.
+
+       The regex should be quoted to avoid this, like in the correct example.
+
+       EXCEPTIONS
+
+       None
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

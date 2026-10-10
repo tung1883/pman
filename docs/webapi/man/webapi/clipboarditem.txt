@@ -1,0 +1,116 @@
+WEBAPI.CLIPBOARDITEM(1)          Sandbox manual          WEBAPI.CLIPBOARDITEM(1)
+
+       NAME
+
+       ClipboardItem - The ClipboardItem interface of the Clipboard API represents a single item format, used when reading or writing clipboard data using Clipboar
+
+       CLIPBOARDITEM
+
+       The ClipboardItem interface of the Clipboard API represents a single item format, used when reading or writing clipboard data using Clipboard.read() and Clipboard.write() respectively.
+
+       The ClipboardItem interface enables developers to use a single type to represent a range of different data formats.
+
+       > The read() and write() methods can be used to work with text strings and arbitrary data items represented by Blob instances. However, if you are solely working with text, it is more convenient to use the Clipboard.readText() and Clipboard.writeText() methods.
+
+       CONSTRUCTOR
+
+        * ClipboardItem()
+          * : Creates a new ClipboardItem object, with the MIME type as the key and the data as the value.
+
+       INSTANCE PROPERTIES
+
+        * types (read-only)
+          * : Returns an Array of MIME types available within the ClipboardItem.
+        * presentationStyle (read-only)
+          * : Returns one of the following: "unspecified", "inline" or "attachment".
+
+       STATIC METHODS
+
+        * ClipboardItem.supports()
+          * : Checks whether a given MIME type is supported by the clipboard. This enables a website to detect whether a MIME type is supported before attempting to write data.
+
+       INSTANCE METHODS
+
+        * getType()
+          * : Returns a Promise that resolves with a Blob of the requested MIME type, or an error if the MIME type is not found.
+
+       EXAMPLES
+
+       WRITING TEXT TO THE CLIPBOARD
+
+       In this example we first define two constants containing references to a element containing some text and a element.
+
+       Next, we define a function called copyToClipboard(). This starts off by storing a "text/plain" MIME type in a constant, then creating an object called clipboardItemData that contains one property with a key equal to the MIME type and a value of the text we want to copy to the clipboard (the content of the element, in this case). Because we are working with text, we can pass it in directly rather than having to create a Blob.
+
+       We construct a new ClipboardItem object using the ClipboardItem() constructor, and pass it into the Clipboard.write() method to copy the text to the clipboard.
+
+       Finally, we add an event listener to the so that it runs the function when pressed.
+
+         const textSource = document.querySelector("p");
+         const copyBtn = document.querySelector("button");
+
+         async function copyToClipboard() {
+           const type = "text/plain";
+           const clipboardItemData = {
+             [type]: textSource.textContent,
+           };
+           const clipboardItem = new ClipboardItem(clipboardItemData);
+           await navigator.clipboard.write([clipboardItem]);
+         }
+
+         copyBtn.addEventListener("click", copyToClipboard);
+
+       WRITING AN IMAGE TO THE CLIPBOARD
+
+       Here we use supports() to check whether the image/svg+xml MIME data type is supported. If it is, we fetch an SVG image with the Fetch API, and then read it into a Blob, which we can use to create a ClipboardItem that is written to the clipboard.
+
+         async function writeClipImg() {
+           try {
+             if (ClipboardItem.supports("image/svg+xml")) {
+               const imgURL = "/my-image.svg";
+               const data = await fetch(imgURL);
+               const blob = await data.blob();
+               await navigator.clipboard.write([
+                 new ClipboardItem({
+                   [blob.type]: blob,
+                 }),
+               ]);
+               console.log("Fetched image copied.");
+             } else {
+               console.log("SVG images are not supported by the clipboard.");
+             }
+           } catch (err) {
+             console.error(err.name, err.message);
+           }
+         }
+
+       READING FROM THE CLIPBOARD
+
+       Here we're returning all items on the clipboard via the clipboard.read() method. Then utilizing the ClipboardItem.types property to set the getType() argument and return the corresponding blob object.
+
+         async function getClipboardContents() {
+           try {
+             const clipboardItems = await navigator.clipboard.read();
+
+             for (const clipboardItem of clipboardItems) {
+               for (const type of clipboardItem.types) {
+                 const blob = await clipboardItem.getType(type);
+                 // we can now use blob here
+               }
+             }
+           } catch (err) {
+             console.error(err.name, err.message);
+           }
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ClipboardChangeEvent
+        * Clipboard API
+        * Image support for Async Clipboard article
+
+Web APIs manual                         from the official documentation

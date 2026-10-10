@@ -1,0 +1,40 @@
+SHELLCHECK.SC2318(1)             Sandbox manual             SHELLCHECK.SC2318(1)
+
+       NAME
+
+       This assignment is used again in this declare, but won't have taken effect. Use two declares. - (or local, typeset, readonly, export)
+
+       THIS ASSIGNMENT IS USED AGAIN IN THIS DECLARE, BUT WON'T HAVE TAKEN EF
+
+       THIS ASSIGNMENT IS USED AGAIN IN THIS DECLARE, BUT WON'T HAVE TAKEN EF
+
+       (or local, typeset, readonly, export)
+
+       PROBLEMATIC CODE
+
+         declare -i first=$1 current=$first
+
+       CORRECT CODE
+
+         declare -i first=$1
+         declare -i current=$first
+
+       RATIONALE
+
+       When assigning variables via a command, such as declare, typeset, local etc, the expansion of all arguments happen before all assignments. This means that you can't have a variable assigned and then referenced in the same command.
+
+       In the example, if $1 is 42, the arguments will first be expanded in the current environment into -i first=42 current=. They will then be passed to declare which will perform the assignments.
+
+       To correctly set current=$first so that it uses the new value of first, use two separate commands as shown.
+
+       Note that this only applies when assigning via commands, because arguments are always expanded before commands are invoked. If assigning without a command, as in first=$1 current=$first, it will work as expected.
+
+       EXCEPTIONS
+
+       If you want to reference the value as it existed before the command, e.g. if swapping variables with declare x=$y y=$x, you can ignore this message. However, consider rewriting it anyways for the benefit of any humans reading the code.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

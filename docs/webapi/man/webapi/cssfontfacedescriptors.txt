@@ -1,0 +1,106 @@
+WEBAPI.CSSFONTFACEDESCRIPTORS(1) Sandbox manual WEBAPI.CSSFONTFACEDESCRIPTORS(1)
+
+       NAME
+
+       CSSFontFaceDescriptors - The CSSFontFaceDescriptors interface represents a CSS declaration block for an @font-face at-rule.
+
+       CSSFONTFACEDESCRIPTORS
+
+       The CSSFontFaceDescriptors interface represents a CSS declaration block for an @font-face at-rule.
+
+       Each descriptor in the body of the corresponding @font-face at-rule can be accessed using either its kebab-case property name in bracket notation or the camel-case version of the property name in dot notation. For example, you can access the font-family CSS descriptor as style["font-family"] or style.fontFamily, where style is a CSSFontFaceDescriptors instance.
+
+       > The CSSFontFaceRule interface represents a @font-face at-rule, and the CSSFontFaceRule.style property is an instance of this object.
+
+       INSTANCE PROPERTIES
+
+       _Inherits properties from its ancestor CSSStyleDeclaration._
+
+       The following property names, in kebab-case (accessed using bracket notation) and camel-case (accessed using dot notation), each represent the value of a descriptor in the corresponding @font-face at-rule:
+
+        * font-display or fontDisplay
+          * : A string representing the value of the font-display descriptor.
+        * font-family or fontFamily
+          * : A string representing the value of the font-family descriptor.
+        * font-feature-settings or fontFeatureSettings
+          * : A string representing the value of the font-feature-settings descriptor.
+        * font-stretch or fontStretch
+          * : A string representing the value of the font-stretch descriptor.
+        * font-style or fontStyle
+          * : A string representing the value of the font-style descriptor.
+        * font-weight or fontWeight
+          * : A string representing the value of the font-weight descriptor.
+        * font-width or fontWidth
+          * : A string representing the value of the font-width descriptor.
+        * size-adjust or sizeAdjust
+          * : A string representing the value of the size-adjust descriptor.
+        * src
+          * : A string representing the value of the src descriptor.
+        * unicode-range or unicodeRange
+          * : A string representing the value of the unicode-range descriptor.
+
+       INSTANCE METHODS
+
+       _No specific methods; inherits methods from its ancestor CSSStyleDeclaration._
+
+       EXAMPLES
+
+       ACCESSING FONT-FACE DESCRIPTOR VALUES
+
+       This example defines a @font-face rule and then uses CSSFontFaceDescriptors to read back the descriptor values.
+
+       CSS
+
+         @font-face {
+           font-family: "MyHelvetica";
+           src:
+             local("Helvetica Neue Bold"),
+             local("HelveticaNeue-Bold"),
+             url("MgOpenModernaBold.woff2") format("woff2");
+           font-weight: bold;
+           font-style: normal;
+           font-display: swap;
+         }
+
+         #log {
+           height: 200px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+         <pre id="log"></pre>
+
+         const logElement = document.querySelector("#log");
+         function log(text) {
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+       JAVASCRIPT
+
+         const myRules = document.getElementById("css-output").sheet.cssRules;
+         for (const rule of myRules) {
+           if (rule instanceof CSSFontFaceRule) {
+             const style = rule.style; // a CSSFontFaceDescriptors
+             log(`font-family: ${style.fontFamily}`);
+             log(`src: ${style.src}`);
+             log(`font-weight: ${style["font-weight"]}`);
+             log(`font-style: ${style.fontStyle}`);
+             log(`font-display: ${style["font-display"]}`);
+           }
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * CSSFontFaceRule
+        * CSSFontFaceRule.style
+        * @font-face
+
+Web APIs manual                         from the official documentation

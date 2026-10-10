@@ -1,0 +1,173 @@
+WEBAPI.KEYBOARDEVENT(1)          Sandbox manual          WEBAPI.KEYBOARDEVENT(1)
+
+       NAME
+
+       KeyboardEvent - KeyboardEvent objects describe a user interaction with the keyboard; each event describes a single interaction between the user and a key (o
+
+       KEYBOARDEVENT
+
+       KeyboardEvent objects describe a user interaction with the keyboard; each event describes a single interaction between the user and a key (or combination of a key with modifier keys) on the keyboard. The event type (keydown, keypress, or keyup) identifies what kind of keyboard activity occurred.
+
+       > KeyboardEvent events just indicate what interaction the user had with a key on the keyboard at a low level, providing no contextual meaning to that interaction. When you need to handle text input, use the input event instead. Keyboard events may not be fired if the user is using an alternate means of entering text, such as a handwriting system on a tablet or graphics tablet.
+
+       CONSTRUCTOR
+
+        * KeyboardEvent()
+          * : Creates a new KeyboardEvent object.
+
+       CONSTANTS
+
+       The KeyboardEvent interface defines the following constants.
+
+       KEYBOARD LOCATIONS
+
+       The following constants identify which part of the keyboard the key event originates from. They are accessed as KeyboardEvent.DOM_KEY_LOCATION_STANDARD and so forth.
+
+       Keyboard location identifiers Constant Value Description DOM_KEY_LOCATION_STANDARD 0x00 The key described by the event is not identified as being located in a particular area of the keyboard; it is not located on the numeric keypad (unless it's the NumLock key), and for keys that are duplicated on the left and right sides of the keyboard, the key is, for whatever reason, not to be associated with that location. Examples include alphanumeric keys on the standard PC 101 US keyboard, the NumLock key, and the space bar. DOM_KEY_LOCATION_LEFT 0x01 The key is one which may exist in multiple locations on the keyboard and, in this instance, is on the left side of the keyboard. Examples include the left Control key, the left Command key on a Macintosh keyboard, or the left Shift key. DOM_KEY_LOCATION_RIGHT 0x02 The key is one which may exist in multiple positions on the keyboard and, in this case, is located on the right side of the keyboard. Examples include the right Shift key and the right Alt key (Option on a Mac keyboard). DOM_KEY_LOCATION_NUMPAD 0x03 The key is located on the numeric keypad, or is a virtual key associated with the numeric keypad if there's more than one place the key could originate from. The NumLock key does not fall into this group and is always encoded with the location DOM_KEY_LOCATION_STANDARD. Examples include the digits on the numeric keypad, the keypad's Enter key, and the decimal point on the keypad.
+
+       INSTANCE PROPERTIES
+
+       _This interface also inherits properties of its parents, UIEvent and Event._
+
+        * KeyboardEvent.altKey (read-only)
+          * : Returns a boolean value that is true if the Alt (Option or ⌥ on macOS) key was active when the key event was generated.
+        * KeyboardEvent.code (read-only)
+          * : Returns a string with the code value of the physical key represented by the event.
+       > This ignores the user's keyboard layout, so that if the user presses the key at the "Y" position in a QWERTY keyboard layout (near the middle of the row above the home row), this will always return "KeyY", even if the user has a QWERTZ keyboard (which would mean the user expects a "Z" and all the other properties would indicate a "Z") or a Dvorak keyboard layout (where the user would expect an "F"). If you want to display the correct keystrokes to the user, you can use Keyboard.getLayoutMap().
+        * KeyboardEvent.ctrlKey (read-only)
+          * : Returns a boolean value that is true if the Ctrl key was active when the key event was generated.
+        * KeyboardEvent.isComposing (read-only)
+          * : Returns a boolean value that is true if the event is fired between after compositionstart and before compositionend.
+        * KeyboardEvent.key (read-only)
+          * : Returns a string representing the key value of the key represented by the event.
+        * KeyboardEvent.location (read-only)
+          * : Returns a number representing the location of the key on the keyboard or other input device. A list of the constants identifying the locations is shown above in Keyboard locations.
+        * KeyboardEvent.metaKey (read-only)
+          * : Returns a boolean value that is true if the Meta key (on Mac keyboards, the ⌘ Command key; on Windows keyboards, the Windows key (⊞)) was active when the key event was generated.
+        * KeyboardEvent.repeat (read-only)
+          * : Returns a boolean value that is true if the key is being held down such that it is automatically repeating.
+        * KeyboardEvent.shiftKey (read-only)
+          * : Returns a boolean value that is true if the Shift key was active when the key event was generated.
+
+       OBSOLETE PROPERTIES
+
+        * KeyboardEvent.charCode (deprecated) (read-only)
+          * : Returns a number representing the Unicode reference number of the key; this property is used only by the keypress event. For keys whose char property contains multiple characters, this is the Unicode value of the first character in that property. In Firefox 26 this returns codes for printable characters.
+        * KeyboardEvent.keyCode (deprecated) (read-only)
+          * : Returns a number representing a system and implementation dependent numerical code identifying the unmodified value of the pressed key.
+        * KeyboardEvent.keyIdentifier {{Non-standard_inline}} (deprecated) (read-only)
+          * : This property is non-standard and has been deprecated in favor of KeyboardEvent.key. It was part of an old version of DOM Level 3 Events.
+
+       INSTANCE METHODS
+
+       _This interface also inherits methods of its parents, UIEvent and Event._
+
+        * KeyboardEvent.getModifierState()
+          * : Returns a boolean value indicating if a modifier key such as Alt, Shift, Ctrl, or Meta, was pressed when the event was created.
+
+       OBSOLETE METHODS
+
+        * KeyboardEvent.initKeyboardEvent() (deprecated)
+          * : Initializes a KeyboardEvent object. This is now deprecated. You should instead use the KeyboardEvent() constructor.
+
+       EVENTS
+
+       The following events are based on the KeyboardEvent type. In the list below, each event links to the documentation for the Element handler for the event, which applies generally to all of the recipients, including Element, Document, and Window.
+
+        * keydown
+          * : A key has been pressed.
+        * keyup
+          * : A key has been released.
+
+       OBSOLETE EVENTS
+
+        * keypress (deprecated)
+          * : A key that normally produces a character value has been pressed. This event was highly device-dependent and is obsolete. You should not use it.
+
+       USAGE NOTES
+
+       There are three types of keyboard events: keydown, keypress, and keyup. For most keys, Gecko dispatches a sequence of key events like this:
+
+        1. When the key is first pressed, the keydown event is sent.
+        2. If the key is not a modifier key, the keypress event is sent.
+        3. When the user releases the key, the keyup event is sent.
+
+       SPECIAL CASES
+
+       Some keys toggle the state of an indicator light; these include keys such as Caps Lock, Num Lock, and Scroll Lock. On Windows and Linux, these keys dispatch only the keydown and keyup events.
+
+       > On Linux, Firefox 12 and earlier also dispatched the keypress event for these keys.
+       However, a limitation of the macOS event model causes Caps Lock to dispatch only the keydown event. Num Lock was supported on some older laptop models (2007 models and older), but since then, macOS hasn't supported Num Lock even on external keyboards. On older MacBooks with a Num Lock key, that key doesn't generate any key events. Gecko does support the Scroll Lock key if an external keyboard which has an F14 key is connected. In certain older versions of Firefox, this key generated a keypress event; this inconsistent behavior was Firefox bug 602812.
+
+       AUTO-REPEAT HANDLING
+
+       When a key is pressed and held down, it begins to auto-repeat. This results in a sequence of events similar to the following being dispatched:
+
+        1. keydown
+        2. keypress
+        3. keydown
+        4. keypress
+        5. <\>
+        6. keyup
+       This is what the DOM Level 3 specification says should happen. There are some caveats, however, as described below.
+
+       AUTO-REPEAT ON SOME GTK ENVIRONMENTS SUCH AS UBUNTU 9.4
+
+       In some GTK-based environments, auto-repeat dispatches a native key-up event automatically during auto-repeat, and there's no way for Gecko to know the difference between a repeated series of key presses and an auto-repeat. On those platforms, then, an auto-repeat key will generate the following sequence of events:
+
+        1. keydown
+        2. keypress
+        3. keyup
+        4. keydown
+        5. keypress
+        6. keyup
+        7. <\>
+        8. keyup
+       In these environments, unfortunately, there's no way for web content to tell the difference between auto-repeating keys and keys that are just being pressed repeatedly.
+
+       EXAMPLE
+
+         document.addEventListener("keydown", (event) => {
+           const keyName = event.key;
+
+           if (keyName === "Control") {
+             // do not alert when only Control key is pressed.
+             return;
+           }
+
+           if (event.ctrlKey) {
+             // Even though event.key is not 'Control' (e.g., 'a' is pressed),
+             // event.ctrlKey may be true if Ctrl key is pressed at the same time.
+             alert(`Combination of ctrlKey + ${keyName}`);
+           } else {
+             alert(`Key pressed ${keyName}`);
+           }
+         });
+
+         document.addEventListener("keyup", (event) => {
+           const keyName = event.key;
+
+           // As the user releases the Ctrl key, the key is no longer active,
+           // so event.ctrlKey is false.
+           if (keyName === "Control") {
+             alert("Control key was released");
+           }
+         });
+
+       SPECIFICATIONS
+
+       The KeyboardEvent interface specification went through numerous draft versions, first under DOM Events Level 2 where it was dropped as no consensus arose, then under DOM Events Level 3. This led to the implementation of non-standard initialization methods, the early DOM Events Level 2 version, KeyboardEvent.initKeyEvent() by Gecko browsers and the early DOM Events Level 3 version, KeyboardEvent.initKeyboardEvent() by others. Both have been superseded by the modern usage of a constructor: KeyboardEvent().
+
+       BROWSER COMPATIBILITY
+
+       COMPATIBILITY NOTES
+
+        * As of Firefox 65, the keypress event is no longer fired for non-printable keys (Firefox bug 968056), except for the Enter key, and the Shift + Enter and Ctrl + Enter key combinations (these were kept for cross-browser compatibility purposes).
+
+       SEE ALSO
+
+        * KeyboardEvent.code.
+        * KeyboardEvent.key.
+        * KeyboardEvent.getModifierState()
+
+Web APIs manual                         from the official documentation

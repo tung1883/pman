@@ -1,0 +1,43 @@
+SHELLCHECK.SC1039(1)             Sandbox manual             SHELLCHECK.SC1039(1)
+
+       NAME
+
+       Remove indentation before end token (or use <<- and indent with tabs). - for f in .png
+
+       REMOVE INDENTATION BEFORE END TOKEN (OR USE - AND INDENT WITH TABS)
+
+       REMOVE INDENTATION BEFORE END TOKEN (OR USE - AND INDENT WITH TABS)
+
+       PROBLEMATIC CODE
+
+         for f in *.png
+         do
+           cat << HTML
+              <img src="$f" /><br/>
+           HTML
+         done > index.html
+
+       CORRECT CODE
+
+         for f in *.png
+         do
+           cat << HTML
+              <img src="$f" /><br/>
+         HTML
+         done > index.html
+
+       RATIONALE
+
+       The here document delimiter will not be recognized if it is indented.
+
+       You can fix it in one of two ways:
+
+        1. Simply remove the indentation, even though this may break formatting.
+        2. Use <<- instead of <<, and indent the script with tabs only (spaces will not be recognized).
+       Removing the indentation is preferred, since the script won't suddenly break if it's reformatted, copy-pasted, or saved with a different editor.
+
+       EXCEPTIONS
+
+       If the line was supposed to be a literal part of the here document, consider choosing a less ambiguous token.
+
+ShellCheck manual                       from the official documentation

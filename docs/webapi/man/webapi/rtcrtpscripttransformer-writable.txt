@@ -1,0 +1,46 @@
+WEBAPI.RTCRTPSCRIPTTRANSFORMER-WRITABLE(1) Sandbox manual WEBAPI.RTCRTPSCRIPTTRANSFORMER-WRITABLE(1)
+
+       NAME
+
+       RTCRtpScriptTransformer: writable property - The writable read-only property of the RTCRtpScriptTransformer interface returns a WritableStream instance that can be used as a sink for en
+
+       RTCRTPSCRIPTTRANSFORMER: WRITABLE PROPERTY
+
+       The writable read-only property of the RTCRtpScriptTransformer interface returns a WritableStream instance that can be used as a sink for encoded media frames enqueued on the corresponding RTCRtpScriptTransformer.readable.
+
+       When the corresponding RTCRtpScriptTransform is inserted into the WebRTC sender and receiver pipelines, encoded media frames (RTCEncodedVideoFrame or RTCEncodedAudioFrame) may be enqueued on the RTCRtpScriptTransformer.readable. A WebRTC encoded transform can read the frames from readable, modify them as needed, and then send them back into the WebRTC pipeline by sending them to this writable. A common way to perform this operation is to pipe the frames through a TransformStream.
+
+       VALUE
+
+       A WritableStream.
+
+       EXAMPLES
+
+       The following example shows how RTCRtpScriptTransformer.readable is piped through a TransformStream to RTCRtpScriptTransformer.writable.
+
+         addEventListener("rtctransform", (event) => {
+           let transform;
+           // Select a transform based on passed options
+           if (event.transformer.options.name === "senderTransform")
+             transform = createSenderTransform(); // A TransformStream
+           else if (event.transformer.options.name === "receiverTransform")
+             transform = createReceiverTransform(); // A TransformStream
+           else return;
+
+           // Pipe frames from the readable to writeable through TransformStream
+           event.transformer.readable
+             .pipeThrough(transform)
+             .pipeTo(event.transformer.writable);
+         });
+
+       The code implements a handler for the rtctransform event, which is fired at the global worker object on construction of the corresponding RTCRtpScriptTransform, and when new frames are enqueued for processing. event.transformer is the RTCRtpScriptTransformer that has the writable and readable properties.
+
+       A different TransformStream is created to process outgoing and incoming frames, using createSenderTransform() or createReceiverTransform(), respectively (implementations not shown). The event handler chooses the correct transform stream to use based on options passed through from the RTCRtpScriptTransform constructor and assigns it to transform.
+
+       The code calls ReadableStream.pipeThrough() on the readable to pipe encoded frames through the selected TransformStream, and then ReadableStream.pipeTo() to pipe them to the RTCRtpScriptTransformer.writable.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

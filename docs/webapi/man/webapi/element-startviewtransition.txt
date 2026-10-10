@@ -1,0 +1,160 @@
+WEBAPI.ELEMENT-STARTVIEWTRANSITION(1) Sandbox manual WEBAPI.ELEMENT-STARTVIEWTRANSITION(1)
+
+       NAME
+
+       Element: startViewTransition() method - The startViewTransition() method of the Element interface starts a new same-document (SPA) element-scoped view transition and returns a View
+
+       ELEMENT: STARTVIEWTRANSITION() METHOD
+
+       The startViewTransition() method of the Element interface starts a new same-document (SPA) element-scoped view transition and returns a ViewTransition object to represent it.
+
+       The sequence of steps followed when startViewTransition() is invoked is explained in the view transition process section.
+
+       SYNTAX
+
+         startViewTransition()
+         startViewTransition(updateCallback)
+         startViewTransition(options)
+
+       PARAMETERS
+
+        * updateCallback (optional)
+          * : A callback function invoked to update the element's DOM tree during the SPA view transition process. It returns a Promise. The callback is invoked once the API has taken a snapshot of the current page. When the promise returned by the callback fulfills, the view transition begins in the next frame. If the promise returned by the callback rejects, the transition is abandoned.
+        * options (optional)
+          * : An object containing options to configure the view transition. It can include the following properties:
+            * update (optional)
+              * : The same updateCallback function described above. Defaults to null.
+            * types (optional)
+              * : An array of strings representing the types applied to the view transition. View transition types enable selective application of CSS styles or JavaScript logic based on the type of transition occurring. Defaults to an empty array.
+
+       RETURN VALUE
+
+       A ViewTransition object instance.
+
+       DESCRIPTION
+
+       Calling Element.startViewTransition() on an element creates a view transition scoped to that element's DOM subtree. Any DOM changes performed inside the startViewTransition() callback will transition only if those updates happen inside the calling element's DOM subtree. The element is referred to as the root of the view transition, and the DOM subtree is referred to as the scope of the view transition.
+
+       An element-scoped view transition's pseudo-element tree is placed inside the transition root element, as shown in the following example, where a view transition is running on a link:
+
+         <a href="#">
+           ├─ ::view-transition
+           │  └─ ::view-transition-group(root)
+           │     └─ ::view-transition-image-pair(root)
+           │        ├─ ::view-transition-old(root)
+           │        └─ ::view-transition-new(root)
+           |
+           |
+           "Link text"
+         </a>
+
+       Element-scoped view transitions have many advantages over their document-scoped counterparts:
+
+        * You can run more than one at a time.
+        * When running, only the view transition's scope ceases to be interactive until the transition is finished; the rest of the page continues to be interactive. Document-scoped view transitions render the entire page non-interactive until the transition is complete.
+        * The transition pseudo-element tree sits only over the top of the element scope, not the entire page, meaning that you don't get the same issues associated with stacked elements disappearing underneath the updating part of the page when a document-scoped transition animation starts.
+        * If the contents of the scope are clipped using overflow, they will stay clipped while undergoing a view transition. Document-scoped view transitions spill out of clipping containers because their pseudo-element trees are drawn over the top of the entire page.
+
+       EXAMPLES
+
+       See Using element-scoped view transitions for more examples.
+
+       ANIMATING A SLIDESHOW
+
+       This is a basic example of using an element-scoped view transition to smoothly animate the DOM changes to a slideshow when a button is clicked.
+
+       HTML
+
+       The HTML includes a element to represent the slideshow, a to press to change the slide content, and some surrounding content.
+
+         <p>
+           Lorem ipsum dolor sit amet, consectetur adipisicing elit. Donec a diam lectus.
+           Set sit amet ipsum mauris.
+         </p>
+         <section>Slide 1</section>
+         <button>Update slide</button>
+         <p>
+           Maecenas congue ligula as quam viverra nec consectetur ant hendrerit. Donec et
+           mollis dolor.
+         </p>
+
+       CSS
+
+       The CSS uses flexbox to center the slide's content and sets the animation-duration of the view transition to 1s via the ::view-transition-group pseudo-element.
+
+         html {
+           font-family: sans-serif;
+         }
+         section {
+           height: 200px;
+           font-size: 2rem;
+           background-color: green;
+         }
+         button {
+           position: absolute;
+           top: 5px;
+           right: 5px;
+         }
+
+         section {
+           display: flex;
+           justify-content: center;
+           align-items: center;
+         }
+         ::view-transition-group(root) {
+           animation-duration: 1s;
+         }
+
+       JAVASCRIPT
+
+       The script starts by grabbing references to the and elements and adding a click event listener to the button.
+
+         const slide = document.querySelector("section");
+         const btn = document.querySelector("button");
+         btn.addEventListener("click", handleClick);
+
+       Next, we define a function called updateSlide(), which toggles the content and background color of the slide between two sets of values.
+
+         function updateSlide() {
+           if (slide.textContent === "Slide 1") {
+             slide.textContent = "Slide 2";
+             slide.style.backgroundColor = "orange";
+           } else {
+             slide.textContent = "Slide 1";
+             slide.style.backgroundColor = "green";
+           }
+         }
+
+       Finally, we define the event handler function, handleClick(). When the button is clicked, we first check whether Element.startViewTransition() exists, and if not, just run the updateSlide() function and return. This ensures that the update will still work in non-supporting browsers, albeit without the animation. If Element.startViewTransition() is supported, we call it on the element, and call updateSlide() inside its callback.
+
+         function handleClick() {
+           if (!slide.startViewTransition) {
+             updateSlide();
+             return;
+           }
+
+           const transition = slide.startViewTransition(() => {
+             updateSlide();
+           });
+         }
+
+       RESULT
+
+       Click the "Update slide" button to update the slide element DOM and see the view transition.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Element.activeViewTransition
+        * Document.startViewTransition()
+        * :active-view-transition pseudo-class
+        * :active-view-transition-type() pseudo-class
+        * View Transition API
+        * Using the View Transition API
+        * Using view transition types
+        * Using element-scoped view transitions
+
+Web APIs manual                         from the official documentation

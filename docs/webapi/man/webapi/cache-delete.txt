@@ -1,0 +1,64 @@
+WEBAPI.CACHE-DELETE(1)           Sandbox manual           WEBAPI.CACHE-DELETE(1)
+
+       NAME
+
+       Cache: delete() method - The delete() method of the Cache interface finds the Cache entry whose key is the request, and if found, deletes the Cache entry and returns
+
+       CACHE: DELETE() METHOD
+
+       The delete() method of the Cache interface finds the Cache entry whose key is the request, and if found, deletes the Cache entry and returns a Promise that resolves to true. If no Cache entry is found, it resolves to false.
+
+       SYNTAX
+
+         delete(request)
+         delete(request, options)
+
+       PARAMETERS
+
+        * request
+          * : The Request you are looking to delete.
+       This can be a Request object or a URL.
+
+        * options (optional)
+          * : An object whose properties control how matching is done in the delete operation.
+       The available options are:
+
+            * ignoreSearch
+              * : A boolean value that specifies whether the matching process should ignore the query string in the URL.
+       If set to true, the ?value=bar part of https://example.com/?value=bar would be ignored when performing a match. It defaults to false.
+
+            * ignoreMethod
+              * : A boolean value that, when set to
+       true, prevents matching operations from validating the Request HTTP method (normally only GET and HEAD are allowed.) It defaults to false.
+
+            * ignoreVary
+              * : A boolean value that, when set to
+       true, tells the matching operation not to perform VARY header matching. In other words, if the URL matches you will get a match regardless of whether the Response object has a VARY header. It defaults to false.
+
+            * cacheName
+              * : A string that represents a specific cache to search within. Note that this option is ignored by Cache.delete().
+
+       RETURN VALUE
+
+       A Promise that resolves to true if the cache entry is deleted, or false otherwise.
+
+       EXAMPLES
+
+         caches
+           .open("v1")
+           .then((cache) => cache.delete("/images/image.png"))
+           .then((response) => {
+             someUIUpdateFunction();
+           });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using Service Workers
+        * Cache
+        * Window.caches and WorkerGlobalScope.caches
+
+Web APIs manual                         from the official documentation

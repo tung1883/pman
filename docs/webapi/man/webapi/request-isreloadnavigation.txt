@@ -1,0 +1,51 @@
+WEBAPI.REQUEST-ISRELOADNAVIGATION(1) Sandbox manual WEBAPI.REQUEST-ISRELOADNAVIGATION(1)
+
+       NAME
+
+       Request: isReloadNavigation property - The isReloadNavigation read-only property of the Request interface is a boolean indicating whether the request is a user-triggered reload.
+
+       REQUEST: ISRELOADNAVIGATION PROPERTY
+
+       The isReloadNavigation read-only property of the Request interface is a boolean indicating whether the request is a user-triggered reload.
+
+       A user-triggered reload can be triggered via a browser control, such as pressing Cmd/Ctrl + R or clicking the browser's reload button, or programmatically (for example, by calling Location.reload(), History.go(0), or Navigation.reload()).
+
+       This property is primarily used within service worker fetch event handlers to respond appropriately to reload requests versus non-reload requests. For example, a reload request indicates that the user expects current data, so it should prefer content from the server over that from a cache.
+
+       VALUE
+
+       A boolean value.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The following example can be used inside a service worker script to check for reloads and respond appropriately.
+
+       Inside a fetch event handler, we first check whether the event's Request.mode is navigate and isReloadNavigation properties are true. If so, this is a reload navigation; we therefore fetch the page from the network to provide an updated version. If that fails, we try retrieving the page from the Cache as a fallback.
+
+       If the navigation is not a reload navigation, we try retrieving the page from the Cache first, and only fetch from the network if a cached version of the page is not found.
+
+         self.addEventListener("fetch", (event) => {
+           if (event.request.mode === "navigate" && event.request.isReloadNavigation) {
+             event.respondWith(
+               fetch(event.request).catch(() => caches.match(event.request)),
+             );
+           } else {
+             event.respondWith(
+               caches
+                 .match(event.request)
+                 .then((cached) => cached || fetch(event.request)),
+             );
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Navigation API
+
+Web APIs manual                         from the official documentation

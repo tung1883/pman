@@ -1,0 +1,74 @@
+WEBAPI.AUDIOWORKLETGLOBALSCOPE-REGISTERPROCESSOR(1) Sandbox manual WEBAPI.AUDIOWORKLETGLOBALSCOPE-REGISTERPROCESSOR(1)
+
+       NAME
+
+       AudioWorkletGlobalScope: registerProcessor() method - The registerProcessor method of the
+
+       AUDIOWORKLETGLOBALSCOPE: REGISTERPROCESSOR() METHOD
+
+       The registerProcessor method of the AudioWorkletGlobalScope interface registers a class constructor derived from AudioWorkletProcessor interface under a specified _name_.
+
+       SYNTAX
+
+         registerProcessor(name, processorCtor)
+
+       PARAMETERS
+
+        * name
+          * : A string representing the name under which the processor will be registered.
+        * processorCtor
+          * : The constructor of a class derived from AudioWorkletProcessor.
+       > A key-value pair { name: constructor }
+       > is saved internally in the AudioWorkletGlobalScope once the processor
+       > is registered. The _name_ is to be referred to when creating an
+       > AudioWorkletNode based on the registered processor. A new processor by
+       > the given name is internally created and associated with the new node.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * NotSupportedError DOMException
+          * : Thrown under the following conditions:
+            * The _name_ is an empty string.
+            * A constructor under the given _name_ is already registered. Registering
+       the same name twice is not allowed.
+
+        * TypeError
+          * : Thrown under the following conditions:
+            * The _processorCtor_ is not a callable constructor.
+            * The parameterDescriptors property of the constructor exists and doesn't return an array of AudioParamDescriptor-based objects.
+
+       EXAMPLES
+
+       In this example we create a custom AudioWorkletNode that outputs silence.
+
+       First, we need to define a custom AudioWorkletProcessor and register it. Note that this should be done in a separate file.
+
+         // test-processor.js
+         class TestProcessor extends AudioWorkletProcessor {
+           process(inputs, outputs, parameters) {
+             return true;
+           }
+         }
+
+         registerProcessor("test-processor", TestProcessor);
+
+       Next, in our main script file we'll load the processor, create an instance of AudioWorkletNode — passing it the processor name that we used when calling registerProcessor — and connect it to an audio graph.
+
+         const audioContext = new AudioContext();
+         await audioContext.audioWorklet.addModule("test-processor.js");
+         const node = new AudioWorkletNode(audioContext, "test-processor");
+         node.connect(audioContext.destination);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the Web Audio API
+
+Web APIs manual                         from the official documentation

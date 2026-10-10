@@ -1,0 +1,112 @@
+WEBAPI.HTMLDIALOGELEMENT-CANCEL-EVENT(1) Sandbox manual WEBAPI.HTMLDIALOGELEMENT-CANCEL-EVENT(1)
+
+       NAME
+
+       HTMLDialogElement: cancel event - The cancel event fires on a <dialog> element when the user triggers a close request.
+
+       HTMLDIALOGELEMENT: CANCEL EVENT
+
+       The cancel event fires on a element when the user triggers a close request.
+
+       The cancel event handler can be used to override the default behavior on receiving a close request, and prevent the dialog from closing. If the default behavior is not prevented, the dialog will close and fire a close event.
+
+       Close requests might be triggered by:
+
+        * Pressing the Esc key on desktop platforms
+        * Calling the requestClose() method
+        * The back button on mobile platforms
+       This event is cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("cancel", (event) => { })
+
+         oncancel = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       CANCELING A DIALOG
+
+       The following example shows a button that, when clicked, opens a using the showModal() method.
+
+       You can trigger the cancel event by either clicking the _Request Close_ button to close the dialog (via the requestClose() method) or by pressing the Esc key.
+
+       Note that the cancel event handler logs the event and then returns, allowing the dialog to close (which in turn causes the close event to be emitted). You can uncomment the line containing event.preventDefault() to cancel the event.
+
+       HTML
+
+         <dialog id="dialog">
+           <button type="button" id="request-close">Request Close</button>
+         </dialog>
+
+         <button id="open">Open dialog</button>
+
+         <pre id="log"></pre>
+
+         #log {
+           height: 170px;
+           overflow: scroll;
+           padding: 0.5rem;
+           border: 1px solid black;
+         }
+
+       JAVASCRIPT
+
+         const logElement = document.getElementById("log");
+         function log(text, clear = false) {
+           if (clear) {
+             logElement.innerText = "";
+           }
+           logElement.innerText = `${logElement.innerText}${text}\n`;
+           logElement.scrollTop = logElement.scrollHeight;
+         }
+
+         const dialog = document.getElementById("dialog");
+         const openButton = document.getElementById("open");
+         const requestCloseButton = document.getElementById("request-close");
+
+         // Open button opens a modal dialog
+         openButton.addEventListener("click", () => {
+           log("open button click event fired", true);
+           log("dialog showModal() called");
+           dialog.showModal();
+         });
+
+         // Request close
+         requestCloseButton.addEventListener("click", () => {
+           log("request close button click event fired");
+           log("dialog requestClose() called");
+           // Triggers the cancel event
+           dialog.requestClose();
+         });
+
+         // Fired when requestClose() is called
+         // Prevent the dialog from closing by calling event.preventDefault()
+         dialog.addEventListener("cancel", (event) => {
+           log("dialog cancel event fired");
+           // Uncomment the next two lines to prevent the dialog from closing
+           // log("dialog close canceled");
+           // event.preventDefault();
+         });
+
+         dialog.addEventListener("close", (event) => {
+           log("dialog close event fired");
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * HTML element
+
+Web APIs manual                         from the official documentation

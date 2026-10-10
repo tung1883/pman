@@ -1,0 +1,31 @@
+SHELLCHECK.SC1072(1)             Sandbox manual             SHELLCHECK.SC1072(1)
+
+       NAME
+
+       Unexpected .. - See Parser Error.
+
+       UNEXPECTED
+
+       Note: There is a known bug in the current version when directives appear within then clauses of if blocks that causes Shellcheck to report SC1072 on otherwise valid code. Avoid using directives within then clauses - instead place them at the top of the if block or another enclosing block. This is fixed on the online version and the next release.
+
+       See Parser Error.
+
+       This error can also occur with an incomplete shellcheck directive like # shellcheck disable instead of # shellcheck disable=all, or if the corresponding command has been commented out.
+
+       PROBLEMATIC CODE
+
+         # shellcheck disable
+         echo stuff that shellcheck up to at least v0.10.0 will not even see because of the incorrect directive above
+
+         #shellcheck disable=SC2162
+         #read VAR
+
+       CORRECT CODE
+
+         # shellcheck disable=all
+         echo stuff that shellcheck will correctly ignore entirely
+
+         ##shellcheck disable=SC2162
+         #read VAR
+
+ShellCheck manual                       from the official documentation

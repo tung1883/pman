@@ -1,0 +1,72 @@
+WEBAPI.VALIDITYSTATE-TOOLONG(1)  Sandbox manual  WEBAPI.VALIDITYSTATE-TOOLONG(1)
+
+       NAME
+
+       ValidityState: tooLong property - The read-only tooLong property of the ValidityState interface indicates if the value of an <input> or <textarea>, after having been edited b
+
+       VALIDITYSTATE: TOOLONG PROPERTY
+
+       The read-only tooLong property of the ValidityState interface indicates if the value of an or , after having been edited by the user, exceeds the maximum code-unit length established by the element's maxlength attribute.
+
+       VALUE
+
+       A boolean that is true if the ValidityState does not conform to the constraints.
+
+       EXAMPLES
+
+       TEXTAREA WITH TOO LONG CHARACTER COUNT
+
+       The following example checks the validity of a textarea element. A constraint has been added using the maxlength attribute so the textarea expects a maximum of 10 characters. If there are too many characters in the textarea (which is true below), the element fails constraint validation, and the styles matching :invalid CSS pseudo-class are applied.
+
+       When editing the textarea, the browser will not allow the user to add characters that would fail constraint validation of maximum character count, so at first, only deleting characters is allowed. Newline characters are normalized and count as a single character in the maximum length calculation.
+
+         textarea:invalid {
+           outline: red solid 3px;
+         }
+
+         body {
+           margin: 0.5rem;
+         }
+         textarea {
+           width: 75%;
+         }
+         pre {
+           padding: 1rem;
+           height: 2rem;
+           background-color: lightgrey;
+           outline: 1px solid grey;
+         }
+
+         <pre id="log">Validation logged here...</pre>
+         <textarea name="story" id="userText" maxlength="10" rows="5">
+         It was a dark and
+
+         stormy night...
+         </textarea>
+
+         const userInput = document.getElementById("userText");
+         const logElement = document.getElementById("log");
+
+         function log(text) {
+           logElement.innerText = text;
+         }
+
+         userInput.addEventListener("input", () => {
+           userInput.reportValidity();
+           if (userInput.validity.tooLong) {
+             log("Too many characters in the textarea.");
+           } else {
+             log("Input is valid…");
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Constraint validation
+        * Forms: Data form validation
+
+Web APIs manual                         from the official documentation

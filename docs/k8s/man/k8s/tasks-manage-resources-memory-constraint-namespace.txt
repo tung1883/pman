@@ -1,0 +1,246 @@
+K8S.TASKS-MANAGE-RESOURCES-MEMORY-CONSTRAINT-NAMESPACE(1) Sandbox manual K8S.TASKS-MANAGE-RESOURCES-MEMORY-CONSTRAINT-NAMESPACE(1)
+
+       NAME
+
+       Look for the "Requests:" section of the output - This page shows how to set minimum and maximum values for memory used by containers
+
+       LOOK FOR THE REQUESTS: SECTION OF THE OUTPUT
+
+       This page shows how to set minimum and maximum values for memory used by containers running in a namespace. You specify minimum and maximum memory values in a LimitRange object. If a Pod does not meet the constraints imposed by the LimitRange, it cannot be created in the namespace.
+
+       ## PREREQUISITES
+
+       You must have access to create namespaces in your cluster.
+
+       Each node in your cluster must have at least 1 GiB of memory available for Pods.
+
+       CREATE A NAMESPACE
+
+       Create a namespace so that the resources you create in this exercise are isolated from the rest of your cluster.
+
+         kubectl create namespace constraints-mem-example
+
+       CREATE A LIMITRANGE AND A POD
+
+       Here's an example manifest for a LimitRange:
+
+         apiVersion: v1
+         kind: LimitRange
+         metadata:
+           name: mem-min-max-demo-lr
+         spec:
+           limits:
+           - max:
+               memory: 1Gi
+             min:
+               memory: 500Mi
+             type: Container
+
+       Create the LimitRange:
+
+         kubectl apply -f https://k8s.io/examples/admin/resource/memory-constraints.yaml --namespace=constraints-mem-example
+
+       View detailed information about the LimitRange:
+
+         kubectl get limitrange mem-min-max-demo-lr --namespace=constraints-mem-example --output=yaml
+
+       The output shows the minimum and maximum memory constraints as expected. But notice that even though you didn't specify default values in the configuration file for the LimitRange, they were created automatically.
+
+           limits:
+           - default:
+               memory: 1Gi
+             defaultRequest:
+               memory: 1Gi
+             max:
+               memory: 1Gi
+             min:
+               memory: 500Mi
+             type: Container
+
+       Now whenever you define a Pod within the constraints-mem-example namespace, Kubernetes performs these steps:
+
+        * If any container in that Pod does not specify its own memory request and limit,
+       the control plane assigns the default memory request and limit to that container.
+
+        * Verify that every container in that Pod requests at least 500 MiB of memory.
+        * Verify that every container in that Pod requests no more than 1024 MiB (1 GiB)
+       of memory.
+
+       Here's a manifest for a Pod that has one container. Within the Pod spec, the sole container specifies a memory request of 600 MiB and a memory limit of 800 MiB. These satisfy the minimum and maximum memory constraints imposed by the LimitRange.
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: constraints-mem-demo
+         spec:
+           containers:
+           - name: constraints-mem-demo-ctr
+             image: nginx
+             resources:
+               limits:
+                 memory: "800Mi"
+               requests:
+                 memory: "600Mi"
+
+       Create the Pod:
+
+         kubectl apply -f https://k8s.io/examples/admin/resource/memory-constraints-pod.yaml --namespace=constraints-mem-example
+
+       Verify that the Pod is running and that its container is healthy:
+
+         kubectl get pod constraints-mem-demo --namespace=constraints-mem-example
+
+       View detailed information about the Pod:
+
+         kubectl get pod constraints-mem-demo --output=yaml --namespace=constraints-mem-example
+
+       The output shows that the container within that Pod has a memory request of 600 MiB and a memory limit of 800 MiB. These satisfy the constraints imposed by the LimitRange for this namespace:
+
+         resources:
+           limits:
+              memory: 800Mi
+           requests:
+             memory: 600Mi
+
+       Delete your Pod:
+
+         kubectl delete pod constraints-mem-demo --namespace=constraints-mem-example
+
+       ATTEMPT TO CREATE A POD THAT EXCEEDS THE MAXIMUM MEMORY CONSTRAINT
+
+       Here's a manifest for a Pod that has one container. The container specifies a memory request of 800 MiB and a memory limit of 1.5 GiB.
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: constraints-mem-demo-2
+         spec:
+           containers:
+           - name: constraints-mem-demo-2-ctr
+             image: nginx
+             resources:
+               limits:
+                 memory: "1.5Gi"
+               requests:
+                 memory: "800Mi"
+
+       Attempt to create the Pod:
+
+         kubectl apply -f https://k8s.io/examples/admin/resource/memory-constraints-pod-2.yaml --namespace=constraints-mem-example
+
+       The output shows that the Pod does not get created, because it defines a container that requests more memory than is allowed:
+
+         Error from server (Forbidden): error when creating "examples/admin/resource/memory-constraints-pod-2.yaml":
+         pods "constraints-mem-demo-2" is forbidden: maximum memory usage per Container is 1Gi, but limit is 1536Mi.
+
+       ATTEMPT TO CREATE A POD THAT DOES NOT MEET THE MINIMUM MEMORY REQUEST
+
+       Here's a manifest for a Pod that has one container. That container specifies a memory request of 100 MiB and a memory limit of 800 MiB.
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: constraints-mem-demo-3
+         spec:
+           containers:
+           - name: constraints-mem-demo-3-ctr
+             image: nginx
+             resources:
+               limits:
+                 memory: "800Mi"
+               requests:
+                 memory: "100Mi"
+
+       Attempt to create the Pod:
+
+         kubectl apply -f https://k8s.io/examples/admin/resource/memory-constraints-pod-3.yaml --namespace=constraints-mem-example
+
+       The output shows that the Pod does not get created, because it defines a container that requests less memory than the enforced minimum:
+
+         Error from server (Forbidden): error when creating "examples/admin/resource/memory-constraints-pod-3.yaml":
+         pods "constraints-mem-demo-3" is forbidden: minimum memory usage per Container is 500Mi, but request is 100Mi.
+
+       CREATE A POD THAT DOES NOT SPECIFY ANY MEMORY REQUEST OR LIMIT
+
+       Here's a manifest for a Pod that has one container. The container does not specify a memory request, and it does not specify a memory limit.
+
+         apiVersion: v1
+         kind: Pod
+         metadata:
+           name: constraints-mem-demo-4
+         spec:
+           containers:
+           - name: constraints-mem-demo-4-ctr
+             image: nginx
+
+       Create the Pod:
+
+         kubectl apply -f https://k8s.io/examples/admin/resource/memory-constraints-pod-4.yaml --namespace=constraints-mem-example
+
+       View detailed information about the Pod:
+
+         kubectl get pod constraints-mem-demo-4 --namespace=constraints-mem-example --output=yaml
+
+       The output shows that the Pod's only container has a memory request of 1 GiB and a memory limit of 1 GiB. How did that container get those values?
+
+         resources:
+           limits:
+             memory: 1Gi
+           requests:
+             memory: 1Gi
+
+       Because your Pod did not define any memory request and limit for that container, the cluster applied a default memory request and limit from the LimitRange.
+
+       This means that the definition of that Pod shows those values. You can check it using kubectl describe:
+
+         # Look for the "Requests:" section of the output
+         kubectl describe pod constraints-mem-demo-4 --namespace=constraints-mem-example
+
+       At this point, your Pod might be running or it might not be running. Recall that a prerequisite for this task is that your Nodes have at least 1 GiB of memory. If each of your Nodes has only 1 GiB of memory, then there is not enough allocatable memory on any Node to accommodate a memory request of 1 GiB. If you happen to be using Nodes with 2 GiB of memory, then you probably have enough space to accommodate the 1 GiB request.
+
+       Delete your Pod:
+
+         kubectl delete pod constraints-mem-demo-4 --namespace=constraints-mem-example
+
+       ENFORCEMENT OF MINIMUM AND MAXIMUM MEMORY CONSTRAINTS
+
+       The maximum and minimum memory constraints imposed on a namespace by a LimitRange are enforced only when a Pod is created or updated. If you change the LimitRange, it does not affect Pods that were created previously.
+
+       > Note:
+       When using in-place Pod resize, the memory constraints are also enforced. If a resize would cause the Pod's memory values to violate the LimitRange constraints (either exceeding the maximum or falling below the minimum), the resize will be rejected and the Pod's resources remain at their previous values.
+
+       MOTIVATION FOR MINIMUM AND MAXIMUM MEMORY CONSTRAINTS
+
+       As a cluster administrator, you might want to impose restrictions on the amount of memory that Pods can use. For example:
+
+        * Each Node in a cluster has 2 GiB of memory. You do not want to accept any Pod that requests
+       more than 2 GiB of memory, because no Node in the cluster can support the request.
+
+        * A cluster is shared by your production and development departments.
+       You want to allow production workloads to consume up to 8 GiB of memory, but you want development workloads to be limited to 512 MiB. You create separate namespaces for production and development, and you apply memory constraints to each namespace.
+
+       CLEAN UP
+
+       Delete your namespace:
+
+         kubectl delete namespace constraints-mem-example
+
+       ## WHATSNEXT
+
+       FOR CLUSTER ADMINISTRATORS
+
+        * Configure Default Memory Requests and Limits for a Namespace
+        * Configure Default CPU Requests and Limits for a Namespace
+        * Configure Minimum and Maximum CPU Constraints for a Namespace
+        * Configure Memory and CPU Quotas for a Namespace
+        * Configure a Pod Quota for a Namespace
+        * Configure Quotas for API Objects
+
+       FOR APP DEVELOPERS
+
+        * Assign Memory Resources to Containers and Pods
+        * Assign CPU Resources to Containers and Pods
+        * Assign Pod-level CPU and memory resources
+        * Configure Quality of Service for Pods
+
+Kubernetes manual                       from the official documentation

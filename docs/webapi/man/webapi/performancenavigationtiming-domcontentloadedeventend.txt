@@ -1,0 +1,56 @@
+WEBAPI.PERFORMANCENAVIGATIONTIMING-DOMCONTENTLOADEDEVENTEND(1) Sandbox manual WEBAPI.PERFORMANCENAVIGATIONTIMING-DOMCONTENTLOADEDEVENTEND(1)
+
+       NAME
+
+       PerformanceNavigationTiming: domContentLoadedEventEnd property - The domContentLoadedEventEnd read-only property returns a DOMHighResTimeStamp representing the time immediately after the current document's
+
+       PERFORMANCENAVIGATIONTIMING: DOMCONTENTLOADEDEVENTEND PROPERTY
+
+       The domContentLoadedEventEnd read-only property returns a DOMHighResTimeStamp representing the time immediately after the current document's DOMContentLoaded event handler completes.
+
+       Typically frameworks and libraries wait for the DOMContentLoaded event before starting to run their code. We can use the domContentLoadedEventEnd and the domContentLoadedEventStart properties to calculate how long this takes to run.
+
+       VALUE
+
+       A DOMHighResTimeStamp representing the time immediately after the current document's DOMContentLoaded event handler completes.
+
+       EXAMPLES
+
+       MEASURING DOMCONTENTLOADED EVENT HANDLER TIME
+
+       The domContentLoadedEventEnd property can be used to measure how long it takes process the DOMContentLoaded event handler.
+
+       Example using a PerformanceObserver, which notifies of new navigation performance entries as they are recorded in the browser's performance timeline. Use the buffered option to access entries from before the observer creation.
+
+         const observer = new PerformanceObserver((list) => {
+           list.getEntries().forEach((entry) => {
+             const domContentLoadedTime =
+               entry.domContentLoadedEventEnd - entry.domContentLoadedEventStart;
+             console.log(
+               `${entry.name}: DOMContentLoaded processing time: ${domContentLoadedTime}ms`,
+             );
+           });
+         });
+
+         observer.observe({ type: "navigation", buffered: true });
+
+       Example using Performance.getEntriesByType(), which only shows navigation performance entries present in the browser's performance timeline at the time you call this method:
+
+         const entries = performance.getEntriesByType("navigation");
+         entries.forEach((entry) => {
+           const domContentLoadedTime =
+             entry.domContentLoadedEventEnd - entry.domContentLoadedEventStart;
+           console.log(
+             `${entry.name}: DOMContentLoaded processing time: ${domContentLoadedTime}ms`,
+           );
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * DOMContentLoaded
+
+Web APIs manual                         from the official documentation

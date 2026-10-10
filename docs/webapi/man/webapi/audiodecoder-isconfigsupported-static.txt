@@ -1,0 +1,63 @@
+WEBAPI.AUDIODECODER-ISCONFIGSUPPORTED-STATIC(1) Sandbox manual WEBAPI.AUDIODECODER-ISCONFIGSUPPORTED-STATIC(1)
+
+       NAME
+
+       AudioDecoder: isConfigSupported() static method - windowanddedicated
+
+       AUDIODECODER: ISCONFIGSUPPORTED() STATIC METHOD
+
+       window_and_dedicated
+
+       The isConfigSupported() static method of the AudioDecoder interface checks if the given config is supported (that is, if AudioDecoder objects can be successfully configured with the given config).
+
+       SYNTAX
+
+         AudioDecoder.isConfigSupported(config)
+
+       PARAMETERS
+
+        * config
+          * : The dictionary object accepted by AudioDecoder.configure
+
+       RETURN VALUE
+
+       A Promise that resolves with an object containing the following members:
+
+        * supported
+          * : A boolean value which is true if the given config is supported by the decoder.
+        * config
+          * : A copy of the given config with all the fields recognized by the decoder.
+
+       EXCEPTIONS
+
+        * TypeError
+          * : Thrown if the provided config is invalid; that is, if doesn't have required values (such as an empty codec field) or has invalid values (such as a negative sampleRate).
+
+       EXAMPLES
+
+       The following example tests if the browser supports several audio codecs.
+
+         const codecs = ["mp4a.40.2", "mp3", "alaw", "ulaw"];
+         const configs = [];
+         for (const codec of codecs) {
+           configs.push({
+             codec,
+             sampleRate: 48000,
+             numberOfChannels: 1,
+             not_supported_field: 123,
+           });
+         }
+         for (const config of configs) {
+           const support = await AudioDecoder.isConfigSupported(config);
+           console.log(
+             `AudioDecoder's config ${JSON.stringify(support.config)} support: ${
+               support.supported
+             }`,
+           );
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

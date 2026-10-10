@@ -1,0 +1,68 @@
+NGINX.CONTRIBUTING_CHANGES(1)    Sandbox manual    NGINX.CONTRIBUTING_CHANGES(1)
+
+       CONTRIBUTING CHANGES
+
+         Getting Sources Formatting Changes Before Submitting Submitting Changes Website License
+
+       GETTING SOURCES
+
+       GitHub is used to store source code. The repository can be cloned with the following command:
+
+         git clone https://github.com/nginx/nginx.git
+
+       FORMATTING CHANGES
+
+       Changes should be formatted according to the code style used by nginx. Sometimes, there is no clear rule; in such cases examine how existing nginx sources are formatted and mimic this style. Changes will more likely be accepted if style corresponds to the surrounding code.
+
+       Commit the changes in your nginx GitHub fork. Please ensure that the specified e-mail address and real name of the author are correct.
+
+       The commit message should have a single-line synopsis followed by verbose description after an empty line. Limit the subject and commit message body lines to 72 characters. The resulting commit can be obtained using the git show command:
+
+         commit 067d766f210ee914b750d79d9284cbf8801058f3
+         Author: Zoey <username@example.com>
+         Date:   Sun Apr 5 11:31:15 2026 +0200
+
+             Fix $request_port and $is_request_port in subrequests
+
+             Closes #1247.
+
+         diff --git a/src/http/ngx_http_core_module.c b/src/http/ngx_http_core_module.c
+         index 0c46106db..53ddf39bb 100644
+         --- a/src/http/ngx_http_core_module.c
+         +++ b/src/http/ngx_http_core_module.c
+         @@ -2453,6 +2453,8 @@ ngx_http_subrequest(ngx_http_request_t *r,
+              sr->method = NGX_HTTP_GET;
+              sr->http_version = r->http_version;
+
+         +    sr->port = r->port;
+         +
+              sr->request_line = r->request_line;
+              sr->uri = *uri;
+
+       BEFORE SUBMITTING
+
+       Several points are worth to consider before submitting changes:
+
+        * The proposed changes should work properly on a wide range of supported platforms.
+        * Try to make it clear why the suggested change is needed, and provide a use case, if possible.
+        * Passing your changes through the test suite is a good way to ensure that they do not cause a regression. The repository with tests can be cloned with the following command:
+
+         git clone https://github.com/nginx/nginx-tests.git
+
+       SUBMITTING CHANGES
+
+       The proposed changes should be submitted from your fork to nginx repository as a pull request.
+
+       WEBSITE
+
+       GitHub is used to store the sources for this website. The repository can be cloned with the following command:
+
+         git clone https://github.com/nginx/nginx.org.git
+
+       Documentation changes should be submitted from your fork as a pull request.
+
+       LICENSE
+
+       Submitting changes implies granting project a permission to use it under an appropriate license.
+
+nginx manual                            bundled documentation

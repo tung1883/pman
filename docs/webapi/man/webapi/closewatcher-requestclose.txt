@@ -1,0 +1,48 @@
+WEBAPI.CLOSEWATCHER-REQUESTCLOSE(1) Sandbox manual WEBAPI.CLOSEWATCHER-REQUESTCLOSE(1)
+
+       NAME
+
+       CloseWatcher: requestClose() method - The requestClose() method of the CloseWatcher interface fires a cancel event and if that event is not canceled with Event.preventDefault(), 
+
+       CLOSEWATCHER: REQUESTCLOSE() METHOD
+
+       The requestClose() method of the CloseWatcher interface fires a cancel event and if that event is not canceled with Event.preventDefault(), proceeds to fire a close event, and then finally deactivates the close watcher as if destroy() was called.
+
+       SYNTAX
+
+         requestClose()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       USING THE REQUESTCLOSE() METHOD
+
+       In this example, you have your own UI component (a picker), and you want to support both the platform's default close method (e.g., the Esc key) and your custom close method (a close button).
+
+       The onclick handler of your UI component can call requestClose to request a close and to route your close request through the same onclose handler the platform close method uses.
+
+         const watcher = new CloseWatcher();
+         const picker = setUpAndShowPickerDOMElement();
+         let chosenValue = null;
+
+         watcher.onclose = () => {
+           chosenValue = picker.querySelector("input").value;
+           picker.remove();
+         };
+
+         picker.querySelector(".close-button").onclick = () => {
+           watcher.requestClose();
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

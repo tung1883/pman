@@ -1,0 +1,41 @@
+APACHE.MOD_PROXY_HTTP(1)         Sandbox manual         APACHE.MOD_PROXY_HTTP(1)
+
+       ENVIRONMENT VARIABLES
+
+       In addition to the configuration directives that control the behavior of mod_proxy, there are a number of environment variables that control the HTTP protocol provider. Environment variables below that don't specify specific values are enabled when set to any value.
+
+         proxy-sendextracrlf
+       Causes proxy to send an extra CR-LF newline on the end of a request. This is a workaround for a bug in some browsers.
+
+         force-proxy-request-1.0
+       Forces the proxy to send requests to the backend as HTTP/1.0 and disables HTTP/1.1 features.
+
+         proxy-nokeepalive
+       Forces the proxy to close the backend connection after each request.
+
+         proxy-chain-auth
+       If the proxy requires authentication, it will read and consume the proxy authentication credentials sent by the client. With proxy-chain-auth it will also forward the credentials to the next proxy in the chain. This may be necessary if you have a chain of proxies that share authentication information. Security Warning: Do not set this unless you know you need it, as it forwards sensitive information!
+
+         proxy-sendcl
+       HTTP/1.0 required all HTTP requests that include a body (e.g. POST requests) to include a Content-Length header. This environment variable forces the Apache proxy to send this header to the backend server, regardless of what the Client sent to the proxy. It ensures compatibility when proxying for an HTTP/1.0 or unknown backend. However, it may require the entire request to be buffered by the proxy, so it becomes very inefficient for large requests.
+
+         proxy-sendchunks or proxy-sendchunked
+       This is the opposite of proxy-sendcl. It allows request bodies to be sent to the backend using chunked transfer encoding. This allows the request to be efficiently streamed, but requires that the backend server supports HTTP/1.1.
+
+         proxy-interim-response
+       This variable takes values RFC (the default) or Suppress. Earlier httpd versions would suppress HTTP interim (1xx) responses sent from the backend. This is technically a violation of the HTTP protocol. In practice, if a backend sends an interim response, it may itself be extending the protocol in a manner we know nothing about, or just broken. So this is now configurable: set proxy-interim-response RFC to be fully protocol compliant, or proxy-interim-response Suppress to suppress interim responses.
+
+         proxy-initial-not-pooled
+       If this variable is set, no pooled connection will be reused if the client request is the initial request on the frontend connection. This avoids the "proxy: error reading status line from remote server" error message caused by the race condition that the backend server closed the pooled connection after the connection check by the proxy and before data sent by the proxy reached the backend. It has to be kept in mind that setting this variable downgrades performance, especially with HTTP/1.0 clients.
+
+       REQUEST NOTES
+
+       mod_proxy_http creates the following request notes for logging using the %{VARNAME}n format in LogFormat or ErrorLogFormat:
+
+         proxy-source-port
+       The local port used for the connection to the backend server.
+
+         proxy-status
+       The HTTP status received from the backend server.
+
+Apache HTTP Server manual               bundled documentation

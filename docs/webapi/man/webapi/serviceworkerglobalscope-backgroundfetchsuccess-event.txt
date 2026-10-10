@@ -1,0 +1,73 @@
+WEBAPI.SERVICEWORKERGLOBALSCOPE-BACKGROUNDFETCHSUCCESS-EVENT(1) Sandbox manual WEBAPI.SERVICEWORKERGLOBALSCOPE-BACKGROUNDFETCHSUCCESS-EVENT(1)
+
+       NAME
+
+       ServiceWorkerGlobalScope: backgroundfetchsuccess event - service
+
+       SERVICEWORKERGLOBALSCOPE: BACKGROUNDFETCHSUCCESS EVENT
+
+       service
+
+       The backgroundfetchsuccess event of the ServiceWorkerGlobalScope interface is fired when a background fetch operation has completed successfully: that is, when all network requests in the fetch have completed successfully.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("backgroundfetchsuccess", (event) => { })
+
+         onbackgroundfetchsuccess = (event) => { }
+
+       EVENT TYPE
+
+       A BackgroundFetchUpdateUIEvent.
+
+       BackgroundFetchUpdateUIEvent
+
+       DESCRIPTION
+
+       When a background fetch operation completes successfully (meaning that all individual network requests have completed successfully), the browser starts the service worker, if necessary, and fires the backgroundfetchsuccess event in the service worker's global scope.
+
+       In the handler for this event, the service worker can retrieve and store the responses (for example, using the Cache API). To access the response data, the service worker uses the event's registration property.
+
+       In the background fetch API, the browser shows a UI element to the user to indicate the progress of the operation. In the backgroundfetchsuccess handler, the service worker can update that UI to show that the operation has completed successfully. To do this, the handler calls the event's updateUI() method, passing in a new title and/or icons.
+
+       EXAMPLES
+
+       STORING RESPONSES AND UPDATING UI
+
+       This event handler stores all responses in the cache, and updates the UI.
+
+         addEventListener("backgroundfetchsuccess", (event) => {
+           const registration = event.registration;
+
+           event.waitUntil(async () => {
+             // Open a cache
+             const cache = await caches.open("movies");
+             // Get all the records
+             const records = await registration.matchAll();
+             // Cache all responses
+             const cachePromises = records.map(async (record) => {
+               const response = await record.responseReady;
+               await cache.put(record.request, response);
+             });
+
+             // Wait for caching to finish
+             await Promise.all(cachePromises);
+
+             // Update the browser's UI
+             event.updateUI({ title: "Move download complete" });
+           });
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Background Fetch API
+
+Web APIs manual                         from the official documentation

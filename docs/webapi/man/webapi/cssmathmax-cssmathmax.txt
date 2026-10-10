@@ -1,0 +1,69 @@
+WEBAPI.CSSMATHMAX-CSSMATHMAX(1)  Sandbox manual  WEBAPI.CSSMATHMAX-CSSMATHMAX(1)
+
+       NAME
+
+       CSSMathMax: CSSMathMax() constructor - The CSSMathMax() constructor creates a new CSSMathMax object which represents the CSS max() function.
+
+       CSSMATHMAX: CSSMATHMAX() CONSTRUCTOR
+
+       The CSSMathMax() constructor creates a new CSSMathMax object which represents the CSS max() function.
+
+       SYNTAX
+
+         new CSSMathMax(arg1)
+         new CSSMathMax(arg1, arg2)
+         new CSSMathMax(arg1, arg2, /* …, */ argN)
+
+       PARAMETERS
+
+        * arg1, …, argN
+          * : A list of numbers or CSSNumericValue objects.
+
+       EXCEPTIONS
+
+        * SyntaxError DOMException
+          * : Thrown if no arguments are passed.
+        * TypeError
+          * : Thrown if arg1, …, argN have incompatible types (for example, mixing a length with an angle), so a common type cannot be determined for comparison.
+
+       EXAMPLES
+
+       BASIC USAGE
+
+       The following code creates a CSSMathMax instance from three values, then reads back its operator and values properties.
+
+         const max = new CSSMathMax(CSS.px(10), CSS.em(5), CSS.percent(50));
+
+         console.log(max.constructor.name); // "CSSMathMax"
+         console.log(max.operator); // 'max'
+         console.log(max.values); // CSSNumericArray {0: CSSUnitValue, 1: CSSUnitValue, 2: CSSUnitValue, length: 3}
+         console.log(max.values[0]); // CSSUnitValue {value: 10, unit: "px"}
+
+       HANDLING INCOMPATIBLE TYPES
+
+       The constructor throws a TypeError if the values don't resolve to a compatible type. In the following code we mix a length with a time, and log the error.
+
+         try {
+           // Mixes a length (px) with a time (s): incompatible types
+           new CSSMathMax(CSS.px(10), CSS.s(2));
+         } catch (e) {
+           console.log(e instanceof TypeError); // true
+           console.log(e.message);
+         }
+
+       EMPTY ARGUMENTS
+
+       The constructor throws a SyntaxError if called with no arguments.
+
+         try {
+           new CSSMathMax();
+         } catch (e) {
+           console.log(e instanceof DOMException); // true
+           console.log(e.name); // "SyntaxError"
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

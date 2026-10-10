@@ -1,0 +1,62 @@
+WEBAPI.RTCPEERCONNECTION-DATACHANNEL-EVENT(1) Sandbox manual WEBAPI.RTCPEERCONNECTION-DATACHANNEL-EVENT(1)
+
+       NAME
+
+       RTCPeerConnection: datachannel event - A datachannel event is sent to an RTCPeerConnection instance when an RTCDataChannel has been added to the connection, as a result of the rem
+
+       RTCPEERCONNECTION: DATACHANNEL EVENT
+
+       A datachannel event is sent to an RTCPeerConnection instance when an RTCDataChannel has been added to the connection, as a result of the remote peer calling RTCPeerConnection.createDataChannel().
+
+       > This event is _not_ dispatched when the local end of the connection creates the channel.
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("datachannel", (event) => { })
+
+         ondatachannel = (event) => { }
+
+       EVENT TYPE
+
+       An RTCDataChannelEvent. Inherits from Event.
+
+       RTCDataChannelEvent
+
+       EXAMPLES
+
+       This example sets up a function that handles datachannel events by gathering the information needed to communicate with the newly added RTCDataChannel and by adding event handlers for the events that occur on that channel.
+
+         pc.addEventListener("datachannel", (ev) => {
+           receiveChannel = ev.channel;
+           receiveChannel.onmessage = myHandleMessage;
+           receiveChannel.onopen = myHandleOpen;
+           receiveChannel.onclose = myHandleClose;
+         });
+
+       receiveChannel is set to the value of the event's channel property, which specifies the RTCDataChannel object representing the data channel linking the remote peer to the local one.
+
+       This same code can also instead use the RTCPeerConnection interface's ondatachannel event handler property, like this:
+
+         pc.ondatachannel = (ev) => {
+           receiveChannel = ev.channel;
+           receiveChannel.onmessage = myHandleMessage;
+           receiveChannel.onopen = myHandleOpen;
+           receiveChannel.onclose = myHandleClose;
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * Using WebRTC data channels
+        * A simple RTCDataChannel sample
+        * RTCDataChannelEvent
+        * RTCPeerConnection.createDataChannel()
+
+Web APIs manual                         from the official documentation

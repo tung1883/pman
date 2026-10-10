@@ -1,0 +1,46 @@
+WEBAPI.PRESSURERECORD-STATE(1)   Sandbox manual   WEBAPI.PRESSURERECORD-STATE(1)
+
+       NAME
+
+       PressureRecord: state property - windowandworkerexceptservice
+
+       PRESSURERECORD: STATE PROPERTY
+
+       window_and_worker_except_service
+
+       The read-only state property is a string indicating the pressure state recorded.
+
+       VALUE
+
+       A string indicating the pressure state recorded. The Compute Pressure API uses human-readable pressure states with the following semantics (see also the specification):
+
+        * ⚪ "nominal": The conditions of the target device are at an acceptable level with no noticeable adverse effects on the user.
+        * 🟢 "fair": Target device pressure, temperature and/or energy usage are slightly elevated, potentially resulting in reduced battery-life, as well as fans (or systems with fans) becoming active and audible. Apart from that the target device is running flawlessly and can take on additional work.
+        * 🟡 "serious": Target device pressure, temperature and/or energy usage is consistently highly elevated. The system may be throttling as a countermeasure to reduce thermals.
+        * 🔴 "critical": The temperature of the target device or system is significantly elevated and it requires cooling down to avoid any potential issues.
+
+       EXAMPLES
+
+       USING THE STATE PROPERTY
+
+       In the following example we log the value of the state property in the pressure observer callback.
+
+         function callback(records) {
+           const lastRecord = records[records.length - 1];
+           console.log(`Current pressure is ${lastRecord.state}`);
+         }
+
+         try {
+           const observer = new PressureObserver(callback);
+           await observer.observe("cpu", {
+             sampleInterval: 1000, // 1000ms
+           });
+         } catch (error) {
+           // report error setting up the observer
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

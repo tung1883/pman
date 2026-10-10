@@ -1,0 +1,120 @@
+WEBAPI.REQUEST-REQUEST(1)        Sandbox manual        WEBAPI.REQUEST-REQUEST(1)
+
+       NAME
+
+       Request: Request() constructor - The Request() constructor creates a new
+
+       REQUEST: REQUEST() CONSTRUCTOR
+
+       The Request() constructor creates a new Request object.
+
+       SYNTAX
+
+         new Request(input)
+         new Request(input, options)
+
+       PARAMETERS
+
+        * input
+          * : Defines the resource that you wish to fetch. This can either be:
+            * A string containing the URL of the resource you want to fetch. The URL may be relative to the base URL, which is the document's baseURI in a window context, or WorkerGlobalScope.location in a worker context.
+            * A Request object, effectively creating a copy. Note the following
+       behavioral updates to retain security while making the constructor less likely to throw exceptions:
+
+              * If this object exists on another origin to the constructor call, the
+       Request.referrer is stripped out.
+
+              * If this object has a Request.mode of navigate,
+       the mode value is converted to same-origin.
+
+        * options (optional)
+          * : A RequestInit object containing any custom settings that you want to apply to the request.
+       If you construct a new Request from an existing Request, any options you set in an _options_ argument for the new request replace any corresponding options set in the original Request. For example:
+
+             const oldRequest = new Request(
+               "https://github.com/mdn/content/issues/12959",
+               { headers: { From: "webmaster@example.org" } },
+             );
+             oldRequest.headers.get("From"); // "webmaster@example.org"
+             const newRequest = new Request(oldRequest, {
+               headers: { From: "developer@example.org" },
+             });
+             newRequest.headers.get("From"); // "developer@example.org"
+
+       EXCEPTIONS
+
+        * NotAllowedError DOMException
+          * : Thrown if:
+            * Use of the Topics API is specifically disallowed by a browsing-topics Permissions Policy, and browsingTopics is set to true.
+            * Use of Private State Token API operations is specifically disallowed by a private-state-token-issuance or private-state-token-redemption Permissions Policy, and the privateToken option is specified, including a disallowed privateToken.operation type.
+        * TypeError
+          * : Thrown if:
+            * The URL has credentials, such as http://user:password@example.com, or cannot be parsed.
+            * The privateToken init option is specified, including a privateToken.operation type of send-redemption-record, and the privateToken.issues array was empty or not set, or one or more of the specified issuers are not trustworthy, HTTPS URLs.
+
+       EXAMPLES
+
+       In our Fetch Request example (see Fetch Request live) we create a new Request object using the constructor, then fetch it using a fetch() call. Since we are fetching an image, we run Response.blob on the response to give it the proper MIME type so it will be handled properly, then create an Object URL of it and display it in an element.
+
+         const myImage = document.querySelector("img");
+         const myRequest = new Request("flowers.jpg");
+
+         fetch(myRequest)
+           .then((response) => response.blob())
+           .then((response) => {
+             const objectURL = URL.createObjectURL(response);
+             myImage.src = objectURL;
+           });
+
+       In our Fetch Request with init example (see Fetch Request init live) we do the same thing except that we pass in an _options_ object when we invoke fetch(). In this case, we can set a Cache-Control value to indicate what kind of cached responses we're okay with:
+
+         const myImage = document.querySelector("img");
+         const reqHeaders = new Headers();
+
+         // A cached response is okay unless it's more than a week old.
+         reqHeaders.set("Cache-Control", "max-age=604800");
+
+         const options = {
+           headers: reqHeaders,
+         };
+
+         // pass init as an "options" object with our headers
+         const req = new Request("flowers.jpg", options);
+
+         fetch(req).then((response) => {
+           // …
+         });
+
+       Note that you could also pass options into the fetch call to get the same effect, e.g.:
+
+         fetch(req, options).then((response) => {
+           // …
+         });
+
+       You can also use an object literal as headers in options.
+
+         const options = {
+           headers: {
+             "Cache-Control": "max-age=60480",
+           },
+         };
+
+         const req = new Request("flowers.jpg", options);
+
+       You may also pass a Request object to the Request() constructor to create a copy of the Request (This is similar to calling the clone() method.)
+
+         const copy = new Request(req);
+
+       > This last usage is probably only useful in ServiceWorkers.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * ServiceWorker API
+        * HTTP access control (CORS)
+        * HTTP
+
+Web APIs manual                         from the official documentation

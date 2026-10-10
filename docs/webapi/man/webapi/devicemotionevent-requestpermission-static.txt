@@ -1,0 +1,65 @@
+WEBAPI.DEVICEMOTIONEVENT-REQUESTPERMISSION-STATIC(1) Sandbox manual WEBAPI.DEVICEMOTIONEVENT-REQUESTPERMISSION-STATIC(1)
+
+       NAME
+
+       DeviceMotionEvent: requestPermission() static method - The requestPermission() static method of the DeviceMotionEvent interface requests the user's permission to access device motion data from th
+
+       DEVICEMOTIONEVENT: REQUESTPERMISSION() STATIC METHOD
+
+       The requestPermission() static method of the DeviceMotionEvent interface requests the user's permission to access device motion data from the accelerometer and gyroscope sensors. This method requires transient activation, meaning that it must be triggered by a UI event such as a button click.
+
+       SYNTAX
+
+         DeviceMotionEvent.requestPermission()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A Promise that resolves with a string which is either "granted" or "denied".
+
+       EXCEPTIONS
+
+       The returned promise rejects with the following exceptions:
+
+        * NotAllowedError DOMException
+          * : The permission state is "prompt" and the calling function does not have transient activation.
+
+       SECURITY
+
+       Transient user activation is required. The user has to interact with the page or a UI element in order for this feature to work.
+
+       EXAMPLES
+
+       REQUESTING DEVICE MOTION PERMISSION ON CLICK
+
+         document.querySelector("button").addEventListener("click", async () => {
+           if (typeof DeviceMotionEvent.requestPermission !== "function") {
+             // The feature is not available, or does not need permission.
+             return;
+           }
+
+           const permission = await DeviceMotionEvent.requestPermission();
+           if (permission === "granted") {
+             window.addEventListener("devicemotion", (event) => {
+               console.log(`Acceleration X: ${event.acceleration.x}`);
+               console.log(`Acceleration Y: ${event.acceleration.y}`);
+               console.log(`Acceleration Z: ${event.acceleration.z}`);
+             });
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * DeviceMotionEvent
+        * DeviceOrientationEvent.requestPermission()
+        * devicemotion event
+        * Detecting device orientation
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,83 @@
+ROCKY.INCUS_SERVER-05-INCUS_IMAGES(1) Sandbox manual ROCKY.INCUS_SERVER-05-INCUS_IMAGES(1)
+
+       NAME
+
+       5 Setting Up and Managing Images - Throughout this chapter, you must run commands as your unprivileged user ("incusadmin" if you have followed this book from the beginning).
+
+       5 SETTING UP AND MANAGING IMAGES
+
+       Throughout this chapter, you must run commands as your unprivileged user ("incusadmin" if you have followed this book from the beginning).
+
+       LIST AVAILABLE IMAGES
+
+       You probably can not wait to get started with a container. There are many container operating system possibilities. To get a feel for how many possibilities, enter this command:
+
+         incus image list images: | more
+
+       Enter the space bar to page through the list. This list of containers and virtual machines continues to grow.
+
+       The last thing you want to do is to look for a container image to install, particularly if you know the image you want to create. Change the command to show only Rocky Linux install options:
+
+         incus image list images: | grep rocky
+
+       This brings up a much more manageable list:
+
+         | rockylinux/8 (3 more)                    | dede6169bb45 | yes    | Rockylinux 8 amd64 (20240903_05:18)        | x86_64       | VIRTUAL-MACHINE | 850.75MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/8/arm64 (1 more)              | b749bad83e60 | yes    | Rockylinux 8 arm64 (20240903_04:40)        | aarch64      | CONTAINER       | 125.51MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/8/cloud (1 more)              | 4fefd464d25d | yes    | Rockylinux 8 amd64 (20240903_05:18)        | x86_64       | VIRTUAL-MACHINE | 869.95MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/8/cloud (1 more)              | 729891475172 | yes    | Rockylinux 8 amd64 (20240903_05:18)        | x86_64       | CONTAINER       | 148.81MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/8/cloud/arm64                 | 3642ec9652fc | yes    | Rockylinux 8 arm64 (20240903_04:52)        | aarch64      | CONTAINER       | 144.84MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/9 (3 more)                    | 9e5e4469e660 | yes    | Rockylinux 9 amd64 (20240903_03:29)        | x86_64       | VIRTUAL-MACHINE | 728.60MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/9 (3 more)                    | fff1706d5834 | yes    | Rockylinux 9 amd64 (20240903_03:29)        | x86_64       | CONTAINER       | 111.25MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/9/arm64 (1 more)              | d3a44df90d69 | yes    | Rockylinux 9 arm64 (20240903_04:49)        | aarch64      | CONTAINER       | 107.18MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/9/cloud (1 more)              | 4329a67099ba | yes    | Rockylinux 9 amd64 (20240903_03:28)        | x86_64       | VIRTUAL-MACHINE | 749.29MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/9/cloud (1 more)              | bc30d585b9f0 | yes    | Rockylinux 9 amd64 (20240903_03:28)        | x86_64       | CONTAINER       | 127.16MiB  | 2024/09/02 19:00 CDT |
+         | rockylinux/9/cloud/arm64                 | 5c38ddd506bd | yes    | Rockylinux 9 arm64 (20240903_04:38)        | aarch64      | CONTAINER       | 122.87MiB  | 2024/09/02 19:00 CDT |
+
+       INSTALLING, RENAMING, AND LISTING IMAGES
+
+       For the first container, you are going to use "rockylinux/8". To install it, you can use:
+
+         incus launch images:rockylinux/8 rockylinux-test-8
+
+       That will create a Rocky Linux-based container named "rockylinux-test-8". You can rename a container after creating it, but you first need to stop the container, which starts automatically when created.
+
+       To start the container manually, use:
+
+         incus start rockylinux-test-8
+
+       To Rename the image (we are not going to do this here, but this is how to do it), first stop the container:
+
+         incus stop rockylinux-test-8
+
+       Use the move command to change the container's name:
+
+         incus move rockylinux-test-8 rockylinux-8
+
+       If you followed this instruction anyway, stop the container and move it back to the original name to continue to follow along.
+
+       For this guide, go ahead and install two more images for now:
+
+         incus launch images:rockylinux/9 rockylinux-test-9
+
+       and
+
+         incus launch images:ubuntu/22.04 ubuntu-test
+
+       Examine what you have by listing your images:
+
+         incus list
+
+       which will return this:
+
+         +-------------------+---------+----------------------+------+-----------+-----------+
+         |       NAME        |  STATE  |         IPV4         | IPV6 |   TYPE    | SNAPSHOTS |
+         +-------------------+---------+----------------------+------+-----------+-----------+
+         | rockylinux-test-8 | RUNNING | 10.146.84.179 (eth0) |      | CONTAINER | 0         |
+         +-------------------+---------+----------------------+------+-----------+-----------+
+         | rockylinux-test-9 | RUNNING | 10.146.84.180 (eth0) |      | CONTAINER | 0         |
+         +-------------------+---------+----------------------+------+-----------+-----------+
+         | ubuntu-test       | RUNNING | 10.146.84.181 (eth0) |      | CONTAINER | 0         |
+         +-------------------+---------+----------------------+------+-----------+-----------+
+
+Rocky Linux manual                      from the official documentation

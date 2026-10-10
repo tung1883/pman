@@ -1,0 +1,66 @@
+WEBAPI.PRESSUREOBSERVER-PRESSUREOBSERVER(1) Sandbox manual WEBAPI.PRESSUREOBSERVER-PRESSUREOBSERVER(1)
+
+       NAME
+
+       PressureObserver: PressureObserver() constructor - windowandworkerexceptservice
+
+       PRESSUREOBSERVER: PRESSUREOBSERVER() CONSTRUCTOR
+
+       window_and_worker_except_service
+
+       The PressureObserver() constructor creates a new PressureObserver object to watch for changes to pressure changes of system resources such as the CPU.
+
+       SYNTAX
+
+         new PressureObserver(callback)
+
+       PARAMETERS
+
+        * callback
+          * : A callback that will be invoked when pressure records are observed. When the callback is invoked, the following parameters are available:
+            * changes
+              * : An array containing all PressureRecord objects recorded since the last time the callback was called, or the last time the observer's takeRecords() method was called.
+            * observer
+              * : The observer object that is receiving the above records.
+
+       RETURN VALUE
+
+       A new PressureObserver object with the specified callback function that will be invoked when PressureObserver.observe() was called to watch pressure changes.
+
+       EXCEPTIONS
+
+        * NotAllowedError DOMException
+          * : Thrown if the Compute Pressure API is disallowed by a compute-pressure Permissions Policy.
+
+       EXAMPLES
+
+       LOG CURRENT PRESSURE
+
+       This example creates a PressureObserver and takes action whenever there is a pressure change. The sample interval is set to 1000ms, meaning that there will be updates at most every second.
+
+         function callback(records) {
+           const lastRecord = records[records.length - 1];
+           console.log(`Current pressure ${lastRecord.state}`);
+           if (lastRecord.state === "critical") {
+             // disable video feeds
+           } else if (lastRecord.state === "serious") {
+             // disable video filter effects
+           } else {
+             // enable all video feeds and filter effects
+           }
+         }
+
+         try {
+           const observer = new PressureObserver(callback);
+           await observer.observe("cpu", {
+             sampleInterval: 1000, // 1000ms
+           });
+         } catch (error) {
+           // report error setting up the observer
+         }
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

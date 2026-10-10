@@ -1,0 +1,44 @@
+WEBAPI.WEBSOCKET-BINARYTYPE(1)   Sandbox manual   WEBAPI.WEBSOCKET-BINARYTYPE(1)
+
+       NAME
+
+       WebSocket: binaryType property - The WebSocket.binaryType property controls the type of
+
+       WEBSOCKET: BINARYTYPE PROPERTY
+
+       The WebSocket.binaryType property controls the type of binary data being received over the WebSocket connection.
+
+       VALUE
+
+       A string:
+
+        * "blob"
+          * : Use Blob objects for binary data. This is the default value.
+        * "arraybuffer"
+          * : Use ArrayBuffer objects for binary data.
+
+       EXAMPLES
+
+         // Create WebSocket connection.
+         const socket = new WebSocket("ws://localhost:8080");
+
+         // Change binary type from "blob" to "arraybuffer"
+         socket.binaryType = "arraybuffer";
+
+         // Listen for messages
+         socket.addEventListener("message", (event) => {
+           if (event.data instanceof ArrayBuffer) {
+             // binary frame
+             const view = new DataView(event.data);
+             console.log(view.getInt32(0));
+           } else {
+             // text frame
+             console.log(event.data);
+           }
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

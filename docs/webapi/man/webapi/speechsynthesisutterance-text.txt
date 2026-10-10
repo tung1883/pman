@@ -1,0 +1,53 @@
+WEBAPI.SPEECHSYNTHESISUTTERANCE-TEXT(1) Sandbox manual WEBAPI.SPEECHSYNTHESISUTTERANCE-TEXT(1)
+
+       NAME
+
+       SpeechSynthesisUtterance: text property - The text property of the
+
+       SPEECHSYNTHESISUTTERANCE: TEXT PROPERTY
+
+       The text property of the SpeechSynthesisUtterance interface gets and sets the text that will be synthesized when the utterance is spoken.
+
+       The text may be provided as plain text, or a well-formed SSML document. The SSML tags will be stripped away by devices that don't support SSML.
+
+       VALUE
+
+       A string representing the text to the synthesized. The maximum length of the text that can be spoken in each utterance is 32,767 characters.
+
+       EXAMPLES
+
+         const synth = window.speechSynthesis;
+
+         const inputForm = document.querySelector("form");
+         const inputTxt = document.querySelector("input");
+         const voiceSelect = document.querySelector("select");
+
+         const voices = synth.getVoices();
+
+         // …
+
+         inputForm.onsubmit = (event) => {
+           event.preventDefault();
+
+           const utterThis = new SpeechSynthesisUtterance(inputTxt.value);
+           const selectedOption =
+             voiceSelect.selectedOptions[0].getAttribute("data-name");
+           for (const voice of voices) {
+             if (voice.name === selectedOption) {
+               utterThis.voice = voice;
+             }
+           }
+           console.log(utterThis.text);
+           synth.speak(utterThis);
+           inputTxt.blur();
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Speech API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,39 @@
+SHELLCHECK.SC3067(1)             Sandbox manual             SHELLCHECK.SC3067(1)
+
+       NAME
+
+       In POSIX sh, test -O is undefined. - if [ -O file ]
+
+       IN POSIX SH, TEST -O IS UNDEFINED
+
+       IN POSIX SH, TEST -O IS UNDEFINED
+
+       PROBLEMATIC CODE
+
+         if [ -O file ]
+         then
+           echo "File is owned by you"
+         fi
+
+       CORRECT CODE
+
+         if [ -n "$(find file -prune -user "$(id -u)")" ]
+         then
+           echo "File is owned by you"
+         fi
+
+       RATIONALE
+
+       test -O is a bash/ksh/dash/ash extension to check whether the file is owned by you.
+
+       To ensure compatibility with other shells, you can use find -user "$(id -u)".
+
+       EXCEPTIONS
+
+       If you expect your shell to support test -O, specify this explicitly in the shebang (or with # shellcheck shell=dash directive).
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

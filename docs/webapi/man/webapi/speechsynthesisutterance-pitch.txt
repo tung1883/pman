@@ -1,0 +1,53 @@
+WEBAPI.SPEECHSYNTHESISUTTERANCE-PITCH(1) Sandbox manual WEBAPI.SPEECHSYNTHESISUTTERANCE-PITCH(1)
+
+       NAME
+
+       SpeechSynthesisUtterance: pitch property - The pitch property of the SpeechSynthesisUtterance interface gets and sets the pitch at which the utterance will be spoken at.
+
+       SPEECHSYNTHESISUTTERANCE: PITCH PROPERTY
+
+       The pitch property of the SpeechSynthesisUtterance interface gets and sets the pitch at which the utterance will be spoken at.
+
+       If unset, a default value of 1 will be used.
+
+       VALUE
+
+       A float representing the pitch value. It can range between 0 (lowest) and 2 (highest), with 1 being the default pitch for the current platform or voice. Some speech synthesis engines or voices may constrain the minimum and maximum rates further. If SSML is used, this value will be overridden by prosody tags in the markup.
+
+       EXAMPLES
+
+         const synth = window.speechSynthesis;
+
+         const inputForm = document.querySelector("form");
+         const inputTxt = document.querySelector("input");
+         const voiceSelect = document.querySelector("select");
+
+         const voices = synth.getVoices();
+
+         // …
+
+         inputForm.onsubmit = (event) => {
+           event.preventDefault();
+
+           const utterThis = new SpeechSynthesisUtterance(inputTxt.value);
+           const selectedOption =
+             voiceSelect.selectedOptions[0].getAttribute("data-name");
+           for (const voice of voices) {
+             if (voice.name === selectedOption) {
+               utterThis.voice = voice;
+             }
+           }
+           utterThis.pitch = 1.5;
+           synth.speak(utterThis);
+           inputTxt.blur();
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Web Speech API
+
+Web APIs manual                         from the official documentation

@@ -1,0 +1,47 @@
+SHELLCHECK.SC2252(1)             Sandbox manual             SHELLCHECK.SC2252(1)
+
+       NAME
+
+       You probably wanted && here, otherwise it's always true. - if [ "$1" != foo ] || [ "$1" != bar ]
+
+       YOU PROBABLY WANTED && HERE, OTHERWISE IT'S ALWAYS TRUE
+
+       YOU PROBABLY WANTED && HERE, OTHERWISE IT'S ALWAYS TRUE
+
+       PROBLEMATIC CODE
+
+         if [ "$1" != foo ] || [ "$1" != bar ]
+         then
+           echo "$1 is not foo or bar"
+         fi
+
+       CORRECT CODE
+
+         if [ "$1" != foo ] && [ "$1" != bar ]
+         then
+           echo "$1 is not foo or bar"
+         fi
+
+       RATIONALE
+
+       This is not a bash issue, but a simple, common logical mistake applicable to all languages.
+
+       [ "$1" != foo ] || [ "$1" != bar ] is always true (when foo != bar):
+
+        * If $1 = foo then $1 != bar is true, so the statement is true.
+        * If $1 = bar then $1 != foo is true, so the statement is true.
+        * If $1 = cow then $1 != foo is true, so the statement is true.
+       [ $1 != foo ] && [ $1 != bar ] matches when $1 is neither foo nor bar:
+
+        * If $1 = foo, then $1 != foo is false, so the statement is false.
+        * If $1 = bar, then $1 != bar is false, so the statement is false.
+        * If $1 = cow, then both $1 != foo and $1 != bar is true, so the statement is true.
+       This statement is identical to ! [ "$1" = foo ] || [ "$1" = bar ], which also works correctly (by De Morgan's law)
+
+       This warning is equivalent to [[SC2055]] and [[SC2056]], which trigger for intra-test expressions and arithmetic contexts respectively.
+
+       EXCEPTIONS
+
+       Rare.
+
+ShellCheck manual                       from the official documentation

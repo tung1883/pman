@@ -1,0 +1,75 @@
+WEBAPI.CANVASRENDERINGCONTEXT2D-GETTRANSFORM(1) Sandbox manual WEBAPI.CANVASRENDERINGCONTEXT2D-GETTRANSFORM(1)
+
+       NAME
+
+       CanvasRenderingContext2D: getTransform() method - The CanvasRenderingContext2D.getTransform() method of the Canvas 2D API retrieves the current transformation matrix being applied to the con
+
+       CANVASRENDERINGCONTEXT2D: GETTRANSFORM() METHOD
+
+       The CanvasRenderingContext2D.getTransform() method of the Canvas 2D API retrieves the current transformation matrix being applied to the context.
+
+       SYNTAX
+
+         getTransform()
+
+       PARAMETERS
+
+       None.
+
+       RETURN VALUE
+
+       A DOMMatrix object.
+
+       The transformation matrix is described by:
+
+       [acebdf001]\left[ \begin{array}{ccc} a & c & e \\ b & d & f \\ 0 & 0 & 1 \end{array} \right]
+
+       > The returned object is not live, so updating it will not
+       > affect the current transformation matrix, and updating the current transformation
+       > matrix will not affect an already returned DOMMatrix.
+
+       EXAMPLES
+
+       In the following example, we have two elements. We apply a transform to the first one's context using CanvasRenderingContext2D.setTransform() and draw a square on it, then retrieve the matrix from it using getTransform().
+
+       We then apply the retrieved matrix directly to the second canvas context by passing the DOMMatrix object directly to setTransform(), and draw a circle on it.
+
+       HTML
+
+         <canvas width="240"></canvas> <canvas width="240"></canvas>
+
+       CSS
+
+         canvas {
+           border: 1px solid black;
+         }
+
+       JAVASCRIPT
+
+         const canvases = document.querySelectorAll("canvas");
+         const ctx1 = canvases[0].getContext("2d");
+         const ctx2 = canvases[1].getContext("2d");
+
+         ctx1.setTransform(1, 0.2, 0.8, 1, 0, 0);
+         ctx1.fillRect(25, 25, 50, 50);
+
+         let storedTransform = ctx1.getTransform();
+         console.log(storedTransform);
+
+         ctx2.setTransform(storedTransform);
+         ctx2.beginPath();
+         ctx2.arc(50, 50, 50, 0, 2 * Math.PI);
+         ctx2.fill();
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The interface defining this method: CanvasRenderingContext2D
+        * CanvasRenderingContext2D.transform()
+
+Web APIs manual                         from the official documentation

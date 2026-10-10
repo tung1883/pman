@@ -1,0 +1,393 @@
+ARCH.PERSISTENT-BLOCK-DEVICE-NAMING(1) Sandbox manual ARCH.PERSISTENT-BLOCK-DEVICE-NAMING(1)
+
+       This article describes how to use persistent names for your block devices. This has been made possible by the introduction of udev and has some advantages over bus-based naming. If your machine has more than one drive sharing a naming scheme, the order in which their corresponding device nodes are added is arbitrary. This may result in block device names (e.g. /dev/sda and /dev/sdb, /dev/nvme0n1 and /dev/nvme1n1, /dev/mmcblk0 and /dev/mmcblk1) switching around on each boot, culminating in an unbootable system, kernel panic, or a block device disappearing. Persistent naming solves these issues.
+
+       Note
+
+        * Persistent naming has limits that are out-of-scope in this article. For example, while mkinitcpio may support a method, systemd may impose its own limits (e.g. FS#42884) on naming it can process during boot.
+        * This article is not relevant for LVM logical volumes as the /dev/VolumeGroupName/LogicalVolumeName device paths are persistent.
+
+       PERSISTENT NAMING METHODS
+
+       There are different schemes providing persistent naming managed by udev.
+
+        * 60-persistent-storage.rules provides four by default: by-label, by-uuid, by-id and by-path. For disks with a GUID Partition Table (GPT), there are two additional schemes—by-partlabel and by-partuuid.
+        * 90-image-dissect.rules provides by-designator and gpt-auto for setups compatible with GPT partition automounting.
+       The directories in /dev/disk/ are created and destroyed dynamically, depending on whether there are devices in them.
+
+       Note Beware that disk cloning creates two different disks with the same name.
+
+       The following sections describe what the different persistent naming methods are and how they are used.
+
+       The lsblk command can be used for viewing graphically the first persistent schemes:
+
+         $ lsblk -f
+
+         NAME        FSTYPE LABEL      UUID                                 MOUNTPOINT
+         sda
+         ├─sda1      vfat              CBB6-24F2                            /boot
+         ├─sda2      ext4   Arch Linux 0a3407de-014b-458b-b5c1-848e92a327a3 /
+         ├─sda3      ext4   Data       b411dc99-f0a0-4c87-9e05-184977be8539 /home
+         └─sda4      swap              f9fe0b69-a280-415d-a03a-a32752370dee [SWAP]
+         mmcblk0
+         └─mmcblk0p1 vfat              F4CA-5D75
+
+       Alternatively, you can use the blkid command instead as root. The latter is more convenient for scripts, but more difficult to read.
+
+       Tip
+
+        * blkid can be executed without root, but might show stale/cached data not reflecting recent changes.
+        * You can change the layout to something more readable with -o - see blkid(8) for a list and description of all possible layouts supported.
+
+         $ blkid -o export
+
+         DEVNAME=/dev/sda1
+         UUID="CBB6-24F2"
+         TYPE="vfat"
+         PARTLABEL="EFI system partition"
+         PARTUUID="d0d0d110-0a71-4ed6-936a-304969ea36af"
+
+         DEVNAME=/dev/sda2
+         LABEL="Arch Linux"
+         UUID="0a3407de-014b-458b-b5c1-848e92a327a3"
+         TYPE="ext4"
+         PARTLABEL="GNU/Linux"
+         PARTUUID="98a81274-10f7-40db-872a-03df048df366"
+
+         DEVNAME=/dev/sda3
+         LABEL="Data"
+         UUID="b411dc99-f0a0-4c87-9e05-184977be8539"
+         TYPE="ext4"
+         PARTLABEL="Home"
+         PARTUUID="7280201c-fc5d-40f2-a9b2-466611d3d49e"
+
+         DEVNAME=/dev/sda4
+         UUID="f9fe0b69-a280-415d-a03a-a32752370dee"
+         TYPE="swap"
+         PARTLABEL="Swap"
+         PARTUUID="039b6c1c-7553-4455-9537-1befbc9fbc5b"
+
+         DEVNAME=/dev/mmcblk0
+         PTUUID="0003e1e5"
+         PTTYPE="dos"
+
+         DEVNAME=/dev/mmcblk0p1
+         UUID="F4CA-5D75"
+         TYPE="vfat"
+         PARTUUID="0003e1e5-01"
+
+       BY-LABEL
+
+       Almost every file system type can have a label. All your volumes that have one are listed in the /dev/disk/by-label directory.
+
+         $ ls -l --time-style=+ /dev/disk/by-label/
+
+         total 0
+         lrwxrwxrwx 1 root root 10  Data -> ../../sda3
+         lrwxrwxrwx 1 root root 10  Arch\x20Linux -> ../../sda2
+
+       Most file systems support setting the label upon file system creation, see the man page of the relevant mkfs.* utility. For some file systems it is also possible to change the labels. Following are some methods for changing labels on common file systems:
+
+         btrfs
+       btrfs filesystem label /dev/XXX "new label" (use the mountpoint of the device if already mounted) using btrfs-progs
+
+         crypto_LUKS (LUKS2 only)
+       cryptsetup config --label="new label" /dev/XXX using cryptsetup
+
+         vfat/fat
+       fatlabel /dev/XXX "new label" using dosfstools
+
+         exfat
+       tune.exfat -L "new label" /dev/XXX using exfatprogs
+
+       exfatlabel /dev/XXX "new label" using exfatprogs or exfat-utils
+
+         ext2/3/4
+       e2label /dev/XXX "new label" using e2fsprogs
+
+         f2fs
+       f2fslabel /dev/XXX "new label" using f2fs-tools
+
+       mlabel -i /dev/XXX ::"new label" using mtools
+
+         jfs
+       jfs_tune -L "new label" /dev/XXX using jfsutils
+
+         ntfs
+       ntfslabel /dev/XXX "new label" using ntfsprogs
+
+         reiserfs
+       reiserfstune -l "new label" /dev/XXX using reiserfsprogsAUR
+
+         swap
+       swaplabel -L "new label" /dev/XXX using util-linux
+
+         udf
+       udflabel /dev/XXX "new label" using udftools
+
+         xfs
+       xfs_admin -L "new label" /dev/XXX (use the mountpoint of the device if already mounted) using xfsprogs
+
+       The label of a device can be obtained with lsblk:
+
+         $ lsblk -dno LABEL /dev/sda2
+
+         Arch Linux
+
+       Or with blkid:
+
+         # blkid -s LABEL -o value /dev/sda2
+
+         Arch Linux
+
+       Note
+
+        * Labels have to be unambiguous to prevent any possible conflicts.
+        * Labels can be up to 16 characters long.
+        * Since the label is a property of the filesystem, it is not suitable for addressing a single RAID device persistently.
+        * When using encrypted containers with dm-crypt, the labels of filesystems inside of containers are not available while the container is locked/encrypted.
+
+       BY-UUID
+
+       UUID is a mechanism to give each filesystem a unique identifier. These identifiers are generated by filesystem utilities (e.g. mkfs.*) when the device gets formatted and are designed so that collisions are unlikely. All GNU/Linux filesystems (including swap and LUKS headers of raw encrypted devices) support UUID. FAT, exFAT and NTFS filesystems do not support UUID, but are still listed in /dev/disk/by-uuid/ with a shorter UID (unique identifier):
+
+         $ ls -l --time-style=+ /dev/disk/by-uuid/
+
+         total 0
+         lrwxrwxrwx 1 root root 10  0a3407de-014b-458b-b5c1-848e92a327a3 -> ../../sda2
+         lrwxrwxrwx 1 root root 10  b411dc99-f0a0-4c87-9e05-184977be8539 -> ../../sda3
+         lrwxrwxrwx 1 root root 10  CBB6-24F2 -> ../../sda1
+         lrwxrwxrwx 1 root root 10  f9fe0b69-a280-415d-a03a-a32752370dee -> ../../sda4
+         lrwxrwxrwx 1 root root 10  F4CA-5D75 -> ../../mmcblk0p1
+
+       The UUID of a device can be obtained with lsblk:
+
+         $ lsblk -dno UUID /dev/sda1
+
+         CBB6-24F2
+
+       Or with blkid:
+
+         # blkid -s UUID -o value /dev/sda1
+
+         CBB6-24F2
+
+       The advantage of using the UUID method is that it is much less likely that name collisions occur than with labels. Further, it is generated automatically on creation of the filesystem. It will, for example, stay unique even if the device is plugged into another system (which may perhaps have a device with the same label).
+
+       The disadvantage is that UUIDs make long code lines hard to read and break formatting in many configuration files (e.g. fstab or crypttab). Also every time a volume is reformatted a new UUID is generated and configuration files have to get manually adjusted.
+
+       Tip In case your swap volume does not have a UUID assigned, you will need to reset it using the mkswap utility.
+
+       BY-ID AND BY-PATH
+
+       by-id creates a unique name depending on the hardware serial number, by-path depending on the shortest physical path (according to sysfs). Both contain strings to indicate which subsystem they belong to (i.e. pci- for by-path, and ata- for by-id), so they are linked to the hardware controlling the device. This implies different levels of persistence: the by-path will already change when the device is plugged into a different port of the controller, the by-id will change when the device is plugged into a port of a hardware controller subject to another subsystem. [1] Thus, both are not suitable to achieve persistent naming tolerant to hardware changes.
+
+       However, both provide important information to find a particular device in a large hardware infrastructure. For example, if you do not manually assign persistent labels (by-label or by-partlabel) and keep a directory with hardware port usage, by-id and by-path can be used to find a particular device.[2] [3]
+
+       Note
+
+        * by-id and by-path links can only be considered persistent for disks, not partitions. Partitions will be referenced by their number in the partition table and that can change if the partitions are reordered.
+        * The /dev/disk/by-path/pci-* paths for NVMe devices may change if a PCIe device is added or removed from the system or if the system firmware does not enumerate them deterministically.
+        * NVMe device by-id links without a namespace identifier (NSID) are obsolete. Use the links with a namespace identifier after the hardware serial number instead (e.g. _1 for the first namespace or _1-part1 for the first partition on the first namespace).
+
+         $ ls -l --time-style=+ /dev/disk/by-id/
+
+         total 0
+         lrwxrwxrwx 1 root root 10  ata-WDC_WD2500BEVT-22ZCT0_WD-WXE908VF0470 -> ../../sda
+         lrwxrwxrwx 1 root root 10  ata-WDC_WD2500BEVT-22ZCT0_WD-WXE908VF0470-part1 -> ../../sda1
+         lrwxrwxrwx 1 root root 10  ata-WDC_WD2500BEVT-22ZCT0_WD-WXE908VF0470-part2 -> ../../sda2
+         lrwxrwxrwx 1 root root 10  ata-WDC_WD2500BEVT-22ZCT0_WD-WXE908VF0470-part3 -> ../../sda3
+         lrwxrwxrwx 1 root root 10  ata-WDC_WD2500BEVT-22ZCT0_WD-WXE908VF0470-part4 -> ../../sda4
+         lrwxrwxrwx 1 root root 10  mmc-SD32G_0x0040006d -> ../../mmcblk0
+         lrwxrwxrwx 1 root root 10  mmc-SD32G_0x0040006d-part1 -> ../../mmcblk0p1
+         lrwxrwxrwx 1 root root 13  nvme-Samsung_SSD_970_EVO_Plus_2TB_S4J4NJ0N704064T -> ../../nvme1n1
+         lrwxrwxrwx 1 root root 15  nvme-Samsung_SSD_970_EVO_Plus_2TB_S4J4NJ0N704064T-part1 -> ../../nvme1n1p1
+         lrwxrwxrwx 1 root root 15  nvme-Samsung_SSD_970_EVO_Plus_2TB_S4J4NJ0N704064T-part2 -> ../../nvme1n1p2
+         lrwxrwxrwx 1 root root 13  nvme-Samsung_SSD_970_EVO_Plus_2TB_S4J4NJ0N704064T_1 -> ../../nvme1n1
+         lrwxrwxrwx 1 root root 15  nvme-Samsung_SSD_970_EVO_Plus_2TB_S4J4NJ0N704064T_1-part1 -> ../../nvme1n1p1
+         lrwxrwxrwx 1 root root 15  nvme-Samsung_SSD_970_EVO_Plus_2TB_S4J4NJ0N704064T_1-part2 -> ../../nvme1n1p2
+         lrwxrwxrwx 1 root root 13  nvme-WDS100T1X0E-00AFY0_21455A801268 -> ../../nvme0n1
+         lrwxrwxrwx 1 root root 15  nvme-WDS100T1X0E-00AFY0_21455A801268-part1 -> ../../nvme0n1p1
+         lrwxrwxrwx 1 root root 15  nvme-WDS100T1X0E-00AFY0_21455A801268-part2 -> ../../nvme0n1p2
+         lrwxrwxrwx 1 root root 13  nvme-WDS100T1X0E-00AFY0_21455A801268_1 -> ../../nvme0n1
+         lrwxrwxrwx 1 root root 15  nvme-WDS100T1X0E-00AFY0_21455A801268_1-part1 -> ../../nvme0n1p1
+         lrwxrwxrwx 1 root root 15  nvme-WDS100T1X0E-00AFY0_21455A801268_2-part2 -> ../../nvme0n1p2
+         lrwxrwxrwx 1 root root 13  nvme-eui.002538570142d716 -> ../../nvme1n1
+         lrwxrwxrwx 1 root root 15  nvme-eui.002538570142d716-part1 -> ../../nvme1n1p1
+         lrwxrwxrwx 1 root root 15  nvme-eui.002538570142d716-part2 -> ../../nvme1n1p2
+         lrwxrwxrwx 1 root root 13  nvme-eui.e8238fa6bf530001001b448b4566aa1a -> ../../nvme0n1
+         lrwxrwxrwx 1 root root 15  nvme-eui.e8238fa6bf530001001b448b4566aa1a-part1 -> ../../nvme0n1p1
+         lrwxrwxrwx 1 root root 15  nvme-eui.e8238fa6bf530001001b448b4566aa1a-part2 -> ../../nvme0n1p2
+         lrwxrwxrwx 1 root root 10  wwn-0x60015ee0000b237f -> ../../sda
+         lrwxrwxrwx 1 root root 10  wwn-0x60015ee0000b237f-part1 -> ../../sda1
+         lrwxrwxrwx 1 root root 10  wwn-0x60015ee0000b237f-part2 -> ../../sda2
+         lrwxrwxrwx 1 root root 10  wwn-0x60015ee0000b237f-part3 -> ../../sda3
+         lrwxrwxrwx 1 root root 10  wwn-0x60015ee0000b237f-part4 -> ../../sda4
+
+         $ ls -l --time-style=+ /dev/disk/by-path/
+
+         total 0
+         lrwxrwxrwx 1 root root 10  pci-0000:00:1f.2-ata-1 -> ../../sda
+         lrwxrwxrwx 1 root root 10  pci-0000:00:1f.2-ata-1-part1 -> ../../sda1
+         lrwxrwxrwx 1 root root 10  pci-0000:00:1f.2-ata-1-part2 -> ../../sda2
+         lrwxrwxrwx 1 root root 10  pci-0000:00:1f.2-ata-1-part3 -> ../../sda3
+         lrwxrwxrwx 1 root root 10  pci-0000:00:1f.2-ata-1-part4 -> ../../sda4
+         lrwxrwxrwx 1 root root 13  pci-0000:01:00.0-nvme-1 -> ../../nvme0n1
+         lrwxrwxrwx 1 root root 15  pci-0000:01:00.0-nvme-1-part1 -> ../../nvme0n1p1
+         lrwxrwxrwx 1 root root 15  pci-0000:01:00.0-nvme-1-part2 -> ../../nvme0n1p2
+         lrwxrwxrwx 1 root root 13  pci-0000:04:00.0-nvme-1 -> ../../nvme1n1
+         lrwxrwxrwx 1 root root 15  pci-0000:04:00.0-nvme-1-part1 -> ../../nvme1n1p1
+         lrwxrwxrwx 1 root root 15  pci-0000:04:00.0-nvme-1-part2 -> ../../nvme1n1p2
+         lrwxrwxrwx 1 root root 10  pci-0000:07:00.0-platform-rtsx_pci_sdmmc.0 -> ../../mmcblk0
+         lrwxrwxrwx 1 root root 10  pci-0000:07:00.0-platform-rtsx_pci_sdmmc.0-part1 -> ../../mmcblk0p1
+
+       WORLD WIDE NAME
+
+       by-id also creates World Wide Name (WWN) links of storage devices that support it. Unlike other by-id links, WWNs are fully persistent and will not change depending on the used subsystem.
+
+       SATA and SAS devices have a wwn- prefix while NVMe devices use a different WWN format and are prefixed with nvme-eui..[4]
+
+       Tip A storage device's WWN is typically printed on its label (the sticker on top of the drive).
+
+         $ ls -l --time-style=+ /dev/disk/by-id/{wwn-,nvme-eui.}*
+
+         lrwxrwxrwx 1 root root 13  /dev/disk/by-id/nvme-eui.002538570142d716 -> ../../nvme1n1
+         lrwxrwxrwx 1 root root 15  /dev/disk/by-id/nvme-eui.002538570142d716-part1 -> ../../nvme1n1p1
+         lrwxrwxrwx 1 root root 15  /dev/disk/by-id/nvme-eui.002538570142d716-part2 -> ../../nvme1n1p2
+         lrwxrwxrwx 1 root root 13  /dev/disk/by-id/nvme-eui.e8238fa6bf530001001b448b4566aa1a -> ../../nvme0n1
+         lrwxrwxrwx 1 root root 15  /dev/disk/by-id/nvme-eui.e8238fa6bf530001001b448b4566aa1a-part1 -> ../../nvme0n1p1
+         lrwxrwxrwx 1 root root 15  /dev/disk/by-id/nvme-eui.e8238fa6bf530001001b448b4566aa1a-part2 -> ../../nvme0n1p2
+         lrwxrwxrwx 1 root root 10  /dev/disk/by-id/wwn-0x60015ee0000b237f -> ../../sda
+         lrwxrwxrwx 1 root root 10  /dev/disk/by-id/wwn-0x60015ee0000b237f-part1 -> ../../sda1
+         lrwxrwxrwx 1 root root 10  /dev/disk/by-id/wwn-0x60015ee0000b237f-part2 -> ../../sda2
+         lrwxrwxrwx 1 root root 10  /dev/disk/by-id/wwn-0x60015ee0000b237f-part3 -> ../../sda3
+         lrwxrwxrwx 1 root root 10  /dev/disk/by-id/wwn-0x60015ee0000b237f-part4 -> ../../sda4
+
+       BY-PARTLABEL
+
+       Note This method only concerns disks with GUID Partition Table (GPT).
+
+       GPT partition labels can be defined in the header of the partition entry on GPT disks.
+
+       This method is very similar to the filesystem labels, except the partition labels do not get affected if the file system on the partition is changed.
+
+       All partitions that have partition labels are listed in the /dev/disk/by-partlabel directory.
+
+         $ ls -l --time-style=+ /dev/disk/by-partlabel/
+
+         total 0
+         lrwxrwxrwx 1 root root 10  EFI\x20system\x20partition -> ../../sda1
+         lrwxrwxrwx 1 root root 10  GNU\x2fLinux -> ../../sda2
+         lrwxrwxrwx 1 root root 10  Home -> ../../sda3
+         lrwxrwxrwx 1 root root 10  Swap -> ../../sda4
+
+       The partition label of a device can be obtained with lsblk:
+
+         $ lsblk -dno PARTLABEL /dev/sda1
+
+         EFI system partition
+
+       Or with blkid:
+
+         # blkid -s PARTLABEL -o value /dev/sda1
+
+         EFI system partition
+
+       Note
+
+        * GPT partition labels also have to be different to avoid conflicts. To change your partition label, you can use gdisk or the ncurses-based version cgdisk. Both are available from the gptfdisk package. See Partitioning#Partitioning tools.
+        * According to the specification, GPT partition labels can be up to 72 characters long.
+
+       BY-PARTUUID
+
+       Like GPT partition labels, GPT partition UUIDs are defined in the partition entry on GPT disks.
+
+       MBR does not support partition UUIDs, but Linux[5] and software using libblkid[6] (e.g. udev[7]) are capable of generating pseudo PARTUUIDs for MBR partitions. The format is SSSSSSSS-PP, where SSSSSSSS is a zero-filled 32-bit MBR disk signature, and PP is a zero-filled partition number in hexadecimal form. Unlike a regular PARTUUID of a GPT partition, MBR's pseudo PARTUUID can change if the partition number changes.
+
+       The dynamic directory is similar to other methods and, like filesystem UUIDs, using UUIDs is preferred over labels.
+
+         $ ls -l --time-style=+ /dev/disk/by-partuuid/
+
+         total 0
+         lrwxrwxrwx 1 root root 10  0003e1e5-01 -> ../../mmcblk0p1
+         lrwxrwxrwx 1 root root 10  039b6c1c-7553-4455-9537-1befbc9fbc5b -> ../../sda4
+         lrwxrwxrwx 1 root root 10  7280201c-fc5d-40f2-a9b2-466611d3d49e -> ../../sda3
+         lrwxrwxrwx 1 root root 10  98a81274-10f7-40db-872a-03df048df366 -> ../../sda2
+         lrwxrwxrwx 1 root root 10  d0d0d110-0a71-4ed6-936a-304969ea36af -> ../../sda1
+
+       The partition UUID of a device can be obtained with lsblk:
+
+         $ lsblk -dno PARTUUID /dev/sda1
+
+         d0d0d110-0a71-4ed6-936a-304969ea36af
+
+       Or with blkid:
+
+         # blkid -s PARTUUID -o value /dev/sda1
+
+         d0d0d110-0a71-4ed6-936a-304969ea36af
+
+       BY-DESIGNATOR AND GPT-AUTO
+
+       If all prerequisites of systemd-gpt-auto-generator are met, udev creates symlinks in /dev/disk/by-designator/ based on the partition type. The links are named: root, home, srv, esp, xbootldr, var, etc. See systemd.image-filter(7) for a full list.
+
+       For LUKS encrypted partitions, the aforementioned links will point to the unlocked/mapped volumes and additional links with a -luks suffix will point to the encrypted partitions. As long as the LUKS device mapper name matches a designator, links to unlocked volumes will be created even for encrypted partitions on other disks, but -luks suffixed links will not be created in this case.
+
+         $ ls -l --time-style=+ /dev/disk/by-designator/
+
+         total 0
+         lrwxrwxrwx 1 root root 10  esp -> ../../nvme1n1p1
+         lrwxrwxrwx 1 root root 10  home -> ../../dm-2
+         lrwxrwxrwx 1 root root 10  root -> ../../dm-0
+         lrwxrwxrwx 1 root root 10  root-luks -> ../../nvme1n1p3
+         lrwxrwxrwx 1 root root 10  swap -> ../../dm-1
+         lrwxrwxrwx 1 root root 10  swap-luks -> ../../nvme1n1p2
+
+       The /dev/gpt-auto-root symlink points to the root volume block device. If the root partition is encrypted with LUKS, /dev/gpt-auto-root will point to the unlocked/mapped volume and /dev/gpt-auto-root-luks will point to the encrypted partition.
+
+         $ ls -l --time-style=+ /dev/gpt-auto-*
+
+         lrwxrwxrwx 1 root root 10  /dev/gpt-auto-root -> dm-0
+         lrwxrwxrwx 1 root root 10  /dev/gpt-auto-root-luks -> nvme1n1p3
+
+       USING PERSISTENT NAMING
+
+       There are various applications that can be configured using persistent naming. Following are some examples of how to configure them.
+
+       FSTAB
+
+       See the main article: fstab#Identifying file systems.
+
+       KERNEL PARAMETERS
+
+       To use persistent names in kernel parameters, the following prerequisites must be met. On a standard installation following the installation guide both prerequisites are met:
+
+        * You are using an initramfs image that has udev in it.
+        * For mkinitcpio, enable either the udev or systemd hook in /etc/mkinitcpio.conf
+       The location of the root filesystem is given by the parameter root on the kernel command line. The kernel command line is configured from the boot loader, see Kernel parameters#Boot loader configuration. To change to persistent device naming, only change the parameters which specify block devices, e.g. root and resume, while leaving other parameters as is. Various naming schemes are supported:
+
+       Persistent device naming using label and the LABEL= format, in this example Arch Linux is the LABEL of the root file system.
+
+         root="LABEL=Arch Linux"
+
+       Persistent device naming using UUID and the UUID= format, in this example 0a3407de-014b-458b-b5c1-848e92a327a3 is the UUID of the root file system.
+
+         root=UUID=0a3407de-014b-458b-b5c1-848e92a327a3
+
+       Persistent device naming using disk id and the /dev path format, in this example wwn-0x60015ee0000b237f-part2 is the id of the root partition.
+
+         root=/dev/disk/by-id/wwn-0x60015ee0000b237f-part2
+
+       Persistent device naming using GPT partition UUID and the PARTUUID= format, in this example 98a81274-10f7-40db-872a-03df048df366 is the PARTUUID of the root partition.
+
+         root=PARTUUID=98a81274-10f7-40db-872a-03df048df366
+
+       Persistent device naming using GPT partition label and the PARTLABEL= format, in this example GNU/Linux is the PARTLABEL of the root partition.
+
+         root="PARTLABEL=GNU/Linux"
+
+       When using GPT partition automounting, the root= parameter can be omitted entirely. If an explicit configuration is desired, use:
+
+         root=dissect
+
+ArchWiki manual                         bundled documentation

@@ -1,0 +1,43 @@
+APACHE.MOD_AUTHZ_GROUPFILE(1)    Sandbox manual    APACHE.MOD_AUTHZ_GROUPFILE(1)
+
+       THE REQUIRE DIRECTIVES
+
+       Apache's Require directives are used during the authorization phase to ensure that a user is allowed to access a resource. mod_authz_groupfile extends the authorization types with group and group-file.
+
+       Since v2.4.8, expressions are supported within the groupfile require directives.
+
+       REQUIRE GROUP
+
+       This directive specifies group membership that is required for the user to gain access.
+
+         Require group admin
+
+       REQUIRE FILE-GROUP
+
+       When this directive is specified, the filesystem permissions on the file being accessed are consulted. The user must be a member of a group with the same name as the group that owns the file. See mod_authz_owner for more details.
+
+         Require file-group
+
+       AUTHGROUPFILE DIRECTIVE
+
+         Description: | Sets the name of a text file containing the list of user groups for authorization
+         Syntax: | AuthGroupFile file-path
+         Context: | directory, .htaccess
+         Override: | AuthConfig
+         Status: | Base
+         Module: | mod_authz_groupfile
+       The AuthGroupFile directive sets the name of a textual file containing the list of user groups for user authorization. File-path is the path to the group file. If it is not absolute, it is treated as relative to the ServerRoot.
+
+       Each line of the group file contains a groupname followed by a colon, followed by the member usernames separated by spaces.
+
+       EXAMPLE
+
+       mygroup: bob joe anne
+
+       Note that searching large text files is very inefficient; AuthDBMGroupFile provides a much better performance.
+
+       SECURITY
+
+       Make sure that the AuthGroupFile is stored outside the document tree of the web-server; do not put it in the directory that it protects. Otherwise, clients may be able to download the AuthGroupFile.
+
+Apache HTTP Server manual               bundled documentation

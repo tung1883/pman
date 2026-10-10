@@ -1,0 +1,29 @@
+APACHE.MOD_LOGIO(1)              Sandbox manual              APACHE.MOD_LOGIO(1)
+
+       CUSTOM LOG FORMATS
+
+       This module adds three new logging directives. The characteristics of the request itself are logged by placing "%" directives in the format string, which are replaced in the log file by the values as follows:
+
+         Format String | Description
+         %I | Bytes received, including request and headers, cannot be zero.
+         %O | Bytes sent, including headers. May be zero in rare cases such as when a request is aborted before a response is sent.
+         %S | Bytes transferred (received and sent), including request and headers, cannot be zero. This is the combination of %I and %O.  Available in Apache 2.4.7 and later
+         %^FB | Delay in microseconds between when the request arrived and the first byte of the response headers are written. Only available if LogIOTrackTTFB is set to ON.  Available in Apache 2.4.13 and later
+       Usually, the functionality is used like this:
+
+         Combined I/O log format:
+       "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %I %O"
+
+       LOGIOTRACKTTFB DIRECTIVE
+
+         Description: | Enable tracking of time to first byte (TTFB)
+         Syntax: | LogIOTrackTTFB ON|OFF
+         Default: | LogIOTrackTTFB OFF
+         Context: | server config, virtual host, directory, .htaccess
+         Override: | All
+         Status: | Extension
+         Module: | mod_logio
+         Compatibility: | Apache HTTP Server 2.4.13 and later
+       This directive configures whether this module tracks the delay between the request being read and the first byte of the response headers being written. The resulting value may be logged with the %^FB format.
+
+Apache HTTP Server manual               bundled documentation

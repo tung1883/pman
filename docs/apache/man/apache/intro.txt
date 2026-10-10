@@ -1,0 +1,181 @@
+APACHE.INTRO(1)                  Sandbox manual                  APACHE.INTRO(1)
+
+       INTRODUCTION
+
+       The Apache module mod_rewrite is a very powerful and sophisticated module which provides a way to do URL manipulations. With it, you can do nearly all types of URL rewriting that you may need. It is, however, somewhat complex, and may be intimidating to the beginner. There is also a tendency to treat rewrite rules as magic incantation, using them without actually understanding what they do.
+
+       This document attempts to give sufficient background so that what follows is understood, rather than just copied blindly.
+
+       Remember that many common URL-manipulation tasks don't require the full power and complexity of mod_rewrite. For simple tasks, see mod_alias and the documentation on mapping URLs to the filesystem.
+
+       Finally, before proceeding, be sure to configure mod_rewrite's log level to one of the trace levels using the LogLevel directive. Although this can give an overwhelming amount of information, it is indispensable in debugging problems with mod_rewrite configuration, since it will tell you exactly how each rule is processed.
+
+       Figure: Simplified overview of how mod_rewrite processes a request. See Technical Details for the full processing model including phases, flags, and looping.
+
+       REGULAR EXPRESSIONS
+
+       mod_rewrite uses the Perl Compatible Regular Expressions vocabulary, via the PCRE2 library. In this document, we do not attempt to provide a detailed reference to regular expressions. For that, we recommend the PCRE2 documentation, the Perl regular expressions man page, and Mastering Regular Expressions, by Jeffrey Friedl (the third edition is from 2006, but regular expression syntax is essentially unchanged, and this remains the definitive reference on the subject).
+
+       In this document, we attempt to provide enough of a regex vocabulary to get you started, without being overwhelming, in the hope that RewriteRules will be scientific formulae, rather than magical incantations.
+
+       REGEX VOCABULARY
+
+       The following are the minimal building blocks you will need, in order to write regular expressions and RewriteRules. They certainly do not represent a complete regular expression vocabulary, but they are a good place to start, and should help you read basic regular expressions, as well as write your own.
+
+         Character | Meaning | Example
+         . | Matches any single character | c.t will match cat, cot, cut, etc
+         + | Repeats the previous match one or more times | a+ matches a, aa, aaa, etc
+         * | Repeats the previous match zero or more times | a* matches all the same things a+ matches, but will also match an empty string
+         ? | Makes the match optional | colou?r will match color and colour
+         \ | Escape the next character | \. will match . (dot) and not any single character as explain above
+         ^ | Called an anchor, matches the beginning of the string | ^a matches a string that begins with a
+         $ | The other anchor, this matches the end of the string | a$ matches a string that ends with a
+         ( ) | Groups several characters into a single unit, and captures a match for use in a backreference | (ab)+ matches ababab - that is, the + applies to the group. For more on backreferences see below
+         [ ] | A character class - matches one of the characters | c[uoa]t matches cut, cot or cat
+         [^ ] | Negative character class - matches any character not specified | c[^/]t matches cat or c=t but not c/t
+       The ! (Not) character can be used before a regular expression to negate it. This is, a string will be considered to have matched only if it does not match the rest of the expression.
+
+       When using ! to negate a pattern, note that backreferences (e.g. $1, $2) are not available, since the pattern does not match.
+
+       For example, the following will redirect any request that does not start with /admin
+
+         RewriteRule "!^/admin" "/xyz.html" [R,L]
+
+       REGEX BACK-REFERENCE AVAILABILITY
+
+       One important thing here has to be remembered: Whenever you use parentheses in Pattern or in one of the CondPattern, back-references are internally created which can be used with the strings $N and %N (see below). These are available for creating the Substitution parameter of a RewriteRule or the TestString parameter of a RewriteCond.
+
+       Captures in the RewriteRule patterns are (counterintuitively) available to all preceding RewriteCond directives, because the RewriteRule expression is evaluated before the individual conditions.
+
+       Figure 1 shows to which locations the back-references are transferred for expansion as well as illustrating the flow of the RewriteRule, RewriteCond matching. In the next chapters, we will be exploring how to use these back-references, so do not fret if it seems a bit alien to you at first.
+
+       Figure 1: The back-reference flow through a rule.  In this example, a request for /test/1234 to host admin.example.com would be transformed into /admin.foo?page=test&id=1234&host=admin.example.com, provided that %{DOCUMENT_ROOT}/test is not an existing file.
+
+       See also Technical Details for a diagram showing backreference flow with multiple conditions.
+
+       REWRITERULE BASICS
+
+       A RewriteRule consists of three arguments separated by spaces. The arguments are
+
+        * Pattern: which incoming URLs should be affected by the rule;
+        * Substitution: where should the matching requests be sent;
+        * [flags]: options affecting the rewritten request.
+       The Pattern is a regular expression. In server or virtualhost context, it is matched against the %-decoded URL-path of the incoming request — the part after the hostname and port, and not including the query string (e.g., /app/index.html). In per-directory context, the pattern is matched against the request's path relative to the directory for which the rule is defined (with the directory prefix stripped — see Per-directory Rewrites for details).
+
+       Once a substitution has occurred, any rules that follow are matched against the substituted value.
+
+       The Pattern is matched only against the URL-path — not the hostname, port, or query string. To match against those, use a RewriteCond with the %{HTTP_HOST}, %{SERVER_PORT}, or %{QUERY_STRING} variables respectively.
+
+       mod_rewrite operates entirely on the URL-path and HTTP headers. It cannot inspect the request body (e.g., POST data). If you need to make routing decisions based on request body content, handle that in your application logic or use a module such as mod_request paired with a custom filter.
+
+       Figure 2: Syntax of the RewriteRule directive.
+
+       The Substitution can itself be one of three things:
+
+         1. A full filesystem path to a resource
+
+         RewriteRule "^/games" "/usr/local/games/web/puzzles.html"
+
+       This maps a request to an arbitrary location on your filesystem, much like the Alias directive.
+
+         2. A web-path to a resource
+
+         RewriteRule "^/games$" "/puzzles.html"
+
+       If DocumentRoot is set to /usr/local/apache2/htdocs, then this directive would map requests for http://example.com/games to the path /usr/local/apache2/htdocs/puzzles.html.
+
+         3. An absolute URL
+
+         RewriteRule "^/product/view$" "http://site2.example.com/seeproduct.html" [R]
+
+       This tells the client to make a new request for the specified URL.
+
+       Note that 1 and 2 have exactly the same syntax. The difference between them is that in the case of 1, the top level of the target path (i.e., /usr/) exists on the filesystem, where as in the case of 2, it does not. (i.e., there's no /bar/ as a root-level directory in the filesystem.)
+
+       The Substitution can also contain back-references to parts of the incoming URL-path matched by the Pattern. Consider the following:
+
+         RewriteRule "^/product/(.*)/view$" "/var/web/productdb/$1"
+
+       The variable $1 will be replaced with whatever text was matched by the expression inside the parenthesis in the Pattern. For example, a request for http://example.com/product/r14df/view will be mapped to the path /var/web/productdb/r14df.
+
+       If there is more than one expression in parenthesis, they are available in order in the variables $1, $2, $3, and so on.
+
+       REWRITE FLAGS
+
+       The behavior of a RewriteRule can be modified by the application of one or more flags to the end of the rule. For example, the matching behavior of a rule can be made case-insensitive by the application of the [NC] flag:
+
+         RewriteRule "^puppy.html" "smalldog.html" [NC]
+
+       For more details on the available flags, their meanings, and examples, see the Rewrite Flags document.
+
+       REWRITE CONDITIONS
+
+       One or more RewriteCond directives can be used to restrict the types of requests that will be subject to the following RewriteRule. The first argument is a variable describing a characteristic of the request, the second argument is a regular expression that must match the variable, and a third optional argument is a list of flags that modify how the match is evaluated.
+
+       Figure 3: Syntax of the RewriteCond directive
+
+       For example, to send all requests from a particular IP range to a different server, you could use:
+
+         RewriteCond "%{REMOTE_ADDR}" "^10\.2\."
+         RewriteRule "(.*)"           "http://intranet.example.com$1"
+
+       When more than one RewriteCond is specified, they must all match for the RewriteRule to be applied. For example, to deny requests that contain the word "hack" in their query string, unless they also contain a cookie containing the word "go", you could use:
+
+         RewriteCond "%{QUERY_STRING}" "hack"
+         RewriteCond "%{HTTP_COOKIE}"  !go
+         RewriteRule "."               "-"   [F]
+
+       Notice that the exclamation mark specifies a negative match, so the rule is only applied if the cookie does not contain "go".
+
+       Matches in the regular expressions contained in the RewriteConds can be used as part of the Substitution in the RewriteRule using the variables %1, %2, etc. For example, this will direct the request to a different directory depending on the hostname used to access the site:
+
+         RewriteCond "%{HTTP_HOST}" "(.*)"
+         RewriteRule "^/(.*)"       "/sites/%1/$1"
+
+       If the request was for http://example.com/foo/bar, then %1 would contain example.com and $1 would contain foo/bar.
+
+       REWRITE MAPS
+
+       The RewriteMap directive provides a way to call an external function, so to speak, to do your rewriting for you. This is discussed in greater detail in the RewriteMap supplementary documentation.
+
+       HTACCESS FILES
+
+       It is possible to use rewrite rules in per-directory context (.htaccess files and <Directory> blocks), but the rules behave differently there — in particular, the directory prefix is stripped from the URL before matching. See the Per-directory Rewrites document for full details. Note that <If> and <Location> blocks also trigger per-directory behavior — see Which contexts support rewrite rules?.
+
+       SECURITY CONSIDERATIONS
+
+       mod_rewrite is a powerful URL manipulation tool, and with that power comes the potential for security mistakes. This section highlights the most common security pitfalls to watch for when writing rewrite rules.
+
+       OPEN REDIRECTS
+
+       If a RewriteRule constructs a redirect URL using unvalidated user input, an attacker can craft a link that redirects visitors to a malicious site while appearing to originate from your domain. This is known as an open redirect vulnerability.
+
+       For example, this rule is dangerous:
+
+         # DANGEROUS - allows open redirect
+         RewriteRule "^/redirect" "%{QUERY_STRING}" [R,L]
+
+       An attacker could use https://yoursite.com/redirect?https://evil.com to redirect users to a malicious site. Always validate or constrain redirect targets. If the destination must be on your own site, ensure the substitution begins with / (a relative path) rather than allowing a full URL from user input.
+
+       SERVER-SIDE REQUEST FORGERY (SSRF)
+
+       When using the [P] (proxy) flag, mod_rewrite causes the server to make an HTTP request to the substitution URL on behalf of the client. If any part of that URL is derived from user input - backreferences, query strings, or headers - an attacker may be able to cause your server to make requests to arbitrary internal services or external hosts.
+
+       For example:
+
+         # DANGEROUS - user controls the proxy target
+         RewriteCond "%{QUERY_STRING}" "target=(.+)"
+         RewriteRule "^/fetch" "http://%1" [P]
+
+       An attacker could use this to probe internal network services that are not otherwise accessible from the internet. Always use a fixed hostname in proxy targets, and limit backreferences to the path component only.
+
+       PATH TRAVERSAL
+
+       Rewrite rules that map user-supplied path components directly to the filesystem can allow path traversal attacks if the input is not properly constrained. For example:
+
+         # DANGEROUS - allows path traversal
+         RewriteRule "^/files/(.+)" "/var/data/$1" [L]
+
+       A request for /files/../../etc/passwd could potentially access files outside the intended directory. Use restrictive patterns in your RewriteRule (for example, [a-zA-Z0-9_-]+ instead of .+), and rely on Apache's built-in protections (Options and <Directory> restrictions) as defense in depth.
+
+Apache HTTP Server manual               bundled documentation

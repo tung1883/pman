@@ -1,0 +1,98 @@
+WEBAPI.HIGHLIGHT(1)              Sandbox manual              WEBAPI.HIGHLIGHT(1)
+
+       NAME
+
+       Highlight - The Highlight interface of the CSS Custom Highlight API is used to represent a collection of AbstractRange instances to be styled using the 
+
+       HIGHLIGHT
+
+       The Highlight interface of the CSS Custom Highlight API is used to represent a collection of AbstractRange instances to be styled using the API.
+
+       To style arbitrary ranges in a page, instantiate a new Highlight object, add one or more AbstractRange objects to it, and register it using the HighlightRegistry.
+
+       A Highlight instance is a Set-like object that can hold one or more AbstractRange objects.
+
+       CONSTRUCTOR
+
+        * Highlight()
+          * : Returns a newly created Highlight object.
+
+       INSTANCE PROPERTIES
+
+       _The Highlight interface doesn't inherit any properties._
+
+        * Highlight.priority
+          * : A number that indicates the priority of this Highlight object. When multiple highlights overlap, the browser uses this priority to decide how to style the overlapping parts.
+        * Highlight.size (read-only)
+          * : Returns the number of ranges in the Highlight object.
+        * Highlight.type
+          * : An enumerated String used to specify the semantic meaning of the highlight. This allows assistive technologies to include this meaning when exposing the highlight to users.
+
+       INSTANCE METHODS
+
+       _The Highlight interface doesn't inherit any methods_.
+
+        * Highlight.add()
+          * : Add a new range to this highlight.
+        * Highlight.clear()
+          * : Remove all ranges from this highlight.
+        * Highlight.delete()
+          * : Remove a range from this highlight.
+        * Highlight.entries()
+          * : Returns a new iterator object that contains each range in the highlight object, in insertion order.
+        * Highlight.forEach()
+          * : Calls the given callback once for each range in the highlight object, in insertion order.
+        * Highlight.has()
+          * : Returns a boolean asserting whether a range is present the highlight object or not.
+        * Highlight.keys()
+          * : An alias for Highlight.values().
+        * Highlight.values()
+          * : Returns a new iterator object that yields the ranges in the highlight object in insertion order.
+
+       EXAMPLES
+
+       The following example demonstrates how specific parts of a block of text can be highlighted.
+
+         <p class="foo">Lorem ipsum dolor sit amet consectetur adipisicing elit. Exercitationem
+           sapiente non eum facere? Nam rem hic culpa, ipsa rerum ab itaque consectetur
+           molestiae dolores vitae! Quo ex explicabo tempore? Tenetur.</p>
+
+       This JavaScript code creates ranges, instantiates a new Highlight object for them, and registers it to be styled on the page:
+
+         const parentNode = document.querySelector(".foo");
+         const textNode = parentNode.firstChild;
+
+         // Create a couple of ranges.
+         const range1 = new Range();
+         range1.setStart(textNode, 6);
+         range1.setEnd(textNode, 21);
+
+         const range2 = new Range();
+         range2.setStart(textNode, 57);
+         range2.setEnd(textNode, 71);
+
+         // Create a custom highlight for these ranges.
+         const highlight = new Highlight(range1, range2);
+
+         // Register the ranges in the HighlightRegistry.
+         CSS.highlights.set("my-custom-highlight", highlight);
+
+       The following CSS code snippet demonstrates how to style the registered custom highlight by using the ::highlight pseudo-element:
+
+         ::highlight(my-custom-highlight) {
+           background-color: peachpuff;
+         }
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The CSS Custom Highlight API
+        * CSS custom highlight API module
+        * CSS Custom Highlight API: The Future of Highlighting Text Ranges on the Web
+
+Web APIs manual                         from the official documentation

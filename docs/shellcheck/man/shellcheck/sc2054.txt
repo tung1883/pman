@@ -1,0 +1,33 @@
+SHELLCHECK.SC2054(1)             Sandbox manual             SHELLCHECK.SC2054(1)
+
+       NAME
+
+       Use spaces, not commas, to separate array elements. - flags=("-l", "-d", "--sort=size")
+
+       USE SPACES, NOT COMMAS, TO SEPARATE ARRAY ELEMENTS
+
+       USE SPACES, NOT COMMAS, TO SEPARATE ARRAY ELEMENTS
+
+       PROBLEMATIC CODE
+
+         flags=("-l", "-d", "--sort=size")
+         ls "${flags[@]}"
+
+       CORRECT CODE
+
+         flags=("-l" "-d" "--sort=size")
+         ls "${flags[@]}"
+
+       RATIONALE
+
+       You appear to have used commas to separate array elements in an array assignment. Other languages require this, but bash instead treats the commas as literal strings.
+
+       In the problematic code, the first element is -l, with the trailing comma, and the executed command ends up being ls -l, -d, --sort=size.
+
+       In the correct code, the trailing commas have been removed, and the command will be ls -l -d --sort=size as expected.
+
+       EXCEPTIONS
+
+       None (if you actually want a trailing comma in your strings, move them inside the quotes).
+
+ShellCheck manual                       from the official documentation

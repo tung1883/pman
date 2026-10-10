@@ -1,0 +1,745 @@
+FREEBSD.BSDINSTALL(1)            Sandbox manual            FREEBSD.BSDINSTALL(1)
+
+       NAME
+
+       Installing FreeBSD - Guide about how to install FreeBSD, the minimum hardware requirements and supported architectures, how to create the installation media, etc
+
+       INSTALLING FREEBSD
+
+       SYNOPSIS
+
+       FreeBSD supports different architectures including amd64, ARM(R), RISC-V(R), and PowerPC(R). Depending on the architecture and platform, different images can be downloaded to install or directly run FreeBSD.
+
+       The image types are:
+
+        * Virtual Machine disk images, such as qcow2, vmdk, vhd, and raw device images. These are not installation images, but images that have FreeBSD preinstalled and ready for post-installation tasks. Virtual machine images are also commonly used in cloud environments.
+        * SD card images, for embedded systems such as Raspberry Pi. These files must be uncompressed and written as a raw image to an SD card, from which the board will boot.
+        * Installation images to boot from an ISO or USB device to install FreeBSD on a drive for the usual desktop, laptop, or server system.
+       The rest of this chapter describes the third case, explaining how to install FreeBSD using the text-based installation program named bsdinstall. There may be minor differences between the installer and what is shown here, so use this chapter as a general guide rather than as a set of literal instructions.
+
+       Read this chapter to learn:
+
+        * How to obtain FreeBSD images and create FreeBSD installation media.
+        * How to start bsdinstall.
+        * The questions bsdinstall will ask, what they mean, and how to answer them.
+        * How to troubleshoot a failed installation.
+        * How to access a live version of FreeBSD before committing to an installation.
+
+       MINIMUM HARDWARE REQUIREMENTS
+
+       The hardware requirements to install FreeBSD vary by architecture and version. Hardware architectures and devices supported by a FreeBSD release are listed on the FreeBSD Release Information page. The FreeBSD download page also has recommendations for choosing the correct image for different architectures.
+
+       PRE-INSTALLATION TASKS
+
+       Once it has been determined that the system meets the minimum hardware requirements for installing FreeBSD, the installation file should be downloaded and the installation media prepared.
+
+       > Tip:
+       Consider using virtualization when wanting to use FreeBSD on a system that already has another operating system installed.
+
+       Before moving on to the installation, check that the system is ready by verifying the items in this checklist:
+
+        1. Back Up Important Data
+       + Before installing any operating system, always backup all important data first. Do not store the backup on the system being installed. Instead, save the data to a removable disk such as a USB drive, another system on the network, or an online backup service. Test the backup before starting the installation to make sure it contains all of the needed files. Once the installer formats the system's disk, all data stored on that disk will be lost.
+
+        1. Decide Where to Install FreeBSD
+       + If FreeBSD will be the only operating system installed, this step can be skipped. But if FreeBSD will share the disk with another operating system, decide which disk or partition will be used for FreeBSD. + In the i386 and amd64 architectures, disks can be divided into multiple partitions using one of two partitioning schemes. A traditional _Master Boot Record_ (MBR) holds a partition table defining up to four _primary partitions_. For historical reasons, FreeBSD calls these primary partition _slices_. One of these primary partitions can be made into an _extended partition_ containing multiple _logical partitions_. The _GUID Partition Table_ (GPT) is a newer and simpler method of partitioning a disk. Common GPT implementations allow up to 128 partitions per disk, eliminating the need for logical partitions. + The FreeBSD boot loader requires either a primary or GPT partition. If all of the primary or GPT partitions are already in use, one must be freed for FreeBSD. To create a partition without deleting existing data, use a partition resizing tool to shrink an existing partition and create a new partition using the freed space. + An alternative to modifying the system's existing disk partitions is to use virtualization, which allows multiple operating systems to run at the same time without having to alter partitions. + A variety of free and commercial partition resizing tools are listed at List of disk partitioning software wikipedia entry. GParted Live is a free live CD which includes the GParted partition editor. +
+
+       > Warning:
+       ====== When used properly, disk shrinking utilities can safely create space for creating a new partition. Since the possibility of selecting the wrong partition exists, always backup any important data and verify the integrity of the backup before modifying disk partitions. ====== + Disk partitions containing different operating systems make it possible to install multiple operating systems on one computer.
+
+        1. Collect Network Information
+       + Some FreeBSD installation methods require a network connection in order to download the installation files. After any installation, the installer will offer to setup the system's network interfaces. + If the network has a DHCP server, it can be used to provide automatic network configuration. If DHCP is not available, the following network information for the system must be obtained from the local network administrator or Internet service provider: + Required Network Information
+
+        1. IP address
+        1. Subnet mask
+        1. IP address of default gateway
+        1. Domain name of the network
+        1. IP addresses of the network's DNS servers
+        1. Check for FreeBSD Errata
+       + Although the FreeBSD Project strives to ensure that each release of FreeBSD is as stable as possible, bugs occasionally creep into the process. On very rare occasions those bugs affect the installation process. As these problems are discovered and fixed, they are noted in the FreeBSD Errata page of each version. Check the errata before installing to make sure that there are no problems that might affect the installation. + Information and errata for all the releases can be found on the FreeBSD Release Information page.
+
+       PREPARE THE INSTALLATION MEDIA
+
+       The FreeBSD installer is not an application that can be run from within another operating system. Instead, download a FreeBSD installation file, burn it to the media associated with its file type and size (CD, DVD, or USB), and boot the system to install from the inserted media.
+
+       FreeBSD installation files are available at the FreeBSD download page. Each installation file's name includes the release version of FreeBSD, the architecture, and the type of file.
+
+       Installation files are available in several formats, compressed with xz(1) or uncompressed. The formats vary depending on computer architecture and media type.
+
+       Installation file types:
+
+        * -bootonly.iso: This is the smallest installation file as it only contains the installer. A working Internet connection is required during installation as the installer will download the files it needs to complete the FreeBSD installation. This file should be burned to optical media.
+        * -disc1.iso: This file contains all of the files needed to install FreeBSD, its source, and the Ports Collection. This file should be burned to optical media.
+        * -dvd1.iso: This file contains all of the files needed to install FreeBSD, its source, and the Ports Collection. It also contains a set of popular binary packages for installing a window manager and some applications so that a complete system can be installed from media without requiring a connection to the Internet. This file should be burned to optical media.
+        * -memstick.img: This file contains all of the files needed to install
+       FreeBSD, its source, and the Ports Collection. Write this file to a USB stick as shown in Writing an Image File to USB.
+
+        * -mini-memstick.img: Like -bootonly.iso, does not include installation
+       files, but downloads them as needed. A working internet connection is required during installation. It should be written to a USB stick as shown in Writing an Image File to USB.
+
+       After downloading the image file, download at least one _checksum_ file from the same directory. There are two _checksum_ files available, named after the release number and the architecture name. For example: CHECKSUM.SHA256-FreeBSD-{rel-latest}-RELEASE-amd64 and CHECKSUM.SHA512-FreeBSD-{rel-latest}-RELEASE-amd64.
+
+       After downloading one of the files (or both), calculate the _checksum_ for the image file and compare it with the one shown in the _checksum_ file. Note that comparing the calculated _checksum_ against the correct file is needed, as they correspond to two different algorithms: SHA256 and SHA512. FreeBSD provides sha256(1) and sha512(1) that can be used for calculating the _checksum_. Other operating systems have similar programs.
+
+       Verifying the _checksum_ in FreeBSD can be done automatically using sha256sum(1) (and sha512sum(1)) by executing:
+
+         % sha256sum -c CHECKSUM.SHA256-FreeBSD-{rel-latest}-RELEASE-amd64 --ignore-missing
+         FreeBSD-{rel-latest}-RELEASE-amd64-dvd1.iso: OK
+
+       The checksums must match exactly. If the checksums do not match, the image file is corrupt and must be downloaded again.
+
+       WRITING AN IMAGE FILE TO USB
+
+       The \memstick.img file is an _image_ of the complete contents of a memory stick. It _cannot_ be copied to the target device as a file. Several applications are available for writing the .img to a USB stick. This section describes two of these utilities.
+
+       > Important:
+       Before proceeding, back up any important data on the USB stick. This procedure will erase the existing data on the stick.
+
+       Procedure. Using dd to write the image +
+
+       > Warning:
+       ====== This example uses /dev/da0 as the target device where the image will be written. Be very careful that the correct device is used as this command will destroy the existing data on the specified target device. ======
+
+        1. The command-line utility is available on BSD, Linux(R), and Mac OS(R) systems. To burn the image using dd, insert the USB stick and determine its device name. Then, specify the name of the downloaded installation file and the device name for the USB stick. This example burns the amd64 installation image to the first USB device on an existing FreeBSD system.
+       +
+
+         # dd if=FreeBSD-{rel-latest}-RELEASE-amd64-memstick.img of=/dev/da0 bs=1M conv=sync
+
+       + If this command fails, verify that the USB stick is not mounted and that the device name is for the disk, not a partition. + Some operating systems might require this command to be run with sudo(8). The dd(1) syntax varies slightly across different platforms; for example, Mac OS(R) requires a lower-case bs=1m. Systems like Linux(R) might buffer writes. To force all writes to complete, use sync(8).
+
+       Procedure. Using Windows(R) to Write the Image +
+
+       > Warning:
+       ====== Be sure to give the correct drive letter as the existing data on the specified drive will be overwritten and destroyed. ======
+
+        1. Obtaining Image Writer for Windows(R)
+       + Image Writer for Windows(R) is a free application that can correctly write an image file to a memory stick. Download it from win32diskimager home page and extract it into a folder.
+
+        1. Writing the Image with Image Writer
+       + Double-click the Win32DiskImager icon to start the program. Verify that the drive letter shown under Device is the drive with the memory stick. Click the folder icon and select the image to be written to the memory stick. Click Save to accept the image file name. Verify that everything is correct, and that no folders on the memory stick are open in other windows. When everything is ready, click Write to write the image file to the memory stick.
+
+       STARTING THE INSTALLATION
+
+       > Important:
+       By default, the installation will not make any changes to the disk(s) before the following message:
+
+         Your changes will now be written to disk. If you
+         have chosen to overwrite existing data, it will
+         be PERMANENTLY ERASED. Are you sure you want to
+         commit your changes?
+
+       The install can be exited at any time prior to this warning. If there is a concern that something is incorrectly configured, just turn the computer off before this point and no changes will be made to the system's disks.
+
+       This section describes how to boot the system from the installation media which was prepared using the instructions in Prepare the Installation Media. When using a bootable USB stick, plug in the USB stick before turning on the computer. When booting from CD or DVD, turn on the computer and insert the media at the first opportunity. How to configure the system to boot from the inserted media depends upon the architecture.
+
+       FREEBSD BOOT LOADER MENU
+
+       Once the system boots from the installation media, a menu similar to the following will be displayed:
+
+       FreeBSD Boot Loader Menu
+
+       By default, the menu will wait ten seconds for user input before booting into the FreeBSD installer or, if FreeBSD is already installed, before booting into FreeBSD. To pause the boot timer in order to review the selections, press Space. To select an option, press its highlighted number, character, or key. The following options are available.
+
+        * Boot Multi User: This will continue the FreeBSD boot process. If the boot timer has been paused, press 1, upper- or lower-case B, or Enter.
+        * Boot Single User: This mode can be used to fix an existing FreeBSD installation as described in “Single-User Mode”. Press 2 or the upper- or lower-case S to enter this mode.
+        * Escape to loader prompt: This will boot the system into a repair prompt that contains a limited number of low-level commands. This prompt is described in “Stage Three”. Press 3 or Esc to boot into this prompt.
+        * Reboot: Reboots the system.
+        * Cons: Allow to continue the installation by video, serial, Dual (serial primary) or Dual (Video primary)
+        * Kernel: Loads a different kernel.
+        * Boot Options: Opens the menu shown in, and described under,
+       FreeBSD Boot Options Menu.
+
+       FreeBSD Boot Options Menu
+
+       The boot options menu is divided into two sections. The first section can be used to either return to the main boot menu or to reset any toggled options back to their defaults.
+
+       The next section is used to toggle the available options to On or Off by pressing the option's highlighted number or character. The system will always boot using the settings for these options until they are modified. Several options can be toggled using this
+
+        * ACPI: If the system hangs during boot, try toggling this option to Off. This option is only present when ACPI support is available but not required.
+        * Safe Mode: If the system still hangs during boot even with ACPI Support set to Off, try setting this option to On.
+        * Single User: Toggle this option to On to fix an existing FreeBSD installation as described in “Single-User Mode”. Once the problem is fixed, set it back to Off.
+        * Verbose: Toggle this option to On to see more detailed messages during the boot process. This can be useful when troubleshooting a piece of hardware.
+       After making the needed selections, press 1 or Backspace to return to the main boot menu, then press Enter to continue booting into FreeBSD. A series of boot messages will appear as FreeBSD carries out its hardware device probes and loads the installation program. Once the boot is complete, the welcome menu shown in Welcome Menu will be displayed.
+
+       Welcome Menu
+
+       Press Enter to select the default of Install to enter the installer. The rest of this chapter describes how to use this installer. Otherwise, use the right or left arrows or the colorized letter to select the desired menu item. The Shell can be used to access a FreeBSD shell in order to use command line utilities to prepare the disks before installation. The Live CD option can be used to try out FreeBSD before installing it. The live version is described in Using the Live CD.
+
+       > Tip:
+       To review the boot messages, including the hardware device probe, press the upper- or lower-case S and then Enter to access a shell. At the shell prompt, type more /var/run/dmesg.boot and use the space bar to scroll through the messages. When finished, type exit to return to the welcome menu.
+
+       USING BSDINSTALL
+
+       This section shows the order of the bsdinstall menus and the type of information that will be asked before the system is installed. Use the arrow keys to highlight a menu option, then Space to select or deselect that menu item. When finished, press Enter to save the selection and move onto the next screen.
+
+       SELECTING THE KEYMAP MENU
+
+       Before starting the process, bsdinstall will load the keymap files as shown in Keymap Loading.
+
+       Keymap Loading
+
+       After the keymaps have been loaded, bsdinstall displays the menu shown in Keymap Selection Menu. Use the up and down arrows to select the keymap that most closely represents the mapping of the keyboard attached to the system. Press Enter to save the selection.
+
+       Keymap Selection Menu
+
+       > Note:
+       Pressing Esc will exit this menu and use the default keymap. If the choice of keymap is not clear, United States of America ISO-8859-1 is also a safe option.
+
+       In addition, when selecting a different keymap, the user can try the keymap and ensure it is correct before proceeding, as shown in Keymap Testing Menu.
+
+       Keymap Testing Menu
+
+       SETTING THE HOSTNAME
+
+       The next bsdinstall menu is used to set the hostname for the newly installed system.
+
+       Setting the Hostname
+
+       Type in a hostname that is unique for the network. It should be a fully-qualified hostname, such as machine3.example.com.
+
+       SELECTING INSTALLATION TYPE
+
+       In the next menu bsdinstall will ask whether to install the base system using traditional distribution sets or the new package-based method.
+
+       Selecting Installation Type
+
+       Starting with FreeBSD 15.0, the installer offers two distinct approaches for laying down and later updating the base system. Both options install the same kernel and userland but differ fundamentally in how they are delivered and maintained over time.
+
+        * Distribution Sets - The classic installation method used since the early days of the project.
+       The base system is unpacked from a collection of compressed tarballs. Updates are performed exclusively with the freebsd-update(8) utility. This method is fully supported, stable, and remains the default for most installation media in the 15.x series.
+
+        * Packages (Tech Preview) - Installs the base system as a set of individual packages from the FreeBSD-base repository.
+       Once installed, the entire operating system—both the base and any third-party software—can be upgraded with a single pkg upgrade command. This method, known as pkgbase, unifies system management under the pkg(8) framework.
+
+       > Tip:
+       The Packages (Tech Preview) option is offered for testing and early adoption. While it is expected to become the default in FreeBSD 16.0, users who prefer a conservative, time-tested update solution should select Distribution Sets for production environments during the 15.x lifecycle.
+
+       SELECTING COMPONENTS TO INSTALL
+
+       Next, bsdinstall will prompt to select optional components to install.
+
+       Selecting Components to Install
+
+       Deciding which components to install will depend largely on the intended use of the system and the amount of disk space available. The FreeBSD kernel and userland, collectively known as the _base system_, are always installed. Depending on the architecture, some of these components may not appear:
+
+        * base-dbg - Base tools like cat and ls, among many others, with debug symbols activated.
+        * kernel-dbg - Kernel and modules with debug symbols activated.
+        * lib32-dbg - Compatibility libraries for running 32-bit applications on a 64-bit version of FreeBSD with debug symbols activated.
+        * lib32 - Compatibility libraries for running 32-bit applications on a 64-bit version of FreeBSD.
+        * ports - The FreeBSD Ports Collection is a collection of files which automates the downloading, compiling and installation of third-party software packages. Installing Applications: Packages and Ports discusses how to use the Ports Collection.
+       +
+
+       > Warning:
+       The installation program does not check for adequate disk space. Select this option only if sufficient hard disk space is available. The FreeBSD Ports Collection takes up about {ports-size} of disk space.
+
+        * src - The complete FreeBSD source code for both the kernel and the userland. Although not required for the majority of applications, it may be required to build device drivers, kernel modules, or some applications from the Ports Collection. It is also used for developing FreeBSD itself. The full source tree requires 1 GB of disk space and recompiling the entire FreeBSD system requires an additional 5 GB of space.
+        * tests - FreeBSD Test Suite.
+
+       INSTALLING FROM THE NETWORK
+
+       The menu shown in Installing from the Network only appears when installing from a -bootonly.iso or -mini-memstick.img, as this installation media does not hold copies of the installation files. Since the installation files must be retrieved over a network connection, this menu indicates that the network interface must be configured first. If this menu is shown in any step of the process, remember to follow the instructions in Configuring Network Interfaces.
+
+       Installing from the Network
+
+       ALLOCATING DISK SPACE
+
+       The next menu is used to determine the method for allocating disk space.
+
+       Partitioning Choices
+
+       bsdinstall gives the user four methods for allocating disk space:
+
+        * Auto (ZFS) partitioning creates a root-on-ZFS system with optional GELI encryption support for _boot environments_.
+        * Auto (UFS) partitioning automatically sets up the disk partitions using the UFS file system.
+        * Manual partitioning allows advanced users to create customized partitions from menu options.
+        * Shell opens a shell prompt where advanced users can create customized partitions using command-line utilities like gpart(8), fdisk(8), and bsdlabel(8).
+       This section describes what to consider when laying out the disk partitions. It then demonstrates how to use the different partitioning methods.
+
+       DESIGNING THE PARTITION LAYOUT
+
+       The default partition layout for file systems includes one file system for the entire system. When using UFS it may be worth considering the use of multiple file systems with sufficient disk space or multiple disks available. When laying out file systems, remember that hard drives transfer data faster from the outer tracks to the inner. Thus, smaller and heavier-accessed file systems should be closer to the outside of the drive, while larger partitions like /usr should be placed toward the inner parts of the disk. It is a good idea to create partitions in an order similar to: /, swap, /var, and /usr.
+
+       The size of the /var partition reflects the intended machine's usage. This partition is used to hold mailboxes, log files, and printer spools. Mailboxes and log files can grow to unexpected sizes depending on the number of users and how long log files are kept. On average, most users rarely need more than about a gigabyte of free disk space in /var.
+
+       > Note:
+       Sometimes, a lot of disk space is required in /var/tmp. When new software is installed, the packaging tools extract a temporary copy of the packages under /var/tmp. Large software packages, like Firefox or LibreOffice may be tricky to install if there is not enough disk space under /var/tmp.
+
+       The /usr partition holds many of the files which support the system, including the FreeBSD Ports Collection and system source code. At least 2 gigabytes of space is recommended for this partition. Also, note that home directories for users are placed in /usr/home by default, but can be placed on another partition. By default, /home is a symbolic link to /usr/home.
+
+       When selecting partition sizes, keep the space requirements in mind. Running out of space in one partition while barely using another can be a hassle.
+
+       As a rule of thumb, the swap partition should be about double the size of physical memory (RAM). Systems with minimal RAM (less for larger-memory configurations) may perform better with more swap. Configuring too little swap can lead to inefficiencies in the VM page scanning code and might create issues later if more memory is added.
+
+       On larger systems with multiple SCSI disks or multiple IDE disks operating on different controllers, it is recommended that swap be configured on each drive, up to four drives. The swap partitions should be approximately the same size. The kernel can handle arbitrary sizes, but internal data structures scale to 4 times the largest swap partition. Keeping the swap partitions near the same size will allow the kernel to optimally stripe swap space across disks. Large swap sizes may elicit a kernel warning message about the total configured swap. The limit is raised by increasing the amount of memory allowed for keeping track of swap allocations, as instructed by the warning message. It might be easier to recover from a runaway program before being forced to reboot.
+
+       By properly partitioning a system, fragmentation introduced in the smaller write-heavy partitions will not bleed over into the mostly read partitions. Keeping the write-loaded partitions closer to the disk's edge will increase I/O performance in the partitions where it occurs the most. While I/O performance in the larger partitions may be needed, shifting them more toward the edge of the disk will not lead to a significant performance improvement over moving /var to the edge.
+
+       GUIDED PARTITIONING USING UFS
+
+       When this method is selected, a menu will display the available disk(s). If multiple disks are connected, choose the one where FreeBSD is to be installed.
+
+       Selecting from Multiple Disks
+
+       Once the disk is selected, the next menu prompts to install to either the entire disk or to create a partition using free space. If Entire Disk is chosen, a general partition layout filling the whole disk is automatically created. Selecting Partition creates a partition layout from the unused space on the disk.
+
+       Selecting Entire Disk or Partition
+
+       The next menu shows a list with the available partition scheme types. GPT is usually the most appropriate choice for amd64 computers. Older computers that are not compatible with GPT should use MBR. The other partition schemes are generally used for uncommon or older computers. More information is available in Partitioning Schemes.
+
+       Select Partition Scheme
+
+       After the partition layout has been created, review it to ensure it meets the needs of the installation. Selecting Revert will reset the partitions to their original values. Pressing Auto will recreate the automatic FreeBSD partitions. Partitions can also be manually created, modified, or deleted. When the partitioning is correct, select Finish to continue with the installation.
+
+       Review Created Partitions
+
+       Once the disks are configured, the next menu provides the last chance to make changes before the selected drives are formatted. If changes need to be made, select Back to return to the main partitioning menu. Revert & Exit exits the installer without making any changes to the drive. Otherwise, select Commit to start the installation process.
+
+       Final Confirmation
+
+       To continue with the installation process, go to Fetching Distribution Files.
+
+       MANUAL PARTITIONING
+
+       Selecting this method opens the partition editor:
+
+       Manually Create Partitions
+
+       Highlight the installation drive (ada0 in this example) and select Create to display a menu of available partition schemes:
+
+       Manually Create Partitions
+
+       GPT is usually the most appropriate choice for amd64 computers. Older computers that are not compatible with GPT should use MBR. The other partition schemes are generally used for uncommon or older computers.
+
+       Partitioning Schemes <| Abbreviation <| Description
+
+       APM Apple Partition Map, used by PowerPC(R).
+
+       BSD BSD label without an MBR, sometimes called _dangerously dedicated mode_ as non-BSD disk utilities may not recognize it.
+
+       GPT GUID Partition Table.
+
+       MBR Master Boot Record.
+
+       After the partitioning scheme has been selected and created, select Create again to create the partitions. The Tab key is used to give focus to the fields (after cycling through , , and ).
+
+       Manually Create Partitions
+
+       A standard FreeBSD GPT installation uses at least three partitions, including either UFS or ZFS:
+
+        * freebsd-boot or efi - Holds the FreeBSD boot code.
+        * freebsd-ufs - A FreeBSD UFS file system.
+        * freebsd-zfs - A FreeBSD ZFS file system. More information about ZFS is available in The Z File System (ZFS).
+        * freebsd-swap - FreeBSD swap space.
+       Refer to gpart(8) for descriptions of the available GPT partition types.
+
+       Multiple file system partitions can be created. Some people prefer a traditional layout with separate partitions for /, /var, /tmp, and /usr.
+
+       > Tip:
+       Note that /tmp can be added later as a memory-based file system (tmpfs(5)) on systems with sufficient memory.
+
+       See Creating Traditional Split File System Partitions for an example.
+
+       The Size may be entered with common abbreviations: _K_ for kilobytes, _M_ for megabytes, or _G_ for gigabytes.
+
+       > Tip:
+       Proper sector alignment provides the best performance, and making partition sizes even multiples of 4K bytes helps to ensure alignment on drives with either 512-byte or 4K-byte sectors. Generally, using partition sizes that are even multiples of 1M or 1G is the easiest way to make sure every partition starts at an even multiple of 4K. There is one exception: a _freebsd-boot_ partition for BIOS booting should be no larger than 512K due to legacy boot code limitations. This limitation does not apply to UEFI booting.
+
+       A Mountpoint is needed if the partition will contain a file system. If only a single UFS partition will be created, the mountpoint should be /.
+
+       The Label is a name by which the partition will be known. Drive names or numbers can change if the drive is connected to a different controller or port, but the partition label does not change. Referring to labels instead of drive names and partition numbers in files like /etc/fstab makes the system more tolerant to hardware changes. GPT labels appear in /dev/gpt/ when a disk is attached. Other partitioning schemes have different label capabilities and their labels appear in different directories in /dev/.
+
+       > Tip:
+       Use a unique label on every partition to avoid conflicts from identical labels. A few letters from the computer's name, use, or location can be added to the label. For instance, use labroot or rootfslab for the UFS root partition on the computer named lab.
+
+       Creating Traditional Split File System Partitions [example] For a traditional partition layout where the /, /var, /tmp, and /usr directories are separate file systems on their own partitions, create a GPT partitioning scheme, then create the partitions as shown. Partition sizes shown are typical for a 20G target disk. If more space is available on the target disk, larger swap or /var partitions may be useful. Labels shown here are prefixed with ex for "example", but readers should use other unique label values as described above.
+
+       By default, FreeBSD's gptboot expects the first UFS partition to be the / partition.
+
+       Partition Type Size Mountpoint Label
+
+       freebsd-boot 512K
+
+       freebsd-ufs 2G / exrootfs
+
+       freebsd-swap 4G
+
+       exswap
+
+       freebsd-ufs 2G /var exvarfs
+
+       freebsd-ufs 1G /tmp extmpfs
+
+       freebsd-ufs accept the default (remainder of the disk) /usr exusrfs
+
+       After the custom partitions have been created, select Finish to continue with the installation and go to Fetching Distribution Files.
+
+       GUIDED PARTITIONING USING ROOT-ON-ZFS
+
+       This partitioning mode only works with whole disks and will erase the contents of the entire disk. The main ZFS configuration menu offers a number of options to control the creation of the pool.
+
+       ZFS Partitioning Menu
+
+       Here is a summary of the options in this
+
+        * Install - Proceed with the installation with the selected options.
+        * Pool Type/Disks - Configure the Pool Type and the disk(s) that will
+       constitute the pool. The automatic ZFS installer currently only supports the creation of a single top level vdev, except in stripe mode. To create more complex pools, use the instructions in Shell Mode Partitioning to create the pool.
+
+        * Rescan Devices - Repopulate the list of available disks.
+        * Disk Info - This menu can be used to inspect each disk, including its partition table and various other information such as the device model number and serial number, if available.
+        * Pool Name - Establish the name of the pool. The default name is _zroot_.
+        * Force 4K Sectors? - Force the use of 4K sectors. By default, the installer will automatically create partitions aligned to 4K boundaries and force ZFS to use 4K sectors. This is safe even with 512 byte sector disks, and has the added benefit of ensuring that pools created on 512 byte disks will be able to have 4K sector disks added in the future, either as additional storage space or as replacements for failed disks. Press the Enter key to chose to activate it or not.
+        * Encrypt Disks? - Encrypting the disks allows the user to encrypt the disks using GELI. More information about disk encryption is available in “Disk Encryption with geli”. Press the Enter key to choose whether to activate it or not.
+        * Partition Scheme - Choose the partition scheme. GPT is the recommended option in most cases. Press the Enter key to chose between the different options.
+        * Swap Size - Establish the amount of swap space.
+        * Mirror Swap? - Whether to mirror the swap between the disks. Be aware that enabling mirror swap will break crash dumps. Press the Enter key to activate it or not.
+        * Encrypt Swap? - Whether to encrypt the swap. This will encrypt the swap with a temporary key each time the system boots, and discards it on reboot. Press the Enter key to choose to activate it or not. More information about swap encryption in “Encrypting Swap”.
+        * ZFS Pool Options - Specifies additional pool properties to apply when the ZFS root pool is created. More information about the options can be found in zpool-create(8) and zpoolprops(7).
+       Select T to configure the Pool Type and the disk(s) that will constitute the pool.
+
+       ZFS Pool Type
+
+       Here is a summary of the Pool Type that can be selected in this
+
+        * stripe - Striping provides maximum storage of all connected devices, but no redundancy. If just one disk fails the data on the pool is lost irrevocably.
+        * mirror - Mirroring stores a complete copy of all data on every disk. Mirroring provides good read performance because data is read from all disks in parallel. Write performance is slower as the data must be written to all disks in the pool. Allows all but one disk to fail. This option requires at least two disks.
+        * raid10 - Striped mirrors. Provides the best performance, but the least storage. This option needs at least an even number of disks and a minimum of four disks.
+        * raidz1 - Single Redundant RAID. Allow one disk to fail concurrently. This option needs at least three disks.
+        * raidz2 - Double Redundant RAID. Allows two disks to fail concurrently. This option needs at least four disks.
+        * raidz3 - Triple Redundant RAID. Allows three disks to fail concurrently. This option needs at least five disks.
+       Once a Pool Type has been selected, a list of available disks is displayed, and the user is prompted to select one or more disks to make up the pool. The configuration is then validated to ensure that enough disks are selected. If validation fails, select to return to the list of disks or to change the Pool Type.
+
+       Disk Selection
+
+       Invalid Selection
+
+       If one or more disks are missing from the list, or if disks were attached after the installer was started, select - Rescan Devices to repopulate the list of available disks.
+
+       Rescan Devices
+
+       To avoid accidentally erasing the wrong disk, the - Disk Info menu can be used to inspect each disk, including its partition table and various other information such as the device model number and serial number, if available.
+
+       Analyzing a Disk
+
+       Select N to configure the Pool Name. Enter the desired name, then select to establish it or to return to the main menu and leave the default name.
+
+       Pool Name
+
+       Select S to set the amount of swap. Enter the desired amount of swap, then select to establish it or to return to the main menu and let the default amount.
+
+       Swap Amount
+
+       Once all options have been set to the desired values, select the >>> Install option at the top of the menu. The installer then offers a last chance to cancel before the contents of the selected drives are destroyed to create the ZFS pool.
+
+       Last Chance
+
+       If GELI disk encryption was enabled, the installer will prompt twice for the passphrase to be used to encrypt the disks. Initialization of the encryption then begins.
+
+       Disk Encryption Password
+
+       Initializing Encryption
+
+       The installation then proceeds normally. To continue with the installation, go to Fetching Distribution Files.
+
+       SHELL MODE PARTITIONING
+
+       When creating advanced installations, the bsdinstall partitioning menus may not provide the level of flexibility required. Advanced users can select the Shell option from the partitioning menu in order to manually partition the drives, create the file system(s), populate /tmp/bsdinstall_etc/fstab, and mount the file systems under /mnt. Once this is done, type exit to return to bsdinstall and continue the installation.
+
+       FETCHING DISTRIBUTION FILES
+
+       Installation time will vary depending on the distributions chosen, installation media, and speed of the computer. A series of messages will indicate the progress.
+
+       First, the installer formats the selected disk(s) and initializes the partitions. Next, in the case of a bootonly media or mini memstick, it downloads the selected components:
+
+       Fetching Distribution Files
+
+       Next, the integrity of the distribution files is verified to ensure they have not been corrupted during download or misread from the installation media:
+
+       Verifying Distribution Files
+
+       Finally, the verified distribution files are extracted to the disk:
+
+       Extracting Distribution Files
+
+       Once all requested distribution files have been extracted, bsdinstall displays the first post-installation configuration screen. The available post-configuration options are described in the next section.
+
+       NETWORK INTERFACES, ACCOUNTS, TIME ZONE, SERVICES AND HARDENING
+
+       SETTING THE ROOT PASSWORD
+
+       First, the root password must be set. While entering the password, the characters being typed are not displayed on the screen. The password must be entered twice to prevent typing errors.
+
+       Setting the root Password
+
+       CONFIGURING NETWORK INTERFACES
+
+       Next, a list of the network interfaces found on the computer is shown. Select the interface to configure.
+
+       Choose a Network Interface
+
+       If an Ethernet interface is selected, the installer will skip ahead to the menu shown in Choose IPv4 Networking. If a wireless network interface is chosen, the system will instead scan for wireless access points:
+
+       Scanning for Wireless Access Points
+
+       Wireless networks are identified by a Service Set Identifier (SSID); a short, unique name given to each network. SSIDs found during the scan are listed, followed by a description of the encryption types available for that network. If the desired SSID does not appear in the list, select Rescan to scan again. If the desired network still does not appear, check for problems with antenna connections or try moving the computer closer to the access point. Rescan after each change is made.
+
+       Choosing a Wireless Network
+
+       Next, enter the encryption information for connecting to the selected wireless network. WPA2 encryption is strongly recommended over older encryption types such as WEP, which offer little security. If the network uses WPA2, input the password, also known as the Pre-Shared Key (PSK). For security reasons, the characters typed into the input box are displayed as asterisks.
+
+       WPA2 Setup
+
+       Next, choose whether or not an IPv4 address should be configured on the Ethernet or wireless interface:
+
+       Choose IPv4 Networking
+
+       There are two methods of IPv4 configuration. DHCP will automatically configure the network interface correctly and should be used if the network provides a DHCP server. Otherwise, the addressing information needs to be input manually as a static configuration.
+
+       > Note:
+       Do not enter random network information as it will not work. If a DHCP server is not available, obtain the information listed in Required Network Information from the network administrator or Internet service provider.
+
+       If a DHCP server is available, select Yes in the next menu to automatically configure the network interface. The installer will appear to pause for a minute or so as it finds the DHCP server and obtains the addressing information for the system.
+
+       Choose IPv4 DHCP Configuration
+
+       If a DHCP server is not available, select No and input the following addressing information in this
+
+       IPv4 Static Configuration
+
+        * IP Address - The IPv4 address assigned to this computer. The address must be unique and not already in use by another device on the local network.
+        * Subnet Mask - The subnet mask for the network.
+        * Default Router - The IP address of the network's default gateway.
+       The next screen will ask if the interface should be configured for IPv6. If IPv6 is available and desired, choose Yes to select it.
+
+       Choose IPv6 Networking
+
+       IPv6 also has two methods of configuration. StateLess Address AutoConfiguration (SLAAC) will automatically request the correct configuration information from a local router. Refer to rfc4862 for more information. Static configuration requires manual entry of network information.
+
+       If an IPv6 router is available, select Yes in the next menu to automatically configure the network interface. The installer will appear to pause for a minute or so as it finds the router and obtains the addressing information for the system.
+
+       Choose IPv6 SLAAC Configuration
+
+       If an IPv6 router is not available, select No and input the following addressing information in this
+
+       IPv6 Static Configuration
+
+        * IPv6 Address - The IPv6 address assigned to this computer. The address must be unique and not already in use by another device on the local network.
+        * Default Router - The IPv6 address of the network's default gateway.
+       The last network configuration menu is used to configure the Domain Name System (DNS) resolver, which converts hostnames to and from network addresses. If DHCP or SLAAC was used to autoconfigure the network interface, the Resolver Configuration values may already be filled in. Otherwise, enter the local network's domain name in the Search field. DNS #1 and DNS #2 are the IPv4 and/or IPv6 addresses of the DNS servers. At least one DNS server is required.
+
+       DNS Configuration
+
+       Once the interface is configured, select a mirror site that is located in the same region of the world as the computer on which FreeBSD is being installed. Files can be retrieved more quickly when the mirror is close to the target computer, reducing installation time.
+
+       > Tip:
+       Selecting https://download.freebsd.org Main Site (GeoDNS, HTTPS) or ftp://download.freebsd.org Main Site (GeoDNS, FTP) will automatically route to the nearest mirror.
+
+       Choosing a Mirror
+
+       SETTING THE TIME ZONE
+
+       The next series of menus are used to determine the correct local time by selecting the geographic region, country, and time zone. Setting the time zone allows the system to automatically correct for regional time changes, such as daylight savings time, and perform other time zone related functions properly.
+
+       The example shown here is for a machine located in the mainland time zone of Spain, Europe. The selections will vary according to the geographical location.
+
+       Select a Region
+
+       The appropriate region is selected using the arrow keys and then pressing Enter.
+
+       Select a Country
+
+       Select the appropriate country using the arrow keys and press Enter.
+
+       Select a Time Zone
+
+       The appropriate time zone is selected using the arrow keys and pressing Enter.
+
+       Confirm Time Zone
+
+       Confirm the abbreviation for the time zone is correct.
+
+       Select Date
+
+       The appropriate date is selected using the arrow keys and then pressing Set Date. Otherwise, the date selection can be skipped by pressing Skip.
+
+       Select Time
+
+       The appropriate time is selected using the arrow keys and then pressing Set Time. Otherwise, the time selection can be skipped by pressing Skip.
+
+       ENABLING SERVICES
+
+       The next menu is used to configure which system services will be started whenever the system boots. All of these services are optional. Only start the services that are needed for the system to function.
+
+       Selecting Additional Services to Enable
+
+       Here is a summary of the services that can be enabled in this
+
+        * sshd - The Secure Shell (SSH) daemon is used to remotely access a system over an encrypted connection. Only enable this service if the system should be available for remote logins.
+        * ntpd - The Network Time Protocol (NTP) daemon for automatic clock synchronization. Enable this service when wanting to synchronise the system clock with a remote time server or pool.
+        * ntpd_sync_on_start - Enabled, ntpd(8) is invoked with the -g flag during system startup, performing an immediate, one-time clock synchronization at boot time.
+        * local_unbound - Enable the DNS local unbound. It is necessary to keep in mind that this is a configuration only meant for use as a local caching forwarding resolver. If the objective is to set up a resolver for the entire network, install dns/unbound.
+        * powerd - System power control utility for power control and energy saving.
+        * moused - Enable this service if the mouse will be used from the command-line system console.
+        * dumpdev - Crash dumps are useful when debugging issues with the system, so users are encouraged to enable them.
+
+       ENABLING HARDENING SECURITY OPTIONS
+
+       The next menu is used to configure which security options will be enabled. All of these options are optional. But their use is encouraged.
+
+       Selecting Hardening Security Options
+
+       Here is a summary of the options that can be enabled in this
+
+        * hide_uids - Hide processes running as other users (UID). This prevents unprivileged users from seeing running processes from other users.
+        * hide_gids - Hide processes running as other groups (GID). This prevents unprivileged users from seeing running processes from other groups.
+        * hide_jail - Hide processes running in jails. This prevents unprivileged users from seeing processes running inside jails.
+        * read_msgbuf - Disable reading kernel message buffer for unprivileged users. Prevent unprivileged users from using dmesg(8) to view messages from the kernel's log buffer.
+        * proc_debug - Disable process debugging facilities for unprivileged users. Disables a variety of unprivileged inter-process debugging services, including some procfs functionality, ptrace(), and ktrace(). Please note that this will also prevent debugging tools such as lldb(1), truss(1) and procstat(1), as well as some built-in debugging facilities in certain scripting languages like PHP.
+        * random_pid - Randomize the PID of processes.
+        * clear_tmp - Clean /tmp when the system starts up.
+        * disable_syslogd - Disable opening the syslogd network socket. By default, FreeBSD runs syslogd in a secure way with -s. This prevents the daemon from listening for incoming UDP requests on port 514. With this option enabled, syslogd will instead run with -ss, which prevents syslogd from opening any port. For more information, see syslogd(8).
+        * secure_console - Make the command prompt request the root password when entering single-user mode.
+        * disable_ddtrace - DTrace can run in a mode that affects the running kernel. Destructive actions may not be used unless explicitly enabled. Use -w to enable this option when using DTrace. For more information, see dtrace(1).
+
+       ADD USERS
+
+       The next menu prompts to create at least one user account. It is recommended to log into the system using a user account rather than as root. When logged in as root, there are essentially no limits or protection on what can be done. Logging in as a normal user is safer and more secure.
+
+       Select Yes to add new users.
+
+       Add User Accounts
+
+       Follow the prompts and input the requested information for the user account. The example shown in Enter User Information creates the asample user account.
+
+       Enter User Information
+
+       Here is a summary of the information to input:
+
+        * Username - The name the user will enter to log in. A common convention is to use the first letter of the first name combined with the last name, as long as each username is unique for the system. The username is case sensitive and should not contain any spaces.
+        * Full name - The user's full name. This can contain spaces and is used as a description for the user account.
+        * Uid - User ID. This is typically left blank so the system automatically assigns a value.
+        * Login group - The user's group. This is typically left blank to accept the default.
+        * Invite _user_ into other groups? - Additional groups to which the user will be added as a member. If the user needs administrative access, type wheel here.
+        * Login class - Typically left blank for the default.
+        * Shell - Type in one of the listed values to set the interactive shell for the user. Refer to Shells for more information about shells.
+        * Home directory - The user's home directory. The default is usually correct.
+        * Home directory permissions - Permissions on the user's home directory. The default is usually correct.
+        * Use password-based authentication? - Typically yes so that the user is prompted to input their password at login.
+        * Use an empty password? - Typically no as empty or blank passwords are insecure.
+        * Use a random password? - Typically no so that the user can set their own password in the next prompt.
+        * Enter password - The password for this user. Typed-in characters will not be shown on the screen.
+        * Enter password again - The password must be typed again for verification.
+        * Lock out the account after creation? - Typically no so that the user can log in.
+       After entering all the details, a summary is shown for review. If a mistake was made, enter no to correct it. Once everything is correct, enter yes to create the new user.
+
+       Exit User and Group Management
+
+       If there are more users to add, answer the Add another user? question with yes. Enter no to finish adding users and continue the installation.
+
+       For more information on adding users and user management, see Users and Basic Account Management.
+
+       FINAL CONFIGURATION
+
+       After everything has been installed and configured, a final chance is provided to modify settings.
+
+       Final Configuration
+
+       Use this menu to make any changes or to do any additional configuration before completing the installation.
+
+        * Add User - Described in Add Users.
+        * Root Password - Described in Setting the root Password.
+        * Hostname - Described in Setting the Hostname.
+        * Network - Described in Configuring Network Interfaces.
+        * Services - Described in Enabling Services.
+        * System Hardening - Described in Enabling Hardening Security Options.
+        * Time Zone - Described in Setting the Time Zone.
+        * Firmware - Download and install required firmware for system components such as Wi-Fi or graphics cards.
+        * Handbook - Download and install the FreeBSD Handbook.
+       Once configuration is complete, select Exit.
+
+       Manual Configuration
+
+       bsdinstall will prompt for any additional configuration that needs to be done before rebooting into the new system. Select Yes to exit to a shell within the new system or No to proceed to the last step of the installation.
+
+       Complete the Installation
+
+       If further configuration or special setup is needed, select Live CD to boot the install media into Live CD mode.
+
+       If the installation is complete, select Reboot to reboot the computer and start the new FreeBSD system. Do not forget to remove the FreeBSD install media or the computer might boot from it again.
+
+       As FreeBSD boots, informational messages are displayed. After the system finishes booting, a login prompt is displayed. At the login: prompt, enter the username added during the installation. Avoid logging in as root. Refer to The Superuser Account for instructions on how to become the superuser when administrative access is needed.
+
+       The messages that appear during boot can be reviewed by pressing Scroll-Lock to turn on the scroll-back buffer. The PgUp, PgDn, and arrow keys can be used to scroll back through the messages. When finished, press Scroll-Lock again to unlock the display and return to the console. To review these messages once the system has been up for some time, type less /var/run/dmesg.boot from a command prompt. Press q to return to the command line after viewing.
+
+       If sshd was enabled in Selecting Additional Services to Enable, the first boot might be a bit slower as the system generates SSH host keys. Subsequent boots will be faster. The fingerprints of the keys are then displayed as in the following example:
+
+         Generating public/private rsa1 key pair.
+         Your identification has been saved in /etc/ssh/ssh_host_key.
+         Your public key has been saved in /etc/ssh/ssh_host_key.pub.
+         The key fingerprint is:
+         10:a0:f5:af:93:ae:a3:1a:b2:bb:3c:35:d9:5a:b3:f3 root@machine3.example.com
+         The key's randomart image is:
+         +--[RSA1 1024]----+
+         |    o..          |
+         |   o . .         |
+         |  .   o          |
+         |       o         |
+         |    o   S        |
+         |   + + o         |
+         |o . + *          |
+         |o+ ..+ .         |
+         |==o..o+E         |
+         +-----------------+
+         Generating public/private dsa key pair.
+         Your identification has been saved in /etc/ssh/ssh_host_dsa_key.
+         Your public key has been saved in /etc/ssh/ssh_host_dsa_key.pub.
+         The key fingerprint is:
+         7e:1c:ce:dc:8a:3a:18:13:5b:34:b5:cf:d9:d1:47:b2 root@machine3.example.com
+         The key's randomart image is:
+         +--[ DSA 1024]----+
+         |       ..     . .|
+         |      o  .   . + |
+         |     . ..   . E .|
+         |    . .  o o . . |
+         |     +  S = .    |
+         |    +  . = o     |
+         |     +  . * .    |
+         |    . .  o .     |
+         |      .o. .      |
+         +-----------------+
+         Starting sshd.
+
+       Refer to "OpenSSH" for more information about fingerprints and SSH.
+
+       FreeBSD does not install a graphical environment by default. Refer to The X Window System for more information about installing and configuring a graphical window manager.
+
+       Proper shutdown of a FreeBSD computer helps protect data and hardware from damage. _Do not turn off the power before the system has been properly shut down!_ If the user is a member of the wheel group, become the superuser by typing su at the command line and entering the root password. Then, type shutdown -p now and the system will shut down cleanly, and, if the hardware supports it, turn itself off.
+
+       TROUBLESHOOTING
+
+       This section covers basic installation troubleshooting, such as common problems people have reported.
+
+       Check the Hardware Notes listed on the FreeBSD Release Information page for the version of FreeBSD to make sure the hardware is supported.
+
+       > Note:
+       Some installation problems can be avoided or alleviated by updating the firmware on various hardware components, most notably the motherboard. Motherboard firmware is usually referred to as the BIOS. Most motherboard and computer manufacturers have a website for upgrades and upgrade information.
+
+       Manufacturers generally advise against upgrading the motherboard BIOS unless there is a good reason for doing so, like a critical update. The upgrade process _can_ go wrong, leaving the BIOS incomplete and the computer inoperative.
+
+       If the system hangs while probing hardware during boot or behaves strangely during the installation process, ACPI may be the culprit. FreeBSD makes extensive use of the system ACPI service on the i386 and amd64 platforms to aid in system configuration if it is detected during boot. Unfortunately, some bugs still exist in both the ACPI driver and within system motherboards and BIOS firmware. ACPI can be disabled by setting the hint.acpi.0.disabled hint in the third stage boot loader:
+
+         set hint.acpi.0.disabled="1"
+
+       This is reset each time the system is booted, so it is necessary to add hint.acpi.0.disabled="1" to the file /boot/loader.conf. More information about the boot loader can be found in “Synopsis”.
+
+       USING THE LIVE CD
+
+       The welcome menu of bsdinstall, shown in Welcome Menu, provides a Live CD option. This is useful for those who are still wondering whether FreeBSD is the right operating system for them and want to test some of the features before installing.
+
+       The following points should be noted before using the Live CD:
+
+        * To gain access to the system, authentication is required. The username is root and the password is blank.
+        * As the system runs directly from the installation media, performance will be significantly slower than that of a system installed on a hard disk.
+        * This option only provides a command prompt and not a graphical interface.
+
+FreeBSD Handbook manual                 from the official documentation

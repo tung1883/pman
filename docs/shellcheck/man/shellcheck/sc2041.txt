@@ -1,0 +1,35 @@
+SHELLCHECK.SC2041(1)             Sandbox manual             SHELLCHECK.SC2041(1)
+
+       NAME
+
+       This is a literal string. To run as a command, use $(..) instead of '..' . - for i in 'seq 1 10'
+
+       THIS IS A LITERAL STRING. TO RUN AS A COMMAND, USE (..) INSTEAD OF '
+
+       THIS IS A LITERAL STRING. TO RUN AS A COMMAND, USE (..) INSTEAD OF '
+
+       PROBLEMATIC CODE
+
+         for i in 'seq 1 10'
+         do
+           echo "$i"
+         done
+
+       CORRECT CODE
+
+         for i in $(seq 1 10)
+         do
+           echo "$i"
+         done
+
+       RATIONALE
+
+       The intent was to run the code in the single quotes. This would have worked with slanted backticks, .. , but here the very similar looking single quotes '..' were used, resulting in a string literal instead of command output.
+
+       This is one of the many problems with backticks, so it's better to use $(..) to expand commands.
+
+       EXCEPTIONS
+
+       None.
+
+ShellCheck manual                       from the official documentation

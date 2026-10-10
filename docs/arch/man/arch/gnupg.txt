@@ -1,0 +1,990 @@
+ARCH.GNUPG(1)                    Sandbox manual                    ARCH.GNUPG(1)
+
+       According to the official website:
+
+       GnuPG is a complete and free implementation of the OpenPGP standard as defined by RFC 4880 (also known as PGP). GnuPG allows you to encrypt and sign your data and communications; it features a versatile key management system, along with access modules for all kinds of public key directories. GnuPG, also known as GPG, is a command line tool with features for easy integration with other applications. A wealth of frontend applications and libraries are available. GnuPG also provides support for S/MIME and Secure Shell (ssh).
+
+       Warning GnuPG started out as an implementation of the OpenPGP format. However, in recent years its maintainer has actively diverged from the OpenPGP standardization effort and is separately extending the format in a GnuPG specific way (see draft-koch-librepgp). These changes are causing compatibility issues with other implementations since version 2.4. See #OpenPGP compatibility.
+
+       INSTALLATION
+
+       gnupg should already be installed on your system as it is a dependency of pacman.
+
+       This will also install pinentry, a collection of simple PIN or passphrase entry dialogs which GnuPG uses for passphrase entry. The shell script /usr/bin/pinentry determines which pinentry dialog is used, in the order described at #pinentry.
+
+       If you want to use a graphical frontend or program that integrates with GnuPG, see List of applications/Security#Encryption, signing, steganography.
+
+       CONFIGURATION
+
+       HOME DIRECTORY
+
+       The GnuPG home directory is where the GnuPG suite stores its keyrings and private keys, and reads configurations from. By default, the path used is ~/.gnupg. There are two ways to override this:
+
+        * Set the $GNUPGHOME environment variable.
+        * Use the --homedir argument, e.g. $ gpg --homedir path/to/dir [1].
+       By default, the home directory has its permissions set to 700 and the files it contains have their permissions set to 600. Only the owner of the directory has permission to read, write, and access the files. This is for security purposes and should not be changed. In case this directory or any file inside it does not follow this security measure, you will get warnings about unsafe file and home directory permissions.
+
+       CONFIGURATION FILES
+
+       All of GnuPG's behavior is configurable via command line arguments. For arguments you would like to be the default, you can add them to the respective configuration file:
+
+        * gpg checks gnupg_home/gpg.conf (user) and /etc/gnupg/gpg.conf (global) [2]. Since gpg is the main entrypoint for GnuPG, most configuration of interest will be here. See GPG Options for possible options.
+        * dirmngr checks gnupg_home/dirmngr.conf and /etc/gnupg/dirmngr.conf. dirmngr is a program internally invoked by gpg to access PGP keyservers [3]. See Dirmngr Options for possible options.
+       These two configuration files cover the common usecases, but there are more auxiliary programs in the GnuPG suite with their own options. See the GnuPG manual for a comprehensive list.
+
+       Create the desired file(s), and set their permissions to 600 as discussed in #Home directory.
+
+       Add to these files any long options you want. Do not write the two dashes, but simply the name of the option and required arguments. For example, to make GnuPG always use a keyring at a specific path, as if it was invoked as gpg --no-default-keyring --keyring keyring-path ...:
+
+         gnupg_home/gpg.conf (or /etc/gnupg/gpg.conf)
+
+         no-default-keyring
+         keyring keyring-path
+
+       Other examples are found in #See also.
+
+       Additionally, pacman uses a different set of configuration files for package signature verification. See Pacman/Package signing for details.
+
+       DEFAULT OPTIONS FOR NEW USERS
+
+       If you want to setup some default options for new users, put configuration files in /etc/skel/.gnupg/. When the new user is added in system, files from here will be copied to its GnuPG home directory. There is also a simple script called addgnupghome which you can use to create new GnuPG home directories for existing users:
+
+         # addgnupghome user1 user2
+
+       This will add the respective /home/user1/.gnupg/ and /home/user2/.gnupg/ and copy the files from the skeleton directory to it. Users with existing GnuPG home directory are simply skipped.
+
+       USAGE
+
+       Note
+
+        * Whenever a user-id is required in a command, it can be specified with your key ID, fingerprint, a part of your name or email address, etc. GnuPG is flexible on this.
+        * Whenever a key-id is needed, it can be found adding the --keyid-format=long flag to the command. To show the master secret key for example, run gpg --list-secret-keys --keyid-format=long user-id, the key-id is the hexadecimal hash provided on the same line as sec.
+
+       CREATE A KEY PAIR
+
+       Generate a key pair by typing in a terminal:
+
+         $ gpg --full-gen-key
+
+       Warning When using --full-gen-key the generated key will advertise an AEAD mechanism, which is not understood by other OpenPGP implementations. To disable this after key creation see #Disable unsupported AEAD mechanism.
+
+       Also add the --expert option to the command line to access more ciphers and in particular some newer elliptic curves like Curve448.
+
+       The command will prompt for answers to several questions. For general use most people will want:
+
+        * The default ECC (sign and encrypt) for signing and encryption keys.
+        * The default Curve 25519 to use Curve25519 and Ed25519.
+        * An expiration date: a period of one year is good enough for the average user. This way even if access is lost to the keyring, it will allow others to know that it is no longer valid. At a later stage, if necessary, the expiration date can be extended without having to re-issue a new key.
+        * Your name and email address. You can add multiple identities to the same key later (e.g., if you have multiple email addresses you want to associate with this key).
+        * no optional comment. Since the semantics of the comment field are not well-defined, it has limited value for identification.
+        * A secure passphrase, find some guidelines in Security#Choosing secure passwords.
+       Note The name and email address you enter here will be seen by anybody who imports your key.
+
+       Tip The simpler --gen-key option uses default parameters for the key cipher, size and expiry and only asks for real name and email address.
+
+       LIST KEYS
+
+       To list keys in your public key ring:
+
+         $ gpg --list-keys
+
+       To list keys in your secret key ring:
+
+         $ gpg --list-secret-keys
+
+       EXPORT YOUR PUBLIC KEY
+
+       GnuPG's main usage is to ensure confidentiality of exchanged messages via public-key cryptography. With it each user distributes the public key of their keyring, which can be used by others to encrypt messages to the user. The private key must always be kept private, otherwise confidentiality is broken. See Wikipedia:Public-key cryptography for examples about the message exchange.
+
+       So, in order for others to send encrypted messages to you, they need your public key.
+
+       To generate an ASCII version of a user's public key to file public-key.asc (e.g. to distribute it by e-mail):
+
+         $ gpg --export --armor --output public-key.asc user-id
+
+       Alternatively, or in addition, you can use a keyserver to share your key.
+
+       Tip
+
+        * Add --no-emit-version to avoid printing the version number, or add the corresponding setting to your gpg.conf.
+        * You can omit the user-id to export all public keys within your keyring. This is useful if you want to share multiple identities at once, or for importing in another application, e.g. Thunderbird.
+
+       IMPORT A PUBLIC KEY
+
+       In order to encrypt messages to others, as well as verify their signatures, you need their public key. To import a public key with file name public-key.asc to your public key ring:
+
+         $ gpg --import public-key.asc
+
+       Alternatively, try retrieving their public key via WKD (in case the domain of their email address supports it) or using a keyserver.
+
+       If you wish to import a key ID to install a specific Arch Linux package, see pacman/Package signing#Managing the keyring and Makepkg#Signature checking.
+
+       USE A KEYSERVER
+
+       SENDING KEYS
+
+       You can register your key with a public PGP key server, so that others can retrieve it without having to contact you directly:
+
+         $ gpg --send-keys key-id
+
+       Warning There are keyservers where submitted keys cannot be deleted. Some of the reasons are explained in the MIT PGP Public Key Server FAQ.
+
+       Note The associated email address, once published publicly, could be the target of spammers and in this case anti-spam filtering may be necessary.
+
+       SEARCHING AND RECEIVING KEYS
+
+       To find out details of a key on the keyserver, without importing it, do:
+
+         $ gpg --search-keys user-id
+
+       To import a key from a key server:
+
+         $ gpg --receive-keys key-id
+
+       To refresh/update the keychain with the latest version from a key server:
+
+         $ gpg --refresh-keys
+
+       Warning
+
+        * You should verify the authenticity of the retrieved public key by comparing its fingerprint with one that the owner published on an independent source(s) (e.g., contacting the person directly). See Wikipedia:Public key fingerprint for more information.
+        * It is recommended to use the long key ID or the full fingerprint when receiving a key. Using a short ID may encounter collisions. All keys will be imported that have the short ID, see fake keys found in the wild for such example.
+       Tip Adding auto-key-retrieve to the GPG configuration file will automatically fetch keys from the key server as needed. This is not a compromise on security, but it can be considered a privacy violation; see "web bug" in gpg(1) § auto-key-retrieve.
+
+       KEY SERVERS
+
+       See OpenPGP#Keyserver for a general overview of OpenPGP keyservers and their features.
+
+       An alternative key server can be specified with the keyserver option in one of the configuration files, for instance:
+
+         ~/.gnupg/dirmngr.conf
+
+         keyserver hkp://keyserver.ubuntu.com
+
+       A temporary use of another server is handy when the regular one does not work as it should. It can be achieved by, for example,
+
+         $ gpg --keyserver hkps://keys.openpgp.org/ --search-keys user-id
+
+       Tip
+
+        * If you are experiencing keyserver failures, you may want to check your DNS and your resolver configurations or its logs beforehand (e.g systemd-resolved).
+        * If receiving fails with the message gpg: keyserver receive failed: Connection refused, try using a different DNS server.
+        * If connecting to a keyserver fails with gpg: keyserver receive failed: Server indicated a failure, you may need to configure gpg to use an alternate port. For example, to use port 80 on Ubuntu's keyserver, use keyserver hkp://keyserver.ubuntu.com:80.
+        * You can connect to the keyserver over Tor with Tor#Torsocks. Or using the --use-tor command line option. See [4] for more information.
+        * You can connect to a keyserver using a proxy by setting the http_proxy environment variable and setting honor-http-proxy in dirmngr.conf. Alternatively, set http-proxy host[:port] in the configuration file to override the environment variable of the same name. Restart the dirmngr.service user service for the changes to take effect.
+
+       WEB KEY DIRECTORY
+
+       See OpenPGP#Web Key Directory for a general overview.
+
+       LOOKUP CERTIFICATES USING WKD
+
+       When encrypting to an email address (e.g. user@example.org), if it is not already in the local keyring, GnuPG, by default, will retrieve the public OpenPGP key using the Web Key Directory protocol (i.e. GnuPG will download the key via HTTPS from the example.org web server). For example:
+
+         $ gpg --recipient user@example.org --encrypt doc
+
+       To retrieve a public key and import it into your keyring, use the --locate-keys or --locate-external-keys options. The former will not do anything if the key already exists in the local keyring, while the later will always refresh the key. For example:
+
+         $ gpg --locate-external-keys user@example.org
+
+       Note GnuPG's automatic key retrieval is controlled with the --auto-key-locate option which defaults to local,wkd; see its description in gpg(1). In case you have set auto-key-locate to a value without wkd in the GPG configuration file, you can use the --auto-key-locate clear,wkd command line option to override it.
+
+       CREATE A WKD
+
+       If you control the domain of your email address yourself and have a web server that provides HTTPS with a trusted TLS certificate, you can follow this guide to enable WKD for your domain.
+
+       ENCRYPT AND DECRYPT
+
+       ASYMMETRIC
+
+       You need to import a public key of a user before encrypting (option -e/--encrypt) a file or message to that recipient (option -r/--recipient). Additionally you need to create a key pair if you have not already done so.
+
+       To encrypt a file with the name doc, use:
+
+         $ gpg --recipient user-id --encrypt doc
+
+       To decrypt (option -d/--decrypt) a file with the name doc.gpg encrypted with your public key, use:
+
+         $ gpg --output doc --decrypt doc.gpg
+
+       gpg will prompt you for your passphrase and then decrypt and write the data from doc.gpg to doc. If you omit the -o/--output option, gpg will write the decrypted data to stdout.
+
+       Tip
+
+        * Add --armor to encrypt a file using ASCII armor, suitable for copying and pasting a message in text format.
+        * Use -R user-id or --hidden-recipient user-id instead of -r to not put the recipient key IDs in the encrypted message. This helps to hide the receivers of the message and is a limited countermeasure against traffic analysis.
+        * Add --no-emit-version to avoid printing the version number, or add the corresponding setting to your configuration file.
+        * You can use GnuPG to encrypt your sensitive documents by using your own user-id as recipient or by using the --default-recipient-self flag; however, you can only do this one file at a time, although you can always tarball various files and then encrypt the tarball. See also Data-at-rest encryption#Available methods if you want to encrypt directories or a whole file-system.
+
+       SYMMETRIC
+
+       Symmetric encryption does not require the generation of a key pair and can be used to simply encrypt data with a passphrase. Simply use -c/--symmetric to perform symmetric encryption:
+
+         $ gpg -c doc
+
+       The following example:
+
+        * Encrypts doc with a symmetric cipher using a passphrase
+        * Uses the AES-256 cipher algorithm to encrypt the data
+        * Uses the SHA-512 digest algorithm to mangle the passphrase and generate the encryption key
+        * Mangles the passphrase for 65536 iterations
+
+         $ gpg -c --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 --s2k-count 65536 doc
+
+       To decrypt a symmetrically encrypted doc.gpg using a passphrase and output decrypted contents into the same directory as doc do:
+
+         $ gpg --output doc --decrypt doc.gpg
+
+       DIRECTORY
+
+       Encrypting/decrypting a directory can be done with gpgtar(1).
+
+       Encrypt:
+
+         $ gpgtar -c -o dir.gpg dir
+
+       Decrypt:
+
+         $ gpgtar -d dir.gpg
+
+       KEY MAINTENANCE
+
+       BACKUP YOUR PRIVATE KEY
+
+       To backup your private key do the following:
+
+         $ gpg --export-secret-keys --armor --output private-key.asc user-id
+
+       If the private key is protected by a passphrase, the exported key file will be protected by the same one.
+
+       GnuPG may ask you to enter the passphrase for the key. This is required, because the internal protection method of the secret key is different from the one specified by the OpenPGP protocol.[5]
+
+       Warning
+
+        * The passphrase is usually the weakest link in protecting your secret key. Place the private key in a safe place on a different system/device, such as a locked container or encrypted drive. It is the only safety you have to regain control to your keyring in case of, for example, a drive failure, theft or worse.
+        * This method of backing up key has some security limitations. See the Moving GPG Keys Privately post on VHSblog for a potentially more secure way to back up and import keys using gpg.
+       To import the backup of your private key:
+
+         $ gpg --import private-key.asc
+
+       Tip Paperkey can be used to export private keys as human readable text or machine readable barcodes that can be printed on paper and archived.
+
+       BACKUP YOUR REVOCATION CERTIFICATE
+
+       Revocation certificates are automatically generated for newly generated keys. These are by default located in ~/.gnupg/openpgp-revocs.d/. The filename of the certificate is the fingerprint of the key it will revoke. The revocation certificates can also be generated manually by the user later using:
+
+         $ gpg --gen-revoke --armor --output revcert.asc user-id
+
+       This certificate can be used to revoke a key if it is ever lost or compromised. The backup will be useful if you have no longer access to the secret key and are therefore not able to generate a new revocation certificate with the above command. It is short enough to be printed out and typed in by hand if necessary.
+
+       Warning Anyone with access to the revocation certificate can revoke the key publicly, this action cannot be undone. Protect your revocation certificate like you protect your secret key.
+
+       EDIT YOUR KEY
+
+       Running the gpg --edit-key user-id command will present a menu which enables you to do most of your key management related tasks.
+
+       Type help in the edit key sub menu to show the complete list of commands. Some useful ones:
+
+         > passwd       # change the passphrase
+         > clean        # compact any user ID that is no longer usable (e.g revoked or expired)
+         > revkey       # revoke a key
+         > addkey       # add a subkey to this key
+         > expire       # change the key expiration time
+         > adduid       # add additional names, comments, and email addresses
+         > addphoto     # add photo to key (must be JPG, 240x288 recommended, enter full path to image when prompted)
+
+       Tip If you have multiple email accounts you can add each one of them as an identity, using adduid command. You can then set your favourite one as primary.
+
+       EXPORTING SUBKEY
+
+       If you plan to use the same key across multiple devices, you may want to strip out your master key and only keep the bare minimum encryption subkey on less secure systems.
+
+       First, find out which subkey you want to export.
+
+         $ gpg --list-secret-keys --with-subkey-fingerprint
+
+       Select only that subkey to export.
+
+         $ mktemp -d
+
+         /tmp/tmp.XXXXXXXXXX
+
+         $ gpg --armor --export-secret-subkeys --output /tmp/tmp.XXXXXXXXXX/subkey.asc subkey-id!
+
+       Warning If you forget to add the exclamation mark (!), all of your subkeys will be exported.
+
+       At this point you could stop, but it is most likely a good idea to change the passphrase as well. Import the key into a temporary folder.
+
+         $ gpg --homedir /tmp/tmp.XXXXXXXXXX --import /tmp/tmp.XXXXXXXXXX/subkey.asc
+         $ gpg --homedir /tmp/tmp.XXXXXXXXXX --edit-key user-id
+         > passwd
+         > save
+         $ gpg --homedir /tmp/tmp.XXXXXXXXXX --armor --output /tmp/tmp.XXXXXXXXXX/subkey.altpass.asc --export-secret-subkeys subkey-id!
+
+       Note You will get a warning that the master key was not available and the password was not changed, but that can safely be ignored as the subkey password was.
+
+       At this point, you can now use /tmp/tmp.XXXXXXXXXX/subkey.altpass.asc on your other devices.
+
+       EXTENDING EXPIRATION DATE
+
+       Warning Never delete your expired or revoked subkeys unless you have a good reason. Doing so will cause you to lose the ability to decrypt files encrypted with the old subkey. Please only delete expired or revoked keys from other users to clean your keyring.
+
+       It is good practice to set an expiration date on your subkeys, so that if you lose access to the key (e.g. you forget the passphrase) the key will not continue to be used indefinitely by others. When the key expires, it is relatively straight-forward to extend the expiration date:
+
+         $ gpg --edit-key user-id
+         > expire
+
+       You will be prompted for a new expiration date, as well as the passphrase for your secret key, which is used to sign the new expiration date.
+
+       Tip An exact expiration date and time can be specified by entering a YYYY-MM-DD formatted date or YYYYMMDDThhmmss formatted timestamp as the expiration value.
+
+       Repeat this for any further subkeys that have expired:
+
+         > key 1
+         > expire
+
+       Finally, save the changes and quit:
+
+         > save
+
+       Update it to a keyserver.
+
+         $ gpg --keyserver keyserver.ubuntu.com --send-keys key-id
+
+       Alternatively, if you use this key on multiple computers, you can export the public key (with new signed expiration dates) and import it on those machines:
+
+         $ gpg --export --output pubkey.gpg user-id
+         $ gpg --import pubkey.gpg
+
+       There is no need to re-export your secret key or update your backups: the master secret key itself never expires, and the signature of the expiration date left on the public key and subkeys is all that is needed.
+
+       ROTATING SUBKEYS
+
+       Warning Never delete your expired or revoked subkeys unless you have a good reason. Doing so will cause you to lose the ability to decrypt files encrypted with the old subkey. Please only delete expired or revoked keys from other users to clean your keyring.
+
+       Alternatively, if you prefer to stop using subkeys entirely once they have expired, you can create new ones. Do this a few weeks in advance to allow others to update their keyring.
+
+       Tip You do not need to create a new key simply because it is expired. You can extend the expiration date, see #Extending expiration date.
+
+       Create new subkey (repeat for both signing and encrypting key)
+
+         $ gpg --edit-key user-id
+         > addkey
+
+       And answer the following questions it asks (see #Create a key pair for suggested settings).
+
+       Save changes
+
+         > save
+
+       Update it to a keyserver.
+
+         $ gpg --keyserver pgp.mit.edu --send-keys user-id
+
+       You will also need to export a fresh copy of your secret keys for backup purposes. See #Backup your private key for details on how to do this.
+
+       Tip Revoking expired subkeys is unnecessary and arguably bad form. If you are constantly revoking keys, it may cause others to lack confidence in you.
+
+       REVOKE A KEY
+
+       Key revocation should be performed if the key is compromised, superseded, no longer used, or you forget your passphrase. This is done by merging the key with the revocation certificate of the key.
+
+       If you have no longer access to your keypair, first import a public key to import your own key.
+
+       Then, to revoke the key, import the file saved in #Backup your revocation certificate:
+
+         $ gpg --import revcert.asc
+
+       Now the revocation needs to be made public. Use a keyserver to send the revoked key to a public PGP server if you used one in the past, otherwise, export the revoked key to a file and distribute it to your communication partners.
+
+       SIGNATURES
+
+       Signatures certify and timestamp documents. If the document is modified, verification of the signature will fail. Unlike encryption which uses the recipient public key to encrypt a document, signatures are created with the sender's private key. The recipient of a signed document then verifies the signature using the sender's public key.
+
+       CREATE A SIGNATURE
+
+       SIGN A FILE
+
+       To sign a file use the -s/--sign flag:
+
+         $ gpg --output doc.sig --sign doc
+
+       doc.sig contains both the compressed content of the original file doc and the signature in a binary format, but the file is not encrypted. However, you can combine signing with encrypting.
+
+       CLEARSIGN A FILE OR MESSAGE
+
+       To sign a file without compressing it into binary format use:
+
+         $ gpg --output doc.sig --clearsign doc
+
+       Here both the content of the original file doc and the signature are stored in human-readable form in doc.sig.
+
+       MAKE A DETACHED SIGNATURE
+
+       To create a separate signature file to be distributed separately from the document or file itself, use the --detach-sig flag:
+
+         $ gpg --output doc.sig --detach-sig doc
+
+       Here the signature is stored in doc.sig, but the contents of doc are not stored in it. This method is often used in distributing software projects to allow users to verify that the program has not been modified by a third party.
+
+       VERIFY A SIGNATURE
+
+       To verify a signature use the --verify flag:
+
+         $ gpg --verify doc.sig
+
+       where doc.sig is the signed file containing the signature you wish to verify.
+
+       If you are verifying a detached signature, both the signed data file and the signature file must be present when verifying. For example, to verify Arch Linux's latest iso you would do:
+
+         $ gpg --verify archlinux-version.iso.sig
+
+       where archlinux-version.iso must be located in the same directory.
+
+       You can also specify the signed data file with a second argument:
+
+         $ gpg --verify archlinux-version.iso.sig /path/to/archlinux-version.iso
+
+       If a file has been encrypted in addition to being signed, simply decrypt the file and its signature will also be verified.
+
+       GPG-AGENT
+
+       gpg-agent is mostly used as daemon to request and cache the password for the keychain. This is useful if GnuPG is used from an external program like a mail client. gnupg comes with systemd user sockets which are enabled by default. These sockets are gpg-agent.socket, gpg-agent-extra.socket, gpg-agent-browser.socket, gpg-agent-ssh.socket, and dirmngr.socket.
+
+        * The main gpg-agent.socket is used by gpg to connect to the gpg-agent daemon.
+        * The intended use for the gpg-agent-extra.socket on a local system is to set up a Unix domain socket forwarding from a remote system. This enables to use gpg on the remote system without exposing the private keys to the remote system. See gpg-agent(1) for details.
+        * The gpg-agent-browser.socket allows web browsers to access the gpg-agent daemon.
+        * The gpg-agent-ssh.socket can be used by SSH to cache SSH keys added by the ssh-add program. See #SSH agent for the necessary configuration.
+        * The dirmngr.socket starts a GnuPG daemon handling connections to keyservers.
+       Note If you use non-default GnuPG home directory, you will need to edit the ListenStream (see systemd.socket(5) § options) of all the socket files to be consistent with gpgconf --list-dirs. The socket names use the hash of the non-default GnuPG home directory [7], so you can hardcode it without worrying about it changing.
+
+       CONFIGURATION
+
+       gpg-agent can be configured via ~/.gnupg/gpg-agent.conf file. The configuration options are listed in gpg-agent(1). For example you can change cache ttl for unused keys:
+
+         ~/.gnupg/gpg-agent.conf
+
+         default-cache-ttl 3600
+
+       Tip To cache your passphrase for the whole session, please run the following command:
+
+         $ /usr/lib/gnupg/gpg-preset-passphrase --preset XXXXX
+
+       where XXXXX is the keygrip. You can get its value when running gpg --with-keygrip --list-secret-keys. The passphrase will be stored until gpg-agent is restarted. If you set up default-cache-ttl value, it will take precedence.
+
+       It is necessary to allow this passphrase presetting by starting gpg-agent with the --allow-preset-passphrase or setting allow-preset-passphrase in ~/.gnupg/gpg-agent.conf.
+
+       RELOAD THE AGENT
+
+       After changing the configuration, reload the agent using gpg-connect-agent:
+
+         $ gpg-connect-agent reloadagent /bye
+
+       The command should print OK.
+
+       However in some cases only the restart may not be sufficient, like when keep-screen has been added to the agent configuration. In this case you firstly need to kill the ongoing gpg-agent process and then you can restart it as was explained above.
+
+       PINENTRY
+
+       gpg-agent can be configured via the pinentry-program stanza to use a particular pinentry user interface when prompting the user for a passphrase. For example:
+
+         ~/.gnupg/gpg-agent.conf
+
+         pinentry-program /usr/bin/pinentry-curses
+
+       There are other pinentry programs that you can choose from - see pacman -Ql pinentry | grep /usr/bin/. You may need to install the relevant optional dependencies for your chosen pinentry program.
+
+       Tip
+
+        * The pinentry programs /usr/bin/pinentry-gnome3 (GNOME), /usr/bin/pinentry-qt, /usr/bin/pinentry-qt5 and /usr/bin/pinentry-gtk (generic) [8] support the DBus Secret Service API, which allows for remembering passwords via a compliant manager such as GNOME Keyring, KeePassXC or KDE Wallet.
+        * An alternative for KDE Wallet is /usr/bin/pinentry-kwallet which requires installing the kwalletcliAUR package.
+       Note When using KDE, the Secret Service API integration is disabled to prevent a deadlock in case KDE Wallet uses GnuPG encryption. If you use KDE Wallet with the classic, blowfish encrypted file instead, re-enable the Secret Service API integration by setting the environment variable PINENTRY_KDE_USE_WALLET to a non-empty value. If you installed KDE from the meta packages or package groups, you should already have kwallet-pam installed, in which case your KDE Wallet was likely already created using blowfish encryption against your account password, so this environment variable should be safe to use.
+
+       Remember to reload the agent after making changes to the configuration.
+
+       CACHE PASSWORDS
+
+       max-cache-ttl and default-cache-ttl defines how many seconds gpg-agent should cache the passwords. To enter a password once a session, set them to something very high, for instance:
+
+         gpg-agent.conf
+
+         max-cache-ttl 60480000
+         default-cache-ttl 60480000
+
+       For password caching in SSH emulation mode, set default-cache-ttl-ssh and max-cache-ttl-ssh instead, for example:
+
+         gpg-agent.conf
+
+         default-cache-ttl-ssh 60480000
+         max-cache-ttl-ssh 60480000
+
+       UNATTENDED PASSPHRASE
+
+       Starting with GnuPG 2.1.0 the use of gpg-agent and pinentry is required, which may break backwards compatibility for passphrases piped in from STDIN using the --passphrase-fd 0 commandline option. In order to have the same type of functionality as the older releases two things must be done:
+
+       First, edit the gpg-agent configuration to allow loopback pinentry mode:
+
+         ~/.gnupg/gpg-agent.conf
+
+         allow-loopback-pinentry
+
+       Reload the agent if it is running to let the change take effect.
+
+       Second, either the application needs to be updated to include a commandline parameter to use loopback mode like so:
+
+         $ gpg --pinentry-mode loopback ...
+
+       ...or if this is not possible, add the option to the configuration:
+
+         ~/.gnupg/gpg.conf
+
+         pinentry-mode loopback
+
+       Note The upstream author indicates setting pinentry-mode loopback in gpg.conf may break other usage, using the commandline option should be preferred if at all possible. [9]
+
+       SSH AGENT
+
+       gpg-agent has OpenSSH agent emulation. If you already use the GnuPG suite, you might consider using its agent to also cache your SSH keys. Additionally, some users may prefer the PIN entry dialog GnuPG agent provides as part of its passphrase management.
+
+       SET SSH_AUTH_SOCK
+
+       Set the following variables to communicate with gpg-agent instead of the default ssh-agent.
+
+         SSH_AGENT_PID=""
+         SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/gnupg/S.gpg-agent.ssh"
+
+       Note
+
+        * If you are using a script to manage your variables, you may also unset SSH_AGENT_PID rather than setting it to "", via unset SSH_AGENT_PID.
+        * If you set your SSH_AUTH_SOCK manually, keep in mind that your socket location may be different if you are using a custom GNUPGHOME. You can use the following bash example, or change SSH_AUTH_SOCK to the value of gpgconf --list-dirs agent-ssh-socket.
+        * If GNOME Keyring is installed, it is necessary to deactivate its ssh component. Otherwise, it will overwrite SSH_AUTH_SOCK.
+       Alternatively, depend on Bash. This works for non-standard socket locations as well:
+
+         ~/.bashrc
+
+         unset SSH_AGENT_PID
+         if [ "${gnupg_SSH_AUTH_SOCK_by:-0}" -ne $$ ]; then
+           export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+         fi
+
+       Note The test involving the gnupg_SSH_AUTH_SOCK_by variable is for the case where the agent is started as gpg-agent --daemon /bin/sh, in which case the shell inherits the SSH_AUTH_SOCK variable from the parent, gpg-agent [10].
+
+       CONFIGURE PINENTRY TO USE THE CORRECT TTY
+
+       Also set the GPG_TTY and refresh the TTY in case user has switched into an X session as stated in gpg-agent(1). For example:
+
+         ~/.bashrc
+
+         export GPG_TTY=$(tty)
+         gpg-connect-agent updatestartuptty /bye >/dev/null
+
+       If you use multiple terminals simultaneously and want gpg-agent to ask for passphrase via pinentry-curses from the same terminal where the ssh command was run, add the following to the SSH configuration file. This will make the TTY to be refreshed every time an ssh command is run [11]:
+
+         ~/.ssh/config
+
+         Match host * exec "gpg-connect-agent UPDATESTARTUPTTY /bye"
+
+       Note that GPG_TTY environment variable has to be set for this to work.
+
+       ADD SSH KEYS
+
+       Once gpg-agent is running you can use ssh-add to approve keys, following the same steps as for ssh-agent. The list of approved keys is stored in the ~/.gnupg/sshcontrol file.
+
+       Once your key is approved, you will get a pinentry dialog every time your passphrase is needed. For password caching see #Cache passwords.
+
+       USING A PGP KEY FOR SSH AUTHENTICATION
+
+       You can also use your PGP key as an SSH key. This requires a key with the Authentication capability (see #Custom capabilities). There are various benefits gained by using a PGP key for SSH authentication, including:
+
+        * Reduced key maintenance, as you will no longer need to maintain an SSH key.
+        * The ability to store the authentication key on a smartcard. GnuPG will automatically detect the key when the card is available, and add it to the agent (check with ssh-add -l or ssh-add -L). The comment for the key should be something like: openpgp:key-id or cardno:card-id.
+       To retrieve the public key part of your GPG/SSH key, run gpg --export-ssh-key gpg-key. If your key is authentication-capable but this command still fails with "Unusable public key", add a ! suffix ([12]).
+
+       Unless you have your GPG key on a keycard, you need to add your key to $GNUPGHOME/sshcontrol to be recognized as a SSH key. If your key is on a keycard, its keygrip is added to sshcontrol implicitly. If not, get the keygrip of your key this way:
+
+         $ gpg --list-keys --with-keygrip
+
+         sub   rsa4096 2018-07-25 [A]
+               Keygrip = 1531C8084D16DC4C36911F1585AF0ACE7AAFD7E7
+
+       Then edit sshcontrol like this. Adding the keygrip is a one-time action; you will not need to edit the file again, unless you are adding additional keys.
+
+         $GNUPGHOME/sshcontrol
+
+         1531C8084D16DC4C36911F1585AF0ACE7AAFD7E7
+
+       FORWARDING GPG-AGENT AND SSH-AGENT TO REMOTE
+
+       It is possible to forward one's gpg-agent to a remote machine by forwarding gpg sockets to the remote machine, as explained by the GnuPG wiki.
+
+       First, add the following line to /etc/ssh/sshd_config on the remote machine to enable automatic removal of stale sockets on connect. Without this, the socket(s) on the remote machine will need to removed manually before connecting with forwarding enabled for agent forwarding to work:
+
+         /etc/ssh/sshd_config
+
+         ...
+         StreamLocalBindUnlink yes
+         ...
+
+       Note You will have to reload sshd.service on the remote machine for the new configuration to be loaded by sshd.
+
+       On the client, use the RemoteForward SSH directive to forward traffic destined for a remote port, to a port on your local host. As described in ssh_config(5) § RemoteForward, this directive's parameters are the listening socket path on the remote, and then the destination socket path on the local host. Your configuration should look something like this:
+
+         ~/.ssh/config
+
+         Host remote_name
+             ...
+             RemoteForward remote_agent_socket local_agent_extra_socket
+             RemoteForward remote_agent_ssh_socket local_agent_ssh_socket
+
+       The first line configures gpg-agent forwarding:
+
+        * remote_agent_socket is the output of gpgconf --list-dir agent-socket on the remote host.
+        * local_agent_extra_socket is gpgconf --list-dir agent-extra-socket on the local host.
+       The second line is optional. It configures ssh-agent forwarding:
+
+        * remote_agent_ssh_socket is gpgconf --list-dir agent-ssh-socket on the remote host.
+        * local_agent_ssh_socket is gpgconf --list-dir agent-ssh-socket on the local host.
+       Note If using ssh-agent forwarding, the remote should have SSH_AUTH_SOCK set to the output of gpgconf --list-dir agent-ssh-socket as mentioned in #SSH agent).
+
+       So, with the default paths, it would be:
+
+             RemoteForward /run/user/1000/gnupg/S.gpg-agent /run/user/1000/gnupg/S.gpg-agent.extra
+             RemoteForward /run/user/1000/gnupg/S.gpg-agent.ssh /run/user/1000/gnupg/S.gpg-agent.ssh
+
+       With this configuration in place, invoking ssh remote_name should automatically forward the gpg-agent to the remote, and allow the use of your gpg key(s) for both decryption/signing (and allows the use of ssh-agent with gpg if the second RemoteForward line is included).
+
+       SMARTCARDS
+
+       GnuPG uses scdaemon as an interface to your smartcard reader, please refer to the man page scdaemon(1) for details.
+
+       GnuPG's gpg-card tool can be used to configure scdaemon and serves as front-end for smartcard configuration, see gpg-card(1) for details.
+
+       Warning GnuPG 2.4.3 (and 2.2.42, 2.4.2 not packaged by Arch Linux) contained a security regression that may have retained a clear private key backup, if you used it to move a key to a smartcard with the gpg --edit-card command.[13] See the GnuPG advisory for information and remediation with gpg-card checkkeys.
+
+       GNUPG ONLY SETUPS
+
+       Note To allow scdaemon direct access to USB smartcard readers the optional dependency libusb-compat must be installed
+
+       If you do not plan to use other cards but those based on GnuPG, you should check the reader-port parameter in ~/.gnupg/scdaemon.conf. The value '0' refers to the first available serial port reader and a value of '32768' (default) refers to the first USB reader.
+
+       GNUPG WITH PCSCD (PCSC LITE)
+
+       pcscd(8) is a daemon which handles access to smartcard (SCard API). In earlier versions, if GnuPG's scdaemon failed to connect to the smartcard directly (e.g. by using its integrated CCID support), it fell back and tried to find a smartcard using the PCSC Lite driver. Since version 2.4 however, you will have to add the disable-ccid option in ~/.gnupg/scdaemon.conf, to be able to use pcscd.
+
+       To use pscsd install pcsclite and ccid. Then start and/or enable pcscd.service. Alternatively start and/or enable pcscd.socket to activate the daemon when needed.
+
+       ALWAYS USE PCSCD
+
+       If you are using any smartcard with an opensc driver (e.g.: ID cards from some countries) you should pay some attention to GnuPG configuration. Out of the box you might receive a message like this when using gpg --card-status
+
+         gpg: selecting openpgp failed: ec=6.108
+
+       By default, scdaemon will try to connect directly to the device. This connection will fail if the reader is being used by another process. For example: the pcscd daemon used by OpenSC. To cope with this situation we should use the same underlying driver as opensc so they can work well together. In order to point scdaemon to use pcscd you should remove reader-port from ~/.gnupg/scdaemon.conf, specify the location to libpcsclite.so library and disable ccid so we make sure that we use pcscd:
+
+         ~/.gnupg/scdaemon.conf
+
+         pcsc-driver /usr/lib/libpcsclite.so
+         card-timeout 5
+         disable-ccid
+
+       Please check scdaemon(1) if you do not use OpenSC.
+
+       SHARED ACCESS WITH PCSCD
+
+       GnuPG scdaemon is the only popular pcscd client that uses PCSC_SHARE_EXCLUSIVE flag when connecting to pcscd. Other clients like OpenSC PKCS#11 that are used by browsers and programs listed in Electronic identification are using PCSC_SHARE_SHARED that allows simultaneous access to single smartcard. pcscd will not give exclusive access to smartcard while there are other clients connected. This means that to use GnuPG smartcard features you must before have to close all your open browser windows or do some other inconvenient operations.
+
+       Starting from version 2.2.28 LTS and 2.3.0 you can enable shared access by modifying your scdaemon.conf file and adding the line pcsc-shared to the end of it. Keep in mind that scdaemon(1) § --pcsc-shared describes this flag as a "somewhat dangerous option" due to "certain information being cached from the card".
+
+       MULTI APPLET SMART CARDS
+
+       When using YubiKeys or other multi applet USB dongles with OpenSC PKCS#11 may run into problems where OpenSC switches your Yubikey from OpenPGP to PIV applet, breaking the scdaemon.
+
+       You can hack around the problem by forcing OpenSC to also use the OpenPGP applet. Open /etc/opensc.conf file, search for Yubikey and change the driver = "PIV-II"; line to driver = "openpgp";. If there is no such entry, use opensc-tool --atr provided by opensc. Search for the Answer to Reset ATR: 12 34 56 78 90 AB CD .... Then create a new card_atr block referencing your device ATR within the app block.
+
+         /etc/opensc.conf
+
+         app default {
+             ...
+             card_atr 12:23:34:45:67:89:ab:cd:... {
+                 name = "YubiKey Neo";
+                 driver = "openpgp"
+             }
+         }
+         ...
+
+       After that you can test with pkcs11-tool -O --login that the OpenPGP applet is selected by default. Other PKCS#11 clients like browsers may need to be restarted for that change to be applied.
+
+       USING A SMART CARD ON A REMOTE CLIENT
+
+       If for example you log into a machine via SSH or share a smart card to WSL via usbipd-win and try to use an attached device via pcscd, you will notice errors such as:
+
+         gpg: selecting card failed: No such device
+         gpg: OpenPGP card not available: No such device
+
+       This is due to Polkit restricting access to local clients. To fix this, you can add a rule to allow certain users in all cases. The below rule allows all users in the wheel group to access devices via pcscd:
+
+         /etc/polkit-1/rules.d/99-pcscd.rules
+
+         polkit.addRule(function(action, subject) {
+             if (action.id == "org.debian.pcsc-lite.access_card" &&
+                 subject.isInGroup("wheel")) {
+                 return polkit.Result.YES;
+             }
+         });
+         polkit.addRule(function(action, subject) {
+             if (action.id == "org.debian.pcsc-lite.access_pcsc" &&
+                 subject.isInGroup("wheel")) {
+                 return polkit.Result.YES;
+             }
+         });
+
+       After creating the file, make sure to restart polkit.service.
+
+       OPENPGP COMPATIBILITY
+
+       GnuPG started out as an implementation of the OpenPGP format. Currently, the project is based on RFC 4880 and does not support RFC 9580 (which supersedes RFC 4880).
+
+       However, beginning with version 2.4.0 (from December 2022) GnuPG has opted to roll out changes and extensions to the format outside of the IETF process (see draft-koch-librepgp).
+
+       Most of the GnuPG-proprietary formats (which diverge from the OpenPGP standard) carry "version 5" or "packet type 20" (these code points are not used in the IETF OpenPGP standard) and introduce incompatibilities:
+
+        * GnuPG's "version 5" keys use different fingerprints from v4 (longer, due to the use of SHA-256), but are also visually indistinguishable from v6 (RFC 9580) fingerprints.
+        * GnuPG's "version 5" signatures use a different calculation method with known design flaws.
+        * GnuPG's "type 20" symmetrically encrypted data packet format (OCB Encrypted Data Packet) is added, however it also has known design flaws. Support for this format is signalled with a "feature flag" which is aggressively enabled by default. See #Disable unsupported AEAD mechanism.
+        * GnuPG's Post-Quantum Cryptography formats again diverge from the upcoming IETF specification (see draft-ietf-openpgp-pqc) in arbitrary details that cause incompatibility.
+       External reviews have raised concerns about the soundness of the format extensions by GnuPG (see A Summary of Known Security Issues in LibrePGP).
+
+       See A Critique on "A Critique on the OpenPGP Updates" for a more in-depth discussion of concerns with regard to the GnuPG-specific format changes and "Comparison of RFC 9580 and LibrePGP" for a detailed technical comparison.
+
+       Arch Linux's position is to prefer compatibility with the OpenPGP standard. To this end the patches from the FreePG project (jointly maintained by package maintainers from several Linux distributions) are applied to the gnupg package. This ensures the longterm compatibility with other OpenPGP implementations and avoids vendor lock-in by default.
+
+       DISABLE UNSUPPORTED AEAD MECHANISM
+
+       With gnupg 2.4, gpg generates keys, which advertise support for a GnuPG specific AEAD encryption mechanism (based on OCB). However, this flavor of AEAD is not supported by other OpenPGP implementations!
+
+       Although many downstreams attempt to remove this new default by patching the GnuPG sources, when using --full-gen-key the OCB based custom AEAD encryption mechanism is nonetheless set for the new key.
+
+       Whether GnuPG's custom AEAD is set for a key can be inspected with the help of gpg itself:
+
+         $ gpg --list-secret-keys --list-options=show-pref-verbose FINGERPRINT
+
+         ...
+         uid           [ultimate] Archie <archie@archlinux.example>
+                       Cipher: AES256, AES192, AES, 3DES
+                       AEAD: OCB
+                       Digest: SHA512, SHA384, SHA256, SHA224, SHA1
+                       Compression: ZLIB, BZIP2, ZIP, Uncompressed
+                       Features: MDC, AEAD, Keyserver no-modify
+         ...
+
+       This mechanism can be disabled:
+
+         $ gpg --expert --edit-key FINGERPRINT
+         gpg> setpref AES256 AES192 AES SHA512 SHA384 SHA256 SHA224 ZLIB BZIP2 ZIP
+         Set preference list to:
+             Cipher: AES256, AES192, AES, 3DES
+             AEAD:
+             Digest: SHA512, SHA384, SHA256, SHA224, SHA1
+             Compression: ZLIB, BZIP2, ZIP, Uncompressed
+             Features: MDC, Keyserver no-modify
+         Really update the preferences? (y/N) y
+
+       TIPS AND TRICKS
+
+       DIFFERENT ALGORITHM
+
+       You may want to use stronger algorithms:
+
+         ~/.gnupg/gpg.conf
+
+         ...
+
+         personal-digest-preferences SHA512
+         cert-digest-algo SHA512
+         default-preference-list SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 ZLIB BZIP2 ZIP Uncompressed
+         personal-cipher-preferences TWOFISH CAMELLIA256 AES 3DES
+
+       In the latest version of GnuPG, the default algorithms used are SHA256 and AES, both of which are secure enough for most people. However, if you are using a version of GnuPG older than 2.1, or if you want an even higher level of security, then you should follow the above step.
+
+       ENCRYPT A PASSWORD
+
+       It can be useful to encrypt some password, so it will not be written in clear on a configuration file. A good example is your email password.
+
+       First create a file with your password. You need to leave one empty line after the password, otherwise gpg will return an error message when evaluating the file.
+
+       Then run:
+
+         $ gpg -e -a -r user-id your_password_file
+
+       -e is for encrypt, -a for armor (ASCII output), -r for recipient user ID.
+
+       You will be left with a new your_password_file.asc file.
+
+       Tip pass automates this process.
+
+       CHANGE TRUST MODEL
+
+       By default GnuPG uses the Web of Trust as the trust model. You can change this to Trust on first use by adding --trust-model=tofu when adding a key or adding this option to your GnuPG configuration file. More details are in this email to the GnuPG list.
+
+       HIDE ALL RECIPIENT ID'S
+
+       By default the recipient's key ID is in the encrypted message. This can be removed at encryption time for a recipient by using hidden-recipient user-id. To remove it for all recipients add throw-keyids to your configuration file. This helps to hide the receivers of the message and is a limited countermeasure against traffic analysis (i.e. using a little social engineering, anyone who is able to decrypt the message can check whether one of the other recipients is the one they suspect). On the receiving side, it may slow down the decryption process because all available secret keys must be tried (e.g. with --try-secret-key user-id).
+
+       USING CAFF FOR KEYSIGNING PARTIES
+
+       To allow users to validate keys on the keyservers and in their keyrings (i.e. make sure they are from whom they claim to be), PGP/GPG uses the Web of Trust. Keysigning parties allow users to get together at a physical location to validate keys. The Zimmermann-Sassaman key-signing protocol is a way of making these very effective. Here you will find a how-to article.
+
+       For an easier process of signing keys and sending signatures to the owners after a keysigning party, you can use the tool caff. It can be installed from the AUR with the package caff-gitAUR.
+
+       To send the signatures to their owners you need a working MTA. If you do not have already one, install msmtp.
+
+       ALWAYS SHOW LONG ID'S AND FINGERPRINTS
+
+       To always show long key ID's add keyid-format 0xlong to your configuration file. To always show full fingerprints of keys, add with-fingerprint to your configuration file.
+
+       CUSTOM CAPABILITIES
+
+       For further customization also possible to set custom capabilities to your keys. The following capabilities are available:
+
+        * Certify (only for primary keys) - allows the key to create certifications that the User IDs on other keys are correct.
+        * Sign - allows the key to create cryptographic signatures over data, that others can verify with the public key.
+        * Encrypt - allows anyone to encrypt data with the public key, that only the private key can decrypt.
+        * Authenticate - allows the key to authenticate with various non-GnuPG programs. The key can be used as e.g. an SSH key.
+       It is possible to specify the capabilities of the primary key, by running:
+
+         $ gpg --full-generate-key --expert
+
+       Warning When using --full-generate-key the generated key will advertise an AEAD mechanism, which is not understood by other OpenPGP implementations. To disable this after key creation see #Disable unsupported AEAD mechanism.
+
+       And select an option that allows you to set your own capabilities.
+
+       Comparably, to specify custom capabilities for subkeys, add the --expert flag to gpg --edit-key, see #Edit your key for more information.
+
+       TROUBLESHOOTING
+
+       SU
+
+       When using pinentry, you must have the proper permissions of the terminal device (e.g. /dev/tty1) in use. However, with su (or sudo), the ownership stays with the original user, not the new one. This means that pinentry will fail with a Permission denied error, even as root. If this happens when attempting to use ssh, an error like sign_and_send_pubkey: signing failed: agent refused operation will be returned. The fix is to change the permissions of the device at some point before the use of pinentry (i.e. using gpg with an agent). If doing gpg as root, simply change the ownership to root right before using gpg:
+
+         # chown root $(tty)
+
+       and then change it back after su (or sudo) terminated.
+
+       Note The owner of tty must match with the user for which pinentry is running. Being part of the group tty is not enough.
+
+       Tip If you run gpg with script it will use a new tty with the correct ownership:
+
+         # script -q -c "gpg --gen-key" /dev/null
+
+       AGENT COMPLAINS END OF FILE
+
+       If the pinentry program is /usr/bin/pinentry-gnome3, it needs a DBus session bus to run properly. See General troubleshooting#Session permissions for details.
+
+       Alternatively, you can use a variety of different options described in #pinentry.
+
+       KGPG CONFIGURATION PERMISSIONS
+
+       There have been issues with kgpg being able to access the ~/.gnupg/ options. One issue might be a result of a deprecated options file, see the bug report.
+
+       GNOME ON WAYLAND OVERRIDES SSH AGENT SOCKET
+
+       For Wayland sessions, gnome-session sets SSH_AUTH_SOCK to the standard gnome-keyring socket, $XDG_RUNTIME_DIR/keyring/ssh. This overrides any value set elsewhere.
+
+       See GNOME/Keyring#Disabling on how to disable this behavior.
+
+       MUTT
+
+       Mutt might not use gpg-agent correctly, you need to set an environment variable GPG_AGENT_INFO (the content does not matter) when running mutt. Be also sure to enable password caching correctly, see #Cache passwords.
+
+       See this forum thread.
+
+       LOST KEYS, UPGRADING TO GNUPG VERSION 2.1
+
+       When gpg --list-keys fails to show keys that used to be there, and applications complain about missing or invalid keys, some keys may not have been migrated to the new format.
+
+       Please read GnuPG invalid packet workaround. Basically, it says that there is a bug with keys in the old pubring.gpg and secring.gpg files, which have now been superseded by the new pubring.kbx file and the private-keys-v1.d/ subdirectory and files. Your missing keys can be recovered with the following commands:
+
+         $ cd
+         $ cp -r .gnupg gnupgOLD
+         $ gpg --export-ownertrust > otrust.txt
+         $ gpg --import .gnupg/pubring.gpg
+         $ gpg --import-ownertrust otrust.txt
+         $ gpg --list-keys
+
+       GPG HANGED FOR ALL KEYSERVERS (WHEN TRYING TO RECEIVE KEYS)
+
+       If gpg hanged with a certain keyserver when trying to receive keys, you might need to kill dirmngr in order to get access to other keyservers which are actually working, otherwise it might keeping hanging for all of them.
+
+       SMARTCARD NOT DETECTED
+
+       Your user might not have the permission to access the smartcard which results in a card error to be thrown, even though the card is correctly set up and inserted.
+
+       One possible solution is to add a new group scard including the users who need access to the smartcard.
+
+       Then use udev rules, similar to the following:
+
+         /etc/udev/rules.d/71-gnupg-ccid.rules
+
+         ACTION=="add", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="1050", ENV{ID_MODEL_ID}=="0116|0111", MODE="660", GROUP="scard"
+
+       One needs to adapt VENDOR and MODEL according to the lsusb output, the above example is for a YubikeyNEO.
+
+       SERVER 'GPG-AGENT' IS OLDER THAN US (X Y)
+
+       This warning appears if gnupg is upgraded and the old gpg-agent is still running. Restart the user's gpg-agent.socket (i.e., use the --user flag when restarting).
+
+       IPC CONNECT CALL FAILED
+
+       Make sure gpg-agent and dirmngr are not running with killall gpg-agent dirmngr and the $GNUPGHOME/crls.d/ folder has permission set to 700.
+
+       By default, the gnupg package uses the directory /run/user/$UID/gnupg/ for sockets. GnuPG documentation states this is the preferred directory (not all file systems are supported for sockets). Validate that your agent-socket configuration specifies a path that has an appropriate file system. You can find your path settings for agent-socket by running gpgconf --list-dirs agent-socket.
+
+       Test that gpg-agent starts successfully with gpg-agent --daemon.
+
+       MITIGATING POISONED PGP CERTIFICATES
+
+       In June 2019, an unknown attacker spammed several high-profile PGP certificates with tens of thousands (or hundreds of thousands) of signatures (CVE-2019-13050) and uploaded these signatures to keyservers. The existence of these poisoned certificates in a keyring causes gpg to hang with the following message:
+
+         gpg: removing stale lockfile (created by 7055)
+
+       Possible mitigation involves removing the poisoned certificate as per this blog post.
+
+       INVALID IPC RESPONSE AND INAPPROPRIATE IOCTL FOR DEVICE
+
+       The default pinentry program is /usr/bin/pinentry-gtk-2. If gtk2AUR is unavailable, pinentry falls back to /usr/bin/pinentry-curses and causes signing to fail:
+
+         gpg: signing failed: Inappropriate ioctl for device
+         gpg: [stdin]: clear-sign failed: Inappropriate ioctl for device
+
+       You need to set the GPG_TTY environment variable for the pinentry programs /usr/bin/pinentry-tty and /usr/bin/pinentry-curses.
+
+         $ export GPG_TTY=$(tty)
+
+       KEYBLOCK RESOURCE DOES NOT EXIST
+
+       If you get an error like this when trying to import keys
+
+         gpg: keyblock resource 'gnupg_home/pubring.kbx': No such file or directory
+
+       it is because GnuPG will not create its home directory if it does not yet exist. Simply create it manually
+
+         $ mkdir -m 700 gnupg_home
+
+       SUBKEY IS CREATED WITH RESTRICTED CAPABILITY
+
+       In some cases creating a subkey with a custom set of capabilities results in the subkey marked as "Restricted". This happens in the addkey command with option 7 or 8 ("set your own capabilities") when the capabilities are toggled in the interactive prompt. A workaround is to enter the desired capability set directly as a string instead of toggling individual capabilities, when prompted with the capability selection. For example, enter "=A" to create a subkey with only the Authentication capability.
+
+       SEE ALSO
+
+        * GNU Privacy Guard Homepage
+        * Alan Eliasen's GPG Tutorial
+        * RFC 4880 — "OpenPGP Message Format"
+        * gpg.conf recommendations and best practices
+        * Fedora:Creating GPG Keys
+        * Debian:Subkeys
+        * Protecting code integrity with PGP
+        * A more comprehensive gpg Tutorial
+        * /r/GPGpractice - a subreddit to practice using GnuPG.
+        * A Summary of Known Security Issues in LibrePGP on blog.pgpkeys.eu
+
+ArchWiki manual                         bundled documentation

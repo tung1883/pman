@@ -1,0 +1,53 @@
+WEBAPI.READABLESTREAMBYOBREQUEST-RESPOND(1) Sandbox manual WEBAPI.READABLESTREAMBYOBREQUEST-RESPOND(1)
+
+       NAME
+
+       ReadableStreamBYOBRequest: respond() method - The respond() method of the ReadableStreamBYOBRequest interface is used to signal to the associated readable byte stream that the specified 
+
+       READABLESTREAMBYOBREQUEST: RESPOND() METHOD
+
+       The respond() method of the ReadableStreamBYOBRequest interface is used to signal to the associated readable byte stream that the specified number of bytes were written into the ReadableStreamBYOBRequest.view.
+
+       After this method is called, the view will be transferred and no longer modifiable.
+
+       SYNTAX
+
+         respond(bytesWritten)
+
+       PARAMETERS
+
+        * bytesWritten
+          * : The number of bytes written into ReadableStreamBYOBRequest.view.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXCEPTIONS
+
+        * TypeError
+          * : The request does not have an associated ReadableByteStreamController or the view buffer is not detached/cannot be transferred into.
+
+       EXAMPLES
+
+       The code below is taken from the live examples in Using readable byte stream.
+
+       The method is called by an underlying byte source as part of making a zero-copy transfer of data to fulfill a pending read request from a consumer. The underlying source first writes data into the ReadableStreamBYOBRequest.view and then calls this respond() method to indicate _how_ much data was copied into the buffer, and cause the data to be transferred to the reader.
+
+       The code below shows this case using a hypothetical readInto() method to copy data into the view:
+
+         const v = controller.byobRequest.view;
+         bytesRead = socket.readInto(v.buffer, v.byteOffset, v.byteLength);
+         controller.byobRequest.respond(bytesRead);
+
+       After the operation the byobRequest.view is detached and the request should be discarded.
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using readable byte stream
+
+Web APIs manual                         from the official documentation

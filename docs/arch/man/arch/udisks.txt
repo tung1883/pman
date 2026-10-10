@@ -1,0 +1,257 @@
+ARCH.UDISKS(1)                   Sandbox manual                   ARCH.UDISKS(1)
+
+       udisks provides a daemon udisksd, that implements D-Bus interfaces used to query and manipulate storage devices, and a command-line tool udisksctl, used to query and use the daemon.
+
+       INSTALLATION
+
+       Install the udisks2 package.
+
+       udisksd(8) is started on-demand by D-Bus and should not be enabled explicitly. It can be controlled through the command-line with udisksctl(1).
+
+       CONFIGURATION
+
+       PERMISSIONS
+
+       Actions a user can perform using udisks are restricted with polkit. If the user session is not activated or present (for example, when controlling udisks from a systemd/User service), adjust polkit rules accordingly.
+
+       See https://github.com/coldfix/udiskie/wiki/Permissions for common udisks permissions for the storage group, and [1] for a more restrictive example. If you are using Dolphin, you may see [2].
+
+       DEFAULT MOUNT OPTIONS
+
+       It is possible to define default mount options in /etc/udisks2/mount_options.conf. Create the file if it does not already exist. The built-in defaults and some examples can be seen in /etc/udisks2/mount_options.conf.example.[3]
+
+       The options can target specific filesystem types. For example, mount btrfs filesystems with zstd compression enabled, as well default to the noatime option (see fstab#noatime options) for all Udisks mounts:
+
+         /etc/udisks2/mount_options.conf
+
+         [defaults]
+         btrfs_defaults=compress=zstd
+         defaults=noatime
+
+       Note Lines override the corresponding built-in defaults. Make sure not to accidentally remove mount options this way.
+
+       The options may be overridden later, if needed. For example, compression on a directory/subvolume level. The atime can be moved from the default to a mount-specific /etc/udisks2/mount_options.conf section, or adjusted through a udev rule setting, for example ENV{UDISKS_MOUNT_OPTIONS_DEFAULTS}="relatime".
+
+       Tip If most of the devices mounted with Udisks are flash memories, like USB sticks and SD cards, configuring Udisks to not update files' access time with the noatime option may be beneficial since they are used infrequently.
+
+       SET PREFERRED DRIVERS
+
+       Some file systems have multiple drivers available. Udisks allows setting preferred driver order by setting a corresponding fs_drivers line.
+
+       One such example is NTFS. Udisks prefers the ntfs3 driver by default (ntfs_drivers=ntfs3,ntfs). To use the ntfs driver instead:
+
+         /etc/udisks2/mount_options.conf
+
+         [defaults]
+         ntfs_drivers=ntfs
+
+       USAGE
+
+       To manually mount a removable drive, for example /dev/sdc:
+
+         $ udisksctl mount -b /dev/sdc1
+
+       To unmount:
+
+         $ udisksctl unmount -b /dev/sdc1
+
+       See udisksctl help for more.
+
+       TIPS AND TRICKS
+
+       MOUNT HELPERS
+
+       The automatic mounting of devices is easily achieved with udisks wrappers. See also List of applications/Utilities#Mount tools.
+
+       Note Desktop environments, such as GNOME and Plasma may also provide a udisks wrapper.
+
+        * bashmount — A bash script to mount and manage removable media as a regular user.
+       https://github.com/jamielinux/bashmount || bashmountAUR
+
+        * udiskie — Automounter with optional notifications, tray icon and support for password protected LUKS devices. See the udiskie wiki for details
+       https://github.com/coldfix/udiskie || udiskie
+
+        * udiskie-dmenu — dmenu interface for udiskie.
+       https://github.com/fogine/udiskie-dmenu || udiskie-dmenu-gitAUR
+
+        * udisksvm — GUI wrapper written in Python3 and using the Qt5 framework. It uses mouse clicks to mount, unmount removable devices or eject a CD/DVD. See the README file for details.
+       https://github.com/berbae/udisksvm || udisksvmAUR
+
+       UDEVADM MONITOR
+
+       You may use udevadm monitor to monitor block events and mount drives when a new block device is created. Stale mount points are automatically removed by udisksd, such that no special action is required on deletion.
+
+         #!/bin/sh
+
+         pathtoname() {
+             udevadm info -p /sys/"$1" | awk -v FS== '/DEVNAME/ {print $2}'
+         }
+
+         stdbuf -oL -- udevadm monitor --udev -s block | while read -r -- _ _ event devpath _; do
+                 if [ "$event" = add ]; then
+                     devname=$(pathtoname "$devpath")
+                     udisksctl mount --block-device "$devname" --no-user-interaction
+                 fi
+         done
+
+       MOUNT TO /MEDIA
+
+       By default, udisks2 mounts removable drives under the ACL controlled directory /run/media/$USER/. If you wish to mount to /media instead, use this rule:
+
+         /etc/udev/rules.d/99-udisks2.rules
+
+         # UDISKS_FILESYSTEM_SHARED
+         # ==1: mount filesystem to a shared directory (/media/VolumeName)
+         # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
+         # See udisks(8)
+         ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
+
+       Since /media, unlike /run, is not mounted by default as a tmpfs, you may also wish to create a tmpfiles.d snippet to clean stale mountpoints at every boot:
+
+         /etc/tmpfiles.d/media.conf
+
+         D /media 0755 root root 0 -
+
+       MOUNT LOOP DEVICES
+
+       To easily mount ISO images, use the following command:
+
+         $ udisksctl loop-setup -r -f image.iso
+
+       This will create a read only loop device and show the ISO image ready to mount. Remove the -r flag to be able to write to it. The name of the created loop device is output by the above loop-setup command.
+
+       You can unmount, and remount, the image as long as the specific loop device is in place. When done working with the specific loop device, use
+
+         $ udisksctl loop-delete -b /dev/loop0
+
+       to delete it. Substitute /dev/loop0 with the name of the specific loop device.
+
+       Loop devices are cheap. Therefore, many loop devices can be created in practice without worrying about a denial of service issue. See [4].
+
+       HIDE SELECTED PARTITIONS
+
+       If you wish to prevent certain partitions or drives appearing on the desktop, you can create a udev rule, for example /etc/udev/rules.d/10-local.rules:
+
+         KERNEL=="sda1", ENV{UDISKS_IGNORE}="1"
+         KERNEL=="sda2", ENV{UDISKS_IGNORE}="1"
+
+       shows all partitions with the exception of sda1 and sda2 on your desktop.
+
+       Because block device names can change between reboots, it is also possible to use UUIDs to hide partitions or whole devices. Matching by UUID is only possible after /usr/lib/udev/rules.d/60-persistent-storage.rules has been processed, so make sure to choose a file name that will be ordered after it. For example:
+
+         /etc/udev/rules.d/61-hide-partitions.rules
+
+         SUBSYSTEM=="block", ENV{ID_FS_UUID}=="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXXX", ENV{UDISKS_IGNORE}="1"
+
+       The above line is also useful to hide multi device btrfs filesystems, as all the devices from a single btrfs filesystem will share the same UUID across the devices but will have different SUB_UUID for each individual device.
+
+       APPLY ATA SETTINGS
+
+       At start-up and when a drive is connected, udisksd will apply configuration stored in the file /etc/udisks2/IDENTIFIER.conf where IDENTIFIER is the value of the Drive:Id property for the drive. Currently ATA settings are supported. See udisks(8) for available options. These settings have essentially the same effect as those of hdparm, but they are persistent as long as the udisks daemon is autostarted.
+
+       For example, to set standby timeout to 240 (20 minutes) for a drive, add the following:
+
+         /etc/udisks2/DriveId.conf
+
+         [ATA]
+         StandbyTimeout=240
+
+       To obtain the DriveId for your drive, use udevadm info --query=property --name=sdx | sed -n 's/^ID_SERIAL=//p' | tr '_' '-'
+
+       Alternatively, use a GUI utility to manage the configuration file, such as gnome-disk-utility.
+
+       ENABLE VERACRYPT/TCRYPT SUPPORT
+
+       Udisks supports VeraCrypt, but it needs to be enabled. To do so, create an empty file /etc/udisks2/tcrypt.conf. It is not enabled by default due to concerns over performance, however those do not seem to have been necessary. For more information see [5]
+
+       TROUBLESHOOTING
+
+       HIDDEN DEVICES
+
+       Udisks2 hides certain devices from the user by default. If this is undesired or otherwise problematic, copy /usr/lib/udev/rules.d/80-udisks2.rules to /etc/udev/rules.d/80-udisks2.rules and remove the following section in the copy:
+
+         # ------------------------------------------------------------------------
+         # ------------------------------------------------------------------------
+         # ------------------------------------------------------------------------
+         # Devices which should not be display in the user interface
+         [...]
+
+       BROKEN STANDBY TIMER
+
+       The udisks daemon polls S.M.A.R.T. data from drives regularly. Hard drives with a longer standby timeout than the polling interval may fail to enter standby. Drives that are already spun down are usually not affected. There seems no way to disable polling or change the interval as for udisks2 by now. See [6], [7].
+
+       However, Standby timeout applied by udisks2 seems to be unaffected. To set standby timeout via udisks, see #Apply ATA settings.
+
+       Other possible workarounds could be setting the timeout below the polling interval (10 minutes) or forcing a manual spindown using hdparm -y /dev/sdx.
+
+       NTFS FILE CREATION FAILING (FILENAME-DEPENDENT)
+
+       udisks 2.8.2 introduced a breaking change by adding windows_names to NTFS mount options, preventing creation of Win32-incompatible filenames such as nul, screenshot 23-08-21 19:22.jpg. Among other things, this causes Steam Proton to stop initializing. To revert this behavior, use:
+
+         /etc/udisks2/mount_options.conf
+
+         [defaults]
+         ntfs:ntfs_defaults=uid=$UID,gid=$GID
+
+       Bad filenames generally do not cause issues in Windows unless accessed. chkdsk will treat these names as errors and move the renamed files to found.nnn folders under filesystem root.
+
+       AUTOMATICALLY TURN OFF AN EXTERNAL HDD AT SHUTDOWN
+
+       If an external HDD is not powered off properly at system shutdown, it may be desirable to fix the issue.
+
+       Enable udisks2.service.
+
+       A service to invoke our script might look like so:
+
+         /etc/systemd/system/handle_external_hdds.service
+
+         [Unit]
+         Requires=udisks2.service
+         Requires=graphical.target
+         After=graphical.target
+         [Service]
+         Type=oneshot
+         RemainAfterExit=yes
+         ExecStop=/usr/local/bin/handle_external_hdds.sh
+         [Install]
+         WantedBy=graphical.target
+
+       Enable handle_external_hdds.service
+
+       Do a systemd daemon-reload to apply the new setting.
+
+       Reboot or restart graphical.target to check if works.
+
+       An example script to handle an arbitrary amount of partitions on a single disk looks like so:
+
+         /usr/local/bin/handle_external_hdds.sh
+
+         #!/bin/bash -u
+
+         declare -a uuids=(uuid_list)
+
+         # Only proceed if the drive is present.
+         if [[ ! -L "/dev/disk/by-uuid/${uuids[0]}" ]]; then
+           exit 0
+         fi
+
+         for uuid in "${uuids[@]}"; do
+           if findmnt "/dev/disk/by-uuid/$uuid"; then
+             umount "/dev/disk/by-uuid/$uuid"
+           fi
+         done
+
+         # udisksctl powers off proper drive even if its partition is supplied
+         udisksctl power-off -b "/dev/disk/by-uuid/${uuids[0]}"
+
+       uuid_list is a list of space delimited UUIDs corresponding to partitions of the device to check, e.g. "uuid_1" "uuid_2".
+
+       SLOW UNMOUNT OR CORRUPTION OF REMOVABLE MEDIA WITHOUT ANY WRITES
+
+       Even if nothing seems to be written to a USB stick, memory card, or other removable media, file access times may still be updated. This is a change that needs to be flushed to the device. If that is of concern, consider setting the noatime option for all Udisks mounts.
+
+       SEE ALSO
+
+        * Gentoo:udisks
+
+ArchWiki manual                         bundled documentation

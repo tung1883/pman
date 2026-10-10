@@ -1,0 +1,110 @@
+WEBAPI.DOCUMENT-READYSTATECHANGE-EVENT(1) Sandbox manual WEBAPI.DOCUMENT-READYSTATECHANGE-EVENT(1)
+
+       NAME
+
+       Document: readystatechange event - The readystatechange event is fired when the readyState attribute of a document has changed.
+
+       DOCUMENT: READYSTATECHANGE EVENT
+
+       The readystatechange event is fired when the readyState attribute of a document has changed.
+
+       This event is not cancelable and does not bubble.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("readystatechange", (event) => { })
+
+         onreadystatechange = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLES
+
+       LIVE EXAMPLE
+
+       HTML
+
+         <div class="controls">
+           <button id="reload" type="button">Reload</button>
+         </div>
+
+         <div class="event-log">
+           <label for="eventLog">Event log:</label>
+           <textarea
+             readonly
+             class="event-log-contents"
+             rows="8"
+             cols="30"
+             id="eventLog"></textarea>
+         </div>
+
+       CSS
+
+         body {
+           display: grid;
+           grid-template-areas: "control log";
+         }
+
+         .controls {
+           grid-area: control;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+         }
+
+         .event-log {
+           grid-area: log;
+         }
+
+         .event-log-contents {
+           resize: none;
+         }
+
+         label,
+         button {
+           display: block;
+         }
+
+         #reload {
+           height: 2rem;
+         }
+
+       JAVASCRIPT
+
+         const log = document.querySelector(".event-log-contents");
+         const reload = document.querySelector("#reload");
+
+         reload.addEventListener("click", () => {
+           log.textContent = "";
+           setTimeout(() => {
+             window.location.reload(true);
+           }, 200);
+         });
+
+         window.addEventListener("load", (event) => {
+           log.textContent = `${log.textContent}load\n`;
+         });
+
+         document.addEventListener("readystatechange", (event) => {
+           log.textContent = `${log.textContent}readystate: ${document.readyState}\n`;
+         });
+
+         document.addEventListener("DOMContentLoaded", (event) => {
+           log.textContent = `${log.textContent}DOMContentLoaded\n`;
+         });
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Related events: DOMContentLoaded, load, beforeunload, unload
+
+Web APIs manual                         from the official documentation

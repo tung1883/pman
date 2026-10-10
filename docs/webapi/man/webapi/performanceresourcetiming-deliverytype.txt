@@ -1,0 +1,50 @@
+WEBAPI.PERFORMANCERESOURCETIMING-DELIVERYTYPE(1) Sandbox manual WEBAPI.PERFORMANCERESOURCETIMING-DELIVERYTYPE(1)
+
+       NAME
+
+       PerformanceResourceTiming: deliveryType property - The deliveryType read-only property is a string indicating how the resource was delivered — for example from the cache or from a navigationa
+
+       PERFORMANCERESOURCETIMING: DELIVERYTYPE PROPERTY
+
+       The deliveryType read-only property is a string indicating how the resource was delivered — for example from the cache or from a navigational prefetch.
+
+       VALUE
+
+       A string, which can be one of the following values:
+
+        * "cache"
+          * : The resource was retrieved from the cache.
+        * "navigational-prefetch" (experimental) {{non-standard_inline}}
+          * : The resource was retrieved from a prefetched response stored in an in-memory cache via the Speculation Rules API.
+        * "" (empty string)
+          * : Returned if none of the above delivery types apply.
+
+       EXAMPLES
+
+       FILTERING RESOURCES
+
+       The deliveryType property can be used to get specific resource timing entries only; for example, only those that were cached.
+
+       The following example uses a PerformanceObserver to notify of new resource performance entries as they are recorded in the browser's performance timeline. The buffered option is used for accessing entries from before the observer creation.
+
+         const observer = new PerformanceObserver((list) => {
+           const cachedResources = list
+             .getEntries()
+             .filter((entry) => entry.deliveryType === "cache");
+           console.log(cachedResources);
+         });
+
+         observer.observe({ type: "resource", buffered: true });
+
+       The following example uses Performance.getEntriesByType(), which only shows resource performance entries present in the browser's performance timeline at the time you call the method.
+
+         const scripts = performance
+           .getEntriesByType("resource")
+           .filter((entry) => entry.deliveryType === "cache");
+         console.log(scripts);
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+Web APIs manual                         from the official documentation

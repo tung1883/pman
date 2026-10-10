@@ -1,0 +1,115 @@
+WEBAPI.DATATRANSFER-SETDATA(1)   Sandbox manual   WEBAPI.DATATRANSFER-SETDATA(1)
+
+       NAME
+
+       DataTransfer: setData() method - The setData() method of the DataTransfer interface sets the drag operation's drag data to the specified data and type. If data for the given
+
+       DATATRANSFER: SETDATA() METHOD
+
+       The setData() method of the DataTransfer interface sets the drag operation's drag data to the specified data and type. If data for the given type does not exist, it is added at the end of the drag data store, such that the last item in the types list will be the new type. If data for the given type already exists, the existing data is replaced in the same position. That is, the order of the types list is not changed when replacing data of the same type.
+
+       Example data types are text/plain and text/uri-list.
+
+       During a drag operation, this method can only be used in the handler for the dragstart event, because that's the only time the drag operation's data store is writable. Calling it from any other drag event does nothing. See Modifying the drag data store for details.
+
+       SYNTAX
+
+         setData(format, data)
+
+       PARAMETERS
+
+        * format
+          * : A string representing the type of the drag data to add to the DataTransfer.
+        * data
+          * : A string representing the data to add to the DataTransfer.
+
+       RETURN VALUE
+
+       None (undefined).
+
+       EXAMPLES
+
+       DRAGGING AN ELEMENT
+
+       In this example we can drag a element into a target element.
+
+        * In the dragstart handler, we use setData() to add the id of the element to the DataTransfer object.
+        * In the drop handler we retrieve the id and use it to move the element into the target.
+
+       HTML
+
+         <div>
+           <p id="source" draggable="true">
+             Select this element, drag it to the drop zone and then release the selection
+             to move the element.
+           </p>
+         </div>
+         <div id="target">Drop Zone</div>
+
+         <button id="reset">Reset example</button>
+
+       CSS
+
+         div {
+           margin: 0.5em 0;
+           padding: 2em;
+         }
+
+         #target,
+         #source {
+           border: 1px solid black;
+           padding: 0.5rem;
+         }
+
+         .dragging {
+           background-color: pink;
+         }
+
+       JAVASCRIPT
+
+         const source = document.querySelector("#source");
+         source.addEventListener("dragstart", (ev) => {
+           console.log("dragStart");
+           // Change the source element's background color
+           // to show that drag has started
+           ev.currentTarget.classList.add("dragging");
+           // Clear the drag data cache (for all formats/types)
+           ev.dataTransfer.clearData();
+           // Set the drag's format and data.
+           // Use the event target's id for the data
+           ev.dataTransfer.setData("text/plain", ev.target.id);
+         });
+         source.addEventListener("dragend", (ev) =>
+           ev.target.classList.remove("dragging"),
+         );
+
+         const target = document.querySelector("#target");
+         target.addEventListener("dragover", (ev) => {
+           console.log("dragOver");
+           ev.preventDefault();
+         });
+         target.addEventListener("drop", (ev) => {
+           console.log("Drop");
+           ev.preventDefault();
+           // Get the data, which is the id of the source element
+           const data = ev.dataTransfer.getData("text");
+           const source = document.getElementById(data);
+           ev.target.appendChild(source);
+         });
+
+         const reset = document.querySelector("#reset");
+         reset.addEventListener("click", () => document.location.reload());
+
+       RESULT
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Drag and drop
+        * Drag Operations
+        * Working with the drag data store
+
+Web APIs manual                         from the official documentation

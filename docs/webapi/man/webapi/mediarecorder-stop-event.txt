@@ -1,0 +1,53 @@
+WEBAPI.MEDIARECORDER-STOP-EVENT(1) Sandbox manual WEBAPI.MEDIARECORDER-STOP-EVENT(1)
+
+       NAME
+
+       MediaRecorder: stop event - The stop event of the MediaRecorder interface is fired when
+
+       MEDIARECORDER: STOP EVENT
+
+       The stop event of the MediaRecorder interface is fired when MediaRecorder.stop() is called, or when the media stream being captured ends. In each case, the stop event is preceded by a dataavailable event, making the Blob captured up to that point available for you to use in your application.
+
+       SYNTAX
+
+       Use the event name in methods like addEventListener(), or set an event handler property.
+
+         addEventListener("stop", (event) => { })
+
+         onstop = (event) => { }
+
+       EVENT TYPE
+
+       A generic Event.
+
+       EXAMPLE
+
+         mediaRecorder.onstop = (e) => {
+           console.log("data available after MediaRecorder.stop() called.");
+
+           const audio = document.createElement("audio");
+           audio.controls = true;
+           const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
+           const audioURL = window.URL.createObjectURL(blob);
+           audio.src = audioURL;
+           console.log("recorder stopped");
+         };
+
+         mediaRecorder.ondataavailable = (e) => {
+           chunks.push(e.data);
+         };
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Using the MediaStream Recording API
+        * Web Dictaphone: MediaRecorder +
+       getUserMedia + Web Audio API visualization demo, by Chris Mills (source on GitHub.)
+
+        * simpl.info MediaStream Recording demo, by Sam Dutton.
+        * Navigator.getUserMedia
+
+Web APIs manual                         from the official documentation

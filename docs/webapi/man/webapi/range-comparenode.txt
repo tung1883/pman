@@ -1,0 +1,75 @@
+WEBAPI.RANGE-COMPARENODE(1)      Sandbox manual      WEBAPI.RANGE-COMPARENODE(1)
+
+       NAME
+
+       Range: compareNode() method - The compareNode() method of the Range interface returns a constant indicating the
+
+       RANGE: COMPARENODE() METHOD
+
+       {{Non-standard_Header}}
+
+       The compareNode() method of the Range interface returns a constant indicating the position of the Node.
+
+       SYNTAX
+
+         compareNode(referenceNode)
+
+       PARAMETERS
+
+        * referenceNode
+          * : The Node to compare with the Range.
+
+       RETURN VALUE
+
+       A constant indicating the position of the Node. The possible values are:
+
+        * NODE_BEFORE (0)
+          * : Node starts before the Range
+        * NODE_AFTER (1)
+          * : Node ends after the Range
+        * NODE_BEFORE_AND_AFTER (2)
+          * : Node starts before and ends after the Range
+        * NODE_INSIDE (3)
+          * : Node starts after and ends before the Range, i.e., the Node is completely selected by
+       the Range.
+
+       EXAMPLES
+
+         range = document.createRange();
+         range.selectNode(document.getElementsByTagName("div").item(0));
+         returnValue = range.compareNode(document.getElementsByTagName("p").item(0));
+
+       NOTES
+
+       This method is non-standard. The following function can be used as replacement:
+
+         function rangeCompareNode(range, node) {
+           const nodeRange = node.ownerDocument.createRange();
+           try {
+             nodeRange.selectNode(node);
+           } catch (e) {
+             nodeRange.selectNodeContents(node);
+           }
+           const nodeIsBefore =
+             range.compareBoundaryPoints(Range.START_TO_START, nodeRange) === 1;
+           const nodeIsAfter =
+             range.compareBoundaryPoints(Range.END_TO_END, nodeRange) === -1;
+
+           if (nodeIsBefore && !nodeIsAfter) return 0;
+           if (!nodeIsBefore && nodeIsAfter) return 1;
+           if (nodeIsBefore && nodeIsAfter) return 2;
+
+           return 3;
+         }
+
+       SPECIFICATIONS
+
+       This method is not standard and therefore not part of any specification.
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * The DOM interfaces index
+
+Web APIs manual                         from the official documentation

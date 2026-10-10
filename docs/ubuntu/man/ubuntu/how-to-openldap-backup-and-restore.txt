@@ -1,0 +1,101 @@
+UBUNTU.HOW-TO-OPENLDAP-BACKUP-AND-RESTORE(1) Sandbox manual UBUNTU.HOW-TO-OPENLDAP-BACKUP-AND-RESTORE(1)
+
+       NAME
+
+       Backup and restore OpenLDAP - Once you have LDAP running the way you want, it is time to ensure you can save all your work and restore it as needed.
+
+       BACKUP AND RESTORE OPENLDAP
+
+       Once you have LDAP running the way you want, it is time to ensure you can save all your work and restore it as needed.
+
+       What we need is a way to back up the directory database(s) -- specifically the configuration backend (cn=config) and the DIT (dc=example,dc=com).
+
+       BACKUP SCRIPT
+
+       Create /usr/local/bin/ldapbackup with the following content:
+
+         #!/bin/bash
+         set -euo pipefail
+
+         BACKUP_PATH=/export/backup
+         CONFIG_BACKUP=f${BACKUP_PATH}/config.ldif"
+         DATA_BACKUP="${BACKUP_PATH}/example.com.ldif"
+
+         # create and secure backup files
+         touch "$CONFIG_BACKUP" "$DATA_BACKUP"
+         chmod 600 "$CONFIG_BACKUP" "$DATA_BACKUP"
+
+         # Backup server config
+         nice slapcat -b cn=config > "$CONFIG_BACKUP"
+         # Backup directory tree
+         nice slapcat -b dc=example,dc=com > "$DATA_BACKUP"
+
+         # Optionally, use a backup tool like borgbackup to store the backups off-site
+
+       Make it executable:
+
+         sudo chmod +x /usr/local/bin/ldapbackup
+
+       > Note: These files are uncompressed text files containing everything in your directory including the tree layout, usernames, and every password. Consider making /export/backup an encrypted partition and even having the script encrypt files as it creates them.
+
+       SCHEDULE BACKUPS WITH SYSTEMD
+
+       Create a systemd service unit at /etc/systemd/system/ldapbackup.service:
+
+         [Unit]
+         Description=LDAP backup
+
+         [Service]
+         Type=oneshot
+         ExecStart=/usr/local/bin/ldapbackup
+
+       Create a timer unit at /etc/systemd/system/ldapbackup.timer:
+
+         [Unit]
+         Description=Run LDAP backup daily
+
+         [Timer]
+         OnCalendar=*-*-* 22:45:00
+         Persistent=true
+
+         [Install]
+         WantedBy=timers.target
+
+       Enable and start the timer:
+
+         sudo systemctl daemon-reload
+
+         sudo systemctl enable --now ldapbackup.timer
+
+       Verify the timer is active:
+
+         systemctl list-timers ldapbackup.timer
+
+       Now the files are created, they should be copied to a backup server.
+
+       RESTORE SCRIPT
+
+       Assuming a fresh reinstall of LDAP, create /usr/local/bin/ldaprestore:
+
+         #!/bin/bash
+         set -euo pipefail
+
+         BACKUP_PATH=/export/backup
+
+         if [ -n "$(ls -l /var/lib/ldap/* 2>/dev/null)" ] || [ -n "$(ls -l /etc/ldap/slapd.d/* 2>/dev/null)" ]; then
+             echo "Existing database found. Run the following to remove it:"
+             echo "  sudo systemctl stop slapd.service"
+             echo "  sudo rm -rf /etc/ldap/slapd.d/* /var/lib/ldap/*"
+             exit 1
+         fi
+
+         sudo systemctl stop slapd.service || :
+         sudo slapadd -F /etc/ldap/slapd.d -b cn=config -l ${BACKUP_PATH}/config.ldif
+         sudo slapadd -F /etc/ldap/slapd.d -b dc=example,dc=com -l ${BACKUP_PATH}/example.com.ldif
+         sudo chown -R openldap:openldap /etc/ldap/slapd.d/
+         sudo chown -R openldap:openldap /var/lib/ldap/
+         sudo systemctl start slapd.service
+
+       This is a basic backup strategy shown here as a reference for the tooling available for backups and restores.
+
+Ubuntu Server manual                    from the official documentation

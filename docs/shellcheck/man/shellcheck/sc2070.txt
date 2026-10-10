@@ -1,0 +1,55 @@
+SHELLCHECK.SC2070(1)             Sandbox manual             SHELLCHECK.SC2070(1)
+
+       NAME
+
+       -n doesn't work with unquoted arguments. Quote or use [[ ]]. - if [ -n $var ]
+
+       N DOESN'T WORK WITH UNQUOTED ARGUMENTS. QUOTE OR USE
+
+       N DOESN'T WORK WITH UNQUOTED ARGUMENTS. QUOTE OR USE
+
+       PROBLEMATIC CODE
+
+         if [ -n $var ]
+         then
+           echo "var has a value"
+         else
+           echo "var is empty"
+         fi
+
+       CORRECT CODE
+
+       In POSIX:
+
+         if [ -n "$var" ]
+         then
+           echo "var has a value"
+         else
+           echo "var is empty"
+         fi
+
+       In bash/ksh:
+
+         if [[ -n $var ]]
+         then
+           echo "var has a value"
+         else
+           echo "var is empty"
+         fi
+
+       RATIONALE
+
+       When $var is unquoted, a blank value will cause it to wordsplit and disappear. If $var is empty, these two statements are identical:
+
+         [ -n $var ]
+         [ -n ]
+
+       [ string ] is shorthand for testing if a string is empty. This is still true if string happens to be -n. [ -n ] is therefore true, and by extension so is [ -n $var ].
+
+       To fix this, either quote the variable, or (if your shell supports it) use [[ -n $var ]] which generally has fewer caveats than [.
+
+       EXCEPTIONS
+
+       None
+
+ShellCheck manual                       from the official documentation

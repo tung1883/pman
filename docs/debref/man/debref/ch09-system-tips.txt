@@ -1,0 +1,1949 @@
+DEBREF.CH09-SYSTEM-TIPS(1)       Sandbox manual       DEBREF.CH09-SYSTEM-TIPS(1)
+
+       CHAPTER 9. SYSTEM TIPS
+
+       Here, I describe basic tips to configure and manage systems, mostly from the console.
+
+       9.1. THE CONSOLE TIPS
+
+       There are some utility programs to help your console activities.
+
+       Table 9.1. List of programs to support console activities
+
+         package | popcon | size | description
+         mc | V:39, I:179 | 1590 | See Section 1.3, “Midnight Commander (MC)”
+         bsdutils | V:445, I:1000 | 338 | script(1) command to make a record of terminal session
+         screen | V:52, I:198 | 991 | terminal multiplexer with VT100/ANSI terminal emulation
+         tmux | V:100, I:164 | 1391 | terminal multiplexer alternative (Use "Control-B" instead)
+         ripgrep | V:15, I:46 | 5284 | fast recursive string search in the source code tree with automatic filtering
+         fzf | V:8, I:34 | 5064 | fuzzy text finder
+         fzy | V:0.07, I:0.38 | 59 | fuzzy text finder
+         rlwrap | V:1, I:11 | 328 | readline feature command line wrapper
+         ledit | V:0.4, I:7.8 | 375 | readline feature command line wrapper
+         rlfe | V:0.02, I:0.50 | 45 | readline feature command line wrapper
+
+       9.1.1. RECORDING THE SHELL ACTIVITIES CLEANLY
+
+       The simple use of script(1) (see Section 1.4.9, “Recording the shell activities”) to record shell activity produces a file with control characters. This can be avoided by using col(1) as the following.
+
+         $ script
+         Script started, file is typescript
+
+       Do whatever … and press Ctrl-D to exit script.
+
+         $ col -bx < typescript > cleanedfile
+         $ vim cleanedfile
+
+       There are alternative methods to record the shell activities:
+
+        * Use tee (usable during the boot process in the initramfs):
+
+         $ sh -i 2>&1 | tee typescript
+
+        * Use gnome-terminal with the extend line buffer for scrollback.
+        * Use screen with "^A H" (see Section 9.1.2, “The screen program”) to perform recording of console.
+        * Use vim with ":terminal" to enter the terminal mode. Use "Ctrl-W N" to exit from terminal mode to normal mode. Use ":w typescript" to write the buffer to a file.
+        * Use emacs with "M-x shell", "M-x eshell", or "M-x term" to enter recording console. Use "C-x C-w" to write the buffer to a file.
+
+       9.1.2. THE SCREEN PROGRAM
+
+       screen(1) not only allows one terminal window to work with multiple processes, but also allows remote shell process to survive interrupted connections. Here is a typical use scenario of screen(1).
+
+        * You login to a remote machine.
+        * You start screen on a single console.
+        * You execute multiple programs in screen windows created with ^A c ("Control-A" followed by "c").
+        * You switch among the multiple screen windows by ^A n ("Control-A" followed by "n").
+        * Suddenly you need to leave your terminal, but you don't want to lose your active work by keeping the connection.
+        * You may detach the screen session by any methods.
+          * Brutally unplug your network connection
+          * Type ^A d ("Control-A" followed by "d") and manually logging out from the remote connection
+          * Type ^A DD ("Control-A" followed by "DD") to have screen detach and log you out
+        * You log in again to the same remote machine (even from a different terminal).
+        * You start screen as "screen -r".
+        * screen magically reattaches all previous screen windows with all actively running programs.
+         Tip
+       You can save connection fees with screen for metered network connections such as dial-up and packet ones, because you can leave a process active while disconnected, and then re-attach it later when you connect again.
+
+       In a screen session, all keyboard inputs are sent to your current window except for the command keystroke. All screen command keystrokes are entered by typing ^A ("Control-A") plus a single key [plus any parameters]. Here are important ones to remember.
+
+       Table 9.2. List of key bindings for screen
+
+         key binding | meaning
+         ^A ? | show a help screen (display key bindings)
+         ^A c | create a new window and switch to it
+         ^A n | go to next window
+         ^A p | go to previous window
+         ^A 0 | go to window number 0
+         ^A 1 | go to window number 1
+         ^A w | show a list of windows
+         ^A a | send a Ctrl-A to current window as keyboard input
+         ^A h | write a hardcopy of current window to file
+         ^A H | begin/end logging current window to file
+         ^A ^X | lock the terminal (password protected)
+         ^A d | detach screen session from the terminal
+         ^A DD | detach screen session and log out
+       See screen(1) for details.
+
+       See tmux(1) for functionalities of the alternative command.
+
+       9.1.3. NAVIGATING AROUND DIRECTORIES
+
+       In Section 1.4.2, “Customizing bash”, 2 tips to allow quick navigation around directories are described: $CDPATH and mc.
+
+       If you use fuzzy text filter program, you can do without typing the exact path. For fzf, include following in ~/.bashrc.
+
+         FZF_KEYBINDINGS_PATH=/usr/share/doc/fzf/examples/key-bindings.bash
+         if [ -f $FZF_KEYBINDINGS_PATH ]; then
+           . $FZF_KEYBINDINGS_PATH
+         fi
+
+       For example:
+
+        * You can jump to a very deep subdirectory with minimal efforts. You first type "cd **" and press Tab. Then you will be prompted with candidate paths. Typing in partial path strings, e.g., s/d/b foo, will narrow down candidate paths. You select the path to be used by cd with cursor and return keys.
+        * You can select a command from the command history more efficiently with minimal efforts. You press Ctrl-R at the command prompt. Then you will be prompted with candidate commands. Typing in partial command strings, e.g., vim d, will narrow down candidates. You select the one to be used with cursor and return keys.
+
+       9.1.4. READLINE WRAPPER
+
+       Some commands such as /usr/bin/dash which lacks command line history editing capability can add such functionality transparently by running under rlwrap or its equivalents.
+
+          $ rlwrap dash -i
+
+       This provides convenient platform to test subtle points for dash with friendly bash-like environment.
+
+       9.1.5. SCANNING THE SOURCE CODE TREE
+
+       The rg(1) command in the ripgrep package offers a faster alternative to the grep(1) command for scanning the source code tree for typical situation. It takes advantage of modern multi-core CPUs and automatically applies reasonable filters to skip some files.
+
+       9.2. CUSTOMIZING VIM
+
+       After you learn basics of vim(1) through Section 1.4.8, “Using vim”, please read Bram Moolenaar's "Seven habits of effective text editing (2000)" to understand how vim should be used.
+
+       9.2.1. CUSTOMIZING VIM WITH INTERNAL FEATURES
+
+       The behavior of vim can be changed significantly by enabling its internal features through the Ex-mode commands such as "set ..." to set vim options.
+
+       These Ex-mode commands can be included in user's vimrc file, traditional "~/.vimrc" or git-friendly "~/.vim/vimrc". Here is a very simple example [2]:
+
+         """ Generic baseline Vim and Neovim configuration (~/.vimrc)
+         """   - For NeoVim, use "nvim -u ~/.vimrc [filename]"
+         """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+         let mapleader = ' '             " :h mapleader
+         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+         set nocompatible                " :h 'cp -- sensible (n)vim mode
+         syntax on                       " :h :syn-on
+         filetype plugin indent on       " :h :filetype-overview
+         set encoding=utf-8              " :h 'enc (default: latin1) -- sensible encoding
+         """ current vim option value can be verified by :set encoding?
+         set backspace=indent,eol,start  " :h 'bs (default: nobs) -- sensible BS
+         set statusline=%<%f%m%r%h%w%=%y[U+%04B]%2l/%2L=%P,%2c%V
+         set listchars=eol:¶,tab:⇄\ ,extends:↦,precedes:↤,nbsp:␣
+         set viminfo=!,'100,<5000,s100,h " :h 'vi -- bigger copy buffer etc.
+         """ Pick "colorscheme" from blue darkblue default delek desert elflord evening
+         """ habamax industry koehler lunaperche morning murphy pablo peachpuff quiet ron
+         """ shine slate torte zellner
+         colorscheme industry
+         """ don't pick "colorscheme" as "default" which may kill SpellUnderline settings
+         set scrolloff=5                 " :h 'scr -- show 5 lines around cursor
+         set laststatus=2                " :h 'ls (default 1)  k
+         """ boolean options can be unset by prefixing "no"
+         set ignorecase                  " :h 'ic
+         set smartcase                   " :h 'scs
+         set autoindent                  " :h 'ai
+         set smartindent                 " :h 'si
+         set nowrap                      " :h 'wrap
+         "set list                        " :h 'list (default nolist)
+         set noerrorbells                " :h 'eb
+         set novisualbell                " :h 'vb
+         set t_vb=                       " :h 't_vb -- termcap visual bell
+         set spell                       " :h 'spell
+         set spelllang=en_us,cjk         " :h 'spl -- english spell, ignore CJK
+         set clipboard=unnamedplus       " :h 'cb -- cut/copy/paste with other app
+         set hidden                      " :h 'hid
+         set autowrite                   " :h 'aw
+         set timeoutlen=300              " :h 'tm
+
+       The keymap of vim can be changed in user's vimrc file. E.g.:
+
+         Caution
+       Don't try to change the default key bindings without very good reasons.
+
+         """ Popular mappings (imitating LazyVim etc.)
+         """ Window moves without using CTRL-W which is dangerous in INSERT mode
+         nnoremap <C-H> <C-W>h
+         nnoremap <C-J> <C-W>j
+         nnoremap <C-K> <C-W>k
+         silent! nnoremap <C-L> <C-W>l
+         """ Window resize
+         nnoremap <C-LEFT> <CMD>vertical resize -2<CR>
+         nnoremap <C-DOWN> <CMD>resize -2<CR>
+         nnoremap <C-UP> <CMD>resize +2<CR>
+         nnoremap <C-RIGHT> <CMD>vertical resize +2<CR>
+         """ Clear hlsearch with <ESC> (<C-L> is mapped as above)
+         nnoremap <ESC> <CMD>noh<CR><ESC>
+         inoremap <ESC> <CMD>noh<CR><ESC>
+         """ center after jump next
+         nnoremap n nzz
+         nnoremap N Nzz
+         """ fast "jk" to get out of INSERT mode (<ESC>)
+         inoremap  jk <CMD>noh<CR><ESC>
+         """ fast "<ESC><ESC>" to get out of TERM mode (CTRL-\ CTRL-N)
+         tnoremap <ESC><ESC> <C-\><C-N>
+         """ fast "jk" to get out of TERM mode (CTRL-\ CTRL-N)
+         tnoremap jk <C-\><C-N>
+         """ previous/next trouble/quickfix item
+         nnoremap [q <CMD>cprevious<CR>
+         nnoremap ]q <CMD>cnext<CR>
+         """ buffers
+         nnoremap <S-H> <CMD>bprevious<CR>
+         nnoremap <S-L> <CMD>bnext<CR>
+         nnoremap [b <CMD>bprevious<CR>
+         nnoremap ]b <CMD>bnext<CR>
+         """ Add undo break-points
+         inoremap  , ,<C-G>u
+         inoremap  . .<C-G>u
+         inoremap  ; ;<C-G>u
+         """ save file
+         inoremap <C-S> <CMD>w<CR><ESC>
+         xnoremap <C-S> <CMD>w<CR><ESC>
+         nnoremap <C-S> <CMD>w<CR><ESC>
+         snoremap <C-S> <CMD>w<CR><ESC>
+         """ better indenting
+         vnoremap < <gv
+         vnoremap > >gv
+         """ terminal (Somehow under Linux, <C-/> becomes <C-_> in Vim)
+         nnoremap <C-_> <CMD>terminal<CR>
+         "nnoremap <C-/> <CMD>terminal<CR>
+         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+         if ! has('nvim')
+         """ Toggle paste mode with <SPACE>p for Vim (no need for Nvim)
+         set pastetoggle=<leader>p
+         """ nvim default mappings for Vim.  See :h default-mappings in nvim
+         """ copy to EOL (no delete) like D for d
+         noremap Y y$
+         """ sets a new undo point before deleting
+         inoremap <C-U> <C-G>u<C-U>
+         inoremap <C-W> <C-G>u<C-W>
+         """ <C-L> is re-purposed as above
+         """ execute the previous macro recorded with Q
+         nnoremap Q @@
+         """ repeat last substitute and *KEEP* flags
+         nnoremap & :&&<CR>
+         """ search visual selected string for visual mode
+         xnoremap * y/\V<C-R>"<CR>
+         xnoremap # y?\V<C-R>"<CR>
+         endif
+
+       In order for the above keybindings to function properly, the terminal program needs to be configured to generate "ASCII DEL" for Backspace-key and "Escape sequence" for Delete-key.
+
+       Other miscellaneous configuration can be changed in user's vimrc file. E.g.:
+
+         """ Use faster 'rg' (ripgrep package) for :grep
+         if executable("rg")
+           set grepprg=rg\ --vimgrep\ --smart-case
+           set grepformat=%f:%l:%c:%m
+         endif
+         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+         """ Retain last cursor position :h '"
+         augroup RetainLastCursorPosition
+           autocmd!
+           autocmd BufReadPost *
+             \ if line("'\"") > 0 && line ("'\"") <= line("$") |
+             \   exe "normal! g'\"" |
+             \ endif
+         augroup END
+         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+         """ Force to use underline for spell check results
+         augroup SpellUnderline
+           autocmd!
+           autocmd ColorScheme * highlight SpellBad term=Underline gui=Undercurl
+           autocmd ColorScheme * highlight SpellCap term=Underline gui=Undercurl
+           autocmd ColorScheme * highlight SpellLocal term=Underline gui=Undercurl
+           autocmd ColorScheme * highlight SpellRare term=Underline gui=Undercurl
+         augroup END
+         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+         """ highlight tailing spaces except when typing as red (set after colorscheme)
+         highlight TailingWhitespaces ctermbg=red guibg=red
+         """ \s\+     1 or more whitespace character: <Space> and <Tab>
+         """ \%#\@<!  Matches with zero width if the cursor position does NOT match.
+         match TailingWhitespaces /\s\+\%#\@<!$/
+
+       9.2.2. CUSTOMIZING VIM WITH EXTERNAL PACKAGES
+
+       Interesting external plugin packages can be found:
+
+        * Vim - the ubiquitous text editor  -- The official upstream site of Vim and vim scripts
+        * VimAwsome  -- The listing of Vim plugins
+        * vim-scripts -- Debian package: a collection of vim scripts
+       Plugin packages in the vim-scripts package can be enabled using user's vimrc file. E.g.:
+
+         packadd! secure-modelines
+         packadd! winmanager
+         " IDE-like UI for files and buffers with <space>w
+         nnoremap <leader>w         :WMToggle<CR>
+
+       The new native Vim package system works nicely with "git" and "git submodule". One such example configuration can be found at my git repository: dot-vim. This does essentially:
+
+        * By using "git" and "git submodule", latest external packages, such as "name", are placed into ~/.vim/pack/*/opt/name and similar.
+        * By adding :packadd! name line to user's vimrc file, these packages are placed on runtimepath.
+        * Vim loads these packages on runtimepath during its initialization.
+        * At the end of its initialization, tags for the installed documents are updated with "helptags ALL".
+       For more, please start vim with "vim --startuptime vimstart.log" to check actual execution sequence and time spent for each step.
+
+       It is quite confusing to see too many ways[3] to manage and load these external packages to vim. Checking the original information is the best cure.
+
+       Table 9.3. Information on the initialization of vim
+
+         key strokes | information
+         :help package | explanation on the vim package mechanism
+         :help runtimepath | explanation on the runtimepath mechanism
+         :version | internal states including candidates for the vimrc file
+         :echo $VIM | the environment variable "$VIM" used to locate the vimrc file
+         :set runtimepath? | list of directories which will be searched for all runtime support files
+         :echo $VIMRUNTIME | the environment variable "$VIMRUNTIME" used to locate various system provided runtime support files
+
+       9.3. DATA RECORDING AND PRESENTATION
+
+       9.3.1. THE LOG DAEMON
+
+       Many traditional programs record their activities in the text file format under the "/var/log/" directory.
+
+       logrotate(8) is used to simplify the administration of log files on a system which generates a lot of log files.
+
+       Many new programs record their activities in the binary file format using systemd-journald(8) Journal service under the "/var/log/journal" directory.
+
+       You can log data to the systemd-journald(8) Journal from a shell script by using the systemd-cat(1) command.
+
+       See Section 3.5, “The system message” and Section 3.4, “The kernel message”.
+
+       9.3.2. LOG ANALYZER
+
+       Here are notable log analyzers ("~Gsecurity::log-analyzer" in aptitude(8)).
+
+       Table 9.4. List of system log analyzers
+
+         package | popcon | size | description
+         fail2ban | V:102, I:113 | 2191 | ban IPs that cause multiple authentication errors
+         logwatch | V:9, I:11 | 2440 | log analyzer with nice output written in Perl
+         awstats | V:5.3, I:8.4 | 6934 | powerful and featureful web server log analyzer
+         analog | V:3, I:84 | 3739 | web server log analyzer
+         sarg | V:0.71, I:0.79 | 863 | squid analysis report generator
+         pflogsumm | V:1.5, I:3.7 | 173 | Postfix log entry summarizer
+         fwlogwatch | V:0.12, I:0.18 | 487 | firewall log analyzer
+         squidview | V:0.02, I:0.43 | 224 | monitor and analyze squid access.log files
+         swatch | V:0.07, I:0.31 | 99 | log file viewer with regexp matching, highlighting, and hooks
+         crm114 | V:0.06, I:0.33 | 1371 | Controllable Regex Mutilator and Spam Filter (CRM114)
+         icmpinfo | V:0.01, I:0.38 | 42 | interpret ICMP messages
+         Note
+       CRM114 provides language infrastructure to write fuzzy filters with the TRE regex library. Its popular use is spam mail filter but it can be used as log analyzer.
+
+       9.3.3. CUSTOMIZED DISPLAY OF TEXT DATA
+
+       Although pager tools such as more(1) and less(1) (see Section 1.4.5, “The pager”) and custom tools for highlighting and formatting (see Section 11.1.8, “Highlighting and formatting plain text data”) can display text data nicely, general purpose editors (see Section 1.4.6, “The text editor”) are most versatile and customizable.
+
+         Tip
+       For vim(1) and its pager mode alias view(1), ":set hls" enables highlighted search.
+
+       9.3.4. CUSTOMIZED DISPLAY OF TIME AND DATE
+
+       The default display format of time and date by the "ls -l" command depends on the locale (see Section 1.2.6, “Timestamps” for value). The "$LANG" variable is referred first and it can be overridden by the "$LC_TIME" or "$LC_ALL" exported environment variables.
+
+       The actual default display format for each locale depends on the version of the standard C library (the libc6 package) used. I.e., different releases of Debian had different defaults. For iso-formats, see ISO 8601.
+
+       If you really wish to customize this display format of time and date beyond the locale, you should set the time style value by the "--time-style" argument or by the "$TIME_STYLE" value (see ls(1), date(1), "info coreutils 'ls invocation'").
+
+       Table 9.5. Display examples of time and date for the "ls -l" command with the time style value
+
+         time style value | locale | display of time and date
+         iso | any | 01-19 00:15
+         long-iso | any | 2009-01-19 00:15
+         full-iso | any | 2009-01-19 00:15:16.000000000 +0900
+         locale | C | Jan 19 00:15
+         locale | en_US.UTF-8 | Jan 19 00:15
+         locale | es_ES.UTF-8 | ene 19 00:15
+         +%d.%m.%y %H:%M | any | 19.01.09 00:15
+         +%d.%b.%y %H:%M | C or en_US.UTF-8 | 19.Jan.09 00:15
+         +%d.%b.%y %H:%M | es_ES.UTF-8 | 19.ene.09 00:15
+         Tip
+       You can eliminate typing long option on commandline using command alias (see Section 1.5.9, “Command alias”):
+
+         alias ls='ls --time-style=+%d.%m.%y %H:%M'
+
+       9.3.5. COLORIZED SHELL ECHO
+
+       Shell echo to most modern terminals can be colorized using ANSI escape code (see "/usr/share/doc/xterm/ctlseqs.txt.gz").
+
+       For example, try the following
+
+         $ RED=$(printf "\x1b[31m")
+         $ NORMAL=$(printf "\x1b[0m")
+         $ REVERSE=$(printf "\x1b[7m")
+         $ echo "${RED}RED-TEXT${NORMAL} ${REVERSE}REVERSE-TEXT${NORMAL}"
+
+       9.3.6. COLORIZED COMMANDS
+
+       Colorized commands are handy for inspecting their output in the interactive environment. I include the following in my "~/.bashrc".
+
+         if [ "$TERM" != "dumb" ]; then
+             eval "`dircolors -b`"
+             alias ls='ls --color=always'
+             alias ll='ls --color=always -l'
+             alias la='ls --color=always -A'
+             alias less='less -R'
+             alias ls='ls --color=always'
+             alias grep='grep --color=always'
+             alias egrep='egrep --color=always'
+             alias fgrep='fgrep --color=always'
+             alias zgrep='zgrep --color=always'
+         else
+             alias ll='ls -l'
+             alias la='ls -A'
+         fi
+
+       The use of alias limits color effects to the interactive command usage. It has advantage over exporting environment variable "export GREP_OPTIONS='--color=auto'" since color can be seen under pager programs such as less(1). If you wish to suppress color when piping to other programs, use "--color=auto" instead in the above example for "~/.bashrc".
+
+         Tip
+       You can turn off these colorizing aliases in the interactive environment by invoking shell with "TERM=dumb bash".
+
+       9.3.7. RECORDING THE EDITOR ACTIVITIES FOR COMPLEX REPEATS
+
+       You can record the editor activities for complex repeats.
+
+       For Vim, as follows.
+
+        * "qa": start recording typed characters into named register "a".
+        * … editor activities
+        * "q": end recording typed characters.
+        * "@a": execute the contents of register "a".
+       For Emacs, as follows.
+
+        * "C-x (": start defining a keyboard macro.
+        * … editor activities
+        * "C-x )": end defining a keyboard macro.
+        * "C-x e": execute a keyboard macro.
+
+       9.3.8. RECORDING THE GRAPHICS IMAGE OF AN X APPLICATION
+
+       There are few ways to record the graphics image of an X application, including an xterm display.
+
+       Table 9.6. List of graphics image manipulation tools
+
+         package | popcon | size | screen | command
+         gnome-screenshot | V:12, I:99 | 1115 | Wayland | screenshot application for GNOME
+         flameshot | V:7, I:16 | 3542 | Wayland | screenshot application on steroid
+         gimp | V:41, I:214 | 32779 | Wayland + X | screenshot in GUI menu
+         x11-apps | V:30, I:440 | 2461 | X | xwd(1)
+         imagemagick | V:7, I:275 | 81 | X | import(1)
+         scrot | V:4, I:49 | 144 | X | scrot(1)
+
+       9.3.9. RECORDING CHANGES IN CONFIGURATION FILES
+
+       There are specialized tools to record changes in configuration files with help of DVCS and to make system snapshots on Btrfs.
+
+       Table 9.7. List of packages which can record configuration history
+
+         package | popcon | size | description
+         etckeeper | V:23, I:26 | 157 | store configuration files and their metadata with Git (default), Mercurial, or GNU Bazaar
+         timeshift | V:8, I:14 | 4481 | system restore utility using rsync or BTRFS snapshots
+         snapper | V:6.3, I:8.4 | 2396 | Linux filesystem snapshot management tool
+       You may also think about local script Section 10.2.3, “Backup tips” approach.
+
+       9.4. MONITORING, CONTROLLING, AND STARTING PROGRAM ACTIVITIES
+
+       Program activities can be monitored and controlled using specialized tools.
+
+       Table 9.8. List of tools for monitoring and controlling program activities
+
+         package | popcon | size | description
+         coreutils | V:910, I:1000 | 17994 | nice(1): run a program with modified scheduling priority
+         bsdutils | V:445, I:1000 | 338 | renice(1): modify the scheduling priority of a running process
+         procps | V:828, I:998 | 2691 | "/proc" filesystem utilities: ps(1), top(1), kill(1), watch(1), …
+         psmisc | V:400, I:720 | 950 | "/proc" filesystem utilities: killall(1), fuser(1), peekfd(1), pstree(1)
+         time | V:6, I:79 | 148 | time(1): run a program to report system resource usages with respect to time
+         sysstat | V:118, I:168 | 1904 | sar(1), iostat(1), mpstat(1), …: system performance tools for Linux
+         isag | V:0.1, I:3.3 | 109 | Interactive System Activity Grapher for sysstat
+         lsof | V:449, I:949 | 492 | lsof(8): list files opened by a running process using "-p" option
+         strace | V:11, I:103 | 4393 | strace(1): trace system calls and signals
+         ltrace | V:1, I:12 | 420 | ltrace(1): trace library calls
+         xtrace | V:0.05, I:0.71 | 342 | xtrace(1): trace communication between X11 client and server
+         powertop | V:35, I:226 | 696 | powertop(1): information about system power use
+         cron | V:922, I:997 | 247 | run processes according to a schedule in background from cron(8) daemon
+         anacron | V:416, I:475 | 110 | cron-like command scheduler for systems that don't run 24 hours a day
+         at | V:72, I:96 | 158 | at(1) or batch(1): run a job at a specified time or below certain load level
+         Tip
+       The procps packages provide very basics of monitoring, controlling, and starting program activities. You should learn all of them.
+
+       9.4.1. TIMING A PROCESS
+
+       Display time used by the process invoked by the command.
+
+         # time some_command >/dev/null
+         real    0m0.035s       # time on wall clock (elapsed real time)
+         user    0m0.000s       # time in user mode
+         sys     0m0.020s       # time in kernel mode
+
+       9.4.2. THE SCHEDULING PRIORITY
+
+       A nice value is used to control the scheduling priority for the process.
+
+       Table 9.9. List of nice values for the scheduling priority
+
+         nice value | scheduling priority
+         19 | lowest priority process (nice)
+         0 | very high priority process for user
+         -20 | very high priority process for root (not-nice)
+
+         # nice  -19 top                                      # very nice
+         # nice --20 wodim -v -eject speed=2 dev=0,0 disk.img # very fast
+
+       Sometimes an extreme nice value does more harm than good to the system. Use this command carefully.
+
+       9.4.3. THE PS COMMAND
+
+       The ps(1) command on a Debian system support both BSD and SystemV features and helps to identify the process activity statically.
+
+       Table 9.10. List of ps command styles
+
+         style | typical command | feature
+         BSD | ps aux | display %CPU %MEM
+         System V | ps -efH | display PPID
+       For the zombie (defunct) children process, you can kill them by the parent process ID identified in the "PPID" field.
+
+       The pstree(1) command display a tree of processes.
+
+       9.4.4. THE TOP COMMAND
+
+       top(1) on the Debian system has rich features and helps to identify what process is acting funny dynamically.
+
+       It is an interactive full screen program. You can get its usage help press by pressing the "h"-key and terminate it by pressing the "q"-key.
+
+       9.4.5. LISTING FILES OPENED BY A PROCESS
+
+       You can list all files opened by a process with a process ID (PID), e.g. 1, by the following.
+
+         $ sudo lsof -p 1
+
+       PID=1 is usually the init program.
+
+       9.4.6. TRACING PROGRAM ACTIVITIES
+
+       You can trace program activity with strace(1), ltrace(1), or xtrace(1) for system calls and signals, library calls, or communication between X11 client and server.
+
+       You can trace system calls of the ls command as the following.
+
+         $ sudo strace ls
+
+         Tip
+       Use strace-graph script found in /usr/share/doc/strace/examples/ to make a nice tree view
+
+       9.4.7. IDENTIFICATION OF PROCESSES USING FILES OR SOCKETS
+
+       You can also identify processes using files by fuser(1), e.g. for "/var/log/mail.log" by the following.
+
+         $ sudo fuser -v /var/log/mail.log
+                              USER        PID ACCESS COMMAND
+         /var/log/mail.log:   root       2946 F.... rsyslogd
+
+       You see that file "/var/log/mail.log" is open for writing by the rsyslogd(8) command.
+
+       You can also identify processes using sockets by fuser(1), e.g. for "smtp/tcp" by the following.
+
+         $ sudo fuser -v smtp/tcp
+                              USER        PID ACCESS COMMAND
+         smtp/tcp:            Debian-exim   3379 F.... exim4
+
+       Now you know your system runs exim4(8) to handle TCP connections to SMTP port (25).
+
+       9.4.8. REPEATING A COMMAND WITH A CONSTANT INTERVAL
+
+       watch(1) executes a program repeatedly with a constant interval while showing its output in fullscreen.
+
+         $ watch w
+
+       This displays who is logged on to the system updated every 2 seconds.
+
+       9.4.9. REPEATING A COMMAND LOOPING OVER FILES
+
+       There are several ways to repeat a command looping over files matching some condition, e.g. matching glob pattern "*.ext".
+
+        * Shell for-loop method (see Section 12.1.4, “Shell loops”):
+
+         for x in *.ext; do if [ -f "$x"]; then command "$x" ; fi; done
+
+        * find(1) and xargs(1) combination:
+
+         find . -type f -maxdepth 1 -name '*.ext' -print0 | xargs -0 -n 1 command
+
+        * find(1) with "-exec" option with a command:
+
+         find . -type f -maxdepth 1 -name '*.ext' -exec command '{}' \;
+
+        * find(1) with "-exec" option with a short shell script:
+
+         find . -type f -maxdepth 1 -name '*.ext' -exec sh -c "command '{}' && echo 'successful'" \;
+
+       The above examples are written to ensure proper handling of funny file names such as ones containing spaces. See Section 10.1.5, “Idioms for the selection of files” for more advance uses of find(1).
+
+       9.4.10. STARTING A PROGRAM FROM GUI
+
+       For the command-line interface (CLI), the first program with the matching name found in the directories specified in the $PATH environment variable is executed. See Section 1.5.3, “The "$PATH" variable”.
+
+       For the graphical user interface (GUI) compliant to the freedesktop.org standards, the *.desktop files in the /usr/share/applications/ directory provide necessary attributes for the GUI menu display of each program. Each package which is compliant to Freedesktop.org's xdg menu system installs its menu data provided by "*.desktop" under "/usr/share/applications/". Modern desktop environments which are compliant to Freedesktop.org standard use these data to generate their menu using the xdg-utils package. See "/usr/share/doc/xdg-utils/README".
+
+       For example, the chromium.desktop file defines attributes for the "Chromium Web Browser" such as "Name" for the program name, "Exec" for the program execution path and arguments, "Icon" for the icon used, etc. (see the Desktop Entry Specification) as follows:
+
+         [Desktop Entry]
+         Version=1.0
+         Name=Chromium Web Browser
+         GenericName=Web Browser
+         Comment=Access the Internet
+         Comment[fr]=Explorer le Web
+         Exec=/usr/bin/chromium %U
+         Terminal=false
+         X-MultipleArgs=false
+         Type=Application
+         Icon=chromium
+         Categories=Network;WebBrowser;
+         MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;
+         StartupWMClass=Chromium
+         StartupNotify=true
+
+       This is an oversimplified description. The *.desktop files are scanned as follows.
+
+       The desktop environment sets $XDG_DATA_HOME and $XDG_DATA_DIR environment variables. For example, under the GNOME:
+
+        * $XDG_DATA_HOME is unset. (The default value of $HOME/.local/share is used.)
+        * $XDG_DATA_DIRS is set to /usr/share/gnome:/usr/local/share/:/usr/share/.
+       So the base directories (see XDG Base Directory Specification) and the applications directories are as follows.
+
+        * $HOME/.local/share/ → $HOME/.local/share/applications/
+        * /usr/share/gnome/ → /usr/share/gnome/applications/
+        * /usr/local/share/ → /usr/local/share/applications/
+        * /usr/share/ → /usr/share/applications/
+       The *.desktop files are scanned in these applications directories in this order.
+
+         Tip
+       A user custom GUI menu entry can be created by adding a *.desktop file in the $HOME/.local/share/applications/ directory.
+
+         Tip
+       The "Exec=..." line isn't parsed by the shell. Use the env(1) command if environment variables need to be set.
+
+         Tip
+       Similarly, if a *.desktop file is created in the autostart directory under these base directories, the specified program in the *.desktop file is executed automatically when the desktop environment is started. See Desktop Application Autostart Specification.
+
+         Tip
+       Similarly, if a *.desktop file is created in the $HOME/Desktop directory and the Desktop environment is configured to support the desktop icon launcher feature, the specified program in it is executed upon clicking the icon. Please note that the actual name of the $HOME/Desktop directory is locale dependent. See xdg-user-dirs-update(1).
+
+       9.4.11. CUSTOMIZING PROGRAM TO BE STARTED
+
+       Some programs start another program automatically. Here are check points for customizing this process.
+
+        * Application configuration menu:
+          * GNOME desktop: "Settings" → "Apps" → "Default Apps"
+          * KDE desktop: "Application Launcher" → "System Settings" → "Default Applications"
+          * Iceweasel browser: "Edit" → "Preferences" → "Applications"
+          * mc(1): "/etc/mc/mc.ext"
+        * Environment variables such as "$BROWSER", "$EDITOR", "$VISUAL", and "$PAGER" (see environ(7))
+        * The update-alternatives(1) system for programs such as "editor", "view", "x-www-browser", "gnome-www-browser", and "www-browser" (see Section 1.4.7, “Setting a default text editor”)
+        * the "~/.mailcap" and "/etc/mailcap" file contents which associate MIME type with program (see mailcap(5))
+        * The "~/.mime.types" and "/etc/mime.types" file contents which associate file name extension with MIME type (see run-mailcap(1))
+         Tip
+       update-mime(8) updates the "/etc/mailcap" file using "/etc/mailcap.order" file (see mailcap.order(5)).
+
+         Tip
+       The debianutils package provides sensible-browser(1), sensible-editor(1), and sensible-pager(1) which make sensible decisions on which editor, pager, and web browser to call, respectively. I recommend you to read these shell scripts.
+
+         Tip
+       In order to run a console application such as mutt under GUI as your preferred application, you should create an GUI application as following and set "/usr/local/bin/mutt-term" as your preferred application to be started as described.
+
+         # cat /usr/local/bin/mutt-term <<EOF
+         #!/bin/sh
+         gnome-terminal -e "mutt \$@"
+         EOF
+         # chmod 755 /usr/local/bin/mutt-term
+
+       9.4.12. KILLING A PROCESS
+
+       Use kill(1) to kill (or send a signal to) a process by the process ID.
+
+       Use killall(1) or pkill(1) to do the same by the process command name and other attributes.
+
+       Table 9.11. List of frequently used signals for kill command
+
+         signal value | signal name | action | note
+         0 | --- | no signal is sent (see kill(2)) | check if process is running
+         1 | SIGHUP | terminate the process | disconnected terminal (signal hang up)
+         2 | SIGINT | terminate the process | interrupt from keyboard (CTRL-C)
+         3 | SIGQUIT | terminate the process and dump core | quit from keyboard (CTRL-\)
+         9 | SIGKILL | terminate the process | unblockable kill signal
+         15 | SIGTERM | terminate the process | blockable termination signal
+
+       9.4.13. SCHEDULING TASKS ONCE
+
+       Run the at(1) command to schedule a one-time job by the following.
+
+         $ echo 'command -args'| at 3:40 monday
+
+       9.4.14. SCHEDULING TASKS REGULARLY
+
+       Use cron(8) to schedule tasks regularly. See crontab(1) and crontab(5).
+
+       You can schedule to run processes as a normal user, e.g. foo by creating a crontab(5) file as "/var/spool/cron/crontabs/foo" with "crontab -e" command.
+
+       Here is an example of a crontab(5) file.
+
+         # use /usr/bin/sh to run commands, no matter what /etc/passwd says
+         SHELL=/bin/sh
+         # mail any output to paul, no matter whose crontab this is
+         MAILTO=paul
+         # Min Hour DayOfMonth Month DayOfWeek command (Day... are OR'ed)
+         # run at 00:05, every day
+         5  0  *  * *   $HOME/bin/daily.job >> $HOME/tmp/out 2>&1
+         # run at 14:15 on the first of every month -- output mailed to paul
+         15 14 1  * *   $HOME/bin/monthly
+         # run at 22:00 on weekdays(1-5), annoy Joe. % for newline, last % for cc:
+         0 22 *   * 1-5 mail -s "It's 10pm" joe%Joe,%%Where are your kids?%.%%
+         23 */2 1 2 *   echo "run 23 minutes after 0am, 2am, 4am ..., on Feb 1"
+         5  4 *   * sun echo "run at 04:05 every Sunday"
+         # run at 03:40 on the first Monday of each month
+         40 3 1-7 * *   [ "$(date +%a)" == "Mon" ] && command -args
+
+         Tip
+       For the system not running continuously, install the anacron package to schedule periodic commands at the specified intervals as closely as machine-uptime permits. See anacron(8) and anacrontab(5).
+
+         Tip
+       For scheduled system maintenance scripts, you can run them periodically from root account by placing such scripts in "/etc/cron.hourly/", "/etc/cron.daily/", "/etc/cron.weekly/", or "/etc/cron.monthly/". Execution timings of these scripts can be customized by "/etc/crontab" and "/etc/anacrontab".
+
+       Systemd has low level capability to schedule programs to run without cron daemon. For example, /lib/systemd/system/apt-daily.timer and /lib/systemd/system/apt-daily.service set up daily apt download activities. See systemd.timer(5) .
+
+       9.4.15. SCHEDULING TASKS ON EVENT
+
+       Systemd can schedule program not only on the timer event but also on the mount event. See Section 10.2.3.3, “Timer event triggered backup” and Section 10.2.3.2, “Mount event triggered backup” for examples.
+
+       9.4.16. ALT-SYSRQ KEY
+
+       Pressing Alt-SysRq (PrtScr) followed by one keys does the magic of rescuing control of the system.
+
+       Table 9.12. List of notable SAK command keys
+
+         key following Alt-SysRq | description of action
+         k | kill all processes on the current virtual console (SAK)
+         s | sync all mounted filesystems to avoid data corruption
+         u | remount all mounted filesystems read-only (umount)
+         r | restore the keyboard from raw mode after X crashes
+       See more on Linux kernel user’s and administrator’s guide » Linux Magic System Request Key Hacks
+
+         Tip
+       From SSH terminal etc., you can use the Alt-SysRq feature by writing to the "/proc/sysrq-trigger". For example, "echo s > /proc/sysrq-trigger; echo u > /proc/sysrq-trigger" from the root shell prompt syncs and umounts all mounted filesystems.
+
+       The current (2021) Debian amd64 Linux kernel has /proc/sys/kernel/sysrq=438=0b110110110:
+
+        * 2 = 0x2 - enable control of console logging level (ON)
+        * 4 = 0x4 - enable control of keyboard (SAK, unraw) (ON)
+        * 8 = 0x8 - enable debugging dumps of processes etc. (OFF)
+        * 16 = 0x10 - enable sync command (ON)
+        * 32 = 0x20 - enable remount read-only (ON)
+        * 64 = 0x40 - enable signaling of processes (term, kill, oom-kill) (OFF)
+        * 128 = 0x80 - allow reboot/poweroff (ON)
+        * 256 = 0x100 - allow nicing of all RT tasks (ON)
+
+       9.5. SYSTEM MAINTENANCE TIPS
+
+       9.5.1. WHO IS ON THE SYSTEM
+
+       You can check who is on the system by the following.
+
+        * who(1) shows who is logged on.
+        * w(1) shows who is logged on and what they are doing.
+        * last(1) shows listing of last logged in user.
+        * lastb(1) shows listing of last bad logged in users.
+         Tip
+       "/var/run/utmp", and "/var/log/wtmp" hold such user information. See login(1) and utmp(5).
+
+       9.5.2. WARNING EVERYONE
+
+       You can send message to everyone who is logged on to the system with wall(1) by the following.
+
+         $ echo "We are shutting down in 1 hour" | wall
+
+       9.5.3. HARDWARE IDENTIFICATION
+
+       For the PCI-like devices (AGP, PCI-Express, CardBus, ExpressCard, etc.), lspci(8) (probably with "-nn" option) is a good start for the hardware identification.
+
+       Alternatively, you can identify the hardware by reading contents of "/proc/bus/pci/devices" or browsing directory tree under "/sys/bus/pci" (see Section 1.2.12, “procfs and sysfs”).
+
+       Table 9.13. List of hardware identification tools
+
+         package | popcon | size | description
+         pciutils | V:258, I:993 | 289 | Linux PCI Utilities: lspci(8)
+         usbutils | V:84, I:888 | 322 | Linux USB utilities: lsusb(8)
+         nvme-cli | V:26, I:36 | 2222 | NVMe utilities for Linux: nvme(1)
+         pcmciautils | V:4.0, I:6.0 | 92 | PCMCIA utilities for Linux: pccardctl(8)
+         scsitools | V:0.2, I:2.2 | 261 | collection of tools for SCSI hardware management: lsscsi(8)
+         procinfo | V:0.8, I:6.1 | 149 | system information obtained from "/proc": lsdev(8)
+         lshw | V:12, I:91 | 971 | information about hardware configuration: lshw(1)
+         discover | V:25, I:595 | 81 | hardware identification system: discover(8)
+
+       9.5.4. HARDWARE CONFIGURATION
+
+       Although most of the hardware configuration on modern GUI desktop systems such as GNOME and KDE can be managed through accompanying GUI configuration tools, it is a good idea to know some basics methods to configure them.
+
+       For the keyboard and terminal configuration, see Section 8.2, “The keyboard input” and Section 8.3, “The display output”.
+
+       Table 9.14. List of hardware configuration tools
+
+         package | popcon | size | description
+         console-setup | V:82, I:975 | 422 | Linux console font and keytable utilities
+         keyd | V:1.4, I:1.5 | 1437 | keyboard key remapping daemon using kernel level input primitives (evdev, uinput)
+         keyd-application-mapper | V:0.00, I:0.07 | 34 | keyboard key remapping daemon - application-specific remapper
+         x11-xserver-utils | V:304, I:528 | 559 | X server utilities: xset(1), xmodmap(1)
+         acpid | V:55, I:83 | 158 | daemon to manage events delivered by the Advanced Configuration and Power Interface (ACPI)
+         acpi | V:7, I:77 | 49 | utility to display information on ACPI devices
+         sleepd | V:0.10, I:0.12 | 84 | daemon to put a laptop to sleep during inactivity
+         hdparm | V:114, I:208 | 246 | hard disk access optimization (see Section 9.6.9, “Optimization of hard disk”)
+         smartmontools | V:239, I:269 | 2455 | control and monitor storage systems using S.M.A.R.T.
+         setserial | V:3.2, I:5.2 | 104 | collection of tools for serial port management
+         memtest86+ | V:1, I:19 | 12483 | collection of tools for memory hardware management
+         scsitools | V:0.2, I:2.2 | 261 | collection of tools for SCSI hardware management
+         setcd | V:0.06, I:0.67 | 33 | compact disc drive access optimization
+         big-cursor | I:0.65 | 26 | larger mouse cursors for X
+       Here, ACPI is a newer framework for the power management system than APM.
+
+         Tip
+       CPU frequency scaling on modern system is governed by kernel modules such as acpi_cpufreq.
+
+       9.5.5. SYSTEM AND HARDWARE TIME
+
+       The following sets system and hardware time to MM/DD hh:mm, CCYY.
+
+         # date MMDDhhmmCCYY
+         # hwclock --utc --systohc
+         # hwclock --show
+
+       Times are normally displayed in the local time on the Debian system but the hardware and system time usually use UTC(GMT).
+
+       If the hardware time is set to UTC, change the setting to "UTC=yes" in the "/etc/default/rcS".
+
+       The following reconfigure the timezone used by the Debian system.
+
+         # dpkg-reconfigure tzdata
+
+       If you wish to update system time via network, consider to use the NTP service with the packages such as ntp, ntpdate, and chrony.
+
+         Tip
+       Under systemd, use systemd-timesyncd for the network time synchronization instead. See systemd-timesyncd(8).
+
+       See the following.
+
+        * Managing Accurate Date and Time HOWTO
+        * NTP Public Services Project
+        * The ntp-doc package
+         Tip
+       ntptrace(8) in the ntp package can trace a chain of NTP servers back to the primary source.
+
+       9.5.6. THE SOUND INFRASTRUCTURE
+
+       Device drivers for sound cards for current Linux are provided by Advanced Linux Sound Architecture (ALSA). ALSA provides emulation mode for previous Open Sound System (OSS) for compatibility.
+
+       Application software may be configured not only to access sound devices directly but also to access them via some standardized sound server system. Currently, PulseAudio, JACK, and PipeWire are used as sound server system. See Debian wiki page on Sound for the latest situation.
+
+       There is usually a common sound engine for each popular desktop environment. Each sound engine used by the application can choose to connect to different sound servers.
+
+         Tip
+       Use "cat /dev/urandom > /dev/audio" or speaker-test(1) to test speaker (^C to stop).
+
+         Tip
+       If you can not get sound, your speaker may be connected to a muted output. Modern sound system has many outputs. alsamixer(1) in the alsa-utils package is useful to configure volume and mute settings.
+
+       Table 9.15. List of sound packages
+
+         package | popcon | size | description
+         alsa-utils | V:337, I:455 | 2700 | utilities for configuring and using ALSA
+         oss-compat | V:0.5, I:9.7 | 21 | OSS compatibility under ALSA preventing "/dev/dsp not found" errors
+         pipewire | V:321, I:364 | 135 | audio and video processing engine multimedia server - metapackage
+         pipewire-bin | V:328, I:364 | 2219 | audio and video processing engine multimedia server - audio server and CLI programs
+         pipewire-alsa | V:168, I:234 | 190 | audio and video processing engine multimedia server - audio server to replace ALSA
+         pipewire-pulse | V:290, I:338 | 53 | audio and video processing engine multimedia server - audio server to replace PulseAudio
+         pulseaudio | V:151, I:177 | 6602 | PulseAudio server
+         libpulse0 | V:437, I:575 | 969 | PulseAudio client library
+         jackd | V:2, I:14 | 8 | JACK Audio Connection Kit. (JACK) server (low latency)
+         libjack0 | V:1.8, I:9.0 | 328 | JACK Audio Connection Kit. (JACK) library (low latency)
+         libphonon4qt5-4 | V:20, I:46 | 572 | Phonon: KDE sound engine
+
+       9.5.7. DISABLING THE SCREEN SAVER
+
+       For disabling the screen saver, use following commands.
+
+       Table 9.16. List of commands for disabling the screen saver
+
+         environment | command
+         The Linux console | setterm -powersave off
+         The X Window (turning off screensaver) | xset s off
+         The X Window (disabling dpms) | xset -dpms
+         The X Window (GUI configuration of screen saver) | xscreensaver-command -prefs
+
+       9.5.8. DISABLING BEEP SOUNDS
+
+       One can always unplug the PC speaker to disable beep sounds. Removing pcspkr kernel module does this for you.
+
+       The following prevents the readline(3) program used by bash(1) to beep when encountering an alert character (ASCII=7).
+
+         $ echo "set bell-style none">> ~/.inputrc
+
+       9.5.9. MEMORY USAGE
+
+       There are 2 resources available for you to get the memory usage situation.
+
+        * The kernel boot message in the "/var/log/dmesg" contains the total exact size of available memory.
+        * free(1) and top(1) display information on memory resources on the running system.
+       Here is an example.
+
+         # grep '\] Memory' /var/log/dmesg
+         [    0.004000] Memory: 990528k/1016784k available (1975k kernel code, 25868k reserved, 931k data, 296k init)
+         $ free -k
+                      total       used       free     shared    buffers     cached
+         Mem:        997184     976928      20256          0     129592     171932
+         -/+ buffers/cache:     675404     321780
+         Swap:      4545576          4    4545572
+
+       You may be wondering "dmesg tells me a free of 990 MB, and free -k says 320 MB is free. More than 600 MB missing …".
+
+       Do not worry about the large size of "used" and the small size of "free" in the "Mem:" line, but read the one under them (675404 and 321780 in the example above) and relax.
+
+       For my MacBook with 1GB=1048576k DRAM (video system steals some of this), I see the following.
+
+       Table 9.17. List of memory sizes reported
+
+         report | size
+         Total size in dmesg | 1016784k = 1GB - 31792k
+         Free in dmesg | 990528k
+         Total under shell | 997184k
+         Free under shell | 20256k (but effectively 321780k)
+
+       9.5.10. SYSTEM SECURITY AND INTEGRITY CHECK
+
+       Poor system maintenance may expose your system to external exploitation.
+
+       For system security and integrity check, you should start with the following.
+
+        * The debsums package, see debsums(1) and Section 2.5.2, “Top level "Release" file and authenticity”.
+        * The chkrootkit package, see chkrootkit(1).
+        * The clamav package family, see clamscan(1) and freshclam(1).
+        * Debian security FAQ.
+        * Securing Debian Manual.
+       Table 9.18. List of tools for system security and integrity check
+
+         package | popcon | size | description
+         logcheck | V:4.7, I:5.8 | 120 | daemon to mail anomalies in the system logfiles to the administrator
+         debsums | V:4, I:30 | 108 | utility to verify installed package files against MD5 checksums
+         chkrootkit | V:11, I:15 | 988 | rootkit detector
+         clamav | V:9, I:40 | 19861 | anti-virus utility for Unix - command-line interface
+         tiger | V:1.2, I:1.5 | 7800 | report system security vulnerabilities
+         tripwire | V:1.3, I:1.7 | 5060 | file and directory integrity checker
+         john | V:1.1, I:7.7 | 469 | active password cracking tool
+         aide | V:2.2, I:2.6 | 324 | Advanced Intrusion Detection Environment - static binary
+         integrit | V:0.09, I:0.18 | 2759 | file integrity verification program
+         crack | V:0.09, I:0.65 | 153 | password guessing program
+       Here is a simple script to check for typical world writable incorrect file permissions.
+
+         # find / -perm 777 -a \! -type s -a \! -type l -a \! \( -type d -a -perm 1777 \)
+
+         Caution
+       Since the debsums package uses MD5 checksums stored locally, it can not be fully trusted as the system security audit tool against malicious attacks.
+
+       9.6. DATA STORAGE TIPS
+
+       Booting your system as the Linux live system (see Section 3.2.2, “Linux live rescue system on USB” and Section 3.2.3, “Linux live rescue system from GRUB”) makes it easy for you to reconfigure data storage on the installed system.
+
+         Note
+       Statements on hard disk (HDD) are applicable to other storage devices such as SSD / USB flash drive / Memory card / ... . Replace device names in examples such as /dev/sda with applicable device names /dev/nvme0, /dev/mmcblk0, ... .
+
+       You may need to umount(8) some devices manually from the command line before operating on them if they are automatically mounted by the GUI desktop system.
+
+       9.6.1. DISK SPACE USAGE
+
+       The disk space usage can be evaluated by programs provided by the mount, coreutils, and xdu packages:
+
+        * mount(8) reports all mounted filesystems (= disks).
+        * df(1) reports the disk space usage for the file system.
+        * du(1) reports the disk space usage for the directory tree.
+         Tip
+       You can feed the output of du(8) to xdu(1) to produce its graphical and interactive presentation with "du -k . |xdu", "sudo du -k -x / |xdu", etc.
+
+       9.6.2. DISK PARTITION CONFIGURATION
+
+       For disk partition configuration, although fdisk(8) has been considered standard, parted(8) deserves some attention. "Disk partitioning data", "partition table", "partition map", and "disk label" are all synonyms.
+
+       Older PCs use the classic Master Boot Record (MBR) scheme to hold disk partitioning data in the first sector, i.e., LBA sector 0 (512 bytes).
+
+       Recent PCs with Unified Extensible Firmware Interface (UEFI), including Intel-based Macs, use GUID Partition Table (GPT) scheme to hold disk partitioning data not in the first sector.
+
+       Although fdisk(8) has been standard for the disk partitioning tool, parted(8) is replacing it.
+
+       Table 9.19. List of disk partition management packages
+
+         package | popcon | size | description
+         util-linux | V:914, I:1000 | 4758 | miscellaneous system utilities including fdisk(8) and cfdisk(8)
+         parted | V:435, I:565 | 122 | GNU Parted disk partition resizing program
+         gparted | V:11, I:87 | 2313 | GNOME partition editor based on libparted
+         gdisk | V:19, I:264 | 967 | partition editor for the GPT/MBR hybrid disk
+         kpartx | V:16, I:26 | 80 | program to create device mappings for partitions
+         Caution
+       Although parted(8) claims to create and to resize filesystem too, it is safer to do such things using best maintained specialized tools such as mkfs(8) (mkfs.msdos(8), mkfs.ext2(8), mkfs.ext3(8), mkfs.ext4(8), …) and resize2fs(8).
+
+         Note
+       In order to switch between GPT and MBR, you need to erase first few blocks of disk contents directly (see Section 9.8.6, “Clearing file contents”) and use "parted /dev/sdx mklabel gpt" or "parted /dev/sdx mklabel msdos" to set it. Please note "msdos" is use here for MBR.
+
+       9.6.3. ACCESSING PARTITION USING UUID
+
+       Although reconfiguration of your partition or activation order of removable storage media may yield different names for partitions, you can access them consistently. This is also helpful if you have multiple disks and your BIOS/UEFI doesn't give them consistent device names.
+
+        * mount(8) with "-U" option can mount a block device using UUID, instead of using its file name such as "/dev/sda3".
+        * "/etc/fstab" (see fstab(5)) can use UUID.
+        * Boot loaders (Section 3.1.2, “Stage 2: the boot loader”) may use UUID too.
+         Tip
+       You can probe UUID of a block special device with blkid(8).
+
+       You can also probe UUID and other information with "lsblk -f".
+
+       9.6.4. LVM2
+
+       LVM2 is a logical volume manager for the Linux kernel. With LVM2, disk partitions can be created on logical volumes instead of the physical harddisks.
+
+       LVM requires the following.
+
+        * device-mapper support in the Linux kernel (default for Debian kernels)
+        * the userspace device-mapper support library (libdevmapper* package)
+        * the userspace LVM2 tools (lvm2 package)
+       Please start learning LVM2 from the following manpages.
+
+        * lvm(8): Basics of LVM2 mechanism (list of all LVM2 commands)
+        * lvm.conf(5): Configuration file for LVM2
+        * lvs(8): Report information about logical volumes
+        * vgs(8): Report information about volume groups
+        * pvs(8): Report information about physical volumes
+
+       9.6.5. FILESYSTEM CONFIGURATION
+
+       For ext4 filesystem, the e2fsprogs package provides the following.
+
+        * mkfs.ext4(8) to create new ext4 filesystem
+        * fsck.ext4(8) to check and to repair existing ext4 filesystem
+        * tune2fs(8) to configure superblock of ext4 filesystem
+        * debugfs(8) to debug ext4 filesystem interactively. (It has undel command to recover deleted files.)
+       The mkfs(8) and fsck(8) commands are provided by the e2fsprogs package as front-ends to various filesystem dependent programs (mkfs.fstype and fsck.fstype). For ext4 filesystem, they are mkfs.ext4(8) and fsck.ext4(8) (they are symlinked to mke2fs(8) and e2fsck(8)).
+
+       Similar commands are available for each filesystem supported by Linux.
+
+       Table 9.20. List of filesystem management packages
+
+         package | popcon | size | description
+         e2fsprogs | V:828, I:998 | 1560 | utilities for the ext2/ext3/ext4 filesystems
+         btrfs-progs | V:52, I:79 | 5255 | utilities for the Btrfs filesystem
+         reiserfsprogs | V:10, I:21 | 473 | utilities for the Reiserfs filesystem
+         zfsutils-linux | V:33, I:33 | 1904 | utilities for the OpenZFS filesystem
+         dosfstools | V:260, I:564 | 310 | utilities for the FAT filesystem. (Microsoft: MS-DOS, Windows)
+         exfatprogs | V:35, I:459 | 558 | utilities for the exFAT filesystem maintained by Samsung.
+         exfat-fuse | V:2, I:43 | 73 | read/write exFAT filesystem (Microsoft) driver for FUSE.
+         xfsprogs | V:41, I:86 | 4382 | utilities for the XFS filesystem. (SGI: IRIX)
+         ntfs-3g | V:175, I:509 | 1507 | read/write NTFS filesystem (Microsoft: Windows NT, …) driver for FUSE.
+         jfsutils | V:0.4, I:6.7 | 1104 | utilities for the JFS filesystem. (IBM: AIX, OS/2)
+         xorriso | V:14, I:65 | 378 | utilities for the ISO-9660 filesystem and CD/DVD writing from libburnia
+         wodim | V:7, I:87 | 898 | command line CD/DVD writing tool from cdrkit
+         genisoimage | V:16, I:158 | 1567 | command line ISO-9660 filesystem tool from cdrkit
+         reiser4progs | V:0.1, I:1.2 | 1367 | utilities for the Reiser4 filesystem
+         hfsprogs | V:0.3, I:3.2 | 394 | utilities for HFS and HFS Plus filesystem. (Apple: Mac OS)
+         zerofree | V:7, I:117 | 30 | program to zero free blocks from ext2/3/4 filesystems
+         Tip
+       Ext4 filesystem is the default filesystem for the Linux system and strongly recommended to use it unless you have some specific reasons not to.
+
+       Btrfs status can be found at Debian wiki on btrfs and kernel.org wiki on btrfs. It is expected to be the next default filesystem after the ext4 filesystem.
+
+       Some tools allow access to filesystem without Linux kernel support (see Section 9.8.2, “Manipulating files without mounting disk”).
+
+       9.6.6. FILESYSTEM CREATION AND INTEGRITY CHECK
+
+       The mkfs(8) command creates the filesystem on a Linux system. The fsck(8) command provides the filesystem integrity check and repair on a Linux system.
+
+       Debian now defaults to no periodic fsck after filesystem creation.
+
+         Caution
+       It is generally not safe to run fsck on mounted filesystems.
+
+         Tip
+       You can run the fsck(8) command safely on all filesystems including root filesystem on reboot by setting "enable_periodic_fsck" in "/etc/mke2fs.conf" and the max mount count to 0 using "tune2fs -c0 /dev/partition_name". See mke2fs.conf(5) and tune2fs(8).
+
+       Check files in "/var/log/fsck/" for the result of the fsck(8) command run from the boot script.
+
+       9.6.7. OPTIMIZATION OF FILESYSTEM BY MOUNT OPTIONS
+
+       The basic static filesystem configuration is given by "/etc/fstab". For example,
+
+         «file system»                   «mount point» «type» «options»    «dump» «pass»
+         proc                                      /proc proc   defaults          0 0
+         UUID=709cbe4c-80c1-56db-8ab1-dbce3146d2f7 /     ext4   errors=remount-ro 0 1
+         UUID=817bae6b-45d2-5aca-4d2a-1267ab46ac23 none  swap   sw                0 0
+         /dev/scd0                        /media/cdrom0  udf,iso9660 user,noauto  0 0
+
+         Tip
+       UUID (see Section 9.6.3, “Accessing partition using UUID”) may be used to identify a block device instead of normal block device names such as "/dev/sda1", "/dev/sda2", …
+
+       Since Linux 2.6.30, the kernel defaults to the behavior provided by "relatime" option.
+
+       See fstab(5) and mount(8).
+
+       9.6.8. OPTIMIZATION OF FILESYSTEM VIA SUPERBLOCK
+
+       Characteristics of a filesystem can be optimized via its superblock using the tune2fs(8) command.
+
+        * Execution of "sudo tune2fs -l /dev/sda1" displays the contents of the filesystem superblock on "/dev/sda1".
+        * Execution of "sudo tune2fs -c 50 /dev/sda1" changes frequency of filesystem checks (fsck execution during boot-up) to every 50 boots on "/dev/sda1".
+        * Execution of "sudo tune2fs -j /dev/sda1" adds journaling capability to the filesystem, i.e. filesystem conversion from ext2 to ext3 on "/dev/sda1". (Do this on the unmounted filesystem.)
+        * Execution of "sudo tune2fs -O extents,uninit_bg,dir_index /dev/sda1 && fsck -pf /dev/sda1" converts it from ext3 to ext4 on "/dev/sda1". (Do this on the unmounted filesystem.)
+         Tip
+       Despite its name, tune2fs(8) works not only on the ext2 filesystem but also on the ext3 and ext4 filesystems.
+
+       9.6.9. OPTIMIZATION OF HARD DISK
+
+         Warning
+       Please check your hardware and read manpage of hdparm(8) before playing with hard disk configuration because this may be quite dangerous for the data integrity.
+
+       You can test disk access speed of a hard disk, e.g. "/dev/sda", by "hdparm -tT /dev/sda". For some hard disk connected with (E)IDE, you can speed it up with "hdparm -q -c3 -d1 -u1 -m16 /dev/sda" by enabling the "(E)IDE 32-bit I/O support", enabling the "using_dma flag", setting "interrupt-unmask flag", and setting the "multiple 16 sector I/O" (dangerous!).
+
+       You can test write cache feature of a hard disk, e.g. "/dev/sda", by "hdparm -W /dev/sda". You can disable its write cache feature with "hdparm -W 0 /dev/sda".
+
+       You may be able to read badly pressed CDROMs on modern high speed CD-ROM drive by slowing it down with "setcd -x 2".
+
+       9.6.10. OPTIMIZATION OF SOLID STATE DRIVE
+
+       Solid state drive (SSD) is auto detected now.
+
+       Reduce unnecessary disk accesses to prevent disk wear out by mounting "tmpfs" on volatile data path in /etc/fstab.
+
+       9.6.11. USING SMART TO PREDICT HARD DISK FAILURE
+
+       You can monitor and log your hard disk which is compliant to SMART with the smartd(8) daemon.
+
+        * Enable SMART feature in BIOS.
+        * Install the smartmontools package.
+        * Identify your hard disk drives by listing them with df(1).
+          * Let's assume a hard disk drive to be monitored as "/dev/sda".
+        * Check the output of "smartctl -a /dev/sda" to see if SMART feature is actually enabled.
+          * If not, enable it by "smartctl -s on -a /dev/sda".
+        * Enable smartd(8) daemon to run by the following.
+          * uncomment "start_smartd=yes" in the "/etc/default/smartmontools" file.
+          * restart the smartd(8) daemon by "sudo systemctl restart smartmontools".
+         Tip
+       The smartd(8) daemon can be customized with the /etc/smartd.conf file including how to be notified of warnings.
+
+       9.6.12. SPECIFY TEMPORARY STORAGE DIRECTORY VIA TMPDIR
+
+       Applications create temporary files normally under the temporary storage directory "/tmp". If "/tmp" does not provide enough space, you can specify such temporary storage directory via the $TMPDIR variable for well-behaving programs.
+
+       9.6.13. EXPANSION OF USABLE STORAGE SPACE VIA LVM
+
+       For partitions created on Logical Volume Manager (LVM) (Linux feature) at install time, they can be resized easily by concatenating extents onto them or truncating extents from them over multiple storage devices without major system reconfiguration.
+
+       9.6.14. EXPANSION OF USABLE STORAGE SPACE BY MOUNTING ANOTHER PARTITIO
+
+       If you have an empty partition (e.g., "/dev/sdx"), you can format it with mkfs.ext4(1) and mount(8) it to a directory where you need more space. (You need to copy original data contents.)
+
+         $ sudo mv work-dir old-dir
+         $ sudo mkfs.ext4 /dev/sdx
+         $ sudo mount -t ext4 /dev/sdx work-dir
+         $ sudo cp -a old-dir/* work-dir
+         $ sudo rm -rf old-dir
+
+         Tip
+       You may alternatively mount an empty disk image file (see Section 9.7.5, “Making the empty disk image file”) as a loop device (see Section 9.7.3, “Mounting the disk image file”). The actual disk usage grows with the actual data stored.
+
+       9.6.15. EXPANSION OF USABLE STORAGE SPACE BY BIND-MOUNTING ANOTHER DIR
+
+       If you have an empty directory (e.g., "/path/to/emp-dir") on another partition with usable space, you can mount(8) it with "--bind" option to a directory (e.g., "work-dir") where you need more space.
+
+         $ sudo mount --bind /path/to/emp-dir work-dir
+
+       9.6.16. EXPANSION OF USABLE STORAGE SPACE BY OVERLAY-MOUNTING ANOTHER
+
+       If you have usable space in another partition (e.g., "/path/to/empty" and "/path/to/work"), you can create a directory in it and stack that on to an old directory (e.g., "/path/to/old") where you need space using the OverlayFS for Linux kernel 3.18 or newer (Debian Stretch 9.0 or newer).
+
+         $ sudo mount -t overlay overlay \
+           -olowerdir=/path/to/old-dir,upperdir=/path/to/empty,workdir=/path/to/work
+
+       Here, "/path/to/empty" and "/path/to/work" should be on the RW-enabled partition to write on "/path/to/old".
+
+       9.6.17. EXPANSION OF USABLE STORAGE SPACE USING SYMLINK
+
+         Caution
+       This is a deprecated method. Some software may not function well with "symlink to a directory". Instead, use the "mounting" approaches described in the above.
+
+       If you have an empty directory (e.g., "/path/to/emp-dir") in another partition with usable space, you can create a symlink to the directory with ln(8).
+
+         $ sudo mv work-dir old-dir
+         $ sudo mkdir -p /path/to/emp-dir
+         $ sudo ln -sf /path/to/emp-dir work-dir
+         $ sudo cp -a old-dir/* work-dir
+         $ sudo rm -rf old-dir
+
+         Warning
+       Do not use "symlink to a directory" for directories managed by the system such as "/opt". Such a symlink may be overwritten when the system is upgraded.
+
+       9.7. THE DISK IMAGE
+
+       Here, we discuss manipulations of the disk image.
+
+       9.7.1. MAKING THE DISK IMAGE FILE
+
+       The disk image file, "disk.img", of an unmounted device, e.g., the second SCSI or serial ATA drive "/dev/sdb", can be made by one of the following.
+
+         # dd if=/dev/sdb of=disk.img; sync
+
+         # cp /dev/sdb disk.img ; sync
+
+         # cat /dev/sdb > disk.img ; sync
+
+       The disk image of the traditional PC's master boot record (MBR) (see Section 9.6.2, “Disk partition configuration”) which reside on the first sector on the primary IDE disk can be made by using dd(1) by the following.
+
+         # dd if=/dev/sda of=mbr.img bs=512 count=1
+         # dd if=/dev/sda of=mbr-nopart.img bs=446 count=1
+         # dd if=/dev/sda of=mbr-part.img skip=446 bs=1 count=66
+
+        * "mbr.img": The MBR with the partition table
+        * "mbr-nopart.img": The MBR without the partition table
+        * "mbr-part.img": The partition table of the MBR only
+       If you are making an image of a disk partition of the original disk, substitute "/dev/sda" with "/dev/sda1" etc.
+
+       9.7.2. WRITING DIRECTLY TO THE DISK
+
+       The disk image file, "disk.img" can be written to an unmounted device, e.g., the second SCSI drive "/dev/sdb" with matching size, by one of the following.
+
+         # dd if=disk.img of=/dev/sdb ; sync
+
+         # cp disk.img /dev/sdb ; sync
+
+         # cat disk.img >/dev/sdb ; sync
+
+       Similarly, the disk partition image file, "partition.img" can be written to an unmounted partition, e.g., the first partition of the second SCSI drive "/dev/sdb1" with matching size, by the following.
+
+         # dd if=partition.img of=/dev/sdb1 ; sync
+
+       9.7.3. MOUNTING THE DISK IMAGE FILE
+
+       The disk image "partition.img" containing a single partition image can be mounted and unmounted by using the loop device as follows.
+
+         # losetup --show -f partition.img
+         /dev/loop0
+         # mkdir -p /mnt/loop0
+         # mount -t auto /dev/loop0 /mnt/loop0
+         ...hack...hack...hack
+         # umount /dev/loop0
+         # losetup -d /dev/loop0
+
+       This can be simplified as follows.
+
+         # mkdir -p /mnt/loop0
+         # mount -t auto -o loop partition.img /mnt/loop0
+         ...hack...hack...hack
+         # umount partition.img
+
+       Each partition of the disk image "disk.img" containing multiple partitions can be mounted by using the loop device.
+
+         # losetup --show -f -P disk.img
+         /dev/loop0
+         # ls -l /dev/loop0*
+         brw-rw---- 1 root disk   7,  0 Apr  2 22:51 /dev/loop0
+         brw-rw---- 1 root disk 259, 12 Apr  2 22:51 /dev/loop0p1
+         brw-rw---- 1 root disk 259, 13 Apr  2 22:51 /dev/loop0p14
+         brw-rw---- 1 root disk 259, 14 Apr  2 22:51 /dev/loop0p15
+         # fdisk -l /dev/loop0
+         Disk /dev/loop0: 2 GiB, 2147483648 bytes, 4194304 sectors
+         Units: sectors of 1 * 512 = 512 bytes
+         Sector size (logical/physical): 512 bytes / 512 bytes
+         I/O size (minimum/optimal): 512 bytes / 512 bytes
+         Disklabel type: gpt
+         Disk identifier: 6A1D9E28-C48C-2144-91F7-968B3CBC9BD1
+
+         Device         Start     End Sectors  Size Type
+         /dev/loop0p1  262144 4192255 3930112  1.9G Linux root (x86-64)
+         /dev/loop0p14   2048    8191    6144    3M BIOS boot
+         /dev/loop0p15   8192  262143  253952  124M EFI System
+
+         Partition table entries are not in disk order.
+         # mkdir -p /mnt/loop0p1
+         # mkdir -p /mnt/loop0p15
+         # mount -t auto /dev/loop0p1 /mnt/loop0p1
+         # mount -t auto /dev/loop0p15 /mnt/loop0p15
+         # mount |grep loop
+         /dev/loop0p1 on /mnt/loop0p1 type ext4 (rw,relatime)
+         /dev/loop0p15 on /mnt/loop0p15 type vfat (rw,relatime,fmask=0002,dmask=0002,allow_utime=0020,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro)
+         ...hack...hack...hack
+         # umount /dev/loop0p1
+         # umount /dev/loop0p15
+         # losetup -d /dev/loop0
+
+       Alternatively, similar effects can be done by using the device mapper devices created by kpartx(8) from the kpartx package as follows.
+
+         # kpartx -a -v disk.img
+         add map loop0p1 (253:0): 0 3930112 linear 7:0 262144
+         add map loop0p14 (253:1): 0 6144 linear 7:0 2048
+         add map loop0p15 (253:2): 0 253952 linear 7:0 8192
+         # fdisk -l /dev/loop0
+         Disk /dev/loop0: 2 GiB, 2147483648 bytes, 4194304 sectors
+         Units: sectors of 1 * 512 = 512 bytes
+         Sector size (logical/physical): 512 bytes / 512 bytes
+         I/O size (minimum/optimal): 512 bytes / 512 bytes
+         Disklabel type: gpt
+         Disk identifier: 6A1D9E28-C48C-2144-91F7-968B3CBC9BD1
+
+         Device         Start     End Sectors  Size Type
+         /dev/loop0p1  262144 4192255 3930112  1.9G Linux root (x86-64)
+         /dev/loop0p14   2048    8191    6144    3M BIOS boot
+         /dev/loop0p15   8192  262143  253952  124M EFI System
+
+         Partition table entries are not in disk order.
+         # ls -l /dev/mapper/
+         total 0
+         crw------- 1 root root 10, 236 Apr  2 22:45 control
+         lrwxrwxrwx 1 root root       7 Apr  2 23:19 loop0p1 -> ../dm-0
+         lrwxrwxrwx 1 root root       7 Apr  2 23:19 loop0p14 -> ../dm-1
+         lrwxrwxrwx 1 root root       7 Apr  2 23:19 loop0p15 -> ../dm-2
+         # mkdir -p /mnt/loop0p1
+         # mkdir -p /mnt/loop0p15
+         # mount -t auto /dev/mapper/loop0p1 /mnt/loop0p1
+         # mount -t auto /dev/mapper/loop0p15 /mnt/loop0p15
+         # mount |grep loop
+         /dev/loop0p1 on /mnt/loop0p1 type ext4 (rw,relatime)
+         /dev/loop0p15 on /mnt/loop0p15 type vfat (rw,relatime,fmask=0002,dmask=0002,allow_utime=0020,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro)
+         ...hack...hack...hack
+         # umount /dev/mapper/loop0p1
+         # umount /dev/mapper/loop0p15
+         # kpartx -d disk.img
+
+       9.7.4. CLEANING A DISK IMAGE FILE
+
+       A disk image file, "disk.img" can be cleaned of all removed files into clean sparse image "new.img" by the following.
+
+         # mkdir old; mkdir new
+         # mount -t auto -o loop disk.img old
+         # dd bs=1 count=0 if=/dev/zero of=new.img seek=5G
+         # mount -t auto -o loop new.img new
+         # cd old
+         # cp -a --sparse=always ./ ../new/
+         # cd ..
+         # umount new.img
+         # umount disk.img
+
+       If "disk.img" is in ext2, ext3 or ext4, you can also use zerofree(8) from the zerofree package as follows.
+
+         # losetup --show -f disk.img
+         /dev/loop0
+         # zerofree /dev/loop0
+         # cp --sparse=always disk.img new.img
+         # losetup -d /dev/loop0
+
+       9.7.5. MAKING THE EMPTY DISK IMAGE FILE
+
+       The empty disk image "disk.img" which can grow up to 5GiB can be made using dd(1) as follows.
+
+         $ dd bs=1 count=0 if=/dev/zero of=disk.img seek=5G
+
+       Instead of using dd(1), specialized fallocate(8) may be used here.
+
+       You can create an ext4 filesystem on this disk image "disk.img" using the loop device as follows.
+
+         # losetup --show -f disk.img
+         /dev/loop0
+         # mkfs.ext4 /dev/loop0
+         ...hack...hack...hack
+         # losetup -d /dev/loop0
+         $ du  --apparent-size -h disk.img
+         5.0G  disk.img
+         $ du -h disk.img
+         83M disk.img
+
+       For "disk.img", its file size is 5.0 GiB and its actual disk usage is mere 83MiB. This discrepancy is possible since ext4 can hold sparse file.
+
+         Tip
+       The actual disk usage of sparse file grows with data which are written to it.
+
+       Using similar operation on devices created by the loop device or the device mapper devices as Section 9.7.3, “Mounting the disk image file”, you can partition this disk image "disk.img" using parted(8) or fdisk(8), and can create filesystem on it using mkfs.ext4(8), mkswap(8), etc.
+
+       9.7.6. MAKING THE ISO9660 IMAGE FILE
+
+         Tip
+       Both genisoimage(1) provided by cdrkit and xorrisofs(1) provided by Libburnia share the same command syntax except for the command name.
+
+       The ISO9660 image file, "cd.iso", from the source directory tree at "source_directory" can be made using genisoimage(1) provided by cdrkit by the following.
+
+         #  genisoimage -r -J -T -V volume_id -o cd.iso source_directory
+
+       Similarly, the bootable ISO9660 image file, "cdboot.iso", can be made from debian-installer like directory tree at "source_directory" by the following.
+
+         #  genisoimage -r -o cdboot.iso -V volume_id \
+            -b isolinux/isolinux.bin -c isolinux/boot.cat \
+            -no-emul-boot -boot-load-size 4 -boot-info-table source_directory
+
+       Here Isolinux boot loader (see Section 3.1.2, “Stage 2: the boot loader”) is used for booting.
+
+       You can calculate the md5sum value and make the ISO9660 image directly from the CD-ROM device as follows.
+
+         $ isoinfo -d -i /dev/cdrom
+         CD-ROM is in ISO 9660 format
+         ...
+         Logical block size is: 2048
+         Volume size is: 23150592
+         ...
+         # dd if=/dev/cdrom bs=2048 count=23150592 conv=notrunc,noerror | md5sum
+         # dd if=/dev/cdrom bs=2048 count=23150592 conv=notrunc,noerror > cd.iso
+
+         Warning
+       You must carefully avoid ISO9660 filesystem read ahead bug of Linux as above to get the right result.
+
+       9.7.7. WRITING DIRECTLY TO THE CD/DVD-R/RW
+
+         Tip
+       DVD is only a large CD to wodim(1) provided by cdrkit and xorrecord(1) provided by Libburnia. These commands share the same command syntax except for the command name.
+
+       You can find a usable device by the following.
+
+         # wodim --devices
+
+       Then the blank CD-R is inserted to the CD drive, and the ISO9660 image file, "cd.iso" is written to this device, e.g., "/dev/sda", using wodim(1) by the following.
+
+         # wodim -v -eject dev=/dev/sda cd.iso
+
+       If CD-RW is used instead of CD-R, do this instead by the following.
+
+         # wodim -v -eject blank=fast dev=/dev/sda cd.iso
+
+         Tip
+       If your desktop system mounts CDs automatically, unmount it by "sudo umount /dev/sda" from console before using wodim(1).
+
+       9.7.8. MOUNTING THE ISO9660 IMAGE FILE
+
+       If "cd.iso" contains an ISO9660 image, then the following manually mounts it to "/cdrom".
+
+         # mount -t iso9660 -o ro,loop cd.iso /cdrom
+
+         Tip
+       Modern desktop system may mount removable media such as ISO9660 formatted CD automatically (see Section 10.1.7, “Removable storage device”).
+
+       9.8. THE BINARY DATA
+
+       Here, we discuss direct manipulations of the binary data on storage media.
+
+       9.8.1. VIEWING AND EDITING BINARY DATA
+
+       The most basic viewing method of binary data is to use "od -t x1" command.
+
+       Table 9.21. List of packages which view and edit binary data
+
+         package | popcon | size | description
+         coreutils | V:910, I:1000 | 17994 | basic package which has od(1) to dump files (HEX, ASCII, OCTAL, …)
+         bsdmainutils | V:4, I:131 | 17 | utility package which has hd(1) to dump files (HEX, ASCII, OCTAL, …)
+         hexedit | V:0.8, I:8.1 | 70 | binary editor and viewer (HEX, ASCII)
+         bless | V:0.1, I:1.4 | 924 | full featured hexadecimal editor (GNOME)
+         okteta | V:1, I:10 | 1589 | full featured hexadecimal editor (KDE4)
+         ncurses-hexedit | V:0.1, I:1.3 | 130 | binary editor and viewer (HEX, ASCII, EBCDIC)
+         beav | V:0.04, I:0.30 | 137 | binary editor and viewer (HEX, ASCII, EBCDIC, OCTAL, …)
+         Tip
+       HEX is used as an acronym for hexadecimal format with radix 16. OCTAL is for octal format with radix 8. ASCII is for American Standard Code for Information Interchange, i.e., normal English text code. EBCDIC is for Extended Binary Coded Decimal Interchange Code used on IBM mainframe operating systems.
+
+       9.8.2. MANIPULATING FILES WITHOUT MOUNTING DISK
+
+       There are tools to read and write files without mounting disk.
+
+       Table 9.22. List of packages to manipulate files without mounting disk
+
+         package | popcon | size | description
+         mtools | V:7, I:53 | 400 | utilities for MSDOS files without mounting them
+         hfsutils | V:0.2, I:2.8 | 178 | utilities for HFS and HFS+ files without mounting them
+
+       9.8.3. DATA REDUNDANCY
+
+       Software RAID systems offered by the Linux kernel provide data redundancy in the kernel filesystem level to achieve high levels of storage reliability.
+
+       There are tools to add data redundancy to files in application program level to achieve high levels of storage reliability, too.
+
+       Table 9.23. List of tools to add data redundancy to files
+
+         package | popcon | size | description
+         par2 | V:9, I:116 | 297 | Parity Archive Volume Set, for checking and repair of files
+         dvdisaster | V:0.1, I:1.2 | 1422 | data loss/scratch/aging protection for CD/DVD media
+         dvbackup | V:0.01, I:0.04 | 413 | backup tool using MiniDV camcorders (providing rsbep(1))
+
+       9.8.4. DATA FILE RECOVERY AND FORENSIC ANALYSIS
+
+       There are tools for data file recovery and forensic analysis.
+
+       Table 9.24. List of packages for data file recovery and forensic analysis
+
+         package | popcon | size | description
+         testdisk | V:2, I:26 | 2276 | utilities for partition scan and disk recovery
+         magicrescue | V:0.2, I:1.9 | 257 | utility to recover files by looking for magic bytes
+         scalpel | V:0.2, I:2.4 | 89 | frugal, high performance file carver
+         myrescue | V:0.2, I:2.1 | 81 | rescue data from damaged harddisks
+         extundelete | V:0.5, I:7.8 | 152 | utility to undelete files on the ext3/4 filesystem
+         ext4magic | V:0.3, I:3.7 | 235 | utility to undelete files on the ext3/4 filesystem
+         ext3grep | V:0.2, I:2.0 | 299 | tool to help recover deleted files on the ext3 filesystem
+         scrounge-ntfs | V:0.2, I:1.7 | 49 | data recovery program for NTFS filesystems
+         gzrt | V:0.02, I:0.47 | 34 | gzip recovery toolkit
+         sleuthkit | V:2, I:25 | 1119 | tools for forensics analysis. (Sleuthkit)
+         autopsy | V:0.2, I:1.3 | 1026 | graphical interface to SleuthKit
+         foremost | V:0.4, I:4.2 | 101 | forensics application to recover data
+         guymager | V:0.14, I:0.82 | 1049 | forensic imaging tool based on Qt
+         dcfldd | V:0.3, I:2.8 | 113 | enhanced version of dd for forensics and security
+         Tip
+       You can undelete files on the ext2 filesystem using list_deleted_inodes and undel commands of debugfs(8) in the e2fsprogs package.
+
+       9.8.5. SPLITTING A LARGE FILE INTO SMALL FILES
+
+       When a data is too big to backup as a single file, you can backup its content after splitting it into, e.g. 2000MiB chunks and merge those chunks back into the original file later.
+
+         $ split -b 2000m large_file
+         $ cat x* >large_file
+
+         Caution
+       Please make sure you do not have any files starting with "x" to avoid name crashes.
+
+       9.8.6. CLEARING FILE CONTENTS
+
+       In order to clear the contents of a file such as a log file, do not use rm(1) to delete the file and then create a new empty file, because the file may still be accessed in the interval between commands. The following is the safe way to clear the contents of the file.
+
+         $ :>file_to_be_cleared
+
+       9.8.7. DUMMY FILES
+
+       The following commands create dummy or empty files.
+
+         $ dd if=/dev/zero    of=5kb.file bs=1k count=5
+         $ dd if=/dev/urandom of=7mb.file bs=1M count=7
+         $ touch zero.file
+         $ : > alwayszero.file
+
+       You should find following files.
+
+        * "5kb.file" is 5KB of zeros.
+        * "7mb.file" is 7MB of random data.
+        * "zero.file" may be a 0 byte file. If it existed, its mtime is updated while its content and its length are kept.
+        * "alwayszero.file" is always a 0 byte file. If it existed, its mtime is updated and its content is reset.
+
+       9.8.8. ERASING AN ENTIRE HARD DISK
+
+       There are several ways to completely erase data from an entire hard disk like device, e.g., USB flash drive at "/dev/sda".
+
+         Caution
+       Check your USB flash drive location with mount(8) first before executing commands here. The device pointed by "/dev/sda" may be SCSI hard disk or serial-ATA hard disk where your entire system resides.
+
+       Erase all the disk content by resetting data to 0 with the following.
+
+         # dd if=/dev/zero of=/dev/sda
+
+       Erase everything by overwriting with random data as follows.
+
+         # dd if=/dev/urandom of=/dev/sda
+
+       Erase everything by overwriting with random data very efficiently as follows.
+
+         # shred -v -n 1 /dev/sda
+
+       You may alternatively use badblocks(8) with -t random option.
+
+       Since dd(1) is available from the shell of many bootable Linux CDs such as Debian installer CD, you can erase your installed system completely by running an erase command from such media on the system hard disk, e.g., "/dev/sda", "/dev/sda", etc.
+
+       9.8.9. ERASING UNUSED AREA OF AN HARD DISK
+
+       Unused area on an hard disk (or USB flash drive), e.g. "/dev/sdb1" may still contain erased data themselves since they are only unlinked from the filesystem. These can be cleaned by overwriting them.
+
+         # mount -t auto /dev/sdb1 /mnt/foo
+         # cd /mnt/foo
+         # dd if=/dev/zero of=junk
+         dd: writing to `junk': No space left on device
+         ...
+         # sync
+         # umount /dev/sdb1
+
+         Warning
+       This is usually good enough for your USB flash drive. But this is not perfect. Most parts of erased filenames and their attributes may be hidden and remain in the filesystem.
+
+       9.8.10. UNDELETING DELETED BUT STILL OPEN FILES
+
+       Even if you have accidentally deleted a file, as long as that file is still being used by some application (read or write mode), it is possible to recover such a file.
+
+       For example, try the following
+
+         $ echo foo > bar
+         $ less bar
+         $ ps aux | grep ' less[ ]'
+         bozo    4775  0.0  0.0  92200   884 pts/8    S+   00:18   0:00 less bar
+         $ rm bar
+         $ ls -l /proc/4775/fd | grep bar
+         lr-x------ 1 bozo bozo 64 2008-05-09 00:19 4 -> /home/bozo/bar (deleted)
+         $ cat /proc/4775/fd/4 >bar
+         $ ls -l
+         -rw-r--r-- 1 bozo bozo 4 2008-05-09 00:25 bar
+         $ cat bar
+         foo
+
+       Execute on another terminal (when you have the lsof package installed) as follows.
+
+         $ ls -li bar
+         2228329 -rw-r--r-- 1 bozo bozo 4 2008-05-11 11:02 bar
+         $ lsof |grep bar|grep less
+         less 4775 bozo 4r REG 8,3 4 2228329 /home/bozo/bar
+         $ rm bar
+         $ lsof |grep bar|grep less
+         less 4775 bozo 4r REG 8,3 4 2228329 /home/bozo/bar (deleted)
+         $ cat /proc/4775/fd/4 >bar
+         $ ls -li bar
+         2228302 -rw-r--r-- 1 bozo bozo 4 2008-05-11 11:05 bar
+         $ cat bar
+         foo
+
+       9.8.11. SEARCHING ALL HARDLINKS
+
+       Files with hardlinks can be identified by "ls -li".
+
+         $ ls -li
+         total 0
+         2738405 -rw-r--r-- 1 root root 0 2008-09-15 20:21 bar
+         2738404 -rw-r--r-- 2 root root 0 2008-09-15 20:21 baz
+         2738404 -rw-r--r-- 2 root root 0 2008-09-15 20:21 foo
+
+       Both "baz" and "foo" have link counts of "2" (>1) showing them to have hardlinks. Their inode numbers are common "2738404". This means they are the same hardlinked file. If you do not happen to find all hardlinked files by chance, you can search it by the inode, e.g., "2738404" as the following.
+
+         # find /path/to/mount/point -xdev -inum 2738404
+
+       9.8.12. INVISIBLE DISK SPACE CONSUMPTION
+
+       All deleted but open files consume disk space although they are not visible from normal du(1). They can be listed with their size by the following.
+
+         # lsof -s -X / |grep deleted
+
+       9.9. DATA ENCRYPTION TIPS
+
+       With physical access to your PC, anyone can easily gain root privilege and access all the files on your PC (see Section 4.6.4, “Securing the root password”). This means that login password system can not secure your private and sensitive data against possible theft of your PC. You must deploy data encryption technology to do it. Although GNU privacy guard (see Section 10.3, “Data security infrastructure”) can encrypt files, it takes some user efforts.
+
+       Dm-crypt facilitates automatic data encryption via native Linux kernel modules with minimal user efforts using device-mapper.
+
+       Table 9.25. List of data encryption utilities
+
+         package | popcon | size | description
+         cryptsetup | V:35, I:80 | 465 | utilities for encrypted block device (dm-crypt / LUKS)
+         cryptmount | V:2.0, I:2.6 | 236 | utilities for encrypted block device (dm-crypt / LUKS) with focus on mount/unmount by normal users
+         fscrypt | V:0.4, I:1.1 | 6545 | utilities for Linux filesystem encryption (fscrypt)
+         libpam-fscrypt | V:0.29, I:0.34 | 6594 | PAM module for Linux filesystem encryption (fscrypt)
+         Caution
+       Data encryption costs CPU time etc. Encrypted data becomes inaccessible if its password is lost. Please weigh its benefits and costs.
+
+         Note
+       Entire Debian system can be installed on a encrypted disk by the debian-installer (lenny or newer) using dm-crypt/LUKS and initramfs.
+
+         Tip
+       See Section 10.3, “Data security infrastructure” for user space encryption utility: GNU Privacy Guard.
+
+       9.9.1. REMOVABLE DISK ENCRYPTION WITH DM-CRYPT/LUKS
+
+       You can encrypt contents of removable mass devices, e.g. USB flash drive on "/dev/sdx", using dm-crypt/LUKS. You simply format it as the following.
+
+         # fdisk /dev/sdx
+         ... "n" "p" "1" "return" "return" "w"
+         # cryptsetup luksFormat /dev/sdx1
+         ...
+         # cryptsetup open /dev/sdx1 secret
+         ...
+         # ls -l /dev/mapper/
+         total 0
+         crw-rw---- 1 root root  10, 60 2021-10-04 18:44 control
+         lrwxrwxrwx 1 root root       7 2021-10-04 23:55 secret -> ../dm-0
+         # mkfs.vfat /dev/mapper/secret
+         ...
+         # cryptsetup close secret
+
+       Then, it can be mounted just like normal one on to "/media/username/disk_label", except for asking password (see Section 10.1.7, “Removable storage device”) under modern desktop environment using the udisks2 package. The difference is that every data written to it is encrypted. The password entry may be automated using keyring (see Section 10.3.6, “Password keyring”).
+
+       You may alternatively format media in different filesystem, e.g., ext4 with "mkfs.ext4 /dev/mapper/sdx1". If btrfs is used instead, the udisks2-btrfs package needs to be installed. For these filesystems, the file ownership and permissions may need to be configured.
+
+       9.9.2. MOUNTING ENCRYPTED DISK WITH DM-CRYPT/LUKS
+
+       For example, an encrypted disk partition created with dm-crypt/LUKS on "/dev/sdc5" by Debian Installer can be mounted onto "/mnt" as follows:
+
+         $ sudo cryptsetup open /dev/sdc5 ninja --type luks
+         Enter passphrase for /dev/sdc5: ****
+         $ sudo lvm
+         lvm> lvscan
+           inactive          '/dev/ninja-vg/root' [13.52 GiB] inherit
+           inactive          '/dev/ninja-vg/swap_1' [640.00 MiB] inherit
+           ACTIVE            '/dev/goofy/root' [180.00 GiB] inherit
+           ACTIVE            '/dev/goofy/swap' [9.70 GiB] inherit
+         lvm> lvchange -a y /dev/ninja-vg/root
+         lvm> exit
+           Exiting.
+         $ sudo mount /dev/ninja-vg/root /mnt
+
+       9.10. THE KERNEL
+
+       Debian distributes modularized Linux kernel as packages for supported architectures.
+
+       If you are reading this documentation, you probably don't need to compile Linux kernel by yourself.
+
+       9.10.1. KERNEL PARAMETERS
+
+       Many Linux features are configurable via kernel parameters as follows.
+
+        * Kernel parameters initialized by the bootloader (see Section 3.1.2, “Stage 2: the boot loader”)
+        * Kernel parameters changed by sysctl(8) at runtime for ones accessible via sysfs (see Section 1.2.12, “procfs and sysfs”)
+        * Module parameters set by arguments of modprobe(8) when a module is activated (see Section 9.7.3, “Mounting the disk image file”)
+       See "The Linux kernel user’s and administrator’s guide » The kernel’s command-line parameters" for the detail.
+
+       9.10.2. KERNEL HEADERS
+
+       Most normal programs don't need kernel headers and in fact may break if you use them directly for compiling. They should be compiled against the headers in "/usr/include/linux" and "/usr/include/asm" provided by the libc6-dev package (created from the glibc source package) on the Debian system.
+
+         Note
+       For compiling some kernel-specific programs such as the kernel modules from the external source and the automounter daemon (amd), you must include path to the corresponding kernel headers, e.g. "-I/usr/src/linux-particular-version/include/", to your command line.
+
+       9.10.3. COMPILING THE KERNEL AND RELATED MODULES
+
+       Debian has its own method of compiling the kernel and related modules.
+
+       Table 9.26. List of key packages to be installed for the kernel recompilation on the Debian system
+
+         package | popcon | size | description
+         build-essential | V:18, I:512 | 17 | essential packages for building Debian packages: make, gcc, …
+         bzip2 | V:159, I:972 | 113 | compress and decompress utilities for bz2 files
+         libncurses5-dev | I:34 | 6 | developer's libraries and docs for ncurses
+         git | V:409, I:623 | 52512 | git: distributed revision control system used by the Linux kernel
+         fakeroot | V:32, I:514 | 225 | provide fakeroot environment for building package as non-root
+         initramfs-tools | V:479, I:988 | 49 | tool to build an initramfs (Debian specific)
+         dkms | V:81, I:149 | 235 | dynamic kernel module support (DKMS) (generic)
+         module-assistant | V:1, I:13 | 395 | helper tool to make module package (Debian specific)
+         devscripts | V:5, I:33 | 2766 | helper scripts for a Debian Package maintainer (Debian specific)
+       If you use initrd in Section 3.1.2, “Stage 2: the boot loader”, make sure to read the related information in initramfs-tools(8), update-initramfs(8), mkinitramfs(8) and initramfs.conf(5).
+
+         Warning
+       Do not put symlinks to the directories in the source tree (e.g. "/usr/src/linux*") from "/usr/include/linux" and "/usr/include/asm" when compiling the Linux kernel source. (Some outdated documents suggest this.)
+
+         Note
+       When compiling the latest Linux kernel on the Debian stable system, the use of backported latest tools from the Debian unstable may be needed.
+
+       module-assistant(8) (or its short form m-a) helps users to build and install module package(s) easily for one or more custom kernels.
+
+       The dynamic kernel module support (DKMS) is a new distribution independent framework designed to allow individual kernel modules to be upgraded without changing the whole kernel. This is used for the maintenance of out-of-tree modules. This also makes it very easy to rebuild modules as you upgrade kernels.
+
+       9.10.4. COMPILING THE KERNEL SOURCE: DEBIAN KERNEL TEAM RECOMMENDATION
+
+       For building custom kernel binary packages from the upstream kernel source, you should use the "deb-pkg" target provided by it.
+
+         $ sudo apt-get build-dep linux
+         $ cd /usr/src
+         $ wget https://mirrors.edge.kernel.org/pub/linux/kernel/v7.x/linux-7.1.7.tar.xz
+         $ tar --xz -xvf linux-7.1.7.tar.xz
+         $ cd linux-7.1.7
+         $ cp /boot/config-7.1.7.config
+         $ make menuconfig
+          ...
+         $ make deb-pkg
+
+         Tip
+       The linux-source-version package provides the Linux kernel source with Debian patches as "/usr/src/linux-version.tar.bz2".
+
+       For building specific binary packages from the Debian kernel source package, you should use the "binary-arch_architecture_featureset_flavour" targets in "debian/rules.gen".
+
+         $ sudo apt-get build-dep linux
+         $ apt-get source linux
+         $ cd linux-7.*
+         $ fakeroot make -f debian/rules.gen binary-arch_i386_none_686
+
+       See further information:
+
+        * Debian Wiki: KernelFAQ
+        * Debian Wiki: DebianKernel
+        * Debian Linux Kernel Handbook: https://kernel-handbook.debian.net
+
+       9.10.5. HARDWARE DRIVERS AND FIRMWARE
+
+       The hardware driver is the code running on the main CPUs of the target system. Most hardware drivers are available as free software now and are included in the normal Debian kernel packages in the main area.
+
+        * GPU driver
+          * Intel GPU driver (main)
+          * AMD/ATI GPU driver (main)
+          * NVIDIA GPU driver (main for nouveau driver, and non-free for binary-only drivers supported by the vendor.)
+       The firmware is the code or data loaded on the device attach to the target system (e.g., CPU microcode, rendering code running on GPU, or FPGA / CPLD data, …). Some firmware packages are available as free software but many firmware packages are not available as free software since they contain sourceless binary data. Installing these firmware data is essential for the device to function as expected.
+
+        * The firmware data packages containing data loaded to the volatile memory on the target device.
+          * firmware-linux-free (main)
+          * firmware-linux-nonfree (non-free-firmware)
+          * firmware-linux-* (non-free-firmware)
+          * *-firmware (non-free-firmware)
+          * intel-microcode (non-free-firmware)
+          * amd64-microcode (non-free-firmware)
+        * The firmware update program packages which update data on the non-volatile memory on the target device.
+          * fwupd (main): Firmware update daemon which downloads firmware data from Linux Vendor Firmware Service.
+          * gnome-firmware (main): GTK front end for fwupd
+          * plasma-discover-backend-fwupd (main): Qt front end for fwupd
+       Please note that access to non-free-firmware packages are provided by the official installation media to offer functional installation experience to the user since Debian 12 Bookworm. The non-free-firmware area is described in Section 2.1.5, “Debian archive basics”.
+
+       Please also note that the firmware data downloaded by fwupd from Linux Vendor Firmware Service and loaded to the running Linux kernel may be non-free.
+
+       9.11. VIRTUALIZED SYSTEM
+
+       Use of virtualized system enables us to run multiple instances of system simultaneously on a single hardware.
+
+         Tip
+       See Debian wiki on SystemVirtualization.
+
+       9.11.1. VIRTUALIZATION AND EMULATION TOOLS
+
+       There are several virtualization and emulation tool platforms.
+
+        * Complete hardware emulation packages such as ones installed by the games-emulator metapackage
+        * Mostly CPU level emulation with some I/O device emulations such as QEMU
+        * Mostly CPU level virtualization with some I/O device emulations such as Kernel-based Virtual Machine (KVM)
+        * OS level container virtualization with the kernel level support such as LXC (Linux Containers), Docker, systemd-nspawn(1), ...
+        * OS level filesystem access virtualization with the system library call override on the file path such as chroot
+        * OS level filesystem access virtualization with the system library call override on the file ownership such as fakeroot
+        * OS API emulation such as Wine
+        * Interpreter level virtualization with its executable selection and run-time library overrides such as virtualenv and venv for Python
+       The container virtualization uses Section 4.7.5, “Linux security features” and is the backend technology of Section 7.7, “Sandbox”.
+
+       Here are some packages to help you to setup the virtualized system.
+
+       Table 9.27. List of virtualization tools
+
+         package | popcon | size | description
+         coreutils | V:910, I:1000 | 17994 | GNU core utilities which contain chroot(8)
+         util-linux | V:914, I:1000 | 4758 | miscellaneous system utilities which contain unshare(1)
+         systemd-container | V:74, I:77 | 2726 | systemd container/nspawn tools which contain systemd-nspawn(1)
+         schroot | V:7.6, I:9.5 | 2222 | specialized tool for executing Debian binary packages in chroot
+         sbuild | V:3.8, I:7.2 | 155 | tool for building Debian binary packages from Debian sources
+         debootstrap | V:4, I:46 | 331 | bootstrap a basic Debian system (written in sh)
+         mmdebstrap | V:8, I:13 | 574 | bootstrap a Debian system (written in Perl)
+         cdebootstrap | V:0.1, I:1.3 | 114 | bootstrap a Debian system (written in C)
+         cloud-image-utils | V:1, I:14 | 52 | cloud image management utilities
+         cloud-guest-utils | V:5, I:23 | 67 | cloud guest utilities
+         virt-manager | V:11, I:48 | 2309 | Virtual Machine Manager: desktop application for managing virtual machines
+         libvirt-clients | V:48, I:72 | 1164 | programs for the libvirt library
+         docker.io | V:50, I:52 | 81699 | docker: Linux container runtime
+         podman | V:33, I:36 | 84895 | podman: engine to run OCI-based containers in Pods
+         podman-docker | V:2.7, I:3.3 | 270 | engine to run OCI-based containers in Pods - wrapper for docker
+         incus | V:0.8, I:3.2 | 23 | Incus: system container and virtual machine manager
+         games-emulator | I:0.19 | 21 | games-emulator: Debian's emulators for games
+         bochs | V:0.05, I:0.62 | 8180 | Bochs: IA-32 PC emulator
+         qemu-system | I:21 | 64 | QEMU: full system emulation binaries
+         qemu-user | V:5.8, I:9.6 | 471927 | QEMU: user mode emulation binaries
+         qemu-utils | V:13, I:113 | 12634 | QEMU: utilities
+         qemu-system-x86 | V:53, I:96 | 69241 | KVM: full virtualization on x86 hardware with the hardware-assisted virtualization
+         virtualbox | V:2.7, I:3.4 | 151006 | VirtualBox: x86 virtualization solution on i386 and amd64
+         gnome-boxes | V:1.1, I:6.5 | 7074 | Boxes: Simple GNOME app to access virtual systems
+         xen-tools | V:0.1, I:1.5 | 719 | tools to manage debian XEN virtual server
+         wine | V:13, I:56 | 204 | Wine: Windows API Implementation (standard suite)
+         dosbox | V:1, I:12 | 2697 | DOSBox: x86 emulator with Tandy/Herc/CGA/EGA/VGA/SVGA graphics, sound and DOS
+         lxc | V:10, I:13 | 1681 | Linux containers user space tools
+         python3-venv | V:8, I:153 | 6 | venv for creating virtual python environments (system library)
+         python3-virtualenv | V:7, I:39 | 374 | virtualenv for creating isolated virtual python environments
+         pipx | V:8, I:50 | 4412 | pipx for installing python applications in isolated environments
+       See Wikipedia article Comparison of platform virtual machines for detail comparison of different platform virtualization solutions.
+
+       9.11.2. VIRTUALIZATION WORK FLOW
+
+         Note
+       Default Debian kernels support KVM since lenny.
+
+       Typical work flow for virtualization involves several steps.
+
+        * Create an empty filesystem (a file tree or a disk image).
+          * The file tree can be created by "mkdir -p /path/to/chroot".
+          * The raw disk image file can be created with dd(1) (see Section 9.7.1, “Making the disk image file” and Section 9.7.5, “Making the empty disk image file”).
+          * qemu-img(1) can be used to create and convert disk image files supported by QEMU.
+          * The raw and VMDK file format can be used as common format among virtualization tools.
+        * Mount the disk image with mount(8) to the filesystem (optional).
+          * For the raw disk image file, mount it as loop device or device mapper devices (see Section 9.7.3, “Mounting the disk image file”).
+          * For disk images supported by QEMU, mount them as network block device (see Section 9.11.3, “Mounting the virtual disk image file”).
+        * Populate the target filesystem with required system data.
+          * The use of programs such as debootstrap and cdebootstrap helps with this process (see Section 9.11.4, “Chroot system”).
+          * Use installers of OSs under the full system emulation.
+        * Run a program under a virtualized environment.
+          * chroot provides basic virtualized environment enough to compile programs, run console applications, and run daemons in it.
+          * QEMU provides cross-platform CPU emulation.
+          * QEMU with KVM provides full system emulation by the hardware-assisted virtualization.
+          * VirtualBox provides full system emulation on i386 and amd64 with or without the hardware-assisted virtualization.
+
+       9.11.3. MOUNTING THE VIRTUAL DISK IMAGE FILE
+
+       For the raw disk image file, see Section 9.7, “The disk image”.
+
+       For other virtual disk image files, you can use qemu-nbd(8) to export them using network block device protocol and mount them using the nbd kernel module.
+
+       qemu-nbd(8) supports disk formats supported by QEMU: raw, qcow2, qcow, vmdk, vdi, bochs, cow (user-mode Linux copy-on-write), parallels, dmg, cloop, vpc, vvfat (virtual VFAT), and host_device.
+
+       The network block device can support partitions in the same way as the loop device (see Section 9.7.3, “Mounting the disk image file”). You can mount the first partition of "disk.img" as follows.
+
+         # modprobe nbd max_part=16
+         # qemu-nbd -v -c /dev/nbd0 disk.img
+         ...
+         # mkdir /mnt/part1
+         # mount /dev/nbd0p1 /mnt/part1
+
+         Tip
+       You may export only the first partition of "disk.img" using "-P 1" option to qemu-nbd(8).
+
+       9.11.4. CHROOT SYSTEM
+
+       If you wish to try a new Debian environment from a terminal console, I recommend you to use chroot. This enables you to run console applications of Debian unstable and testing without usual risks associated and without rebooting. chroot(8) is the most basic way.
+
+         Caution
+       Examples below assumes both parent system and chroot system share the same amd64 CPU architecture.
+
+       Although you can manually create a chroot(8) environment using debootstrap(1), this requires non-trivial efforts.
+
+       The sbuild package to build Debian packages from source uses the chroot environment managed by the schroot package. It comes with helper script sbuild-createchroot(1). Let's learn how it works by running it as follows.
+
+         $ sudo mkdir -p /srv/chroot
+         $ sudo sbuild-createchroot -v --include=eatmydata,ccache unstable /srv/chroot/unstable-amd64-sbuild http://deb.debian.org/debian
+          ...
+
+       You see how debootstrap(8) populates system data for unstable environment under "/srv/chroot/unstable-amd64-sbuild" for a minimal build system.
+
+       You can login to this environment using schroot(1).
+
+         $ sudo schroot -v -c chroot:unstable-amd64-sbuild
+
+       You see how a system shell running under unstable environment is created.
+
+         Note
+       The "/usr/sbin/policy-rc.d" file which always exits with 101 prevents daemon programs to be started automatically on the Debian system. See "/usr/share/doc/init-system-helpers/README.policy-rc.d.gz".
+
+         Note
+       Some programs under chroot may require access to more files from the parent system to function than sbuild-createchroot provides as above. For example, "/sys", "/etc/passwd", "/etc/group", "/var/run/utmp", "/var/log/wtmp", etc. may need to be bind-mounted or copied.
+
+         Tip
+       The sbuild package helps to construct a chroot system and builds a package inside the chroot using schroot as its backend. It is an ideal system to check build-dependencies. See more on sbuild at Debian wiki and sbuild configuration example in "Guide for Debian Maintainers".
+
+         Tip
+       The systemd-nspawn(1) command helps to run a command or OS in a light-weight container in similar ways to chroot. It is more powerful since it uses namespaces to fully virtualize the the process tree, IPC, hostname, domain name and, optionally, networking and user databases. See systemd-nspawn.
+
+       9.11.5. MULTIPLE DESKTOP SYSTEMS
+
+       If you wish to try a new GUI Desktop environment of any OS, I recommend you to use QEMU or KVM on a Debian stable system to run multiple desktop systems safely using virtualization. These enable you to run any desktop applications including ones of Debian unstable and testing without usual risks associated with them and without rebooting.
+
+       Since pure QEMU is very slow, it is recommended to accelerate it with KVM when the host system supports it.
+
+       Virtual Machine Manager also known as virt-manager is a convenient GUI tool for managing KVM virtual machines via libvirt.
+
+       The virtual disk image "virtdisk.qcow2" containing a Debian system for QEMU can be created using debian-installer: Small CDs as follows.
+
+         $ wget https://cdimage.debian.org/debian-cd/5.0.3/amd64/iso-cd/debian-503-amd64-netinst.iso
+         $ qemu-img create -f qcow2 virtdisk.qcow2 5G
+         $ qemu -hda virtdisk.qcow2 -cdrom debian-503-amd64-netinst.iso -boot d -m 256
+         ...
+
+         Tip
+       Running other GNU/Linux distributions such as Ubuntu and Fedora under virtualization is a great way to learn configuration tips. Other proprietary OSs may be run nicely under this GNU/Linux virtualization, too.
+
+       See more tips at Debian wiki: SystemVirtualization.
+
+       [2] More elaborate customization examples: "Vim Galore", "sensible.vim", ...
+
+       [3]  vim-pathogen was popular.
+
+Debian Reference manual                 bundled documentation

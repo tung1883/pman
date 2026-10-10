@@ -1,0 +1,39 @@
+SHELLCHECK.SC2100(1)             Sandbox manual             SHELLCHECK.SC2100(1)
+
+       NAME
+
+       Use $((..)) for arithmetics, e.g. i=$((i + 2)) - i=3
+
+       USE ((..)) FOR ARITHMETICS, E.G. I ((I + 2))
+
+       USE ((..)) FOR ARITHMETICS, E.G. I ((I + 2))
+
+       PROBLEMATIC CODE
+
+         i=3
+         i=i+2
+
+       CORRECT CODE
+
+         i=3
+         i=$((i + 2))
+
+       RATIONALE
+
+       Unlike most languages, variable assignments (almost) always assigns strings and not expressions. In the example code, i will become the string i+2 instead of the intended 5.
+
+       To instead evaluate a mathematical expressions, use $((..)) as in the correct code.
+
+       EXCEPTIONS
+
+       If you wanted to assign a literal string, quote it:
+
+       description="friendly-looking"
+
+       ShellCheck (as of v0.5) doesn't recognize Bash/Ksh numeric variables created with declare -i where this syntax is valid. Using $((..)) still works, but you can also [[ignore]] this warning.
+
+       RELATED RESOURCES
+
+        * Help by adding links to BashFAQ, StackOverflow, man pages, POSIX, etc!
+
+ShellCheck manual                       from the official documentation

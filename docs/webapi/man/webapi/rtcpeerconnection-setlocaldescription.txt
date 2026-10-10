@@ -1,0 +1,98 @@
+WEBAPI.RTCPEERCONNECTION-SETLOCALDESCRIPTION(1) Sandbox manual WEBAPI.RTCPEERCONNECTION-SETLOCALDESCRIPTION(1)
+
+       NAME
+
+       RTCPeerConnection: setLocalDescription() method - The setLocalDescription() method of the RTCPeerConnection interface changes the local description associated with the connection.
+
+       RTCPEERCONNECTION: SETLOCALDESCRIPTION() METHOD
+
+       The setLocalDescription() method of the RTCPeerConnection interface changes the local description associated with the connection. This description specifies the properties of the local end of the connection, including the media format. The method takes a single parameter—the session description—and it returns a Promise which is fulfilled once the description has been changed, asynchronously.
+
+       If setLocalDescription() is called while a connection is already in place, it means renegotiation is underway (possibly to adapt to changing network conditions). Because descriptions will be exchanged until the two peers agree on a configuration, the description submitted by calling setLocalDescription() does not immediately take effect. Instead, the current connection configuration remains in place until negotiation is complete. Only then does the agreed-upon configuration take effect.
+
+       SYNTAX
+
+         setLocalDescription()
+         setLocalDescription(sessionDescription)
+
+         setLocalDescription(sessionDescription, successCallback, errorCallback) // deprecated
+
+       PARAMETERS
+
+        * sessionDescription (optional)
+          * : An object which specifies the configuration to be applied to the local end of the connection. It should contain the following properties:
+            * type (optional)
+              * : A string indicating the type of the session description. If you don't explicitly provide a session description, the WebRTC runtime will try to handle it correctly. If the signaling state is one of stable, have-local-offer, or have-remote-pranswer, the WebRTC runtime automatically creates a new offer and sets that as the new local description. Otherwise, setLocalDescription() creates an answer, which becomes the new local description.
+            * sdp (optional)
+              * : A string containing the SDP describing the session. If sdp is not provided, it defaults to an empty string. If type is "rollback", sdp must be null or an empty string.
+       If the description is omitted, the WebRTC runtime tries to automatically do the right thing.
+
+       You can also pass an actual RTCSessionDescription instance, but there's no difference. For this reason, the RTCSessionDescription constructor is deprecated.
+
+       In older code and documentation, you may see a callback-based version of this function used. This has been deprecated and its use is strongly discouraged, as it will be removed in the future. You should update any existing code to use the Promise-based version of setLocalDescription() instead. The parameters for the older form of setLocalDescription() are described below, to aid in updating existing code.
+
+        * successCallback (deprecated)
+          * : A JavaScript Function which accepts no input parameters to be called once the description has been successfully set.
+       At that time, the offer can be sent to a remote peer via the signaling server.
+
+        * errorCallback (deprecated)
+          * : A function matching the signature RTCPeerConnectionErrorCallback which gets called if the description can't be set.
+       It is passed a single DOMException object explaining why the request failed.
+
+       This deprecated form of the method returns instantaneously without waiting for the actual setting to be done: in case of success, the successCallback will be called; in case of failure, the errorCallback will be called.
+
+       RETURN VALUE
+
+       A Promise which is fulfilled once the value of RTCPeerConnection.localDescription is successfully changed or rejected if the change cannot be applied (for example, if the specified description is incompatible with one or both of the peers on the connection). The promise's fulfillment handler receives no input parameters.
+
+       > The process of changing descriptions actually involves intermediary steps handled by the WebRTC layer to ensure that an active connection can be changed without losing the connection if the change does not succeed.
+       > See Pending and current descriptions in the WebRTC Connectivity page for more details on this process.
+
+       DEPRECATED EXCEPTIONS
+
+       When using the deprecated callback-based version of setLocalDescription(), the following exceptions may occur:
+
+        * InvalidStateError DOMException (deprecated)
+          * : Thrown if the connection's signalingState is "closed", indicating that the connection is not currently open, so negotiation cannot take place.
+        * InvalidSessionDescriptionError DOMException (deprecated)
+          * : Thrown if the sessionDescription parameter is invalid.
+
+       EXAMPLES
+
+       IMPLICIT DESCRIPTIONS
+
+       One of the advantages of the parameter-free form of setLocalDescription() is that it lets you simplify your negotiation code substantially. This is all your negotiationneeded event handler needs to look like, for the most part. Just add the signaling server code, which here is represented by the call to signalRemotePeer().
+
+         pc.addEventListener("negotiationneeded", async (event) => {
+           await pc.setLocalDescription();
+           signalRemotePeer({ description: pc.localDescription });
+         });
+
+       Other than error handling, that's about it!
+
+       PROVIDING YOUR OWN OFFER OR ANSWER
+
+       The example below shows the implementation of a handler for the negotiationneeded event that explicitly creates an offer, rather than letting setLocalDescription() do it.
+
+         async function handleNegotiationNeededEvent() {
+           try {
+             const offer = await pc.createOffer();
+             pc.setLocalDescription(offer);
+             signalRemotePeer({ description: pc.localDescription });
+           } catch (err) {
+             window.reportError(err);
+           }
+         }
+
+       This begins by creating an offer by calling createOffer(); when that succeeds, we call setLocalDescription(). We can then send the newly-created offer along to the other peer using the signaling server, which here is done by calling a function called signalRemotePeer().
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * WebRTC API
+        * RTCSessionDescription
+
+Web APIs manual                         from the official documentation

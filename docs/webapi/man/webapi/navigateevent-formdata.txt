@@ -1,0 +1,49 @@
+WEBAPI.NAVIGATEEVENT-FORMDATA(1) Sandbox manual WEBAPI.NAVIGATEEVENT-FORMDATA(1)
+
+       NAME
+
+       NavigateEvent: formData property - The formData read-only property of the
+
+       NAVIGATEEVENT: FORMDATA PROPERTY
+
+       The formData read-only property of the NavigateEvent interface returns the FormData object representing the submitted data in the case of a POST form submission, or null otherwise.
+
+       VALUE
+
+       A FormData object, or null.
+
+       EXAMPLES
+
+         navigation.addEventListener("navigate", (event) => {
+           // Some navigations, e.g. cross-origin navigations, we
+           // cannot intercept. Let the browser handle those normally.
+           if (!event.canIntercept) {
+             return;
+           }
+
+           // Don't intercept fragment navigations or downloads.
+           if (event.hashChange || event.downloadRequest !== null) {
+             return;
+           }
+
+           event.intercept({
+             handler() {
+               if (event.formData) {
+                 processFormDataAndUpdateUI(event.formData, event.signal);
+               } else {
+                 doSinglePageAppNav(event.destination, event.signal);
+               }
+             },
+           });
+         });
+
+       SPECIFICATIONS
+
+       BROWSER COMPATIBILITY
+
+       SEE ALSO
+
+        * Modern client-side routing: the Navigation API
+        * Navigation API explainer
+
+Web APIs manual                         from the official documentation

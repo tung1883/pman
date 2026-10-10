@@ -1,0 +1,30 @@
+SHELLCHECK.SC2174(1)             Sandbox manual             SHELLCHECK.SC2174(1)
+
+       NAME
+
+       When used with -p, -m only applies to the deepest directory. - mkdir -p -m 0755 foo/bar/baz
+
+       WHEN USED WITH -P, -M ONLY APPLIES TO THE DEEPEST DIRECTORY
+
+       WHEN USED WITH -P, -M ONLY APPLIES TO THE DEEPEST DIRECTORY
+
+       PROBLEMATIC CODE
+
+         mkdir -p -m 0755 foo/bar/baz
+
+       CORRECT CODE
+
+         mkdir -p foo/bar/baz
+         chmod 0755 foo/bar/baz foo/bar foo
+
+       RATIONALE
+
+       When using -m 0755, the mode of the directory created will be set to 0755. When using -p, parent directories which do not exist will be created, but the mode specified by -m will only be used on the last directory. The parent directories will get their access mode the default way, via [umask(2)].
+
+       [umask(2)]: http://man7.org/linux/man-pages/man2/umask.2.html
+
+       EXCEPTIONS
+
+       ShellCheck does not warn if the path only has one component, as in mkdir -p -m 0755 mydir, but will not attempt to determine whether this applies for a variable as in mkdir -p -m 0755 "$mydir". You can mkdir/chmod separately or [[ignore]] this message.
+
+ShellCheck manual                       from the official documentation
