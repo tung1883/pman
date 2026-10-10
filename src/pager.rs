@@ -317,15 +317,18 @@ impl<'a> Pager<'a> {
 
     fn draw(&self) -> io::Result<()> {
         let mut out = io::stdout();
-        queue!(out, cursor::MoveTo(0, 0), terminal::Clear(ClearType::All))?;
+        queue!(out, terminal::BeginSynchronizedUpdate, cursor::MoveTo(0, 0))?;
         let body = self.body_height();
         if let Mode::Toc(sel) = self.mode {
             self.draw_toc(&mut out, sel, body)?;
         } else {
             for y in 0..body {
                 let ri = self.top + y;
-                let Some(row) = self.rows.get(ri) else { break };
                 queue!(out, cursor::MoveTo(0, y as u16))?;
+                let Some(row) = self.rows.get(ri) else {
+                    queue!(out, terminal::Clear(ClearType::UntilNewLine))?;
+                    continue;
+                };
                 let selected = match self.mode {
                     Mode::Select(mark, cur) => {
                         let a = mark.unwrap_or(cur);
@@ -339,6 +342,7 @@ impl<'a> Pager<'a> {
                 } else {
                     self.draw_row(&mut out, ri, row)?;
                 }
+                queue!(out, terminal::Clear(ClearType::UntilNewLine))?;
             }
         }
         // bottom line
@@ -356,6 +360,7 @@ impl<'a> Pager<'a> {
                 queue!(out, cursor::Hide, SetAttribute(Attribute::Reverse), Print(s), SetAttribute(Attribute::Reset))?;
             }
         }
+        queue!(out, terminal::EndSynchronizedUpdate)?;
         out.flush()
     }
 
@@ -364,16 +369,18 @@ impl<'a> Pager<'a> {
         let start = if sel >= body { sel + 1 - body } else { 0 };
         for y in 0..body {
             let i = start + y;
-            if i >= n {
-                break;
-            }
             queue!(out, cursor::MoveTo(0, y as u16))?;
+            if i >= n {
+                queue!(out, terminal::Clear(ClearType::UntilNewLine))?;
+                continue;
+            }
             let title: String = self.page.sections()[i].title.chars().take(self.width.saturating_sub(5)).collect();
             if i == sel {
                 queue!(out, SetAttribute(Attribute::Reverse), Print(format!(" {:>3} {title}", i + 1)), SetAttribute(Attribute::Reset))?;
             } else {
                 queue!(out, Print(format!(" {:>3} {title}", i + 1)))?;
             }
+            queue!(out, terminal::Clear(ClearType::UntilNewLine))?;
         }
         Ok(())
     }
