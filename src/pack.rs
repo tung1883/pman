@@ -95,6 +95,31 @@ pub fn local_source(id: &str) -> Option<PathBuf> {
     Some(PathBuf::from(s.trim()))
 }
 
+fn newest_mtime(path: &Path) -> Option<SystemTime> {
+    let meta = fs::metadata(path).ok()?;
+    if meta.is_file() {
+        return meta.modified().ok();
+    }
+    let mut best = meta.modified().ok();
+    for e in fs::read_dir(path).ok()?.flatten() {
+        if let Some(t) = newest_mtime(&e.path()) {
+            best = Some(best.map_or(t, |b| b.max(t)));
+        }
+    }
+    best
+}
+
+/// Whether `src` has changed since `id` was last imported from it: `pman pack update` reconverts a
+/// local pack's markdown on every run otherwise, which is pure waste (and slow for large sources)
+/// when nothing changed. Unable to tell either mtime -> stale, so the caller re-imports to be safe.
+pub fn local_source_stale(id: &str, src: &Path) -> bool {
+    let imported = fs::metadata(pack_dir(id).join("bundle.json")).and_then(|m| m.modified());
+    match (imported, newest_mtime(src)) {
+        (Ok(imported), Some(changed)) => changed > imported,
+        _ => true,
+    }
+}
+
 /// Imports a .md file or folder of them as the local pack `name`, replacing an earlier import.
 pub fn add_local(name: &str, src: &Path) -> Result<usize, String> {
     let root = packs_dir();

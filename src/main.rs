@@ -582,7 +582,7 @@ fn reindex(args: &[String]) -> Result<(), String> {
 /// `pman license [pack|page]`: the license of the pack providing a page, or of a pack itself.
 fn license(key: Option<&str>) -> Result<(), String> {
     let key = key.ok_or("usage: pman license <pack|page>")?;
-    let reg = pack::fetch_registry()?;
+    let reg = pack::fetch_registry_cached()?;
     let id = if reg.packs.contains_key(key) {
         key.to_string()
     } else {
@@ -606,13 +606,21 @@ fn license(key: Option<&str>) -> Result<(), String> {
     Ok(())
 }
 
-/// Quietly builds `search.idx` for any installed pack missing one, before the first `-k`.
+/// Quietly (re)builds `search.idx` for any installed pack missing one or whose file a `Reader` can't
+/// open (older format version, truncated write): checking the file parses, not just that it exists,
+/// so a format bump doesn't leave every `-k` silently falling back to a full scan forever.
 fn ensure_indexes() {
     for (id, _) in pack::installed() {
         let dir = pack::pack_dir(&id);
-        if dir.join("bundle.json").exists() && !dir.join("search.idx").exists() {
-            eprintln!("indexing {id}...");
-            let _ = index::reindex_installed(&dir);
+        if !dir.join("bundle.json").exists() {
+            continue;
+        }
+        if searchidx::Reader::open(&dir.join("search.idx")).is_some() {
+            continue;
+        }
+        eprintln!("indexing {id}...");
+        if let Err(e) = index::reindex_installed(&dir) {
+            eprintln!("pman: failed to index {id}: {e}");
         }
     }
 }
@@ -695,7 +703,7 @@ fn completion_words() -> Words {
         }
     }
     let mut packs: std::collections::BTreeSet<String> = pack::installed().into_iter().map(|(id, _)| id).collect();
-    if let Ok(reg) = pack::fetch_registry() {
+    if let Ok(reg) = pack::fetch_registry_cached() {
         packs.extend(reg.packs.keys().cloned());
     }
     let topics = ix.topics();
@@ -763,7 +771,7 @@ fn import_local(name: &str, src: &std::path::Path) -> Result<(), String> {
     if pack::installed_version(name).is_some() && pack::local_source(name).is_none() {
         return Err(format!("'{name}' is an installed doc pack; pick another with --name"));
     }
-    let known = pack::fetch_registry().map(|r| r.packs.contains_key(name)).unwrap_or(false);
+    let known = pack::fetch_registry_cached().map(|r| r.packs.contains_key(name)).unwrap_or(false);
     if known && pack::local_source(name).is_none() {
         return Err(format!("'{name}' is a downloadable doc pack; pick another with --name"));
     }
@@ -821,7 +829,7 @@ fn packs(args: &[String]) -> Result<(), String> {
                     outln!("  {id:<8} {:<18} {}", "local", src.display());
                 }
             }
-            match pack::fetch_registry() {
+            match pack::fetch_registry_cached() {
                 Ok(reg) => {
                     let state = |id: &str, info: &pack::PackInfo| match pack::installed_version(id) {
                         Some(v) if v == info.version => "[installed]".to_string(),
@@ -866,7 +874,7 @@ fn packs(args: &[String]) -> Result<(), String> {
         }
         "info" => {
             let id = args.get(1).ok_or("usage: pman pack info <id>")?;
-            let reg = pack::fetch_registry()?;
+            let reg = pack::fetch_registry_cached()?;
             let info = reg.packs.get(id).ok_or(format!("no pack '{id}' (pman pack list)"))?;
             outln!("{id}: {}", info.desc);
             outln!("  registry version: {}", info.version);
@@ -923,7 +931,9 @@ fn packs(args: &[String]) -> Result<(), String> {
             Ok(())
         }
         "install" | "update" | "remove" => {
-            let group_reg = pack::fetch_registry().ok();
+            // `update` means "check for real"; everything else is happy with a <24h cached copy, so
+            // one fetch serves both the group lookup below and the install/update pass further down.
+            let group_reg = if sub == "update" { pack::fetch_registry().ok() } else { pack::fetch_registry_cached().ok() };
             let ids: Vec<String> = args[1..].to_vec();
             if sub == "remove" {
                 if ids.is_empty() {
@@ -946,16 +956,19 @@ fn packs(args: &[String]) -> Result<(), String> {
             if sub == "update" {
                 for (id, _) in pack::installed() {
                     if let Some(src) = pack::local_source(&id) {
-                        if src.exists() {
-                            import_local(&id, &src)?;
-                        } else {
+                        if !src.exists() {
                             eprintln!("pman: source of '{id}' is gone ({}); keeping the imported copy", src.display());
+                        } else if pack::local_source_stale(&id, &src) {
+                            import_local(&id, &src)?;
                         }
                         locals += 1;
                     }
                 }
             }
-            let reg = pack::fetch_registry()?;
+            let reg = match group_reg {
+                Some(r) => r,
+                None => pack::fetch_registry()?,
+            };
             let targets: Vec<String> = if sub == "update" {
                 pack::installed().into_iter().map(|(id, _)| id).filter(|id| pack::local_source(id).is_none()).collect()
             } else if ids.iter().any(|i| i == "all" || i == "--all") {
@@ -989,7 +1002,8 @@ fn packs(args: &[String]) -> Result<(), String> {
                 }
                 return Err(if sub == "update" { "nothing installed".into() } else { "usage: pman pack install <id>...".into() });
             }
-            let (mut changed, mut current) = (0, 0);
+            let mut current = 0;
+            let mut to_install: Vec<(String, u32, Option<u32>)> = Vec::new();
             for id in targets {
                 let Some(info) = reg.packs.get(&id) else {
                     if sub == "update" {
@@ -1007,14 +1021,9 @@ fn packs(args: &[String]) -> Result<(), String> {
                     current += 1;
                     continue;
                 }
-                pack::install(&id, info, false)?;
-                if let Some(v) = old {
-                    outln!("updated {id} v{v} -> v{}", info.version);
-                } else {
-                    outln!("installed {id} v{}", info.version);
-                }
-                changed += 1;
+                to_install.push((id, info.version, old));
             }
+            let changed = install_parallel(&reg, to_install)?;
             if sub == "update" {
                 outln!("{changed} updated, {current} already up to date");
             }
@@ -1022,5 +1031,65 @@ fn packs(args: &[String]) -> Result<(), String> {
         }
         _ => Err("usage: pman pack list | install <id|@group>... | remove <id|@group>... | update | info <id> | outdated".into()),
     }
+}
+
+/// Installs/updates several packs concurrently (network download dominates, so this overlaps their
+/// latency instead of paying it one pack at a time, as `pack install all` does). A lone pack keeps
+/// the live progress bar; two or more install quietly and report as each finishes, since interleaved
+/// progress bars would garble the terminal.
+fn install_parallel(reg: &pack::Registry, to_install: Vec<(String, u32, Option<u32>)>) -> Result<usize, String> {
+    if to_install.is_empty() {
+        return Ok(0);
+    }
+    if to_install.len() == 1 {
+        let (id, version, old) = &to_install[0];
+        let info = reg.packs.get(id).expect("checked above");
+        pack::install(id, info, false)?;
+        match old {
+            Some(v) => { outln!("updated {id} v{v} -> v{version}"); }
+            None => { outln!("installed {id} v{version}"); }
+        }
+        return Ok(1);
+    }
+    let workers = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(8).min(to_install.len());
+    let queue = std::sync::Mutex::new(to_install.into_iter());
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::scope(|scope| {
+        for _ in 0..workers {
+            let queue = &queue;
+            let tx = tx.clone();
+            scope.spawn(move || loop {
+                let next = queue.lock().unwrap().next();
+                let Some((id, version, old)) = next else { break };
+                let info = reg.packs.get(&id).expect("checked above");
+                let result = pack::install(&id, info, true);
+                let _ = tx.send((id, version, old, result));
+            });
+        }
+    });
+    drop(tx);
+    let (mut changed, mut failed) = (0, 0);
+    for (id, version, old, result) in rx {
+        match result {
+            Ok(()) => {
+                match old {
+                    Some(v) => { outln!("updated {id} v{v} -> v{version}"); }
+                    None => { outln!("installed {id} v{version}"); }
+                }
+                changed += 1;
+            }
+            Err(e) => {
+                eprintln!("pman: {id}: {e}");
+                failed += 1;
+            }
+        }
+    }
+    if changed == 0 && failed > 0 {
+        return Err(format!("{failed} pack(s) failed to install"));
+    }
+    if failed > 0 {
+        eprintln!("pman: {failed} pack(s) failed to install, {changed} installed");
+    }
+    Ok(changed)
 }
 
