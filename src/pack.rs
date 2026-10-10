@@ -27,11 +27,32 @@ pub struct PackInfo {
     pub topics: Vec<String>,
     #[serde(default)]
     pub desc: String,
+    #[serde(default)]
+    pub group: Option<String>,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub upstream_version: Option<String>,
+    #[serde(default)]
+    pub fetched: Option<String>,
+    #[serde(default)]
+    pub license: Option<String>,
+    #[serde(default)]
+    pub license_url: Option<String>,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct GroupInfo {
+    #[serde(default)]
+    pub desc: String,
+    pub packs: Vec<String>,
 }
 
 #[derive(Deserialize)]
 pub struct Registry {
     pub packs: BTreeMap<String, PackInfo>,
+    #[serde(default)]
+    pub groups: BTreeMap<String, GroupInfo>,
 }
 
 pub fn data_dir() -> PathBuf {
@@ -153,14 +174,37 @@ pub fn registry_source() -> String {
     std::env::var("PMAN_REGISTRY").unwrap_or_else(|_| DEFAULT_REGISTRY.to_string())
 }
 
-pub fn fetch_registry() -> Result<Registry, String> {
+fn registry_text() -> Result<String, String> {
     let src = registry_source();
-    let text = if is_url(&src) {
-        http_text(&src)?
+    if is_url(&src) {
+        http_text(&src)
     } else {
-        fs::read_to_string(&src).map_err(|e| format!("cannot read registry {src}: {e}"))?
-    };
-    serde_json::from_str(&text).map_err(|e| format!("bad registry: {e}"))
+        fs::read_to_string(&src).map_err(|e| format!("cannot read registry {src}: {e}"))
+    }
+}
+
+pub fn fetch_registry() -> Result<Registry, String> {
+    serde_json::from_str(&registry_text()?).map_err(|e| format!("bad registry: {e}"))
+}
+
+/// The registry, reused for a day: a lookup that misses locally asks it whether a pack has the name, and
+/// that should not cost a network round trip every time.
+pub fn fetch_registry_cached() -> Result<Registry, String> {
+    let cache = data_dir().join("registry.cache.json");
+    let fresh = fs::metadata(&cache)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.elapsed().ok())
+        .map_or(false, |age| age < Duration::from_secs(24 * 3600));
+    if fresh {
+        if let Some(reg) = fs::read_to_string(&cache).ok().and_then(|t| serde_json::from_str(&t).ok()) {
+            return Ok(reg);
+        }
+    }
+    let text = registry_text()?;
+    let reg = serde_json::from_str(&text).map_err(|e| format!("bad registry: {e}"))?;
+    let _ = fs::write(&cache, text);
+    Ok(reg)
 }
 
 /// A pack's download URL; relative URLs and plain paths resolve against the registry location.
