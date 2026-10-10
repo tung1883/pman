@@ -523,10 +523,10 @@ fn add(args: &[String]) -> Result<(), String> {
         } else if path.is_none() {
             path = Some(a.clone());
         } else {
-            return Err("usage: pman add <file.md|dir> [--name n]".into());
+            return Err("usage: pman add <file.md|dir|pack.zip> [--name n]".into());
         }
     }
-    let path = path.ok_or("usage: pman add <file.md|dir> [--name n]")?;
+    let path = path.ok_or("usage: pman add <file.md|dir|pack.zip> [--name n]")?;
     let src = std::path::Path::new(&path);
     if !src.exists() {
         return Err(format!("{path}: no such file or folder"));

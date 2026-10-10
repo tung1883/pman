@@ -76,22 +76,39 @@ pub fn local_source(id: &str) -> Option<PathBuf> {
 
 /// Imports a .md file or folder of them as the local pack `name`, replacing an earlier import.
 pub fn add_local(name: &str, src: &Path) -> Result<usize, String> {
-    let notes = crate::md::convert_source(src, name);
-    if notes.is_empty() {
-        return Err(format!("no .md files in {}", src.display()));
-    }
     let root = packs_dir();
     let tmp = root.join(format!("{name}.tmp"));
     let _ = fs::remove_dir_all(&tmp);
-    let man = tmp.join("man");
-    fs::create_dir_all(&man).map_err(|e| e.to_string())?;
-    for n in &notes {
-        let path = if n.slug.is_empty() { man.join(format!("{name}.txt")) } else { man.join(name).join(format!("{}.txt", n.slug)) };
-        if let Some(d) = path.parent() {
-            fs::create_dir_all(d).map_err(|e| e.to_string())?;
+    let is_zip = src.is_file() && src.extension().map_or(false, |e| e.eq_ignore_ascii_case("zip"));
+    let count = if is_zip {
+        // a ready-made pack zip (man/ inside), e.g. built by tools/import_w3s.py: installed as it is
+        fs::create_dir_all(&tmp).map_err(|e| e.to_string())?;
+        if let Err(e) = unzip(src, &tmp) {
+            let _ = fs::remove_dir_all(&tmp);
+            return Err(e);
         }
-        fs::write(&path, &n.text).map_err(|e| e.to_string())?;
-    }
+        let count = count_pages(&tmp.join("man"));
+        if count == 0 {
+            let _ = fs::remove_dir_all(&tmp);
+            return Err(format!("no pages (man/**/*.txt) in {}", src.display()));
+        }
+        count
+    } else {
+        let notes = crate::md::convert_source(src, name);
+        if notes.is_empty() {
+            return Err(format!("no .md files in {}", src.display()));
+        }
+        let man = tmp.join("man");
+        fs::create_dir_all(&man).map_err(|e| e.to_string())?;
+        for n in &notes {
+            let path = if n.slug.is_empty() { man.join(format!("{name}.txt")) } else { man.join(name).join(format!("{}.txt", n.slug)) };
+            if let Some(d) = path.parent() {
+                fs::create_dir_all(d).map_err(|e| e.to_string())?;
+            }
+            fs::write(&path, &n.text).map_err(|e| e.to_string())?;
+        }
+        notes.len()
+    };
     crate::index::build_bundle(&tmp).map_err(|e| e.to_string())?;
     let abs = fs::canonicalize(src).unwrap_or_else(|_| src.to_path_buf());
     let abs = abs.to_string_lossy().to_string();
@@ -101,7 +118,23 @@ pub fn add_local(name: &str, src: &Path) -> Result<usize, String> {
     let dest = pack_dir(name);
     let _ = fs::remove_dir_all(&dest);
     fs::rename(&tmp, &dest).map_err(|e| e.to_string())?;
-    Ok(notes.len())
+    Ok(count)
+}
+
+fn count_pages(dir: &Path) -> usize {
+    let Ok(rd) = fs::read_dir(dir) else { return 0 };
+    rd.flatten()
+        .map(|e| {
+            let p = e.path();
+            if p.is_dir() {
+                count_pages(&p)
+            } else if p.extension().map_or(false, |x| x == "txt") {
+                1
+            } else {
+                0
+            }
+        })
+        .sum()
 }
 
 pub fn remove(id: &str) -> io::Result<()> {
