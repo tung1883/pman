@@ -1,0 +1,95 @@
+name: Rebuild doc packs
+
+# Monthly refresh of the packs whose upstream changed; publishes only those. Never touches w3s
+# (personal-only) or powershell's Get-Help snapshot (needs Windows; kept committed as-is).
+on:
+  schedule:
+    - cron: "0 4 1 * *"
+  workflow_dispatch:
+    inputs:
+      packs:
+        description: "comma-separated pack ids to rebuild (empty = all)"
+        required: false
+        default: ""
+      publish:
+        description: "upload changed packs to the latest release"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rust-docs
+
+      - name: Cache importer downloads
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: pman-importer-cache-${{ github.run_id }}
+          restore-keys: pman-importer-cache-
+
+      - run: pip install pyyaml
+
+      - name: Run importers (best-effort; a failing one must not publish a half-empty pack)
+        run: |
+          set +e
+          status=0
+          # import_w3s.py (personal) and import_gethelp.py (Windows-only snapshot) are excluded.
+          for f in tools/import_*.py; do
+            case "$f" in
+              tools/import_w3s.py|tools/import_gethelp.py) continue ;;
+            esac
+            echo "::group::$f"
+            python "$f" || { echo "::warning::$f failed; keeping the committed docs/ for its pack(s)"; status=1; }
+            echo "::endgroup::"
+          done
+          exit 0
+
+      - name: Check navigation footers (Previous:/Next:/Contents:)
+        run: python tools/check_nav.py
+
+      - name: Build pman and run its tests
+        run: |
+          cargo build --release
+          cargo test --release
+
+      - name: Build packs (sanity-gated; --changed-only bumps versions for changed packs)
+        id: build
+        run: |
+          ARGS="--changed-only"
+          if [ -n "${{ github.event.inputs.packs }}" ]; then
+            ARGS="$ARGS --only ${{ github.event.inputs.packs }}"
+          fi
+          python tools/build_packs.py $ARGS
+
+      - name: Smoke test (install two packs from the freshly built registry)
+        run: |
+          export PMAN_HOME="$RUNNER_TEMP/pman_home"
+          export PMAN_REGISTRY="$GITHUB_WORKSPACE/dist/registry.json"
+          ./target/release/pman pack install c python
+          ./target/release/pman -k printf
+          ./target/release/pman pack list
+
+      - name: Publish (changed packs + registry only)
+        if: github.event.inputs.publish == 'true' || github.event_name == 'schedule'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARGS="--changed-only --publish"
+          if [ -n "${{ github.event.inputs.packs }}" ]; then
+            ARGS="$ARGS --only ${{ github.event.inputs.packs }}"
+          fi
+          python tools/build_packs.py $ARGS
