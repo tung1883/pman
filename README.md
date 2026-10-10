@@ -1,6 +1,7 @@
 # pman
 
 pman shows documentation in your terminal, in the style of man pages. Here are some commands showing you how to use it:
+
     pman pack install all          # or pick: c js py rust go zig (check pman pack list for all packages)
     pman pack install @devops      # or a whole group (pman pack list shows them)
     pman c printf                  # a page (pman sprintf works too)
@@ -19,9 +20,11 @@ pman pack update                  # re-imports local packs from their source
 pman pack remove notes
 ```
 
-*Note: 
-  - pman copies your notes into a local pack under the data directory. It never changes the source.
-  - It skips hidden folders, such as `.obsidian` and `.git`.
+**Note:**
+
+- pman copies your notes into a local pack under the data directory. It never changes the source.
+- It skips hidden folders, such as `.obsidian` and `.git`.
 
 ## Sources and licenses
+
 The pman code has the MIT license.
