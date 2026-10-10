@@ -7,6 +7,7 @@ mod md;
 mod pack;
 mod pager;
 mod repl;
+mod searchidx;
 #[cfg(unix)]
 mod pty;
 
@@ -27,12 +28,17 @@ pman: man-style docs for languages and tools
 usage:
   pman <topic> [section...]    open a page or jump to a section
   pman <function>              open the page that documents it (pman sprintf)
-  pman -k <words>              ranked search of every installed pack
+  pman -k <words> [-t topic|pack]... [-n max] [--all] [--by-page]
+                               ranked search of every installed pack
+  pman reindex [pack...]       (re)build search.idx for installed packs lacking one
   pman list [topic]            topics, or the pages of one topic
-  pman pack list               available and installed packs
-  pman pack install <id>...    download packs (or: pack install all)
-                               pack remove <id>...   delete them (or: pack remove all)
+  pman pack list               available and installed packs, grouped
+  pman pack install <id|@group>...    download packs or a whole group (or: pack install all)
+                               pack remove <id|@group>...   delete them (or: pack remove all)
   pman pack update             update installed packs (and re-import local ones)
+  pman pack info <id>          source, upstream version, fetched date, license
+  pman pack outdated           installed packs with a newer version or a stale snapshot
+  pman license <pack|page>     license of the pack providing a page
   pman add <file.md|dir> [--name n]
                                read your own markdown notes as a pack (pman n); refresh with
                                pman add again or pman pack update, delete with pack remove n
@@ -87,9 +93,12 @@ fn run(args: &[String]) -> Result<(), String> {
             Ok(())
         }
         "-k" | "--apropos" | "apropos" => {
+            ensure_indexes();
             let ix = load_index();
-            apropos(&ix, &args[1..].join(" "))
+            apropos(&ix, &args[1..])
         }
+        "reindex" => reindex(&args[1..]),
+        "license" => license(args.get(1).map(String::as_str)),
         _ => lookup(args),
     }
 }
@@ -134,6 +143,33 @@ fn lookup(args: &[String]) -> Result<(), String> {
                         outln!("  {t:<10} {n} pages   (pman list {t})");
                     } else {
                         outln!("  {t}");
+                    }
+                }
+                return Ok(());
+            }
+            // Tail match unique to one page (e.g. only w3s.bash_intro) opens directly.
+            let tails: Vec<&str> = ix.pages.keys().filter(|id| id.rsplit('.').next() == Some(key.as_str())).map(|s| s.as_str()).collect();
+            if tails.len() == 1 {
+                let id = tails[0].to_string();
+                eprintln!("pman: showing {id}");
+                return show(&ix, &id, 0, vec![], false);
+            }
+            let suggestions = ix.suggest(&key, 8);
+            if !suggestions.is_empty() {
+                if !(tty() && io::stdin().is_terminal()) {
+                    return Err(format!("no manual for '{key}'. Did you mean: {}?", suggestions.join(", ")));
+                }
+                outln!("no manual for '{key}'. did you mean:");
+                for (n, s) in suggestions.iter().enumerate() {
+                    outln!("{:>2}. {s}", n + 1);
+                }
+                print!("open # (enter to quit): ");
+                let _ = io::stdout().flush();
+                let mut ans = String::new();
+                io::stdin().lock().read_line(&mut ans).map_err(|e| e.to_string())?;
+                if let Ok(n) = ans.trim().parse::<usize>() {
+                    if n >= 1 && n <= suggestions.len() {
+                        return show(&ix, &suggestions[n - 1], 0, vec![], false);
                     }
                 }
                 return Ok(());
@@ -241,7 +277,12 @@ fn open_query(ix: &Index, p: &index::Page, q: &str) -> Resolved {
     if let Some(r) = topic_sections(ix, &p.topic, q) {
         return r;
     }
-    eprintln!("pman: no section '{q}' in {}; opening the top", p.id);
+    let suggestions = ix.suggest_sections(p, q, 5);
+    if suggestions.is_empty() {
+        eprintln!("pman: no section '{q}' in {}; opening the top", p.id);
+    } else {
+        eprintln!("pman: no section '{q}' in {}; did you mean: {}? opening the top", p.id, suggestions.join(", "));
+    }
     Resolved::Page(p.id.clone(), 0, false)
 }
 
@@ -294,11 +335,49 @@ fn choose(ix: &Index, found: &[(String, usize, i32)], query: &str) -> Result<(),
     Ok(())
 }
 
+/// A tutorial's contents page ("w3s.bash_getstarted  Getting started" lines) as a filterable list; Enter opens
+/// the page, closing it returns to the list.
+fn contents(ix: &Index, toc: &index::Page) -> Result<(), String> {
+    // entries are "* w3s.id  Title"; split on the ids so a re-wrapped page parses the same
+    let mut items: Vec<(String, String)> = Vec::new();
+    let body = toc.lines().iter().take_while(|l| !l.trim_start().starts_with("W3Schools manual"));
+    for word in body.flat_map(|l| l.split_whitespace()) {
+        if word.starts_with("w3s.") && ix.page(word).is_some() {
+            items.push((word.to_string(), String::new()));
+        } else if word != "*" {
+            if let Some(last) = items.last_mut() {
+                if !last.1.is_empty() {
+                    last.1.push(' ');
+                }
+                last.1.push_str(&word.to_lowercase());
+            }
+        }
+    }
+    items.retain(|(id, _)| id != &toc.id);
+    let title = format!("{} - {} pages", toc.id, items.len());
+    let (mut filter, mut selected) = (String::new(), 0usize);
+    while let Some(i) = pager::pick(&title, &items, &mut filter, &mut selected).map_err(|e| e.to_string())? {
+        show(ix, &items[i].0, 0, vec![], false)?;
+    }
+    Ok(())
+}
+
 /// Shows a page in the pager, or as plain text when stdout is not a terminal.
 fn show(ix: &Index, id: &str, line: usize, terms: Vec<String>, section_only: bool) -> Result<(), String> {
     let page = ix.page(id).ok_or("page vanished")?;
+    if tty() && io::stdin().is_terminal() && page.id.ends_with("_contents") {
+        return contents(ix, page);
+    }
     if tty() {
-        return pager::run(page, line, terms).map_err(|e| e.to_string());
+        let mut next = pager::run(page, line, terms).map_err(|e| e.to_string())?;
+        while let Some(target) = next {
+            let Some(p) = ix.page(&target) else { break };
+            if p.id.ends_with("_contents") {
+                return contents(ix, p);
+            }
+            next = pager::run(p, 0, vec![]).map_err(|e| e.to_string())?;
+        }
+        return Ok(());
     }
     let (from, to) = if section_only {
         let s = page.section_at(line);
@@ -319,7 +398,7 @@ fn show(ix: &Index, id: &str, line: usize, terms: Vec<String>, section_only: boo
 /// If a registry pack provides `key` and it is not installed, offers to install it. Returns true when installed.
 fn try_install_for(key: &str) -> Result<bool, String> {
     let topic = key.split('.').next().unwrap_or(key).to_lowercase();
-    let Ok(reg) = pack::fetch_registry() else { return Ok(false) };
+    let Ok(reg) = pack::fetch_registry_cached() else { return Ok(false) };
     let Some((id, info)) = reg
         .packs
         .iter()
@@ -373,18 +452,92 @@ fn list(ix: &Index, topic: Option<&str>) {
     }
 }
 
-fn apropos(ix: &Index, query: &str) -> Result<(), String> {
-    if query.trim().is_empty() {
-        return Err("usage: pman -k <words>".into());
+/// `-t <topic|pack>` expands a pack id to its topics (registry, or the installed pack's own topics).
+fn expand_topic_filter(ix: &Index, reg: &Option<pack::Registry>, name: &str) -> Vec<String> {
+    let name = name.to_lowercase();
+    if let Some(r) = reg {
+        if let Some(info) = r.packs.get(&name) {
+            if !info.topics.is_empty() {
+                return info.topics.clone();
+            }
+        }
     }
-    let hits = ix.search(query, 30);
+    if ix.topics().contains(&name) {
+        return vec![name];
+    }
+    let mut one = Index::default();
+    one.load_pack(&pack::pack_dir(&name));
+    let ts = one.topics();
+    if !ts.is_empty() {
+        return ts;
+    }
+    vec![name]
+}
+
+fn apropos(ix: &Index, args: &[String]) -> Result<(), String> {
+    let (mut words, mut topic_names, mut max, mut all, mut by_page) = (Vec::new(), Vec::new(), 15usize, false, false);
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        match a.as_str() {
+            "-t" => topic_names.push(it.next().ok_or("-t needs a value")?.clone()),
+            "-n" => max = it.next().ok_or("-n needs a value")?.parse().map_err(|_| "-n needs a number".to_string())?,
+            "--all" => all = true,
+            "--by-page" => by_page = true,
+            _ => words.push(a.clone()),
+        }
+    }
+    let query = words.join(" ");
+    if query.trim().is_empty() {
+        return Err("usage: pman -k <words> [-t topic|pack]... [-n max] [--all] [--by-page]".into());
+    }
+    let topics: Option<Vec<String>> = if topic_names.is_empty() {
+        None
+    } else {
+        let reg = pack::fetch_registry_cached().ok();
+        Some(topic_names.iter().flat_map(|n| expand_topic_filter(ix, &reg, n)).collect())
+    };
+    let cap = if all { usize::MAX } else { max.max(1) };
+    let mut hits = ix.search_filtered(&query, 0, topics.as_deref());
+    hits.sort_by(|a, b| b.score.cmp(&a.score));
+    if by_page {
+        let mut seen = std::collections::HashSet::new();
+        hits.retain(|h| seen.insert(h.page.clone()));
+    }
+    let mut notes: std::collections::HashMap<(String, usize), String> = std::collections::HashMap::new();
+    if !by_page {
+        // near-duplicate collapse: same section title in > 3 packs -> keep the best, note the rest
+        let mut by_title: std::collections::HashMap<String, Vec<usize>> = std::collections::HashMap::new();
+        for (i, h) in hits.iter().enumerate() {
+            let p = ix.page(&h.page).unwrap();
+            by_title.entry(p.sections()[h.section].title.to_lowercase()).or_default().push(i);
+        }
+        let mut drop: std::collections::HashSet<usize> = std::collections::HashSet::new();
+        for idxs in by_title.values() {
+            let packs: std::collections::BTreeSet<&str> = idxs.iter().map(|&i| ix.page(&hits[i].page).unwrap().topic.as_str()).collect();
+            if idxs.len() <= 3 || packs.len() <= 3 {
+                continue;
+            }
+            let best = idxs[0];
+            for &i in &idxs[1..] {
+                drop.insert(i);
+            }
+            let best_topic = ix.page(&hits[best].page).unwrap().topic.clone();
+            let others: Vec<&str> = packs.iter().filter(|t| **t != best_topic).take(3).cloned().collect();
+            notes.insert((hits[best].page.clone(), hits[best].section), format!(" (+{} more in {})", idxs.len() - 1, others.join(", ")));
+        }
+        if !drop.is_empty() {
+            hits = hits.into_iter().enumerate().filter(|(i, _)| !drop.contains(i)).map(|(_, h)| h).collect();
+        }
+    }
+    hits.truncate(cap.min(hits.len()));
     if hits.is_empty() {
         outln!("nothing found for '{query}'");
         return Ok(());
     }
     for (n, h) in hits.iter().enumerate() {
         let p = ix.page(&h.page).unwrap();
-        outln!("{:>2}. {} › {}", n + 1, p.id, p.sections()[h.section].title);
+        let note = notes.get(&(h.page.clone(), h.section)).cloned().unwrap_or_default();
+        outln!("{:>2}. {} › {}{}", n + 1, p.id, p.sections()[h.section].title, note);
         if !h.snippet.is_empty() {
             outln!("      {}", h.snippet);
         }
@@ -404,6 +557,64 @@ fn apropos(ix: &Index, query: &str) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// Builds `search.idx` for installed packs that do not have one yet (installs from before this
+/// feature, or `pman reindex` asked explicitly).
+fn reindex(args: &[String]) -> Result<(), String> {
+    let ids: Vec<String> = if args.is_empty() { pack::installed().into_iter().map(|(id, _)| id).collect() } else { args.to_vec() };
+    let mut n = 0;
+    for id in ids {
+        let dir = pack::pack_dir(&id);
+        if !dir.join("bundle.json").exists() {
+            continue;
+        }
+        index::reindex_installed(&dir).map_err(|e| format!("{id}: {e}"))?;
+        outln!("reindexed {id}");
+        n += 1;
+    }
+    if n == 0 {
+        outln!("nothing to reindex");
+    }
+    Ok(())
+}
+
+/// `pman license [pack|page]`: the license of the pack providing a page, or of a pack itself.
+fn license(key: Option<&str>) -> Result<(), String> {
+    let key = key.ok_or("usage: pman license <pack|page>")?;
+    let reg = pack::fetch_registry()?;
+    let id = if reg.packs.contains_key(key) {
+        key.to_string()
+    } else {
+        let ix = load_index();
+        let topic = ix.page(key).map(|p| p.topic.clone()).or_else(|| ix.by_name(key).map(|p| p.topic.clone())).unwrap_or_else(|| key.to_string());
+        reg.packs
+            .iter()
+            .find(|(id, i)| **id == topic || i.topics.iter().any(|t| *t == topic))
+            .map(|(id, _)| id.clone())
+            .ok_or(format!("no pack found for '{key}'"))?
+    };
+    let info = reg.packs.get(&id).ok_or(format!("no pack '{id}'"))?;
+    match &info.license {
+        Some(l) => {
+            outln!("{id}: {l}{}", info.license_url.as_deref().map(|u| format!(" ({u})")).unwrap_or_default());
+        }
+        None => {
+            outln!("{id}: license unknown");
+        }
+    }
+    Ok(())
+}
+
+/// Quietly builds `search.idx` for any installed pack missing one, before the first `-k`.
+fn ensure_indexes() {
+    for (id, _) in pack::installed() {
+        let dir = pack::pack_dir(&id);
+        if dir.join("bundle.json").exists() && !dir.join("search.idx").exists() {
+            eprintln!("indexing {id}...");
+            let _ = index::reindex_installed(&dir);
+        }
+    }
 }
 
 // ---- packs -----------------------------------------------------------------------------------
@@ -472,7 +683,7 @@ struct Words {
 fn completion_words() -> Words {
     let ix = load_index();
     let mut first: std::collections::BTreeSet<String> =
-        ["list", "pack", "add", "exit", "clear", "help"].iter().map(|s| s.to_string()).collect();
+        ["list", "pack", "add", "exit", "clear", "help", "reindex", "license"].iter().map(|s| s.to_string()).collect();
     let mut subs: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
     for p in ix.pages.values() {
         first.insert(p.topic.clone());
@@ -502,8 +713,10 @@ fn complete(w: &Words, before: &str) -> (usize, Vec<String>) {
     let lc = cur.to_lowercase();
     let pool: Vec<String> = match prev.as_slice() {
         [] => w.first.clone(),
-        ["pack"] => ["install", "list", "remove", "update"].iter().map(|s| s.to_string()).collect(),
+        ["pack"] => ["install", "list", "remove", "update", "info", "outdated"].iter().map(|s| s.to_string()).collect(),
         ["pack", "install"] | ["pack", "remove"] => w.packs.clone(),
+        ["pack", "info"] => w.packs.clone(),
+        ["license"] => w.packs.clone(),
         ["list"] => w.topics.clone(),
         [topic] => w.subs.get(&topic.to_lowercase()).cloned().unwrap_or_default(),
         _ => Vec::new(),
@@ -543,7 +756,7 @@ fn add(args: &[String]) -> Result<(), String> {
 }
 
 fn import_local(name: &str, src: &std::path::Path) -> Result<(), String> {
-    const RESERVED: [&str; 8] = ["pack", "list", "add", "help", "update", "remove", "install", "all"];
+    const RESERVED: [&str; 10] = ["pack", "list", "add", "help", "update", "remove", "install", "all", "reindex", "license"];
     if RESERVED.contains(&name) {
         return Err(format!("'{name}' is a pman command; pick another with --name"));
     }
@@ -560,6 +773,44 @@ fn import_local(name: &str, src: &std::path::Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Days since the Unix epoch for a "YYYY-MM-DD" string (Howard Hinnant's `days_from_civil`).
+fn parse_date(s: &str) -> Option<i64> {
+    let mut it = s.split('-');
+    let y: i64 = it.next()?.parse().ok()?;
+    let m: i64 = it.next()?.parse().ok()?;
+    let d: i64 = it.next()?.parse().ok()?;
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = if y >= 0 { y } else { y - 399 } / 400;
+    let yoe = y - era * 400;
+    let mp = (m + 9) % 12;
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    Some(era * 146097 + doe - 719468)
+}
+
+fn days_since(epoch_days: i64) -> i64 {
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() as i64 / 86400).unwrap_or(0);
+    now - epoch_days
+}
+
+/// `@devops` is always a group; a bare `devops` is a group only when no pack has that id.
+fn expand_group_ids(reg: &pack::Registry, ids: &[String]) -> Vec<String> {
+    let mut out = Vec::new();
+    for id in ids {
+        let bare = id.strip_prefix('@').unwrap_or(id);
+        if (id.starts_with('@') || !reg.packs.contains_key(id.as_str())) && reg.groups.contains_key(bare) {
+            for p in &reg.groups[bare].packs {
+                if !out.contains(p) {
+                    out.push(p.clone());
+                }
+            }
+        } else {
+            out.push(id.clone());
+        }
+    }
+    out
+}
+
 fn packs(args: &[String]) -> Result<(), String> {
     let sub = args.first().map(String::as_str).unwrap_or("list");
     match sub {
@@ -572,16 +823,33 @@ fn packs(args: &[String]) -> Result<(), String> {
             }
             match pack::fetch_registry() {
                 Ok(reg) => {
-                    for (id, info) in &reg.packs {
-                        if pack::local_source(id).is_some() {
+                    let state = |id: &str, info: &pack::PackInfo| match pack::installed_version(id) {
+                        Some(v) if v == info.version => "[installed]".to_string(),
+                        Some(_) => "[update available]".to_string(),
+                        None => format!("{:.1} MB", info.size as f64 / 1048576.0),
+                    };
+                    let mut grouped: std::collections::HashSet<&str> = std::collections::HashSet::new();
+                    for (gname, g) in &reg.groups {
+                        let members: Vec<(&String, &pack::PackInfo)> =
+                            g.packs.iter().filter_map(|id| reg.packs.get(id).map(|i| (id, i))).collect();
+                        if members.is_empty() {
                             continue;
                         }
-                        let state = match pack::installed_version(id) {
-                            Some(v) if v == info.version => "installed".to_string(),
-                            Some(_) => "update available".to_string(),
-                            None => format!("{:.1} MB", info.size as f64 / 1048576.0),
-                        };
-                        outln!("  {id:<8} {state:<18} {}", info.desc);
+                        let total_mb: f64 = members.iter().map(|(_, i)| i.size as f64 / 1048576.0).sum();
+                        outln!("@{gname} - {} ({total_mb:.1} MB total)", g.desc);
+                        for (id, info) in &members {
+                            if pack::local_source(id).is_some() {
+                                continue;
+                            }
+                            grouped.insert(id.as_str());
+                            outln!("  {id:<8} {:<20} {}", state(id, info), info.desc);
+                        }
+                    }
+                    for (id, info) in &reg.packs {
+                        if pack::local_source(id).is_some() || grouped.contains(id.as_str()) {
+                            continue;
+                        }
+                        outln!("  {id:<8} {:<20} {}", state(id, info), info.desc);
                     }
                 }
                 Err(e) => {
@@ -596,14 +864,75 @@ fn packs(args: &[String]) -> Result<(), String> {
             }
             Ok(())
         }
+        "info" => {
+            let id = args.get(1).ok_or("usage: pman pack info <id>")?;
+            let reg = pack::fetch_registry()?;
+            let info = reg.packs.get(id).ok_or(format!("no pack '{id}' (pman pack list)"))?;
+            outln!("{id}: {}", info.desc);
+            outln!("  registry version: {}", info.version);
+            if let Some(v) = pack::installed_version(id) {
+                outln!("  installed version: {v}{}", if v == info.version { " (up to date)" } else { " (update available)" });
+            } else {
+                outln!("  not installed ({:.1} MB)", info.size as f64 / 1048576.0);
+            }
+            if let Some(g) = &info.group {
+                outln!("  group: @{g}");
+            }
+            if let Some(s) = &info.source {
+                outln!("  source: {s}");
+            }
+            if let Some(v) = &info.upstream_version {
+                outln!("  upstream version: {v}");
+            }
+            if let Some(f) = &info.fetched {
+                outln!("  fetched: {f}");
+            }
+            if let Some(l) = &info.license {
+                outln!("  license: {l}{}", info.license_url.as_deref().map(|u| format!(" ({u})")).unwrap_or_default());
+            }
+            Ok(())
+        }
+        "outdated" => {
+            let reg = pack::fetch_registry()?;
+            let mut any = false;
+            for (id, v) in pack::installed() {
+                if pack::local_source(&id).is_some() {
+                    continue;
+                }
+                let Some(info) = reg.packs.get(&id) else { continue };
+                let stale = info
+                    .fetched
+                    .as_deref()
+                    .and_then(|d| parse_date(d))
+                    .map_or(false, |days| days_since(days) > 365);
+                if v < info.version || stale {
+                    any = true;
+                    let tag = if v < info.version && stale {
+                        "update available, stale"
+                    } else if v < info.version {
+                        "update available"
+                    } else {
+                        "stale?"
+                    };
+                    outln!("  {id:<8} v{v} -> v{} ({tag})", info.version);
+                }
+            }
+            if !any {
+                outln!("all packs up to date");
+            }
+            Ok(())
+        }
         "install" | "update" | "remove" => {
+            let group_reg = pack::fetch_registry().ok();
             let ids: Vec<String> = args[1..].to_vec();
             if sub == "remove" {
                 if ids.is_empty() {
-                    return Err("usage: pman pack remove <id>... | all".into());
+                    return Err("usage: pman pack remove <id>... | @group | all".into());
                 }
                 let ids = if ids.iter().any(|i| i == "all" || i == "--all") {
                     pack::installed().into_iter().map(|(id, _)| id).collect()
+                } else if let Some(reg) = &group_reg {
+                    expand_group_ids(reg, &ids)
                 } else {
                     ids
                 };
@@ -632,7 +961,27 @@ fn packs(args: &[String]) -> Result<(), String> {
             } else if ids.iter().any(|i| i == "all" || i == "--all") {
                 reg.packs.keys().cloned().collect()
             } else {
-                ids
+                let expanded = expand_group_ids(&reg, &ids);
+                if expanded.len() > ids.len() {
+                    let new_mb: f64 = expanded
+                        .iter()
+                        .filter(|id| reg.packs.contains_key(*id) && pack::installed_version(id) != reg.packs.get(*id).map(|i| i.version))
+                        .filter_map(|id| reg.packs.get(id))
+                        .map(|i| i.size as f64 / 1048576.0)
+                        .sum();
+                    if io::stdin().is_terminal() && io::stderr().is_terminal() {
+                        eprint!("group expands to {} packs, {new_mb:.1} MB to download. proceed? [Y/n] ", expanded.len());
+                        let _ = io::stderr().flush();
+                        let mut ans = String::new();
+                        io::stdin().lock().read_line(&mut ans).map_err(|e| e.to_string())?;
+                        if !matches!(ans.trim().to_lowercase().as_str(), "" | "y" | "yes") {
+                            return Ok(());
+                        }
+                    } else {
+                        eprintln!("pman: group expands to {} packs, {new_mb:.1} MB", expanded.len());
+                    }
+                }
+                expanded
             };
             if targets.is_empty() {
                 if sub == "update" && locals > 0 {
@@ -671,7 +1020,7 @@ fn packs(args: &[String]) -> Result<(), String> {
             }
             Ok(())
         }
-        _ => Err("usage: pman pack list | install <id>... | remove <id>... | update".into()),
+        _ => Err("usage: pman pack list | install <id|@group>... | remove <id|@group>... | update | info <id> | outdated".into()),
     }
 }
 

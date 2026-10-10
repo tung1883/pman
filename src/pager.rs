@@ -44,6 +44,7 @@ struct Pager<'a> {
     current: Option<usize>,
     mode: Mode,
     note: String,
+    go: Option<String>,
 }
 
 struct RawGuard;
@@ -63,7 +64,8 @@ impl Drop for RawGuard {
     }
 }
 
-pub fn run(page: &Page, start_line: usize, terms: Vec<String>) -> io::Result<()> {
+/// Returns the id of the page to open next ([ and ] follow the page's Previous:/Next: lines).
+pub fn run(page: &Page, start_line: usize, terms: Vec<String>) -> io::Result<Option<String>> {
     let _guard = RawGuard::new()?;
     let (w, h) = terminal::size()?;
     let mut p = Pager {
@@ -78,6 +80,7 @@ pub fn run(page: &Page, start_line: usize, terms: Vec<String>) -> io::Result<()>
         current: None,
         mode: Mode::Normal,
         note: String::new(),
+        go: None,
     };
     p.layout();
     p.top = p.row_of_line.get(start_line).copied().unwrap_or(0);
@@ -100,7 +103,7 @@ pub fn run(page: &Page, start_line: usize, terms: Vec<String>) -> io::Result<()>
             }
             Event::Key(k) if k.kind != KeyEventKind::Release => {
                 if p.key(k) {
-                    return Ok(());
+                    return Ok(p.go.take());
                 }
             }
             _ => {}
@@ -272,6 +275,27 @@ impl<'a> Pager<'a> {
             KeyCode::Char('u') => self.top = self.top.saturating_sub(page / 2),
             KeyCode::Home | KeyCode::Char('g') => self.top = 0,
             KeyCode::End | KeyCode::Char('G') => self.top = max,
+            code @ (KeyCode::Right | KeyCode::Left | KeyCode::Char(']' | '[' | 'c')) => {
+                let (label, what) = match code {
+                    KeyCode::Right | KeyCode::Char(']') => ("Next:", "next page"),
+                    KeyCode::Left | KeyCode::Char('[') => ("Previous:", "previous page"),
+                    _ => ("Contents:", "contents list"),
+                };
+                let lines = self.page.lines();
+                let target = lines[lines.len().saturating_sub(12)..].iter().find_map(|l| {
+                    // the two links may share one wrapped line: "Previous: a Next: b"
+                    let words: Vec<&str> = l.split_whitespace().collect();
+                    let i = words.iter().position(|w| *w == label)?;
+                    words.get(i + 1).filter(|w| !w.ends_with(':')).map(|w| w.to_string())
+                });
+                match target {
+                    Some(id) if !id.is_empty() => {
+                        self.go = Some(id);
+                        return true;
+                    }
+                    _ => self.note = format!("no {what}"),
+                }
+            }
             KeyCode::Char('/') => self.mode = Mode::Search(String::new()),
             KeyCode::Char('n') => self.step_match(true),
             KeyCode::Char('N') => self.step_match(false),
@@ -288,7 +312,7 @@ impl<'a> Pager<'a> {
                 }
             }
             KeyCode::Char('?') => {
-                self.note = "j/k line  space/b page  d/u half  g/G ends  / search  n/N next/prev  t sections  v select (app)  q quit".into();
+                self.note = "j/k line  space/b page  d/u half  g/G ends  / search  n/N next/prev match  left/right (or [ ]) prev/next page  c contents  t sections  v select (app)  q quit".into();
             }
             _ => {}
         }
@@ -449,8 +473,20 @@ impl<'a> Pager<'a> {
             let c = self.current.map_or("-".to_string(), |c| (c + 1).to_string());
             s.push_str(&format!(" · match {c}/{}", self.matches.len()));
         }
+        if self.has_nav() {
+            s.push_str("  [ ] page  c contents");
+        }
         s.push_str("  (? help)");
         s
+    }
+
+    /// Whether the page's footer carries `Previous:`/`Next:`/`Contents:` links (checked like the
+    /// `[`/`]`/`c` handler: the last 12 lines).
+    fn has_nav(&self) -> bool {
+        let lines = self.page.lines();
+        lines[lines.len().saturating_sub(12)..]
+            .iter()
+            .any(|l| l.contains("Previous:") || l.contains("Next:") || l.contains("Contents:"))
     }
 }
 
